@@ -1,0 +1,14 @@
+{
+    "cSpell.words": [
+        "Deque",
+        "constexpr",
+        "decltype",
+        "lvalue",
+        "noexcept",
+        "struct"
+    ],
+    "cSpell.ignoreWords": [
+        "key",
+        "vals"
+    ]
+}
