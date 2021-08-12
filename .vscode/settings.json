@@ -2,13 +2,20 @@
     "cSpell.words": [
         "Deque",
         "constexpr",
+        "cout",
         "decltype",
         "lvalue",
         "noexcept",
         "struct"
     ],
     "cSpell.ignoreWords": [
+        "deref",
+        "dwim",
+        "expr",
         "key",
+        "less",
+        "typeindex",
+        "up",
         "vals"
     ]
 }

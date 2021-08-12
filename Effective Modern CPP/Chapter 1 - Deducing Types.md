@@ -1,7 +1,7 @@
 ## Chapter 1 - Deducing Types
 
 <summary>
-This chapter is dedicated to type deduction in each context, like templates, auto and decltype.
+Type deduction in different contexts, like templates, auto and decltype.
 </summary>
 
 * c++98 had a single set of rules for type deduction, they one for function templates.
