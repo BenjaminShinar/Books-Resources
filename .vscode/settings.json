@@ -6,7 +6,8 @@
     "decltype",
     "lvalue",
     "noexcept",
-    "struct"
+    "struct",
+    "unscoped"
   ],
   "cSpell.ignoreWords": [
     "deref",

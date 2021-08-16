@@ -397,11 +397,119 @@ c++14 decided that alias decelerations are better, so they introduced a shorthan
 
 </details>
 
-### Item 10: Prefer Scoped enums to Un-scoped enums
+### Item 10: Prefer Scoped enums to unscoped enums
 
-<!-- <details> -->
+<details>
 <summary>
-
+Scoped enums prevent namespace pollution, unintended conversions and promote type saftey.
 </summary>
+C style enum are unscoped,they belong in the same scope as other variables. scoped enums are limited inside their own scope. this scope behaves like a mini-namespace. this means we can reduce namespace pollution.
 
-<!-- </details> -->
+```cpp
+enum Color{black,white,red}; //unscoped enum, black, white,red are same scope as Color;
+//auto white = false; //error! white is already declared!
+
+enum class ScopedColor{green, blue, orange}; //scoped enum, the values exist only int the ScopedColor scope.
+auto green = 9; //no problem, green is in this scope, and the ScopedColor::green is a different scope.
+auto blueC = ScopedColor::blue; //fine;
+auto orangeC = orange; //error! no such thing as orange, only ScopedColor::orange
+```
+
+another advantage of scoped enums is that they provide strong typing. and they don't implicitly convert into numerics. un scoped enums can participate in any operation involving numbers, even when it doesn't make sense!
+
+```cpp
+enum Color{black,white,red}; //unscoped enum
+std::vector<std::size_t> primeFactors(std::size_t x); //function
+Color c = red; //enum
+if (c < 14.5) //compare color to double!
+{
+    auto factors = primeFactors(c); //what are the prime factors of red?
+}
+```
+
+if we use a scoped enum, we no longer have implicit conversions, and if we want to do something weird, that's our choice.
+
+```cpp
+enum class Color{black,white,red}; //unscoped enum
+std::vector<std::size_t> primeFactors(std::size_t x); //function
+Color c = Color::red; //enum
+//if (c < 14.5) //error!
+if (static_cast<double>(c)<14.5) //explicit casting, will work
+{
+    //auto factors = primeFactors(c); //also an error!
+    auto factors = primeFactors(static_cast<std::size_t>(c)); //again, will work
+}
+```
+
+a third advantage for scoped enums is that they can be forward declared. truth to be told, unscoped enums can also be forward declared, but there's an issue. the forward declaration of enums requires the size to be known. the underlying default type of scoped-enums is int. but we can set it to a different type.
+
+```cpp
+enum class Status1{A=-1,B=9}; //underlying type is int;
+enum class Status2: std::uint32_t{A,B,C}; //underlying type is unsigned int for a 32 bit machine;
+```
+
+anyway, we can forward declare enums, if we want to.
+
+there is one case where uns-coped enums might be preferable, this is for getting elements out of a tuple from the get<> template. there are ways to overcome the issue,though.
+
+```cpp
+using UserInfo = std::tuple<std::string, std::string, std::size_t>; //type alias, fields are name, email, reputation
+userInfo uInfo;
+auto emailValue = std::get<1>(uInfo); // 1 is the index of the email.
+enum UserInfoFields {Name, Email,Reputation}; // unscoped enum
+auto repValue = std::get<Reputation>(uInfo); // this is good for readability.
+enum class ScopedInfoFields{NameScoped, EmailScoped,ReputationScoped}; //scoped enum
+//auto nameValue = std::get<ScopedInfoFields::NameScoped>(uInfo); // error! we need std::size_t
+auto nameValue = std::get<static_cast<std::size_t>(ScopedInfoFields::NameScoped)>(uInfo); // this works, but so much typing.
+```
+
+if we want to avoid the long typing, we can write a function, but it must be known in compile-time, so a constexpr, and while we're here, let's template it for any type of enum and return type. we can even use auto in c++14 to reduce the weird parts of the code!
+
+```cpp
+// most basic form
+constexpr std::size_t GetUserField(ScopedInfoFields field)
+{
+    return static_cast<std::size_t>(field);
+}
+// c++11 form
+template<typename E>
+constexpr typename std::underlying_type<E>::type // return type
+ToUType(E enumerator) noexcept
+{
+        return static_cast<std::underlying_type<E>::type>(enumerator);
+
+}
+// c++14 form v1
+template<typename E>
+constexpr std::underlying_type_t<E> ToUType141(E enumerator) noexcept
+{
+    return static_cast<std::underlying_type_t<E>>(enumerator);
+}
+
+// c++14 form v2
+template<typename E>
+constexpr auto ToUType142(E enumerator) noexcept
+{
+    return static_cast<std::underlying_type_t<E>>(enumerator);
+}
+
+//usage
+auto nameValue = std::get<ToUType142(ScopedInfoFields::NameScoped)>(uInfo);
+```
+
+the extended form still requires more typing, but it's worth it.
+
+#### Things to Remember
+
+> - C++98-style enums are now known as unscoped enums.
+> - Enumerators of scoped enums are visible only within the enum. They convert
+>   to other types only with a cast.
+> - Both scoped and unscoped enums support specification of the underlying type.
+>   The default underlying type for scoped enums is int. Unscoped enums have no
+>   default underlying type.
+> - Scoped enums may always be forward-declared. Unscoped enums may be
+>   forward-declared only if their declaration specifies an underlying type.
+
+</details>
+
+### Item 11: Prefer Deleted Functions to Private Undefined Ones
