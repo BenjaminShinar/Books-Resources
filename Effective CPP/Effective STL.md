@@ -808,7 +808,12 @@ Boost - stiil there.
 
 Have some resourecs about STL, implemenation examples and some experimental containers and algorithms. Debuggers for portings, nice libraries, etc...
 
-Appendix A: Locales and Case-InsensitiveString Comparisons
+## Extras
+
+### Appendix A: Locales and Case-InsensitiveString Comparisons
+
 Locales are horrible.
-Appendix B: Remarks on Microsoft’s STL Platforms
+
+### Appendix B: Remarks on Microsoft’s STL Platforms
+
 Something about early versions of visual studio (6 and below).
