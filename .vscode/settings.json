@@ -15,9 +15,11 @@
     "expr",
     "key",
     "less",
+    "t",
     "typedefs",
     "typeindex",
     "up",
-    "vals"
+    "vals",
+    "wchar"
   ]
 }

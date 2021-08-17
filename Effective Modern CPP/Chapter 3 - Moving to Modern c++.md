@@ -401,7 +401,7 @@ c++14 decided that alias decelerations are better, so they introduced a shorthan
 
 <details>
 <summary>
-Scoped enums prevent namespace pollution, unintended conversions and promote type saftey.
+Scoped enums prevent namespace pollution, unintended conversions and promote type safety.
 </summary>
 C style enum are unscoped,they belong in the same scope as other variables. scoped enums are limited inside their own scope. this scope behaves like a mini-namespace. this means we can reduce namespace pollution.
 
@@ -513,3 +513,248 @@ the extended form still requires more typing, but it's worth it.
 </details>
 
 ### Item 11: Prefer Deleted Functions to Private Undefined Ones
+
+<details>
+<summary>
+Explicitly deleting functions improves readability by conveying intent, moves failure form link-time to compile-time, gives out better error messages, and can be done on non member functions and template function specializations
+</summary>
+
+Usually, no function declaration means that there is no function to call,but sometimes things aren't so simple. c++ has some _'special member functions'_, which are automatically generated when they are needed. [Item 17]() introduces the concept in greater details, but for now we will focus on the copy constructor and copy assignment operator.
+
+in classic C (c++98) the way to prevent those functions from being called was to declare them as private and not define them. this was done for classes and objects in the library where it was not clear what copying them means.
+
+here is code for the basic io stream:
+
+```cpp
+template<class charT, class traits= char_traits<CharT>>
+class basic_ios:public ios_base{
+    public:
+    //...
+    private:
+    basic_ios(const basic_ios&); //not defined
+    basic_ios& operator=(const basic_ios&); //not defined
+}
+```
+
+making the function private means they can't be called from outside, and not defining them means that even if a member function tries to call them, it'll cause an linking error.
+
+in modern c++, we can to something better, mark them both as _'deleted functions'_
+
+```cpp
+template<class charT, class traits= char_traits<CharT>>
+class basic_ios:public ios_base{
+    public:
+    //...
+
+    basic_ios(const basic_ios&) = delete; // deleted
+    basic_ios & operator=(const basic_ios&) = delete; // deleted
+}
+```
+
+Deleting functions isn't just a stylistic choice. any file trying to call the functions will fail to compile, so we moved our error detection closer. by convention, deleted functions should be public, this is done because compilers might check for accessability before and report the function is private (which is an important detail, but not informative) rather than that it was deleted (which is the critical reason for the failure). **in general** public functions provide better error message from compilers.
+
+#### Not Just Member Functions
+
+An additional advantage of deleting functions is that while only member functions can be made private, any function can be deleted. this means we can restrict type conversions by providing overloads and deleting them.
+
+```cpp
+bool isLucky(int number);
+
+if (isLucky('a')) // char can become int
+{
+
+}
+if (isLucky(true)) // bool can become int
+{
+
+}
+if (isLucky(3.5)) // should we truncate to 3? who makes this choice>
+{
+
+})
+```
+
+all of the calls above are possible, but if we want to block them, we can do so with deleted functions
+
+```cpp
+bool isLucky(char) = delete; //no more char
+bool isLucky(bool) = delete; // no more boo;
+bool isLucky(double) = delete; //no more double, or float. float prefers to become double
+```
+
+now all of the calls will fail during compilation. the functions don't exist, but they are part of the overload resolution process. we can do something similar with templated functions. let's say we have a function that process pointers of a generic type, and we never want to call it with a void* pointer (which can't be dereferenced) or a char* pointer (which should be handled by sting operations). we can simply provide deleted template specializations.
+
+```cpp
+template<typename T>
+void processPointer(T* ptr);
+
+template<>
+void processPointer<void>(void* ptr) = delete;
+
+template<>
+void processPointer<char>(char* ptr) = delete;
+```
+
+we can go a step further and delete const volatile void* and const volatile char* overloads, or other types of character types (std::wchar_t, std::char16_t, std::char32_t)
+
+in the case of function templates inside a class, we couldn't disable them by using the private method, because all function template specializations have the same access modifier. however, we can delete templates functions specializations, although the process requires deletion from outside the class scope.
+
+```cpp
+class Widget
+{
+    public:
+    //...
+    template<typename T>
+    void processPointer(T* ptr)
+    {
+        //...
+    }
+    private:
+    /*
+    template<>
+    void processPointer<void>(void* ptr) // this can't be done
+    {
+        //...
+    }
+    */
+};
+template<>
+    void Widget::processPointer<void>(void* ptr) = delete; // this can be done.
+```
+
+#### Things to Remember
+
+> - Prefer deleted functions to private undefined ones.
+> - Any function may be deleted, including non-member functions and template
+>   instantiations.
+
+</details>
+
+### Item 12: Declare Overriding Functions Override
+
+<details>
+<summary>
+Derived class overrides are important to get right, but easy to get
+wrong. explicit override means we make sure we get them right.
+</summary>
+Object oriented programming in c++ revolves around classes, inheritance and virtual functions. but the number of ways we can fail to properly override a virtual function in a derived class is surprisingly large.
+
+_overriding_ and _overloading_ sound similar and are parts of polymorphism, but aren't the same.
+below is some code example
+
+```cpp
+class Base{
+    public:
+    virtual void doWork();
+    //...
+};
+class Derived : public Base
+{
+    public:
+    virtual void doWork(); //override, "virtual" is optional.
+};
+std::unique_ptr<Base> upb = std::make_unique<Derived>(); //unique ptr
+upb->doWork(); //function call through the virtual function,
+```
+
+for an override to occur, the following must happen
+
+- the base class function must be virtual
+- the based and derived classes function names must be identical(this doesn't apply to destructors)
+- the parameter types of the base and the derived functions must be identical.
+- the _const-ness_ of the base and the derived functions must be identical
+- the return types and exception specifications of the base and derived functions must be compatible.
+
+and in modern c++, we also get an additional requirement
+
+- the function _reference qualifiers_ must be identical.
+
+```cpp
+class Widget{
+    public:
+    //...
+    void Foo() &; //this version only works when *this Widget is lvalue
+    void Foo() &&; //this version only works when *this Widget is rvalue
+}
+Widget makeWidget(); //some factory function
+Widget w; //lvalue widget
+w.Foo(); //lvalue version
+make.Widget().Foo(); //rvalue version
+```
+
+if we fail on one of those conditions, the 'overriding' function will still exists in the code, but it won't be used when called through a base class pointer. these problems can be hard to trace, and there is no compilation or runtime error, all that happens is that we call the wrong code.
+
+here is an example of legal code, but still not what we wanted.
+
+```cpp
+class Base
+{
+    public:
+    virtual void mf1() const;
+    virtual void mf2(int x);
+    virtual void mf3() &;
+    void mf4() const;
+};
+class Derived
+{
+    public:
+    virtual void mf1(); // oops, no const! this is an entirely new virtual function.
+    virtual void mf2(unsigned int x); //oops, int and unsigned int, another new virtual function.
+    virtual void mf3() &&; //this function is only for rvalue *this*, sorry, new virtual function again
+    void mf4() const; // it wasn't a virtual function then, and it isn't one now.
+};
+```
+
+the compiler might warn you about the issues above, and it might not. it might catch all, some, or none of them, and it might be lost inside a long list of other ignored warnings.
+
+the override keyword will make sure an function that is declared to override another function does so. if it's doesn't its a compile-time error. in the example above, adding _override_ to the derived class will reveal that they aren't overriding any function (even mf4!). and if we have the override specifier, we can change the base class signature and then the compiler will tell us where all of the overriding functions in the derived classes are.
+
+the _override_ and _final_ keywords are **contextual keywords**, they are reserved only in certain cases. they don't mess with old C legacy code that happens to use those names.override specifies a function overrides a function in base class, final declares no further overrides of the function are allowed in derived classes, or that the class cannot be derived from.
+
+#### Member Function Reference Qualifiers
+
+if we want a function to only accept lvalues, we declare it to take non-const references, if we want an rvalue only, we use the rvalue reference parameter.
+
+```cpp
+void Foo(Widget & w); //only lvalue
+void Foo(Widget && w); //only rvalue
+```
+
+the reference qualifiers relate to the calling object,they aren't as popular as 'const' qualifiers, but they can be useful, imagine an object with a vector as a member variable, and a method that returns a reference to that vector.
+
+```cpp
+class Widget{
+    public:
+    using DataType = std::vector<double>; //alias deceleration
+    //...
+    DataType & data(){return values;} // returns a reference to the vector.
+    private:
+    DataType values;
+};
+Widget w;
+auto vals1 = w.data(); // copy w.values into val1;
+Widget makeWidget(); //factory function
+auto vals2 = makeWidget().data(); // again, copy values, even though we could have used move semantics instep
+```
+
+by using reference qualifiers, we can have a correct behavior for this case.
+
+```cpp
+class Widget{
+    public:
+    using DataType = std::vector<double>; //alias deceleration
+    //...
+    DataType & data() & {return values;} // returns a lvalue reference to the vector.
+    DataType data() && {return std::move(values);} // returns a rvalue.
+    private:
+    DataType values;
+};
+```
+
+### Things to Remember
+
+> - Declare overriding functions override.
+> - Member function reference qualifiers make it possible to treat lvalue and
+>   rvalue objects (\*this) differently.
+
+</details>
