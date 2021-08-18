@@ -1,6 +1,8 @@
 {
   "cSpell.words": [
     "Deque",
+    "cbegin",
+    "cend",
     "constexpr",
     "cout",
     "decltype",
@@ -10,11 +12,14 @@
     "unscoped"
   ],
   "cSpell.ignoreWords": [
+    "crbegin",
+    "crend",
     "deref",
     "dwim",
     "expr",
     "key",
     "less",
+    "rbegin",
     "t",
     "typedefs",
     "typeindex",

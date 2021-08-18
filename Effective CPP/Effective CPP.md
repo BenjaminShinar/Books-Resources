@@ -10,13 +10,23 @@ Effective C++: 55 Specific Ways to Improve Your Programs and Designs
 
 ### Item 1: View C++ as a federation of languages.
 
-C++ isn’t one language, it’s four languages together, it’s C, object oriented C++, template C++ and the STL. each part has its’ own conventions, styles and pitfalls. They can work together, but we must know how to combine them.
+<details>
+<summary>
+C++ isn’t one language, it’s four languages together, it’s C, object oriented C++, template C++ and the STL.
+</summary>
+
+Each part has its’ own conventions, styles and pitfalls. They can work together, but we must know how to combine them.
 
 For example. For C basic stuff, we love passing by value (for built-in, C-like types), but in OOP c++, we prefer to pass references, and in templated c++, we have to pass references, but we when go to the STL, we have pointers again,and we go back to passing by value.
 
-### Item 2: Prefer consts, enums, and inlines to #defines.
+</details>
 
-C++ gives us more power to the compiler, and we should use it rather than the precompiler, when possible.
+### Item 2: Prefer Const, enums, and Inline to #defines.
+
+<details>
+<summary>
+C++ gives more power to the compiler, and we should use it rather than the pre compiler, when possible.
+</summary>
 Rather than having defined constants (#define ASPECT 1.653) we should use cons symbols,
 Const is stronger in cpp than in C,
 If we have a pointer, we need to use two const specifiers.
@@ -24,16 +34,20 @@ And if we use a string, we should use the std::string type.
 Make it const.
 
 Making the const part of the code means we can limit it’s visibility and scope. We should define it as a static member of the class.
-Class X {
-Static const int NumTurns = 5;
+
+```cpp
+class X {
+static const int NumTurns = 5;
 };
+```
+
 Older versions of the compiler wouldn’t allow that behavior, and require us to define the value outside of the definitions.
 
 A different way is to declare an enum member, which can also be encapsulated.
-Enums cannot be referenced or addresseed, which is more similar to #define.
+Enums cannot be referenced or addressees, which is more similar to #define.
 
 We should also avoid using #define to create macros.
-The following example is one possible fuckup:
+The following example is one possible fuck-up:
 
 It seems innocent, but side effects
 f(++a > b ? ++a,b); we do ++ twice.
@@ -44,12 +58,18 @@ Here we should use a templated function, which gets const references, and the ++
 We still have #include, #ifndef,#define,#endif.
 But we should reduce our use of the preprocessor.
 
+</details>
+
 ### Item 3: Use const whenever possible.
 
-Const means that the object shouldn’t be modified. And it asks the compiler to help us enforce this rule
+<details>
+<summary>
+Const means that the object shouldn’t be modified. And it asks the compiler to help us enforce this rule.
+</summary>
+
 We have many ways of using ‘const’:
-If the const is to the left of the asterix, it’s a pointer to a const value.
-If the const is to the right of the asterix, it’s a const pointer to a value.
+If the const is to the left of the asterisk, it’s a pointer to a const value.
+If the const is to the right of the asterisk, it’s a const pointer to a value.
 If on both, const pointer to a const value, basically immutable.
 
 In terms of the type, the side of the const doesn’t matter. Use the spiral rule to determine.
@@ -59,26 +79,34 @@ In a function, const can be the return value, parameters, or the function itself
 Sometimes we want to return a const objects, this protects us from some weird behaviors.
 
 Const member functions, if it’s not a const, const objects can’t call it.
-Constiness of a member function is part of the signature, so if we want to override it, we should make sure to keep the constiness.
+Const-ness of a member function is part of the signature, so if we want to override it, we should make sure to keep the const-ness.
 
 If we didn’t have two versions we would either open ourselves to attacks on our objects (a[0] = 0;) or reduce the ability to use the object.
 
-Bitwise and logical constness
-Bitwise - no bits are changed, easy for the compiler to see.
-Logical - a philosophy: a const member function can change the bits, but only in ways the client can’t tell.
+Bitwise and logical const-ness
 
-We might want to change some private members to provide better performance, but constiness stops us!
+- Bitwise - no bits are changed, easy for the compiler to see.
+- Logical - a philosophy: a const member function can change the bits, but only in ways the client can’t tell.
+
+We might want to change some private members to provide better performance, but const-ness stops us!
 For that we have the ‘mutable’ keyword. We set it for data members (private!) and it means we can modify these members even inside const functions.
 
 Avoiding duplication
 We might have const and non const functions with almost identical behavior, which we would want to avoid writing twice.
 One solution is to move what we can to private functions.
-Another solution is to cast consintess away.
+Another solution is to cast const-ness away.
 This is the one place we can should use cast.
-What we do is take the non const version, cast it as const (static_cast<>()) and the const_cast<non const>() the return value.
+What we do is take the non const version, cast it as const (static_cast<>()) and the const_cast\<non const>() the return value.
 After all, if we are in a non-const function, it means the user has a non const object, so we aren’t doing anything wrong.
 
+</details>
+
 ### Item 4: Make sure that objects are initialized before they’re used.
+
+<details>
+<summary>
+
+</summary>
 
 Uninitialized values are dangerous. The rules for when they are given default values are too complicated to care about.
 For objects, we should always initialize everything. And do it it in the member Initialization list, not in the body of the ctor.this is usually safer and faster.
@@ -88,7 +116,7 @@ For const and references members, we must use MIL,
 We can sometimes use a private function to take care of the assignments, especially if we have many constructors, and we don’t want to clatter the MIL with repetitions, this is only when we can safely use the assignment behavior.
 
 There is a set order of initialization.
-First the base class, tehn the members according to the ABEntry list (class declaration?)
+First the base class, ten the members according to the ABEntry list (class declaration?)
 
 The order of initialization of non-local objects defined in different translation units
 Static objects, alive from their creation time until the end of the program.
@@ -101,12 +129,18 @@ Some problems i don’t understand. The answer is to call a function that has a 
 This also saves us some performance cost in creating the non-local objects.
 
 </details>
+</details>
 
 ## Chapter 2: Constructors, Destructors, and Assignment Operators
 
 <details>
 
 ### Item 5: Know what functions C++ silently writes and calls.
+
+<details>
+<summary>
+
+</summary>
 
 The compiler creates a default constructor, a copy constructor, a copy assignment operator (=) and a destructor,
 They are created only if needed (used), but they almost always creep inside.
@@ -115,36 +149,71 @@ If we have a member that is a reference, c++ won’t create a copy assignment op
 If we have const members, the compiler also won’t agree.
 Copy assignment operators aren’t inherited from the base class.
 
+</details>
+
 ### Item 6: Explicitly disallow the use of compiler-generated functions you do not want.
+
+<details>
+<summary>
+
+</summary>
 
 If we don’t want to allow copying (or assignment) of the object, we must explicitly disallow it.
 If we don’t declare them, the compiler create them for us, and if we do create them then, the compiler won’t protect us from using them!
 The trick to avoid this problem is to make the functions ‘private’. And thus we prevent the compiler from auto-generating them, and we also get it to avoid compiling code that tries to call on them!
-We should also just declare them, and leave them without definition! This will get us linktime errors if some private function tries to call them, or a friend member / function tries.
+We should also just declare them, and leave them without definition! This will get us link-time errors if some private function tries to call them, or a friend member / function tries.
 If we would want to get a compile time error, we could push this invalid functionality into a base class, we make the allowed operations protected (inherited) and the actions we want to disallow are private. This means our derived class won’t be able to call on them,
 
 And the code won’t even compile!
 
+</details>
+
 ### Item 7: Declare destructors virtual in polymorphic base classes.
+
+<details>
+<summary>
+
+</summary>
 
 Make destructors virtual if there is at least one virtual function.
 If there aren’t any virtual functions, the class probably isn’t meant to be a base class.
 
+</details>
+
 ### Item 8: Prevent exceptions from leaving destructors.
+
+<details>
+<summary>
+
+</summary>
 
 We should never have two exceptions active at the same time, c++ might terminate or have other undefined behavior.
 
-If we have an exception (that we can’t handle) inside a destructor, we have two options, either abort everything with an explicit call to .abort(), or catch it, log it, and hope that the exception is contained, borth aren’t great options.
+If we have an exception (that we can’t handle) inside a destructor, we have two options, either abort everything with an explicit call to .abort(), or catch it, log it, and hope that the exception is contained, both aren’t great options.
 
 A suggestion is to move the responsibility away from the destructor and allow the user to call on this function, so he could see the exceptions. Our destructor will also call on these functions, but it’s a last resort, not the desired behavior.
 
+</details>
+
 ### Item 9: Never call virtual functions during construction or destruction.
+
+<details>
+<summary>
+
+</summary>
 
 The vptr is of the most derived class, so we can never know if we call a virtual function, whether or not it has what it needs. If it’s inside a ctor, the data it’s using hasn’t been initialized, or if it’s a dtor, it might have been deleted already!
 
 It might not be easy to find this, especially if the call to the virtual is actually inside a private function (which we created to avoid code duplication).
 
+</details>
+
 ### Item 10: Have assignment operators return a reference to \*this.
+
+<details>
+<summary>
+
+</summary>
 
 Assignments are right associative,
 We can chain assignments together.
@@ -155,7 +224,14 @@ Which makes them all 15. This is bad code writing, but legal.
 To keep the behavior, we we need to make our =operator return a value, this value is the \*this, the result of the assignment.
 This is the convention for all operators, we should deviate from in only if we have a good reason to.
 
+</details>
+
 ### Item 11: Handle assignment to self in operator=.
+
+<details>
+<summary>
+
+</summary>
 
 We need to make sure that x=x is a legal and working behavior in our code.
 
@@ -169,13 +245,21 @@ So one option is to hold a reference to the old object, make sure the new one is
 Another way to do this is by ‘copy and swap’. We define first create a copy of the desired object (rhs), swap it with the current one, and then release it. This means we make use of the copy constructor.
 (or if we pass something by value, we already get a free copy).
 
+</details>
+
 ### Item 12: Copy all parts of an object.
+
+<details>
+<summary>
+
+</summary>
 
 The compiler won’t warn us about partial copying. So if we add a member, we need to add it to the copy ctor/ copy assignment as well.
 This is also a problem with derived classes, as we will need to explicitly copy the base class members. Otherwise we get partially copies with the old base or the default values instead.
 
 In general, we shouldn’t have the copy constructor or the assignment operator call one another, if we have too much code duplication we can use a private member function, and make sure it’s safe.
 
+</details>
 </details>
 
 ## Chapter 3: Resource Management
@@ -189,6 +273,11 @@ If we take something from the system, we must return it.
 Memory on the heap, file descriptors, locks, sockets and all sorts of other resources.
 
 ### Item 13: Use objects to manage resources.
+
+<details>
+<summary>
+
+</summary>
 
 We need to make sure that we have resources in stuff that gets its destructor called automatically, not only through delete.
 One way to so is with the standard library auto_ptr (smart pointer), which knows to call the destructor on what it’s pointing to.
@@ -205,19 +294,29 @@ A special note is that both auto_ptr and shared_ptr call delete, and not delete 
 The boost package has some implementations of auto_ptr and shared_ptr for arrays. If we need them and for some reason std::string and std::vector<> aren’t enough for us.
 
 Here’s how i imagine auto_ptr look:
+
+```cpp
 template<typename T>
-Class auto_ptr<T>
+class auto_ptr<T>
 {
 public:
 auto_ptr<T> (T t){m_ptr=tl;}
 ~auto_ptr<T>() {delete m_ptr}
-Private:
-T\* m_ptr;
-}
+private:
+T* m_ptr;
+};
+```
 
-Also probably has some fancy ways to derefences it so it behaves just like T.
+Also probably has some fancy ways to dereference it so it behaves just like T.
+
+</details>
 
 ### Item 14: Think carefully about copying behavior in resource management classes
+
+<details>
+<summary>
+
+</summary>
 
 We should avoid copying managerial objects. Always. This is the same problem that led to creating the shared_ptr, but it’s not always enough.
 
@@ -233,13 +332,27 @@ The new object is independent from the old object, and simply happens to have th
 Transfer ownership of the underlying resource
 This is the behavior of auto_ptr, only one resource exists at all time that can control the object, the rest can’t.
 
+</details>
+
 ### Item 15: Provide access to raw resources in resource-managing classes.
+
+<details>
+<summary>
+
+</summary>
 
 We can’t always use simple managed resource, even if we really want to. Many API’s require the raw pointer, not a managed one.
 We can either explicitly give the pointer with .get() command, or have an conversion function (operator RawName() const {return raw_pointer)), and overload the \* (dereference) and -> operators.
 This can lead to other problems,
 
+</details>
+
 ### Item 16: Use the same form in corresponding uses of new and delete.
+
+<details>
+<summary>
+
+</summary>
 
 The problem with delete vs delete[].
 How many destructors are called?
@@ -250,7 +363,14 @@ Therefore, we should always match [new [] and delete[] .
 This can get weird in tyepdef.
 We might typedef an array[], and then we have no problems calling new on it, but when we call delete we mess up, as we should have been using delete[].
 
+</details>
+
 ### Item 17: Store newed objects in smart pointers in standalone statements.
+
+<details>
+<summary>
+
+</summary>
 
 There are some weird cases in which we might get a memory leak if we try to initialize a smart_pointer as part of the expression and another part of the expression causes an exception before we pass control of the object to the manager
 
@@ -258,6 +378,8 @@ Assume that we successfully create the new widget, and then the compiler decides
 If the priority function throws an exception, then the call to create the shared_pointer won’t run, and no object will take responsibility on the widget, and it won’t be released!
 
 </details>
+</details>
+
 ## Chapter 4: Designs and Declarations
 
 <details>
@@ -368,27 +490,40 @@ These functions can be declared across different source files, all belonging to 
 
 Type conversion can happen only if the argument is in the parameter list, not if it’s implicit like the ‘this’.
 So instead of having
-Class A
+
+```cpp
+class A
 {
-Const A operator+(A other){}//member
+const A operator+(A other){}//member
 }
-Const A operator+(A rhs,int lhs){}//non member
-Const A operator+(int rhs,A lhs){}//non member
+const A operator+(A rhs,int lhs){}//non member
+const A operator+(int rhs,A lhs){}//non member
+```
 
 (three functions!)
 We can have a an implicit int constructor, and one function
-Const A operator+(A rhs,A lhs){}
+
+```cpp
+const A operator+(A rhs,A lhs){}
+```
+
 If either of our arguments are an int (or any type that can be used to create A), then implicit casting will take care of this.
 
 ---
 
 If we have an implicit conversion from int (constructor) to Type A, then we can could do
+
+```cpp
 A a1;
-Int x;
+int x;
 A aa = a1 +x;
+```
 
 Which will be
+
+```cpp
 A aa = a1 + A(x);
+```
 
 But not the other way around
 A aa = x +a1; // won’t work.
@@ -422,10 +557,14 @@ We usually can’t extend namespace, but total template specialization is allowe
 
 This fails to compile not because we extend the std namespace, but because we are trying to access a private member.
 We can declare this swap function as a friend to to our class,
-Class {
-Public:
-Friend void std::swap<Widget>(Widget &A, Widget &B);
+
+```cpp
+class {
+public:
+friend void std::swap<Widget>(Widget &A, Widget &B);
 }
+```
+
 But the convention is not to do so.
 The convention is to specialize the swap as member function, and have an namespace std extension in our class.
 
@@ -460,7 +599,11 @@ If we’re calling swap, make sure to have using std::swap to make sure we can f
 We don’t want the ‘member’ swap to throw exceptions, ever.
 If we can’t assure this, we don’t have a fitting candidate for a swap function.
 
-Chapter 5: Implementations
+</details>
+
+## Chapter 5: Implementations
+
+<details >
 Some problem that occur while implementing our code.
 
 ### Item 26: Postpone variable definitions as long as possible.
@@ -571,6 +714,11 @@ Oop in c++ is different than other languages (like java) and it has some special
 
 ### Item 32: Make sure public inheritance models “is-a.
 
+<details>
+<summary>
+
+</summary>
+
 Public inheritance means a ‘is a’ relationship.
 If we write a derived class from a public inheritance, it means we say that our derived object is a base object, and could be used wherever the base class could be used. Our derived object is a specialized form of the base class.
 This is similar to java, where derived classes cannot change the access modifiers of the base class.
@@ -586,7 +734,14 @@ No. the behavior of only increasing the width of of a shape is possible for a re
 
 The other relationship models are “has-a” and “is-implemented-in-terms-of”, sometimes it’s better to use them.
 
+</details>
+
 ### Item 33: Avoid hiding inherited names.
+
+<details>
+<summary>
+
+</summary>
 
 We should be careful with our naming, and avoid having the same name in different scopes, and doubly so when working with inheritance.
 The name searching scopes works the same no matter the type, or class of the variable.
@@ -599,9 +754,16 @@ This will bring the base mf1 and mf3 function into light, with the new function 
 We sometimes don’t want to inherit everything from the base class, this is against the idea of public inheritance, but it makes sense if we use private inheritance, and we only want to inherit some function (not all the overloads of it).
 We do this by forwarding our function, or having it call the fully qualified name of the base class function ({base::foo();}),
 
-There is also a problem with inherited names in templated classes (### Item 43, specialized classes might be in use and derived classes might inherit from them and they won’t have the same behavior as other derived classes)
+There is also a problem with inherited names in templated classes ([Item-43], specialized classes might be in use and derived classes might inherit from them and they won’t have the same behavior as other derived classes)
+
+</details>
 
 ### Item 34: Differentiate between inheritance of interface and inheritance of implementation.
+
+<details>
+<summary>
+
+</summary>
 
 Inheritance might mean inheriting definitions and API (interface), and might mean inheriting the implementation as well. Sometimes we want both, sometimes we don’t.
 
@@ -620,15 +782,23 @@ We should avoid creating a base class without any virtual functions (especially 
 
 Calling virtual functions has a cost, but it most cases, this isn’t what’s slowing the program.
 
+</details>
+
 ### Item 35: Consider alternatives to virtual functions.
 
+<details>
+<summary>
 Virtual functions are great, but there are alternatives. Let’s get to know them.
-The Template Method Pattern via the Non-Virtual Interface Idiom
+</summary>
+
+#### The Template Method Pattern via the Non-Virtual Interface Idiom
+
 Have a non virtual function call a private virtual function. This is called non-virtual interface (NVI) idiom. Or a wrapper behavior. We seperate the non changeable parts (the shared, set in stone) behavior that the base class defines from the smaller portion that needs specializing.
 We also separate that ‘how stuff is done’ into the virtual function, but the ‘when stuff is done’ is still controlled by the base class. This enforces order and structure.
 A special note is that derived class override function that they can’t access (private functions), which is odd, but legal. We can also make the function protected and expect the derived class to call the base class virtual function themselves.
 
-The Strategy Pattern via Function Pointers
+#### The Strategy Pattern via Function Pointers
+
 Rather than define each derived class a virtual function overload, we can simply pass each object (or class) a function pointer and have it call that function to do the required work. This means stronger decoupling, and allows different instances of each class to have different behaviors. This design patterns is sometimes called strategy. the downside is that we distanced the calculation from the object,and it now has to use public access to the object or be given specialized access into it and make the encapsulation weaker.
 The Strategy Pattern via tr1::function
 Rather than a simple (rigid) function pointer, we can send something that behaves the same, it can be a function pointer, a member function, a functor (function object) that returns not just the type, but anything that can be converted to that type?
@@ -639,36 +809,68 @@ We can still send functions, but we can also send objects and class members.
 
 We use the std::tr1::bind(...) command to force a constant object into a member function, so it now has a ‘this’ member and can be called from anywhere!
 
-The “Classic” Strategy Pattern
+#### The “Classic” Strategy Pattern
+
 A final option is to have the function itself be a class, and specialized behaviors be sub classes of it. This is composition or dependency injection, whatever. It’s a conventional oop approach that doesn’t involve any c++ features, but is recognizable and understandable.
 
+</details>
+
 ### Item 36: Never redefine an inherited non-virtual function.
+
+<details>
+<summary>
+
+</summary>
 
 Don’t redefine non-virtual functions. Just don’t.
 It makes a mess of things, non-virtual functions are statically bound, not dynamically, if we use a Base pointer to hold a derived object, all non-virtual actions will be of the base class. This means that the type of non-virtual function depends on the pointer type, not on the object. This is obviously bad and not what we wanted.
 If something needs to be overridden, it’s a virtual function. If not, it’s a non-virtual function that shouldn’t be redfiend.
 As easy as that, and twice as important for destructor. Always virtual.
 
+</details>
+
 ### Item 37: Never redefine a functions’ inherited default parameter value.
+
+<details>
+<summary>
+
+</summary>
 
 The problem: virtual functions are dynamically bounded (late binding) but default parameter values are statically bound (early binding).
 While the function that we call is dynamically bounded in runtime by the object type, the default parameter is statically bound at compile time based on the pointer type. This means that when there is no given value we set the default value based on the pointer type, not the object.
 So if our base and derived classes have different default parameters, the behavior will change based on the pointer type,
+
+```cpp
 Derived d;
-Derived _ dp = &d;
-Base _ bp = &d;
+Derived * dp = &d;
+Base * bp = &d;
 dp->do();
 bp->do();
+```
 
 The default parameter will be different in the two cases.
 We can avoid this situation by using the Non virtual interface idiom (NVI) and have a non virtual function call the virtual function with the default value, making it ‘safe’ to use again.
 
+</details>
+
 ### Item 38: Model “has-a” or “is-implemented-in-terms-of” through composition.
+
+<details>
+<summary>
+
+</summary>
 
 When the composition is part of the domain logic, we use a ‘has-a’ relationship (a person has name, address, kids.. Etc, but he isn’t a name, address, etc), when the composition is part of the application logic, it’s ‘is-implemented-in-terms-of’ relationship (We implement a thread pool in terms of a queue, but a thread pool isn’t a queue).
 In this case, public inheritance isn't the way to go.
 
+</details>
+
 ### Item 39: Use private inheritance judiciously.
+
+<details>
+<summary>
+
+</summary>
 
 Public inheritance means ‘is-a’ relationship. But what does private inheritance mean?
 It means that there isn’t any implicit conversion between the derived class to the base class.
@@ -678,13 +880,22 @@ We prefer composition over private inheritance, and we should only use private i
 This also helps us in some terms of decoupling .
 And this edge case about empty classes (no data, no virtual functions, no virtual base classes) , empty base optimization (EBO), only for single inheritance,
 
+</details>
+
 ### Item 40: Use multiple inheritance judiciously.
+
+<details>
+<summary>
+
+</summary>
 
 There are people who don’t like multiple inheritance.
 When we have multiple inheritance, we can inherit the same name from both base classes and have ambiguity.
 We can have two instances of the common base class and then we need the diamond inheritance design with virtual inheritance and virtual base classes.
 The general rule is to avoid using unless we must.
 If we must, avoid putting data inside them (interface classes, like java and c#)
+
+</details>
 
 </details>
 
@@ -697,13 +908,25 @@ If we must, avoid putting data inside them (interface classes, like java and c#)
 
 ### Item 41: Understand implicit interfaces and compile-time polymorphism.
 
+<details>
+<summary>
+
+</summary>
+
 OOP programming uses explicit interfaces, and runtime polymorphism - virtual functions, vtables, and declaring types.
 In the case of templating, we give less importance to those, and we focus on implicit interfaces and compile-time polymorphism.
 
 The implicit interface is based on the actions taken in the template. If we asked for .size(), it means only types that use have .size() are acceptable type parameters.
 Each line in the template is a constraint for the type, it’s an implicit interface.
 
+</details>
+
 ### Item 42: Understand the two meanings of typename.
+
+<details>
+<summary>
+
+</summary>
 
 Template <class T> and template <typename T> are usually the same.
 But not always, and typename should be prefered, because it has some stuff that only it can do.
@@ -724,18 +947,25 @@ This tells the compiler that C::const_iterator must be a type, and not anything 
 
 We should use typename anytime we refer to a nested dependent typename in a template.
 This also holds for template signatures.
+
+```cpp
 template<typename C>
 Void f(const C& container, typename C::iterator iter){;}
+```
+
 Now we have templated function that takes a type and a nested type,
 
 One exception is that “typename must not precede nested dependent type names in a list of base classes or as a base class identifier in a member initialization list”.
 
 Another thing is that we can qualify one part of the type, even if it’s templated.
+
+```cpp
 Template <typename IterT>
 Void Work(IterT iter)
 {
 typename std::iterator_traits<iterT>::value_type temp(\*iter);
 }
+```
 
 Let's unpack:
 Templated function that takes a type called IterT.
@@ -746,7 +976,14 @@ There is a convention to create a local typedef definition:
 
 Now we have the horrible line once, and we get a typedef that is easy to read.
 
+</details>
+
 ### Item 43: Know how to access names in templatized base classes.
+
+<details>
+<summary>
+
+</summary>
 
 We can create templated classes. But there is a problem with creating a derived templated class.
 Base template:
@@ -763,16 +1000,30 @@ this->SendClear(info);
 Using MsgSender<Company>::SendClear(info);
 MsgSender<Company>::SendClear(info);
 
+</details>
+
 ### Item 44: Factor parameter-independent code out of templates.
+
+<details>
+<summary>
+
+</summary>
 
 When we have templates, we might lead to bloated binary files, even if the code is lean.
 If we have a template, we should refractor away all of the independent code. We should treat our one templated function as several functions, and try to identify any expressions that don’t depend on the parameter type, and move it outside.
 
 One suggestion is to create a derived class that uses the base class, but hold the member function, and then do some calls to base function with a parameter.
 
-I need to revisit this ### Item in the future
+I need to revisit this Item in the future
+
+</details>
 
 ### Item 45: Use member function templates to accept “all compatible types”.
+
+<details>
+<summary>
+
+</summary>
 
 Smart pointers (what is used as the STL iterators),
 Creating a template with a “generalized copy constructor”.
@@ -781,11 +1032,27 @@ Ths class smartPtr has templated constructor that accepts any other templated sm
 
 Then there’s some part about inheritance and which kinds of conversions we allow.
 
-I need to revisit this ### Item in the future
+I need to revisit this Item in the future
+
+</details>
 
 ### Item 46: Define non-member functions inside templates when type conversions are desired.
 
+<details>
+<summary>
+
+</summary>
+
+</details>
+
 ### Item 47: Use traits classes for information about types.
+
+<details>
+<summary>
+
+</summary>
+
+</details>
 
 ### Item 48: Be aware of template metaprogramming.
 
@@ -802,6 +1069,11 @@ Other programming languages offer automatic garbage collection (memory managemen
 We use new and delete (new[], delete[] for arrays) to get memory, free it and call constructors and destructors. We also have some concerns for multi-threaded environments.
 
 ### Item 49: Understand the behavior of the new-handler.
+
+<details>
+<summary>
+
+</summary>
 
 When we can’t get enough memory from the system, old compilers returned a null pointer.
 Today, the behavior is different, and if there wasn’t enough memory, the program should call a new_handler function.
@@ -823,8 +1095,14 @@ There is some weird parts about having a templated class that never uses it’s 
 Because it’s c++, we can use this base class as part of our multiple inheritance, we just need to be careful (as we always need to be when using multiple inheritance).
 The old behavior of having a null pointer return when allocation fails is still supported with an alternative form of the ‘new’ operator, the new(std::nothrow) overload.
 
+</details>
+
 ### Item 50: Understand when it makes sense to replace new and delete.
 
+<details>
+<summary>
+
+</summary>
 Three common reasons to replace the new and delete operator.
 To detect usage errors
 We can use our new and delete operators to create safe usage of functions, and to add extra protection from double freeing. We can add a marker to out memory (start and finish) and validate that it’s entacts and that it’s where it supposed to be before deleting, and if we see that something in our marker is not as we set it to be, we can tell right there that there is going to be a memory problem. And in this case we can act before the delete and gather information about it to provide better feedback and error reports (think valgrind).
@@ -850,10 +1128,14 @@ If we know some data structures or classes tend to go together, we might get bet
 To obtain unconventional behaviors
 An example is a case where memory management is done via c code api, and we want to maintain the c++ style of our program, so we hide all the memory details in the new and delete operators to reduce the complexity of the code. We might also want to have better security by manually overwriting deallocated bytes with zero to hide sensitive information.
 
+</details>
+
 ### Item 51: Adhere to convention when writing new and delete.
 
+<details>
+<summary>
 As mentioned before, there are some conventions to follow when writing the ‘new’ operator.
-
+</summary>
 We need to consider the case of no available memory.
 We need an infinite loop, an handler function, and some way to throw an exception (or abort the program) if we can’t allocate the memory.
 There is also a problem of requesting zero bytes, as we must return a legitimate point.
@@ -867,7 +1149,14 @@ We also need to handle the ‘new[]’ operator, (called ‘array new’ in spee
 
 In terms of delete, we need to make sure we handle deletion of null pointers (a simply check and return), and we need the same behavior with derived classes in terms of size and with arrays, and not to forget we must have virtual destructors!.
 
+</details>
+
 ### Item 52: Write placement delete if you write placement new.
+
+<details>
+<summary>
+
+</summary>
 
 If memory allocation succeeds by the constructor throws an exception, we need to use the matching delete operator.
 A ‘new’ operator with parameters (besides the mandatory size parameter) is called a placement version of the operator, such as the new operator with size and void pointer to decide where to construct the object. This version is part of the standard library, inside #include<new>.
@@ -880,23 +1169,32 @@ If we define any of them, it hides the other versions. We should also declare th
 Again, the suggestion in the book is to create a base class that has all the special forms declared and that way they will always be available.
 
 </details>
+</details>
 
 ## Chapter 9: Miscellany
 
 <details>
 <summary>
-
+Extra stuff
 </summary>
 
 ### Item 53: Pay attention to compiler warnings.
 
+<details>
+<summary>
 Read the damn message. Don’t ignore warnings.
+</summary>
 Remember that warnings are compiler implementation, so be careful.
+</details>
 
 ### Item 54: Familiarize yourself with the standard library, including TR1.
 
-TR1 stands for technical report 1.
+<details>
+<summary>
 TR libraries usually contain what’s expected to be part of the next c++ release.
+</summary>
+
+TR1 stands for technical report 1.
 Before TR1, the c++ standard contains:
 The standard template library (STL), containers, iterators, algorithms, function objects, etc…
 Iostreams - better control for input and output
@@ -934,9 +1232,15 @@ Compile time information about classes, and other nice things.
 Tr1::result_of
 A way to deduce return types of function calls, templating.
 
+</details>
+
 ### Item 55: Familiarize yourself with Boost.
 
+<details>
+<summary>
 Boost is an open source library of c++ stuff.
+</summary>
 A lot of stuff in TR1 is based on boost, and boost has many other stuff which is nice, including lambda
+</details>
 
 </details>

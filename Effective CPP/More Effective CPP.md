@@ -545,7 +545,7 @@ This shouldn’t have compiled at all. But it does. We shouldn’t be able to ca
 Smart Pointers and Inheritance-Based Type Conversions
 Smart pointer types don’t know about inheritance.
 A smart pointer of a derived class isn’t a derived class from the smart pointer class for the base class.
-(even if B is a derived class from Base class A, smart_ptr<B> isn’t derived from smart_ptr<A>)
+**even if B is a derived class from Base class A, smart_ptr\<B> isn’t derived from smart_ptr\<A>**
 They are different, unrelated classes. Nothing connects them. So although a function with a signature of a base class pointer can accept derived class pointers, a similar function with smart pointer argument can’t.
 
 There is a way to take care of this, we give each smart pointer a conversion operator to the base class.

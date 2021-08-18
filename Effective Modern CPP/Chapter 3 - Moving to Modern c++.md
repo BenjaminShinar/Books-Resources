@@ -6,7 +6,7 @@ The small parts to remember when using modern C++.
 
 the modern versions of c++ define all sorts of high level ideas and features like move semantics, lambdas, concurrency and smart pointers. but also many smaller features, that don't necessary mean big swiping changes, but are important none the less. this chapter deals with them, what they are, and how to build a modern code style.
 
-### Item 7: Distinguish Between () And {} When Creating Objects
+### Item 7: Distinguish Between _()_ And _{}_ When Creating Objects
 
 <details>
 <summary>
@@ -222,7 +222,7 @@ in the standard, std::make_unique and std::make_shared decided on the parenthese
 
 </details>
 
-### Item 8: Prefer nullptr To 0 And NULL
+### Item 8: Prefer _nullptr_ To 0 And NULL
 
 <details>
 <summary>
@@ -306,7 +306,7 @@ when we use nullptr. we get type safety and less surprises.
 
 </details>
 
-### Item 9: Prefer Alias Decelerations to Typedef
+### Item 9: Prefer Alias Decelerations to _typedef_
 
 <details>
 <summary>
@@ -397,7 +397,7 @@ c++14 decided that alias decelerations are better, so they introduced a shorthan
 
 </details>
 
-### Item 10: Prefer Scoped enums to unscoped enums
+### Item 10: Prefer Scoped _enums_ to unscoped _enums_
 
 <details>
 <summary>
@@ -630,7 +630,7 @@ template<>
 
 </details>
 
-### Item 12: Declare Overriding Functions Override
+### Item 12: Declare Overriding Functions _override_
 
 <details>
 <summary>
@@ -751,10 +751,322 @@ class Widget{
 };
 ```
 
-### Things to Remember
+#### Things to Remember
 
 > - Declare overriding functions override.
 > - Member function reference qualifiers make it possible to treat lvalue and
 >   rvalue objects (\*this) differently.
 
 </details>
+
+### Item 13: Prefer _const_iterators_ to _iterators_
+
+<details>
+<summary>
+Using const_iterators is simple, easy, expressive, and correct.
+</summary>
+*const_iterators* are the STL Equivalent to pointer-to-const. they point to values that may not be modified. we should use const whenever possible, so if we have an iterator that shouldn't modify a value, it should be a const_iterator.
+
+in classic c++, const iterator weren't well supported, if we wanted to add an element to a vector at some position, it was easy using iterators
+
+```cpp
+std::vector<int> values;
+//...
+std::vector<int>::iterator it = std::find(values.begin(),values.end(),1983);
+values.insert(it,1998);
+```
+
+but if we wanted to be clear, it should be a const iterator, as it's not modifying the values. this is how c++98 programmers might write it. **and it might not even work**.
+
+```cpp
+typedef std::vector<int>::iterator IterT; // we didn't have auto
+typedef std::vector<int>::const_iterator ConstIterT; // so typedefs, we also didn't have aliases.
+std::vector<int> values;
+//...
+ConstIterT = std::find(static_cast<ConstIterT>(values.begin()),static_cast<ConstIterT>(values.end()),1983);
+values.insert(static_cast<IterT>(it),1998); //may not compile
+```
+
+we need to cast the end and begin iterators, because in c++98, we couldn't get a const*iterator for a non-const container. there were other ways besides casting. we then need to cast back to iterator before calling the insert function, and even that's not guaranteed to work, there was no portable conversion from const_iterator to an iterator. it didn't make sense to go through all of the trouble, so const was used \_when practical* (we would want to use it _when possible_).
+
+c++11 made things easier, _cbegin()_ and _cend()_ produce const*iterators even from non-const containers, the \_insert()* and _erase()_ functions can work with const iterators, and we even got _auto_ to reduce typing. now using const_iterators is just as easy as using regular iterators.
+
+```cpp
+std::vector<int> values;
+//...
+auto it = std::find(values.cbegin(),values.cend(),1983);
+values.insert(it, 1998);
+```
+
+things get a bit muddier for generic code, if we want to use this approach on container-like data-structures. some classes offers those functions as non-member functions, so our generic code will look like this in **c++14**.
+
+```cpp
+template<typename T,typename V>
+void findAndInsert(C& container,const V& targetVal,const V& insertVal)
+{
+    auto it = std::find(std::cbegin(container),std::cend(container),targetVal); // using non member functions
+    container.insert(it,insertVal);
+}
+```
+
+in **c++11 this will not work**, only _end()_ and _begin()_ were added as free function _cbegin(),cend(),rbegin(),rend(),crbegin(),crend()_ weren't added at that time. we could hide the fact with some templates.
+
+```cpp
+template<class C>
+auto cbegin(const C& container)->decltype(std::begin(container))
+{
+    return std::begin(container);
+}
+```
+
+because of how calls are resolved, a templated function will only be called if there is no explicit function or specialized template, so containers with _cbegin()_ will use their own function. this template takes advantage of the fact that c++11 ensures that calling _begin()_ on a const container will return a const_iterator, so this will work for const containers as well. c++11 also returns the first element pointer when the function is called on an array, and the same const rules apply.
+
+#### Things to Remember
+
+> - Prefer const_iterators to iterators.
+> - In maximally generic code, prefer non-member versions of begin, end,
+>   rbegin, etc., over their member function counterparts
+
+</details>
+
+### Item 14: Declare Functions _noexcept_ If They Won’t Emit Exceptions
+
+<details>
+<summary>
+If we know that a function doesn't throw exceptions, mark it as such, it can generate benefits.
+</summary>
+
+in the age of c++98, exceptions were a challenging issue, libraries were expected to detail which exceptions are thrown, and client code might break if something changed. the compilers offered no help in maintaining consistency and things were chaotic.
+
+When c++11 rolled around, the general opinion changed and it was decided that the important thing about functions and and exceptions was whether or not they had them. A function can guarantee that it doesn't throw exceptions, or it can't guarantee it and might throw exceptions. the c++98 exception specifiers are still legal code, but are deprecated. only the _noexcept_ specifier is relevant.
+
+specifying functions _noexcept_ helps users write better code, just as much as making a function _const_ does. not only that, it also helps compilers optimize code and generate better programs.
+
+```cpp
+int f1(int x) throw(); //no exceptions, c++98 style
+int f2(int x) noexcept; // no exception, c++11 style
+```
+
+in the c++98 style, an exception thrown from f1 will result in call stack un-wounding, and eventually termination. in c++11 style, an exception from f2 _might_ un-wound the call stack, and it _might not_ do so before termination. because there is no guarantee of un-wounding the call stack, compilers aren't required to keep it in a state that it is possible to un-wound from. there is no requirement to maintain the objects and destroy them in an inverse order of construction.
+
+c++98 _throw()_ doesn't offer that kind of flexibility.
+
+```cpp
+void foo1() noexcept; //optimizable code.
+void foo2() noexcept(true); //optimizable code. explicit usage
+
+void foo3() throw(); //less optimizable code - change to modern style
+void foo4(); //less optimizable code - decide if there are exceptions possible
+void foo5() noexcept(false); //less optimizable code - we know we might throw exceptions
+```
+
+The case for _noexcept_ is even stronger in some cases, like move semantics. imagine this c++98 code. declare a vector, and push another element to it.
+
+```cpp
+std::vector<Widget> vw;
+//... code happens here
+Widget w;
+vw.push_back(w);
+```
+
+When we add an element to a vector, we first check if there is enough space for it (size == capacity), and if not, there is in internal request for more memory, and than transferring the elements to the new chunk of memory. in the age of c++98, this was done with all copying elements first and then destroying them in the old data. this was was done to ensure that **push_back()** offered strong exception safety guarantee. if something failed in the copying process, the original data was unchanged.  
+in c++11, we would want to make use of move semantics rather than copying, but this runs the risk of violating that guarantee, if we failed to move one of the elements, the original state of the data was already changed. because of this reason, c++11 couldn't change all of the resize operations, but if we ensure it that there are no exceptions possible, the vector can use the move semantics instead, with the driving idea be _"move if you can, but copy if you must"_. this holds true for other function with strong exception guarantee (std::vector::reserve, std::deque::insert, etc...). If the compiler is assured that there is no possibility of throwing an exception, it can use the faster move operations. if the required function is _noexcept_, we get better results.
+
+**swap** functions also benefit from _noexcept_. swaps are used in many STL algorithms, so optimizing them would have cascading benefits. many types in the STL have the swap function _noexcept_ depending on the user type.
+
+```cpp
+//array swap
+template<class T, size_t N>
+void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a,*b)));
+//pair swap
+template<class T1, class T2>
+struct pair{
+void swap(pair & p) noexcept(noexcept(swap(first,p.first)) &&
+                             noexcept(swap(second,p.second)));
+}
+```
+
+these functions are _conditionally noexcept_, if the expressions inside the clauses are noexcept, then they noexcept. _noexcept_ takes a boolean argument, default to false, so if we check the noexcept of some other function, we can 'inherit' that value from it.
+
+#### The Danger
+
+it's true that _noexcept_ functions can be pretty beneficial, but if we make them such, it's a commitment to keep them this way. client code might depend on classes and functions being _noexcept_ and changing them might break something in the long run.
+most functions are, and should be, exception neutral. they might not throw exceptions by themselves, but they call other functions, and those functions might throw. going out of the way to force a function to be _noexcept_ (trying to catch all exceptions internally, returning error codes) can make the code less readable, heavier and have more code branches, this might effect the negatively performance more than any gains from the _noexcept_ optimizations.
+
+some functions should be _noexcept_, the memory de-allocator functions (operator delete and operator delete[]) and destructors are all implicitly _noexcept_. the only way for a destructor not be implicitly _noexcept_ is if some data member destructor is _noexcept(false)_, and throwing an exception from a destructor is undefined behavior.
+
+#### Wide and Narrow Contracts
+
+functions with wide contracts have no pre-conditions, they can be called regardless of the state of a program, and impose no constraints on the argument passed to it. functions with wide contracts never exhibit undefined behavior.
+functions without wide contracts are 'narrow contracts', if a precondition was violated, results are undefined.
+
+when we write functions, if the function has a wide contract, and we know it doesn't emit exceptions (or call functions that emit them), we can safely declare it _noexcept_.
+functions we narrow contracts are a tricker issue. say we have a precondition, we don't check it in the functions, as it is assumed to caller checked before hand. what do we do if the preconditions wasn't satisfied?
+
+regarding the issue of compilers helping us identify issues, this is legal code.
+
+```cpp
+void setup();
+void cleanup();
+void doWork() noexcept
+{
+    setup();
+    //..
+    cleanup();
+}
+```
+
+the doWork is declared noexcept even though setup and cleanup aren't. it might be that the documentation for them ensures no exceptions, maybe they were written in C or in C++98 style. the compiler will not warn us about this.
+
+#### Things to Remember
+
+> - noexcept is part of a function’s interface, and that means that callers may
+>   depend on it.
+> - noexcept functions are more optimizable than non-noexcept functions.
+> - noexcept is particularly valuable for the move operations, swap, memory
+>   de-allocation functions, and destructors.
+> - Most functions are exception-neutral rather than noexcept.
+
+</details>
+
+### Item 15: Use _constexpr_ Whenever Possible
+
+<details>
+<summary>
+Using constexpr objects and functions maximize the range of situations in which we can use our objects, this can lead to better performance and cleaner code.
+</summary>
+Constexpr is a confusing keyword, when applied to a objects, it's an extreme version of const. but when applied to a function, it has a different meaning. knowing what is possible with constexpr and how to use it can yield benefits, so it's advised to make the effort to use it properly.
+
+Constexpr indicates something that's not only constant and not changing, but also something that's known during compilation time. in terms of functions, things are nuanced. the results of a constexpr function don't have to be const, or even known during compilation. and those are good features of constexpr.
+
+#### Constexpr Objects
+
+Constexpr values are const which are const, and their value is known during compilation (actually, translation, which is part compilation part linking). this makes them privileged values, they can be placed in the read-only memory and they can be used when c++ requires _integral constant expressions_, like specifying array sizes, std::arrays, integral template specifiers, enumerator values, memory alignment specifiers, and more. Declaring a variable constexpr ensures that the value is known during compile-time.
+
+```cpp
+int sz; // not a constexpr value
+//constexpr auto arraySize =s1; //error! sz isn't know at compile time!
+//std::array<int, sz>; //error! same!
+constexpr auto arraySize2 =10
+std::array<int, arraySize2>;
+</details>
+```
+
+even using the const keywords doesn't save us
+
+```cpp
+int sz; // still not constexpr;
+const auto arraySize =sz; //no problem, arraySize is a const copy of sz;
+//std::array<int, arraySize>; //error! must be known during compile time!
+```
+
+All constexpr objects are const, but not all const objects are constexpr. if we want to ensure the compiler can use a value during compile time, we use the constexpr keyword.
+
+#### Constexpr Functions
+
+Constexpr functions produce compile-time constants when they are called with compile-time constraints. if we call them with constexpr values, we get compile time constants, if we call them we values that depend on runtime, we won't get the value until runtime.
+
+> - constexpr functions can be used in contexts that demand compile-time constants. If the values of the arguments you pass to a constexpr function in such a context are known during compilation, the result will be computed during compilation. If any of the arguments’ values is not known during compilation your code will be rejected.
+> - When a constexpr function is called with one or more values that are not known during compilation, it acts like a normal function, computing its result at runtime. This means you don’t need two functions to perform the same operation, one for compile-time constants and one for all other values. The constexpr function does it all.
+
+lets try writing a constexpr version of std::pow
+
+```cpp
+constexpr int pow(int base, int exp) noexcept //constexpr don't throw
+{
+    //... implementation below
+}
+constexpr auto numConditions =5;
+std::array<int,pow(3, numConditions)> results;
+```
+
+constexpr function can work in both compile time and runtime.
+
+the constexpr function was expanded between c++11 and c++14. in c++11,we were limited to one statement, the return statement. so our code would have looked like this.
+
+```cpp
+constexpr int pow(int base, int exp) noexcept
+{
+    return (exp == 0 ? 1: base *pow(base,exp-1));
+}
+```
+
+in c++14, restrictions were looser, and we could write something like this. we can declare variables, and even use loops, but the function is still limited to taking and returning **literal** types.
+
+```cpp
+constexpr int pow(int base, int exp) noexcept
+{
+   auto result = 1;
+   for (int i=0; i<exp; ++i)
+   {
+       result *=base;
+    }
+   return result;
+}
+```
+
+literal types are objects whose values can be determined during compilation, so we can have constexpr constructors and then use those objects in constexpr context.
+
+```cpp
+class Point
+{
+    public:
+    constexpr Point(double xVal=0,double yVal=0) noexcept: x(xVal),y(yVal)
+    {
+
+    }
+    constexpr double xValue() const noexcept {return x;}
+    constexpr double yValue() const noexcept {return y;}
+
+    void setX(double newX) noexcept {x= newX;}
+    void setY(double newY) noexcept {y= newY;}
+
+    private:
+    double x,y;
+};
+```
+
+the Point constructor can be made constexpr because the arguments are known at compile time. so we can use Point as a constexpr value
+
+```cpp
+    constexpr Point p1(9.4,27.7)
+    constexpr Point p2(28.8,5.3)
+```
+
+because the getters are also constexpr values, they can be used in constexpr context.
+
+```cpp
+constexpr Point midPoint (const Point &p1, const Point &p2) noexcept
+{
+    return{(p1.xValue()+p2.xValue()/2),(p1.yValue()+p2.yValue()/2)};
+}
+constexpr auto mid = midPoint(p1,p2);
+```
+
+now we have mid as a read only value, so we can use it in all sorts of places which a known value must be used!like getting template or specifying values of enumerators. things which we previously runtime only are now in the realm of compile time. this means faster runtime (but unfortunately, slower compilation).
+
+in c++11,we cant make the setters constexpr functions, as it was required for constexpr member function to be const, and they must return a literal value (which void isn't). in c++14, we can make the setters constexpr functions.
+
+```cpp
+class Point{
+//...
+constexpr void setX(double newX) noexcept {x=newX;}
+constexpr void setY(double newY) noexcept {y=newY;}
+};
+constexpr Point reflection(const Point & p) noexcept
+{
+    Point result;
+    result.setX(-p.yValue());
+    result.setY(-p.xValue());
+    return result;
+}
+```
+
+as with noexcept, making a function constexpr means a commitment, we can't easily scale back without possible making a mess of client code that decided to use the function in constexpr context. even adding debugging IO statements are not usually permitted in compile time context.
+
+#### Things to Remember
+
+> - constexpr objects are const and are initialized with values known during compilation.
+> - constexpr functions can produce compile-time results when called with arguments whose values are known during compilation.
+> - constexpr objects and functions may be used in a wider range of contexts than non-constexpr objects and functions.
+> - constexpr is part of an object’s or function’s interface.
