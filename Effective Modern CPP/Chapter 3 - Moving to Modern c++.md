@@ -1070,3 +1070,283 @@ as with noexcept, making a function constexpr means a commitment, we can't easil
 > - constexpr functions can produce compile-time results when called with arguments whose values are known during compilation.
 > - constexpr objects and functions may be used in a wider range of contexts than non-constexpr objects and functions.
 > - constexpr is part of an object’s or function’s interface.
+
+</details>
+
+### Item 16: Make _const_ Member Functions Thread Safe
+
+<details>
+<summary>
+If a const member function might be accessed in a multi-threaded environment, and it's possible to get a data race inside it, we should ensure that the function is safe to call.
+</summary>
+an example of caching polynomial roots. we don't change the values, so it can be a const function, but we don't want to repeat this action, so we cache the results for later requests by using mutable members.
+
+```cpp
+class Polynomial{
+    public:
+    using RootsType= std::vector<double>;
+
+    RootsType roots() const
+    {
+        if (!rootAreValid) // check if valid
+        {
+            //.. do the work, cache the values
+            rootsAreValid=true; //declare valid for next time
+        }
+        return rootVals;
+    }
+
+
+    private:
+    mutable bool rootAreValid{false}; //mutable members
+    mutable RootsType rootsVals{};
+};
+
+```
+
+the code above is safe and correct, but what will happen in a multi-threaded environment? we can reach a situation of a data-race without synchronization! this can be solved with a mutex (also declared mutable) and using _std::lock_guard\<std::mutex>_ but because mutex is a move only object, our entire object loses the capability to be copied.
+
+mutex isn't always the correct way to go, even we simple want to count something, an atomic counter should fit our needs.
+
+```cpp
+class Point {
+public:
+double distanceFromOrigin() const noexcept
+{
+    ++callCount; // increment atomic counter
+    return std::sqrt((x*x)+(y*y));
+}
+private:
+mutable std::atomic<unsigned> callCount{0};
+double x,y;
+};
+```
+
+however, _std::atomic<>_ is also a move-only type, and one might overuse them when it's not appropriate.
+
+```cpp
+class Widget
+{
+public:
+int magicValue() const
+{
+    if (cacheValid) return cachedValue;
+    else
+    {
+        auto val1 = expensiveComputation1();
+        auto val2 = expensiveComputation2();
+        cachedValue = val1+val2; //bad!
+        cacheValid = true; //bad!
+        return cachedValue;
+    }
+}
+private:
+mutable std::atomic<bool> cacheValid{false};
+mutable std::atomic<int> cachedValue;
+};
+```
+
+we still get a data race,if two (or more!) threads reach this position before the atomic bool is changed, we will get repeated computations. we get even worse behavior if we switch the order of assignments. if a context switch occurs after we changed to bool value to true, but before the values were stored, we get not just bad performance, but actually bad results.
+
+```cpp
+class Widget
+{
+public:
+int magicValue() const
+{
+    if (cacheValid) return cachedValue;
+    else
+    {
+        auto val1 = expensiveComputation1();
+        auto val2 = expensiveComputation2();
+        cacheValid = true; //now it's worse
+        // a context switch might happen here!
+        cachedValue = val1+val2; //now it's worse
+        return cachedValue;
+    }
+}
+};
+```
+
+if we want to use a single value, we can make with _std::atomic<>_, but two or more variables require the use of a mutex.
+
+```cpp
+class WidgetMutex
+{
+public:
+int magicValue() const
+{
+    std::guard<std::mutex> g(m); //lock m
+    if (cacheValid) return cachedValue;
+    else
+    {
+        auto val1 = expensiveComputation1();
+        auto val2 = expensiveComputation2();
+        cachedValue = val1+val2; //order doesn't matter!
+        cacheValid = true; //order doesn't matter
+        return cachedValue;
+    }
+}
+private:
+mutable std::mutex m;
+mutable bool cacheValid{false};
+mutable int cachedValue;
+};
+```
+
+#### Things to Remember
+
+> - Make const member functions thread safe unless you’re certain they’ll never
+>   be used in a concurrent context.
+> - Use of std::atomic variables may offer better performance than a mutex, but
+>   they’re suited for manipulation of only a single variable or memory location.
+
+</details>
+
+### Item 17: Understand Special Member Function Generation
+
+<details>
+<summary>
+Know When the member functions are generated and when not. difference between move and copy operations, using the =default keyword,
+</summary>
+
+In c++, there are several member functions that the compiler will generate for us. in c++98, there four functions:
+
+- the default constructor
+- the destructor
+- the copy constructor
+- the copy assignment operator
+
+those functions are generated only if they are needed (called in the code), the default constructor is generated when there is no other constructor declared. all generated functions are implicitly _public_ and _inline_, and non-virtual, except for when a destructor is generated for a derived class inheriting a base class with a virtual destructor.
+
+in c++11, there are two mre generated member functions:
+
+- the move constructor
+- the move assignment operator
+
+```cpp
+class Widget
+{
+    public:
+    Widget(Widget && rhs); //move constructor
+    Widget & operator=(Widget&& rhs); // move assignment operator
+};
+```
+
+the same rules as before apply, the functions are generated only if needed, and the perform _member-wise moves_ on the non static-data of the object and it's base classes. the move constructor and move assignment operator, don't necessarily perform actual moving, they perform move when it's enabled,or copy operations when not.  
+for the copy constructor and the copy assignment, the two functions are independent of one another, if only one is declared, the other can be generated.  
+this isn't true for the move constructor and move assignment, if we declare one of them, the compiler won't generate the other. the reason behind this is that if we say the the default implementation of one those functions is not suitable, then the default implementation of the other one must also be incorrect. on the same rationale, if we declare a copy constructor or a copy assignment, this also disables automatic move operators from being generated. for the same reason, if there is something wrong with piece-wise copy, there must be something wrong with piece-wise moving. this applies in other direction, declaring a move operator disables generation of copt operators.
+
+if we define a destructor, it means that we need to manage some resources, which should mean that member-wise copying shouldn't work. this reasoning is solid, but wasn't enforced in code by c++98.
+this leads us to the classic \*_Rule of Three_ from c++98. if we declared one of the following: copy constructor, copy assignment operator or destructor, we should declare all of them.
+
+because of how c++98 operated, the language doesn't enforce the _rule of three_ even today, but does enforce limitations on the newer features. so move operations are generated when
+
+- they are needed.
+- no copy operations are declared in the class
+- no mover operations are declared
+- no destructor is declared
+
+perhaps in the future, some c++ version will extend the rules for copy operations, therefore invalidation older legacy code. the fix for this is fairly easy,all we need is to add a default operations for any class with user defined operations.
+
+```cpp
+class WidgetClassic
+{
+    public:
+    ~WidgetClassic(); //user defined destructor
+    WidgetClassic(const WidgetClassic&) = default; // use default copy constructor.
+    WidgetClassic& operator=(const WidgetClassic &) = default; // use default copy assignments
+    //...
+};
+```
+
+this is useful in polymorphic base classes (which have virtual destructors). a user-defined destructor disables move operations,so we might need additional _=default_ declarations.
+
+```cpp
+class Base
+{
+    public:
+    virtual ~Base() = default; // default virtual destructor.
+    Base(const Base &) = default;
+    Base& operator=(const Base&) = default; //copy operations
+
+    Base(Base &&) = default;
+    Base& operator=(Base&&) = default; //move operations
+};
+```
+
+even if we don't have to declare the functions (in cases the compiler is willing to generate them for us), it might be the smart idea to _=default_ explicitly. this conveys intent and allows to avoid some bugs that might appear down the way.
+
+in the following example, the rule of three is followed, we don't need any special functionality, so we don't define them and leave it to the compiler.
+
+```cpp
+class StringTable
+{
+    public:
+    StringTable(){} // user defined default constructor
+    //... other functions, but no copy/move/destructor.
+    private:
+    std::map<int, std::string> values;
+};
+```
+
+but if in the future we want to add some functionality to the destructor, we have the **side effect of losing the move operations!** (not the copy operations).
+
+```cpp
+class StringTable
+{
+    public:
+    StringTable(){
+        makeLogEntry("Creating StringTable object");
+    } // user defined default constructor
+    ~StringTable()
+    {
+        makeLogEntry("Destroying StringTable object");
+    } // now we have a user defined destructor
+
+    //... other functions, but no copy/move
+    private:
+    std::map<int, std::string> values;
+};
+```
+
+the issue is that this change is silent. the class is now not move-enabled, so the copy operations will be used instead. this is not likely to fail any tests or cause a difference in behavior, but it is a great hit to performance. before, move operations were possible so the contained members were moved as needed, but now we need to copy them, which means string copying! this is slower in a magnitude of times. and could have been avoided had we declared the operators (moves and copies) to be default.
+
+the rules for the default constructor and the destructor have only slightly changed from c++98. the default constructor is the same, the destructor is now _noexcept_ by default.
+
+|         member function         | C++98                                                             | C++11                                                                                                                          |
+| :-----------------------------: | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+|       Default Constructor       | Generated if there are no user defined constructors               | Same as C++98                                                                                                                  |
+|           Destructor            | Generated if needed, virtual if base class destructor was virtual | Same as c++98, now _noexcept_ by default                                                                                       |
+|        Copy Constructor         | Generated if needed. Member-wise copy of non-static data          | Same as c++98, prevents generations of mover operations, if the copy assignment was defined, this generations is _deprecated_  |
+|         Copy Assignment         | Generated if needed. Member-wise assignment of non-static data    | Same as c++98, prevents generations of mover operations, if the copy constructor was defined, this generations is _deprecated_ |
+| Move Constructor and Assignment | Not available                                                     | Piece-wise move, generated only if there are no used defined copy operations, mover operations or destructor                   |
+
+a final edge case is that member function Templates **don't** prevent compilers from generating special member functions.
+
+```cpp
+class Widget
+{
+    template<typename T>
+    Widget(const T& rhs); //construct Widget from any T
+
+    template<typename T>
+    Widget& operator=(const T& rhs); //assign Widget from any T
+};
+```
+
+the compiler will still generate copy and move operations for Widget (if needed and other conditions are satisfied), despite the template which should count as those functions (when T is Widget) and block that generation. this edge case is further detailed in [Item 26]()
+
+#### Things to Remember
+
+> - The special member functions are those compilers may generate on their own:
+>   default constructor, destructor, copy operations, and move operations.
+> - Move operations are generated only for classes lacking explicitly declared
+>   move operations, copy operations, and a destructor.
+> - The copy constructor is generated only for classes lacking an explicitly
+>   declared copy constructor, and it’s deleted if a move operation is declared.
+>   The copy assignment operator is generated only for classes lacking an explicitly declared copy assignment operator, and it’s deleted if a move operation is declared. Generation of the copy operations in classes with an explicitly declared destructor is deprecated.
+> - Member function templates never suppress generation of special member
+>   functions
+
+</details>
