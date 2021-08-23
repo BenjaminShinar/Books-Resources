@@ -7,6 +7,7 @@
     "cout",
     "decltype",
     "lvalue",
+    "malloc",
     "noexcept",
     "struct",
     "unscoped"
