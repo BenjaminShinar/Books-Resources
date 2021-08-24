@@ -15,9 +15,9 @@ raw pointers aren't nice in a variety of ways:
 
 raw pointers are powerful, but we have decades of experience with them, and we know that they tend to be a source of problems,confusions and bugs. smart pointers are a way to address this issue. a smart pointer is a a wrapper around a raw pointer that has the same powers, but protects the user from the silent pitfalls like resource leaking or untimely destructions.
 
-moderns C++ has several smart pointer types.
+modern C++ has several smart pointer types.
 
-1. _std::auto_ptr<>_ was **deprecated**. it was an attempt to standardize the pointer type at c++98 before we had move semantics, so it used work-around on it's copy operations. it had all sorts of issues.
+1. _std::auto_ptr_ was **deprecated**. it was an attempt to standardize the pointer type at c++98 before we had move semantics, so it used work-around on it's copy operations. it had all sorts of issues.
    1. copying an _std::auto_ptr_ set it's value to null.
    2. it couldn't be stored in containers.
 2. _std::unique_ptr_ is the functional version of the _std::auto_ptr_ idea. it does everything we wanted from it without performing weird twists around the idea of copying.
@@ -277,5 +277,490 @@ another current issue with _std::share_ptr_ is their relationship with arrays. t
 > - Compared to _std::unique_ptr_, _std::shared_ptr_ objects are typically twice as big, incur overhead for control blocks, and require atomic reference count manipulations.
 > - Default resource destruction is via delete, but custom deleters are supported. The type of the deleter has no effect on the type of the _std::shared_ptr_.
 > - Avoid creating *std::shared_ptr*s from variables of raw pointer type.
+
+</details>
+
+### Item 20: Use _std::weak_ptr_ for _std::shared_ptr_-like Pointers That Can Dangle
+
+<details>
+<summary>
+Non-Owning smart pointers that can detect dangling data.
+</summary>
+_std::weak_ptr_ behaves like *std::shared_ptr*, but doesn't count towards the ownership count. this is intended to tackle the possibility that an object might be destroyed. the _std::weak_ptr_ is for these situations. it can't be dereferenced or checked for null (but can be checked for expiry), as it's actually an augmentation of the *std::shared_ptr* class.   
+_std::weak_ptr_  are created from *std::shared_ptr*s, they point to the same control block as the *std::shared_ptr* that created them, but they don't affect the reference count.
+
+```cpp
+auto spw = std::make_shared<Widget>(); //reference count is 1
+std::weak_ptr<Widget> wpw(spw); // reference count is still 1
+spw=nulltpr; // or reset(nullptr), reference count is 0
+
+if (!wpw.expired()) //false. it has expired
+{
+    //do something
+}
+```
+
+even if we can check our _std::weak_ptr_ isn't dangling with _.expired()_, we still can't do anything with it. there's no dereferencing from _std::weak_ptr_. and even if there were, they could be a data race, what if the last owning _std::shared_ptr_ goes out of scope and destroys the data? what we need (and want, and have) is an atomic operation that checks the expiry status, and if its available, gives us an owning smart pointer to use the data with.
+
+this operation has two forms in c++, we can either get a nullptr if the _std::weak_ptr_ is dangling by using the _lock()_ method, or an exception if we try to construct a *std::shared_ptr *from a _std::weak_ptr_ .
+
+```cpp
+auto spw = std::make_shared<Widget>();
+std::weak_ptr<Widget> wpw(spw);
+spw = nullptr;
+auto spw1 = wpw.lock(); //creates a shared_ptr
+if (spw1 != nullptr)
+{
+    //do something
+}
+try
+{
+auto spw2 = std::shared_ptr<Widget>(wpw);
+//do something
+}
+catch(std::bad_weak_ptr & e) //exception
+{
+
+}
+```
+
+in terms of efficiency and size, _std::weak_ptr_ are about the same as _std::shared_ptr_, and they point to the same control block, it's just that _std::weak_ptr_ don't participate in the **shared-ownership count**, but they do participate in the other reference count in the control block.
+
+#### Cache
+
+a possible use case for _std::weak_ptr_ is for caching results. if we expect something to be used repeatedly and creation is costly (IO, database access), maybe it's better to keep the results in memory and use them again if possible. maybe we already have a shared_ptr to it somewhere.
+
+```cpp
+std::unique_ptr<const Widget> loadWidget(WidgetId id); //factory for unique widgets, but this is step 1
+
+std::shared_ptr<const Widget> fastLoadWidget(WidgetId id)
+{
+    static std::unordered_map<WidgetId, std::weak_ptr<const Widget>> cache;
+    //check if cache contains key at all...
+    auto objPtr = cache[id].lock(); //shared_ptr, null if expired
+    if (!objPtr)
+    {
+        objPtr = LoadWidget(id); // do the costly thin
+        cache[id]=objPtr; //store a weak_ptr, created from shared_ptr.
+    }
+    return objPtr;
+
+}
+```
+
+#### Observer Design Pattern
+
+a different use case is the _Observer design pattern_. we have a _subject_, whose state can change, and _observers_, who wish to be informed when the subject change. we usually store all the observers in a list inside the subject memory, but we actually have no intention of controlling the lifetime of the observers via the the subject, but we don't want to access an observer that has been already destroyed. _std::weak_ptr_ allows us to do so, we can simply check if the object is dangling before accessing it.
+
+```cpp
+class Subject
+{
+    public:
+    void stateChange()
+    {
+        for (auto & weakPtr  : observers)
+        {
+            auto sharedPtr = weakPtr.lock();
+            if (sharedPtr)
+            {
+                //do something with the observer, now that it's a shared_ptr
+            }
+        }
+    }
+    private:
+    std::list<std::weak_ptr<Observer>> observers;
+}
+```
+
+#### Circular Reference
+
+a final use case is for Circular references. if there are three elements A,B,C: A and C have shared ownership over B.
+
+- A holds a shared_ptr of B
+- C holds a shared_ptr of B
+- B wants to access A, but how should he do it?
+
+there are three options
+
+- raw pointer - but if A is destroyed, B won't know about it. not good.
+- _std::shared_ptr_ - an ownership cycle. if A goes out of scope, it still lives as a member of B. if B goes out of scope, it's still kept alive by A. even if both are out of scope their reference count is 1, they keep each other alive by the virtue of circular reference, their resources won't be reclaimed.
+- _std::weak_ptr_ - this is the preferred solution, B can detect if A goes out of scope, and it doesn't extend A's lifetime.
+
+in most hierarchical data structures, we don't expect children elements to outlive their parents, so there is usually no need for _std::weak_ptr_, but it doesn't hurt.
+
+#### Things to Remember
+
+> - Use _std::weak_ptr_ for _std::shared_ptr_-like pointers that can dangle.
+> - Potential use cases for _std::weak_ptr_ include caching, observer lists, and the
+>   prevention of _std::shared_ptr_ cycles.
+
+</details>
+
+### Item 21: Prefer _std::make_unique_ and _std::make_shared_ to Direct Use of _new_
+
+<details>
+<summary>
+The utility functions usually offer benefits in performance and safety, use them unless there is specific reason not to.
+</summary>
+
+_std::make_shared_ exists in c++11, _std::make_unique_ exists in c++14, but even in c++11, it's simple to write, we just need to perfect forward the parameters to the constructor (recall that
+we use the parentheses constructor, see [item 7]()).
+
+```cpp
+template<typename T, typename... Ts>
+std::unique_ptr<T> make_unique(Ts&&... params)
+{
+    return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
+}
+```
+
+as we can see, this form doesn't support custom deleters or creating unique\*ptr to arrays, but it will work for most cases.
+_std::make_shared_ ,_std::make_unique_ are two of three _make_ functions that take an arbitrary set of arguments (the third function is _std::allocate_shared_, which acts like _std::make_shared_ but takes a allocator object as well).
+
+in most cases, the difference in typing between the two forms is negligible, or even easier with the custom functions. we can still use auto, and we only write the typename once.
+
+```cpp
+auto upw1(std::make_unique<Widget>);
+std::unique_ptr<Widget> upw2(new Widget);
+
+
+auto spw1(std::make_shared<Widget>);
+std::shared_ptr<Widget> spw2(new Widget);
+```
+
+#### Avoiding Resource Leaks
+
+a bigger reason to use the make functions is to control exception safety. we have no problem with passing by value, the copy constructor will make a copy, which is perfectly fine fo _std::shared_ptr_. lets assume a function takes a _std::shared_ptr_ and another value, if we construct the _std::shared_ptr_ on spot, the compiler can play tricks on us and cause resource leaks because of the order of arguments evaluation (which is undefined).
+
+```cpp
+void processWidget(std::shared_ptr<Widget> spw,int priority);
+int computePriority(); // return priority
+processWidget(std::shared_ptr<Widget>(new Widget),computePriority()); // this is potential resources leak.
+```
+
+we must create the new Widget before calling the _std::shared_ptr_ constructor, but it's possible that between those two operations, the computePriority function threw an exception,
+
+> possible order that causes leak
+>
+> 1. perform _"new Widget"_
+> 2. execute _computePriority()_ - **but what if we had an exception here?**
+> 3. ~~run the _std::shared_ptr_ constructor~~. **didn't happen, leaked resource**
+
+had we used the utility functions, the new resource would have definitely been stored inside the smart pointer, and we wouldn't see the resource leak.
+
+```cpp
+processWidget(std::make_shared<Widget>(),computePriority()); // this is safe.
+```
+
+#### Better Performance
+
+another bonus of using the utility functions is about the number and location of memory allocations. calling the constructor of a _std::shared_ptr_ creates the control block on the heap, and calling the new operator creates the data, also on the heap. by combining both calls into _std::make_shared_ the compiler can request one continues block of data of the size of the data and the control block combined, and place both of them together, which means better data locality. this is also true for _std::make_allocate_.
+
+#### Edge Cases
+
+despite the advantages of the make functions, there are still cases when its impossible to use them,there are two cases that happen with both _std::unique_ptr_ and _std::shared_ptr_, and two more cases that apply only to _std::shared_ptr_
+
+for both kinds, we cannot use the utility function for passing a custom deleter.
+
+```cpp
+auto widgetDeleter=[](Widget* pw){...}; //deleter
+std::unique_ptr<Widget,decltype(widgetDeleter)> upw(new Widget,widgetDeleter);
+std::shared_ptr<Widget> spw(new Widget, widgetDeleter);
+```
+
+another case is the usage of the braced initialization (curly braces) in the constructor call. as we saw earlier, depending on how the make function ins implemented, we can get very different results for the following:
+
+```cpp
+auto upv = std::make_unique<std::vector<int>>(10,20);
+```
+
+one option uses the parentheses constructor, and will result in a vector with 10 elements with the value 20.
+the other option uses uniform initialization (with std::initializer_list) and will result in a vector of two elements, 10 and 20.
+
+the result is unambiguous, as part of the documentation, the decision was made to use parentheses over braces. but that means there is no way to use curly braces in make functions, and we must resort to calling _new_. in [item 30]() there is a work around for this.
+
+```cpp
+auto initList = {10,20}; //std::initializer_list.
+auto spv = std::make_shared<std::vector<int>>(initList);
+```
+
+if our class defines it's own versions of _operator new_ and _operator delete_,we shouldn't use the utility functions to create it (we can still use the _std::shared_ptr_, just not the _std::make_shared_ function). also, there is a possibility that if we allocated the control block together with the data, and the control block contains weak reference count, the memory won't be released until all *std::weak_ptr*s go out of scope. those _std::weak_ptr_ are able to extend the lifetime of the object, even if it's no longer accessible.
+if we allocate the memory in two different calls, then we can reclaim the object memory separately from that of the control block.
+
+if we want to avoid the resource leaking issue, we need to make sure we construct the _std::shared_ptr_ immediately with the new object, without any other statements in the same time. now we start tweaking the call for better performance, first by ensuring a move is done rather than a copy (avoiding usage of atomics)
+
+```cpp
+void processWidget(std::shared_ptr<Widget> spw, int priority);
+void deleter(Widget * ptr); //custom deleter
+processWidget(std::shared_ptr<Widget>(new Widget,deleter),computePriority()); //unsafe
+std::shared_ptr<Widget> spw(new Widget,deleter); //lvalue
+processWidget(spw,computePriority()); //safe, but not optimal, we ensure copying, it would be better to allow moving, won't it?,
+processWidget(std::move(spw), computePriority()) //safe, correct, and also better.
+```
+
+#### Things To Remember
+
+> - Compared to direct use of new, make functions eliminate source code duplication, improve exception safety, and, for _std::make_shared_ and _std::allocate_shared_, generate code that’s smaller and faster.
+> - Situations where use of make functions is inappropriate include the need to
+>   specify custom deleters and a desire to pass braced initializers.
+> - For *std::shared_ptr*s, additional situations where make functions may be ill-advised include (1) classes with custom memory management and (2) systems with memory concerns, very large objects, and *std::weak_ptr*s that outlive the corresponding *std::shared_ptr*s.
+
+</details>
+
+### Item 22: When Using the Pimpl Idiom, Define Special Member Functions in the Implementation File
+
+<details>
+<summary>
+We can use the smart pointers to use the pimpl idiom, but it does require some work to ensure that the classes are incomplete in the header file and still have all the required member function such as a destructor or move/copy operations.
+</summary>
+
+The pimpl (_pointer to implementation_) idiom is a technique where rather than define data members as concrete objects, we declare them as pointer to a class/struct, and leave the definition for later.
+
+first, the non idiom way. widget is defined in the header of widget.h, and because it has Gadget members, it should include the gadget header, and should be re-compiled whenever the Gadget class changes. any class that uses Widget is also required to re-compile when Gadget changes.
+
+```cpp
+class Widget{
+public:
+    Widget();
+    //...
+private:
+std::string name;
+std::vector<double> data;
+Gadget g1,g2,g3;
+};
+```
+
+in c++98, the PIMPL idiom would look like this. we use _incomplete types_ we no longer have headers for any other classes in the header, so changing one of those class doesn't require users of the Widget class to re-compile. all the data is encapsulated in the cpp file.
+
+```cpp
+// the widget.h header
+class Widget{
+public:
+Widget();
+~Widget();  //we need the destructor, probably also the other functions to complete the rule of three
+//...
+private:
+struct Impl; //declare an implementation struct and a pointer to it
+Impl *pImpl;
+};
+
+// the widget.cpp file
+#include <widget.h>
+#include <gadget.h>
+struct Widget::Impl
+{
+    std::string name;
+    std::vector<double> data;
+    Gadget g1,g2,g3;
+}
+
+Widget::Widget():pImpl(new Impl) //constructor, allocate data members for the implementation class
+{
+
+}
+Widget::~Widget() //destructor, release data.
+{
+    delete pImpl;
+}
+```
+
+in a more modern world, we would use smart pointers, this way we don't need to define the destructor. our code compiles, but somehow **simple client code doesn't**? we see an issue of incomplete type, the delete operator and sizeof, why is that?
+
+```cpp
+// the widget.h header
+class Widget{
+public:
+Widget();
+
+//...
+private:
+struct Impl; //declare an implementation struct
+std::unique_ptr<Impl> pImpl; // use a smart pointer
+};
+
+// the widget.cpp file
+#include <widget.h>
+#include <gadget.h>
+struct Widget::Impl
+{
+    std::string name;
+    std::vector<double> data;
+    Gadget g1,g2,g3;
+}
+
+Widget::Widget():pImpl(std::make_unique<Impl>())) //constructor, use the utility function
+{
+
+}
+
+//client code.
+#include <widget.h>
+
+Widget w; //error!
+```
+
+lets understand the issue.
+we have a _std::unique_ptr_ to an incomplete type, we didn't define a custom deleter, so the default is used. we didn't define a destructor so we got one for free from the compiler, and as all member generated functions, it's assumed to be _implicitly inline_. so we have an inline destructor without any knowledge about the incomplete type it should destroy.
+we can fix it by declaring our own, non inlined destructor in the .cpp file, where the Impl type is known and no longer incomplete. we can also use the _=default_ in the definition.
+
+```cpp
+// the widget.h header
+class Widget{
+public:
+Widget();
+~Widget(); //turns out we do need the destructor
+//...
+private:
+struct Impl; //declare an implementation struct
+std::unique_ptr<Impl> pImpl; // use a smart pointer
+};
+
+// the widget.cpp file
+#include <widget.h>
+#include <gadget.h>
+struct Widget::Impl
+{
+    std::string name;
+    std::vector<double> data;
+    Gadget g1,g2,g3;
+}
+
+Widget::Widget():pImpl(std::make_unique<Impl>())) //constructor, use the utility function
+{
+
+}
+Widget::~Widget() //destructor definition
+{
+}
+//Widget::~Widget() = default; also possible
+
+//client code.
+#include <widget.h>
+
+Widget w; //now it's fine!
+```
+
+if we want move support (and we probably do, as we already have unique_ptr which is great for move semantics), we need to do something similar, we declare the operations in the .h file, but define them in .cpp file. their definitions can be defaulted.
+
+```cpp
+// the widget.h header
+class Widget{
+public:
+Widget();
+~Widget(); //turns out we do need the destructor
+Widget(Widget && rhs); //declaration of move constructor
+Widget & operator=(Widget&& rhs); //declaration of move assignment
+
+//...
+private:
+struct Impl; //declare an implementation struct
+std::unique_ptr<Impl> pImpl; // use a smart pointer
+};
+
+// the widget.cpp file
+#include <widget.h>
+#include <gadget.h>
+struct Widget::Impl
+{
+    std::string name;
+    std::vector<double> data;
+    Gadget g1,g2,g3;
+}
+
+Widget::Widget():pImpl(std::make_unique<Impl>())) //constructor, use the utility function
+{
+
+}
+Widget::~Widget() = default;
+WWidget::Widget(Widget && rhs)= default;
+Widget::Widget & operator=(Widget&& rhs) = default;
+```
+
+what's missing? oh, right. Copy operations, once we defined move operations we no longer have copy operations generated for us, and even if we did, we can't copy _std::unique_ptr_, so we need to do it ourselves, luckily, we can use the default generated operations for the Impl data class.
+
+```cpp
+// the widget.h header
+class Widget{
+public:
+Widget();
+~Widget(); //turns out we do need the destructor
+Widget(Widget && rhs); //declaration of move constructor
+Widget & operator=(Widget&& rhs); //declaration of move assignment
+Widget(const Widget & rhs);
+Widget& operator=(const Widget & rhs)
+//...
+private:
+struct Impl; //declare an implementation struct
+std::unique_ptr<Impl> pImpl; // use a smart pointer
+};
+
+// the widget.cpp file
+#include <widget.h>
+#include <gadget.h>
+struct Widget::Impl
+{
+    std::string name;
+    std::vector<double> data;
+    Gadget g1,g2,g3;
+}
+
+Widget::Widget():pImpl(std::make_unique<Impl>())) //constructor, use the utility function
+{}
+Widget::~Widget() = default;
+WWidget::Widget(Widget && rhs)= default;
+Widget::Widget & operator=(Widget&& rhs) = default;
+Widget::Widget(const Widget & rhs):pImpl(std::make_unique<Impl>(*rhs.pImpl))
+{}
+// create a new unique_ptr with an object that is the copy of the one in the other objects
+
+Widget::Widget& operator=(const Widget & rhs)
+{
+    *pImpl = *rhs.Impl; //copy assignment of the data.
+    return *this;
+}
+```
+
+if we had decided to use a _std::shared_ptr_ to store our implementation data, things would be different, we wouldn't need as much code. we wouldn't need to declare any member functions in the header and then default it the cpp file. this is because _std::unique_ptr_ contain the custom deleter within them `std::unique_pre<T, decltype(customDeleter)>`, so everything must be known and we must have complete typing when created. on the other hand _std::shared_ptr_ stores the custom deleter on the heap in the control block, so it can be much more lenient with incomplete type.
+
+```cpp
+class Widget {
+public:
+Widget();
+//... more code
+private:
+struct Impl;
+std::shared_ptr<Impl> pImpl
+};
+
+// the widget.cpp file
+#include <widget.h>
+#include <gadget.h>
+struct Widget::Impl
+{
+    std::string name;
+    std::vector<double> data;
+    Gadget g1,g2,g3;
+}
+
+Widget::Widget():pImpl(std::make_unique<Impl>())) //constructor, use the utility function
+{}
+
+//client code
+
+Widget W1;
+auto w2(std::move(w1));
+w1 = std::move(w2);
+```
+
+in most cases, the std::unique_ptr is the correct choice for the Pimpl Idiom, as it most closely resembles the base form.
+
+#### Things to Remember
+
+> - The Pimpl Idiom decreases build times by reducing compilation dependencies
+>   between class clients and class implementations.
+> - For _std::unique_ptr_ pImpl pointers, declare special member functions in
+>   the class header, but implement them in the implementation file. Do this even
+>   if the default function implementations are acceptable.
+> - The above advice applies to _std::unique_ptr_, but not to _std::shared_ptr_.
 
 </details>

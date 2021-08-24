@@ -18,30 +18,30 @@ what I learned from each episode.
 
 ## C++ Weekly - Ep 6 - Intro To Variadic Templates
 
-## C++ Weekly - Ep 7 - Stop Using stdendl
+## C++ Weekly - Ep 7 - Stop Using std::endl
 
-Std::endl also does flush.
+_std::endl_ also does flush.
 This is bad. Use ‘\n’ instead.
 
-## C++ Weekly - Ep 8 - C++ Name Demangling
+## C++ Weekly - Ep 8 - C++ Name De-Mangling
 
-## C++ Weekly - Ep 9 - stdfuture Quick-Start
+## C++ Weekly - Ep 9 - std::future Quick-Start
 
 ## C++ Weekly - Ep 10 - Variadic Expansion Wrap-Up
 
-## C++ Weekly - Ep 11 - stdfuture Part 2
+## C++ Weekly - Ep 11 - std::future Part 2
 
-## C++ Weekly - Ep 12 - C++17's stdany
+## C++ Weekly - Ep 12 - C++17's std::any
 
 ## C++ Weekly - Ep 13 - Fibonacci You're Doing It Wrong
 
-## C++ Weekly - Ep 14 - Standard Library Gems `next` and `exchange`
+## C++ Weekly - Ep 14 - Standard Library Gems _next_ and _exchange_
 
-## C++ Weekly - Ep 15 - Using `stdbind`
+## C++ Weekly - Ep 15 - Using _std::bind_
 
-## C++ Weekly - Ep 16 - Avoiding `stdbind`
+## C++ Weekly - Ep 16 - Avoiding _std::bind_
 
-## C++ Weekly - Ep 17 - C++17's `stdinvoke`
+## C++ Weekly - Ep 17 - C++17's _std::invoke_
 
 ## C++ Weekly - Ep 18 - C++17's constexpr if
 
@@ -51,9 +51,9 @@ This is bad. Use ‘\n’ instead.
 
 ## C++ Weekly - Ep 20 - C++17's Fold Expressions - Introduction
 
-## C++ Weekly - Ep 21 - C++17's `if` and `switch` Init ## Statements
+## C++ Weekly - Ep 21 - C++17's _if_ and _switch_ Init Statements
 
-## C++ Weekly - Ep 22 - C++17's Nested Namespaces and `stdclamp`
+## C++ Weekly - Ep 22 - C++17's Nested Namespaces and _std::clamp_
 
 ## C++ Weekly - Ep 23 - C++17's \_\_has_include
 
@@ -117,13 +117,13 @@ Means that this variable might not be used in all version (build vs debug), this
 
 ## C++ Weekly - Ep 47 - My Visual C++ Pet Peeve
 
-## C++ Weekly - Ep 48 - C++17's Variadic `using`
+## C++ Weekly - Ep 48 - C++17's Variadic _using_
 
 ## C++ Weekly SE - Why -0xFFFFFFFF == 1
 
 Numeric literals are unsigned by default;  
 Minus prefix is not part of the literal, it’s an operator.  
-Two complement - take every negate each btye, and then add 1.  
+Two complement - take every negate each byte, and then add 1.  
 Unsigned will always be unsigned
 
 ## C++ Weekly - Ep 49 - Why Inherit From Lambdas?
@@ -177,23 +177,23 @@ Whiles are gotos
 
 ## C++ Weekly - Ep 59 - Negative Cost Embedded C++ - Part 2
 
-## C++ Weekly - Ep 60 - stdquoted
+## C++ Weekly - Ep 60 - std::quoted
 
 ## C++ Weekly - Ep 61 - Storage Duration with Lambdas
 
-## C++ Weekly - Ep 62 - stdregex
+## C++ Weekly - Ep 62 - std::regex
 
 ## C++ Weekly - Ep 63 - What is Negative Zero?
 
-## C++ Weekly - Ep 64 - C++11's stdmin (and my version)
+## C++ Weekly - Ep 64 - C++11's std::min (and my version)
 
-## C++ Weekly - Ep 65 - C++11's stdfmin
+## C++ Weekly - Ep 65 - C++11's std::fmin
 
 ## C++ Weekly - Ep 66 - Variadic fmin for C++11
 
-## C++ Weekly - Ep 67 - C++17's stdgcd and stdlcm
+## C++ Weekly - Ep 67 - C++17's std::gcd and std::lcm
 
-## C++ Weekly - Ep 68 - stdiota
+## C++ Weekly - Ep 68 - std::iota
 
 ## C++ Weekly - Ep 69 - C++17's Searchers
 
@@ -217,13 +217,13 @@ Std::from_chars - takes a char\* (begin and end) and returns a numeric result.
 Std::shared_mutex, Std::shared_timed_mutex (for reader / writer)
 Math stuff: specialized stuff with overloads
 
-## C++ Weekly - Ep 73 - stdstring_view
+## C++ Weekly - Ep 73 - std::string_view
 
 Use std::string_view instead of const std::string &s.
 If we don’t need any ‘std::string’ things and we just need to look at a string.
 If we don’t change it, and it’s a string literal, a string view should be enough.
 
-## C++ Weekly - Ep 74 - stdregex optimize
+## C++ Weekly - Ep 74 - std::regex optimize
 
 A flag that’s supposed to make regex faster.
 Make sure to put the stuff where it needs to be scope.
@@ -256,7 +256,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 85 - Fuzz Testing
 
-## C++ Weekly - Ep 87 - stdoptional
+## C++ Weekly - Ep 87 - std::optional
 
 ## C++ Weekly - Ep 88 - Don't Forget About puts
 
@@ -324,7 +324,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 121 - Strict Aliasing In The Real world
 
-## C++ Weekly - Ep 122 - `constexpr` With `optional` And `variant`
+## C++ Weekly - Ep 122 - _constexpr_ With _optional_ And _variant_
 
 ## C++ Weekly - Ep 123 - Using in_place_t
 
@@ -348,29 +348,29 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 133 - What Exactly IS A Lambda Anyhow?
 
-## C++ Weekly - Ep 134 - The Best Possible Way To Create A ## Visitor?
+## C++ Weekly - Ep 134 - The Best Possible Way To Create A Visitor?
 
-## C++ Weekly - Ep 135 - {fmt} is Addictive! Using {fmt} and ## spdlog
+## C++ Weekly - Ep 135 - {fmt} is Addictive! Using {fmt} and spdlog
 
-## C++ Weekly - Ep 137 - C++ Is Not An Object Oriented ## Language
+## C++ Weekly - Ep 137 - C++ Is Not An Object Oriented Language
 
 ## C++ Weekly - Ep 138 - Will It C++? MIPS Architecture (1985)
 
 ## C++ Weekly - Ep 139 - References To Pointers
 
-## C++ Weekly - Ep 140 - Use `cout`, `cerr`, and `clog` ## Correctly
+## C++ Weekly - Ep 140 - Use _cout_, _cerr_, and _clog_ Correctly
 
-## C++ Weekly - Ep 141 - C++20's Designated Initializers And ## Lambdas
+## C++ Weekly - Ep 141 - C++20's Designated Initializers And Lambdas
 
-## C++ Weekly - Ep 142 - Short Circuiting With Logical ## Operators
+## C++ Weekly - Ep 142 - Short Circuiting With Logical Operators
 
 ## C++ Weekly - Ep 143 - GNU Function Attributes
 
 ## C++ Weekly - Ep 144 - Pure Functions in C++
 
-## C++ Weekly - Ep 145 - Semi-Automatic `constexpr` and ## `noexcept`
+## C++ Weekly - Ep 145 - Semi-Automatic _constexpr_ and _noexcept_
 
-## C++ Weekly - Ep 146 - C++20's stdto_pointer
+## C++ Weekly - Ep 146 - C++20's std::to_pointer
 
 ## C++ Weekly - Ep 147 - C++ And Python Tooling
 
@@ -378,15 +378,15 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 149 - C++20's Lambda Usability Changes
 
-## C++ Weekly - Ep 150 - C++20's Lambdas For Resource ## Management
+## C++ Weekly - Ep 150 - C++20's Lambdas For Resource Management
 
 ## C++ Weekly - Ep 151 - C++20's Lambdas As Custom Comparators
 
 ## C++ Weekly - Ep 152 - Lambdas The Key To Understanding C++
 
-## C++ Weekly - Ep 153 - 24-Core C++ Builds Using Spare ## Computers!
+## C++ Weekly - Ep 153 - 24-Core C++ Builds Using Spare Computers!
 
-## C++ Weekly - Ep 154 - One Simple Trick For Reducing Code ## Bloat
+## C++ Weekly - Ep 154 - One Simple Trick For Reducing Code Bloat
 
 ## C++ Weekly - Ep 155 - Misuse of pure Function Attribute
 
@@ -396,7 +396,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 158 - Getting The Most Out Of Your CPU
 
-## C++ Weekly - Ep 159 - `constexpr` `virtual` Members In C+## +20
+## C++ Weekly - Ep 159 - _constexpr_ _virtual_ Members In C++20
 
 ## C++ Weekly - Ep 160 - Argument Dependent Lookup (ADL)
 
@@ -414,25 +414,25 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 167 - What Is Variable Shadowing?
 
-## C++ Weekly - Ep 168 - Discovering Warnings You Should Be ## Using
+## C++ Weekly - Ep 168 - Discovering Warnings You Should Be Using
 
 ## C++ Weekly - Ep 169 - C++20 Aggregates With User Defined Constructors
 
-## C++ Weekly - Ep 170 - C++17's `inline` Variables
+## C++ Weekly - Ep 170 - C++17's _inline_ Variables
 
 ## C++ Weekly - Ep 171 - C++20's Parameter Packs In Captures
 
-## C++ Weekly - Ep 172 - Execution Support in Compiler ## Explorer
+## C++ Weekly - Ep 172 - Execution Support in Compiler Explorer
 
-## C++ Weekly - Ep 173 - The Important Parts of C++98 in 13 ## Minutes
+## C++ Weekly - Ep 173 - The Important Parts of C++98 in 13 Minutes
 
-## C++ Weekly - Ep 174 - C++20's `stdbind_front`
+## C++ Weekly - Ep 174 - C++20's _std::bind_front_
 
 ## C++ Weekly - Ep 175 - Spaceships in C++ operator 〈=〉
 
 ## C++ Weekly - Ep 176 - Important Parts of C++11 in 12 Minutes
 
-## C++ Weekly - Ep 177 - `stdbind_front` Implemented With Lambdas
+## C++ Weekly - Ep 177 - _std::bind_front_ Implemented With Lambdas
 
 ## C++ Weekly - Ep 178 - The Important Parts of C++14 In 9 Minutes
 
@@ -440,7 +440,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 180 - Whitespace Is Meaningless
 
-## C++ Weekly - Ep 181 - Fixing Our bind_front with stdinvoke
+## C++ Weekly - Ep 181 - Fixing Our bind_front with std::invoke
 
 ## C++ Weekly - Ep 182 - Overloading In C and C++
 
@@ -452,7 +452,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 186 - What Are Callables?
 
-## C++ Weekly - Ep 187 - C++20's `constexpr` Algorithms
+## C++ Weekly - Ep 187 - C++20's _constexpr_ Algorithms
 
 ## C++ Weekly - Ep 285 - Experiments With Generating Stably Random Game Assets
 
@@ -467,6 +467,21 @@ the rng version is changed to be constexpr.the generator needs to be passed by r
 there is a problem that if we add an element inside a planet, all the other plants are changed. we want each planet to be random, but not having one change in a planet to change everything. the solution used in the video is to 'fork' the generator for each planet. the original generator creates a new generator with a new seed based on the next random value, and this makes nested generation of elements to still be random, but independent and consistent.  
 in the comments someone says that the 'fork' part is called 'RNG splitting'.
 
-std::rotl, std::rotr - are shorthands for rotate left and which does some number checks and deals with positive and negative rotation shifts
+_std::rotl_, _std::rotr_ - are shorthands for rotate left and which does some number checks and deals with positive and negative rotation shifts
+
+</details>
+
+## C++ Weekly - Ep 286 - How Command and Conquer's Dual Screen DOS Support Worked
+
+<details>
+<summary>
+Old games using different memory address ranges to display debugging data to a second monitor.
+</summary>
+
+[How Command and Conquer's Dual Screen DOS Support Worked](https://youtu.be/wDvEzmEurlQ)
+in the past there was a code review of Command and Conquer engine, there was a use of a mono-chrome screen as debugging. dual monitor support was added to windows 98, but there were hardware configurations that supported dual monitor even before that. so it seems that it was possible to use a mono-chrome adapter as one screen, and have an additional monitor. it wasn't plug-and-play.
+memory ports of data didn't overlap between the devices, and those memory addresses were fixed. we could write data into the EGA and VGA ports,and different data into the monochrome ports. some games used this feature to display debugging data. we can do this with dos-box and setting secondary display. there is an example of using this with the game _mag jongg - VBA_ which displayed additional data.
+this is a memory layout thing, the displays have different address range.
+jason does a simple example with assembly code that tries to write to monochrome display.
 
 </details>
