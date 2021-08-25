@@ -1,7 +1,7 @@
 ## Chapter 4 - Smart Pointers
 
 <summary>
-aaa
+Using the correct smart pointer type for the job, advantages and disadvantages.
 </summary>
 
 raw pointers aren't nice in a variety of ways:
