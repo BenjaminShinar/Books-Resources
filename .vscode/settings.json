@@ -3,6 +3,7 @@
     "Deque",
     "cbegin",
     "cend",
+    "chrono",
     "constexpr",
     "cout",
     "decltype",
