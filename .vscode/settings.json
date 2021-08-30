@@ -10,10 +10,12 @@
     "endl",
     "lvalue",
     "malloc",
+    "multiset",
     "noexcept",
     "nulltpr",
     "rvalues",
     "struct",
+    "t",
     "unscoped"
   ],
   "cSpell.ignoreWords": [
@@ -22,6 +24,7 @@
     "deref",
     "dwim",
     "expr",
+    "fwd",
     "key",
     "less",
     "pimpl",
