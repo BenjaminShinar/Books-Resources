@@ -485,3 +485,70 @@ this is a memory layout thing, the displays have different address range.
 jason does a simple example with assembly code that tries to write to monochrome display.
 
 </details>
+
+## C++ Weekly - Ep 287 - Understanding _'auto'_
+
+<details>
+<summary>
+Clearing up misunderstandings about the 'auto' keyword.
+</summary>
+
+[Understanding _'auto'_](https://youtu.be/tn69TCMdYbQ)
+
+the old meaning of auto was 'explicit local variable', this was until C99 and c++98.
+
+questions about _auto_ are
+
+> - is there a hidden copy?
+> - why isn't it a reference?
+> - how does _auto_ even work?
+
+the simple answer is that auto uses the exact same rules as template type parameters.
+
+```cpp
+template <typename T>
+void func1(T param);
+
+void func2(auto param);
+```
+
+this is the same, a copy by value, auto will never deduce a reference type for us. if we return a reference,we still get a copy, unless we declared our variable to be an reference itself.
+
+```cpp
+std::string getValue();
+std::string &getReference();
+void func3(const auto & param);
+
+auto a = getValue(); //copy by value
+auto b = getReference(); // another copy by value
+auto & c = getReference(); //actually a reference
+```
+
+we can use _decltype(auto)_ to deduce a reference. **but shouldn't**.
+
+in regards to pointers, it can deduce pointers, not reference. const-ness can be deduced.
+
+```cpp
+int *p = nullptr;
+int i{};
+auto p_copy = p; //p_copy is int*
+auto i_copy = i; // i_copy is i*
+//auto * i_copy2=i; //error. can't deduce auto* from i
+//p_copy = i; //error = can't assign int to int*
+p_copy = &i; //this is cool.
+const int x{}; //const int
+const int * px = &x;
+//p_copy = &x; //error, conversion between const int* to int*
+auto px_copy =  px; //px_copy is const int *
+auto & x_ref =x; //x_ref is a reference to const int;
+auto x_copy = x;  // not const, copy by value
+x_copy = 55;  // fine
+decltype(auto) x_decl = x; // the exact type of x, so const int
+//x_decl = 9; error! x_decl is const int
+```
+
+> - _'auto'_ uses the same rules as template type parameters.
+> - _'auto'_ will never deduce a reference.
+> - 'const'-ness will be deduced only for reference and pointer types. when copying by value it won't maintain const.
+
+</details>
