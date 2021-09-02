@@ -19,6 +19,7 @@
     "unscoped"
   ],
   "cSpell.ignoreWords": [
+    "Asynchronicity",
     "crbegin",
     "crend",
     "deref",
@@ -28,8 +29,10 @@
     "key",
     "less",
     "pimpl",
+    "pthread",
     "rbegin",
     "t",
+    "templatized",
     "typedefs",
     "typeindex",
     "up",
