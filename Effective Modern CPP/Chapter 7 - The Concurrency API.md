@@ -340,9 +340,9 @@ class ThreadRAII
 
 ### Item 38: Be Aware of Varying Thread Handle Destructor Behavior
 
-<!-- <details> -->
+<details>
 <summary>
-
+The std::future object has different behavior at the destructor.
 </summary>
 
 A joinable _std::thread_ corresponds to an underlying system thread of execution
@@ -351,4 +351,398 @@ a future of a non-deferred task corresponds similarly to ta system thread, and t
 despite that, there are difference of behavior with the destructors of the two objects, _std::thread_ terminates the program as part of the destructor behavior if it wasn't previously joined or detached.
 but for _std::future_ objects, the destructor behavior is sometimes similar to _.join()_, sometimes to _.detach()_ and sometimes something else. and it never causes program termination.
 
-<!-- </details> -->
+A _std::future_ is one end of a communication channel, we have a caller and a callee, and both usually run asynchronously.
+the callee transmits a result to the caller, this is done by writing the result of a computation into the communication channel, usually in the form of an _std::promise_ object.
+
+caller has _std::future_.
+callee has _std::promise_ (most often).
+
+but the result of the callee can't be actually stored inside the _std::promise_ itself, because that object might go out of scope when the computation is complete. it's also not practical to store the result in the _std::future_ of the caller, one problem is that a _std::shared_future_ can be created from it, and that the new object might be copied, but the result isn't always a copyable object. so the result must have both a lifetime that exceeds that of the _std::promise_ object and not be part of the _std::future_.
+
+the result is actually stored in a location called _'shared state'_ which is in neither of the options. it's usually a heap-based object, although the standard leaves all the implementation details free for the library developers to decide.
+
+this leads us to the behavior of the _std::future_ destructor, which depends on the _shared state_.
+
+> - **The destructor for the last future referring to a shared state for a non-deferred task launched via _std::async_ blocks** until the task completes. In essence, the destructor for such a future does an implicit join on the thread on which the asynchronously executing task is running.
+> - **The destructor for all other futures simply destroys the future object**. For asynchronously running tasks, this is akin to an implicit detach on the underlying thread. For deferred tasks for which this is the final future, it means that the deferred task will never run.
+
+to make it simple, this is similar to reference counting objects, any _std::future_ except the last simply disassociates itself from the task. the last standing _std::future_ waits until the task is complete before it can be destroyed.
+
+in different words, the special behavior of blocking happens only when:
+
+> - It refers to a shared state that was **created due to a call to _std::async_**.
+> - The task’s launch policy is **_std::launch::async_**, either because that was chosen by the runtime system or because it was specified in the call to _std::async_.
+> - The future is the **last** future referring to the shared state. For _std::future_,
+>   this will always be the case. For *std::shared_future*s, if other *std::shared_future*s refer to the same shared state as the future being destroyed, the future being destroyed follows the normal behavior (i.e., it simply destroys its data members).
+
+the api for _std::future_ doesn't provide a way to determine if it the shared state it refers to is a result of a call to _std::async_, so there's no sure way to know if the destructor will cause blocking behavior. in this example, the vector might contain _std::future_ that were created with _std::launch::async_,so the destructor of the vector might block. the Widget class has a _std::shared_future_, so it's possible that any Widget object will cause a blocking as part of the destructor behavior.
+
+```cpp
+std::vector<std::future<void>> futs;
+class Widget
+{
+public:
+//...
+private:
+std::shared_future<double> fut;
+};
+```
+
+although we can't know if a _std::future_ will block, we can know for sure that it doesn't block. if it doesn't satisfy the above conditions, it won't block. so if it wasn't created bt _std::async_, it won't block. that't the case for _std::packaged_task_ which can also produce a _std::future_ object.
+
+```cpp
+int calcValue();
+std::packaged_task<int()> pt (calcValue);
+auto fut = pt.get_future(); // won't block
+std::thread t(std::move(pt));
+//...
+```
+
+_std::packaged_task_ is an object that can be run on a thread,and is a move-only object, so we can cast it to rvalue reference to move it into a _std::thread_. the behavior now depends on what happens to the _std::thread_.
+
+- if nothing happens with t, the _std::thread_ is still joinable at the end of the scope, and the program is terminated.
+- if t was joined, there is no need for fut to block.
+- if t was detached, no need to block.
+
+the behavior of the _std::packaged_task_ and the _std::future_ it creates depends on how the containing _std::thread_ is handled
+
+#### Things to Remember
+
+> - Future destructors normally just destroy the future’s data members.
+> - The final future referring to a shared state for a non-deferred task launched via _std::async_ blocks until the task completes.
+
+</details>
+
+### Item 39: Consider void Futures for One-Shot Event Communication
+
+<details>
+<summary>
+a void std::future can be used a one time synchronization mechanism with a surprisingly easy syntax and good performance.
+</summary>
+
+#### The _conditional variable_ Approach
+
+an traditional way of inter-thread communication involves using the _conditional variable_ as a way to check if a condition was qualified before continuing. one thread waits on the _conditional variable_ and other notifies it.
+
+```cpp
+std::condition_variable cv;
+std::mutex m;
+//...
+// detecting thread A
+{
+    cv.notify_one();
+}
+
+// waiting/reacting thread B
+{
+    {
+        std::unique_lock<std::mutex> lk(m); //lock mutex
+        cv.wait(lk);
+        // react to event while holding m
+    }
+    //m is unlocked
+}
+```
+
+the code above works, but the use of the _std::mutex_ might be too much if the only thing it does is limit access until a object was initialized and that data is no longer shared. furthermore, the code ignores two possible cases:
+
+- if the detecting thread A acts before the waiting thread B starts waiting, the notification to the _conditional variable_ is wasted, and thread B will never be released. this can be solved by having a condition checked prior to waiting, but it means the detecting thread will also need to control the mutex.
+- the waiting thread ignores the possibility of spurious wake-ups, a mythical occurrence that can happen for no reason, but tends to happen a lot more with multi-core machines. the solution is to check the whether the condition is satisfied, which was traditionally done with a while loop, but can be done with a lambda in the _conditional variable_ call to _.wait()_.
+
+```cpp
+cv.wait(lk,[] {/*condition*/})
+```
+
+the problem in our current scenario is that the _conditional variable_ is waiting for an event to happen, that's the whole point of it's existence. we would need another shared data to use for this condition, like the _std::atomic\<bool>_ flag.
+
+we can do the easy thing and just use the atomic flag on it's own, which is easy and short. no _std::mutex_, no spurious wake-ups, no _std::condition_variable_. But the waiting thread B is spending all of it's allocated time slice checking on the flag. it's **busy waiting** and wasting cpu resources.
+
+```cpp
+std::atomic<bool> flag(false;)
+//...
+// detecting thread A
+{
+    flag= true;
+}
+
+//waiting thread B
+{
+   while(!flag)
+   {
+     //do nothing!
+   }; //wait for event
+   //react to event.
+}
+```
+
+the advantage of the _std::condition_variable_ is that it truly causes the thread to wait, it yields away the time-slot it receives from the scheduler so the program runs faster. it's possible to combine the two approaches together. because the flag is now guarded by the _std::mutex_, we can use a normal variable and not an atomic one.
+
+```cpp
+std::condition_variable cv;
+std::mutex m;
+bool flag{false};
+//...
+// detecting thread A
+{
+    {
+        std::lock_guard<std::mutex>g(m);
+        flag =true;
+    }
+    cv.notify_one(); // no need to hold the mutex right now
+}
+
+// waiting/reacting thread B
+{
+    {
+        std::unique_lock<std::mutex> lk(m); //lock mutex
+        cv.wait(lk,[]{return flag;}); // check before entering and at wake-ups, if true, continue, otherwise wait.
+        // react to event while holding m
+    }
+    //m is unlocked
+}
+```
+
+#### The Task and Future Approach
+
+the alternative way to handle this case is by using a task and waiting on a _std::future_ object. rather than using _std::future_ and _std::promise_ as a two way communication channel, they can be used as a way to inform that an event has taken place.
+
+the detecting task has and _std::promise_ object, while the waiting/reacting task holds the corresponding _std::future_ object. when the detecting task is ready, it sets the _std::promise_ (writes a value into the communication channel), and the waiting thread waits on the _std::future_ that it holds, and when the value is set, the task is free to continue running.
+both _std::future_ and _std::promise_ are templated and require a type parameter, which specifies what type of data is passed through the channel. in this case, we have no type, only the existence of having something written to the channel, so the _void_ type is good for us.
+the detecting task will use _std::promise\<void>_ and the reacting task will use a _std::future\<void>_ object.
+
+```cpp
+std::promise<void> p;
+// detecting thread A
+{
+    p.set_value();
+}
+
+// waiting/reacting thread B
+{
+    p.get_future().wait(); //get the future from the promise and wait on it.
+}
+```
+
+this design is simple, uses only one shared object (the _std::promise_), immune to spurious wake-ups and works even if the detecting task A finished before task B started waiting.
+
+but it's not perfect. a _std::promise_ and _std::future_ have a _shared state_ between them, so there are some heap allocation costs. but more than that, this approach is a one-time only mechanism. once set, we can't unset the value of the _std::promise_, unlike conditional variables or flags which can be reused.
+
+the limit isn't as bad as it seems, in this example, we want to first create the thread in a suspended state, so that when we want it to start, it's already allocated and configured (maybe we change the thread priority or cache affinity with the native handles).
+
+```cpp
+std::promise<void> p;
+void react();
+void detect()
+{
+    std::thread t([]
+    {
+        p.get_future().wait();
+        react();
+    });
+    // do something before launching thread.
+    p.set_value(); // the thread can not start;
+    //... do more work;
+
+    t.join(); //never forget to join
+}
+```
+
+as we know, we have a problem with letting _std::thread_ run wild, so we can use our RAII class from before, unfortunately, this isn't as secured as we think it is. if there is an exception before the value is set, we have effectively forced ourselves into an hung situation. we are waiting for a thread that is blocked with no one to unset it.
+
+```cpp
+void detect()
+{
+    ThreadRAII (std::thread t([]
+    {
+        p.get_future().wait();
+        react();
+    }),ThreadRAII::DtorAction::join); //risk involved
+    //... do something before launching thread. what if there's an exception here?
+    p.set_value(); // the thread can not start;
+    //... do more work;
+}
+```
+
+this version doesn't fix the above issues, but it shows that even a one way communication channel can be effective for a large number of tasks, if they all depend on the same event. we do this by using _std::shared_future_ instead to suspend and un-suspend man reacting tasks.
+
+```cpp
+std::promise<void> p;
+auto threadToRun = 5;
+void react();
+void detect()
+{
+   auto sf = p.get_future().share(); //get std::shared_future
+   std::vector<std::thread> vt;
+   for (int i = 0; i < threadToRun;++i)
+   {
+       vt.emplace_back(
+           [sv]
+           {
+               sf.wait();
+               react();
+            };) // lambda, local copy of shared_future sf.
+   }
+   //... detect hangs somehow and do something,
+   p.set_value(); // unsuspend all thread
+   for (auto & t :vt)
+   {
+       t.join(); //join all threads
+   }
+}
+```
+
+#### Things to Remember
+
+> - For simple event communication, _conditional variable_-based designs require a superfluous mutex, impose constraints on the relative progress of detecting and reacting tasks, and require reacting tasks to verify that the event has taken place.
+> - Designs employing a flag avoid those problems, but are based on polling, not blocking.
+> - A _conditional variable_ and flag can be used together, but the resulting communications mechanism is somewhat stilted.
+> - Using _std::promises_ and futures dodges these issues, but the approach uses heap memory for shared states, and it’s limited to one-shot communication.
+
+</details>
+
+### Item 40: Use _std::atomic_ for Concurrency, _volatile_ for Special Memory
+
+<details>
+<summary>
+Atomic variables and volatile variables are different, and have different use cases. they aren't interchangeable and there isn't a superior choice between them.
+</summary>
+
+The _volatile_ keyword has nothing to do with concurrency in c++. it's used in some other languages to work together with concurrent code, but it's supposed to be used for it.
+
+#### _volatile_ Variables Shortcomings for Concurrency
+
+The _std::atomic_ template is what should be used, all operations on it are guaranteed to be atomic, not only as if they were guarded by a mutex, but actually using special machine instructions.
+
+```cpp
+std::atomic<int> ai(0);
+at = 10; //atomic set
+std::cout << ai; //atomic read - 10
+++ai; //atomic increment - 11
+--ai; //atomic decrement - 10
+
+volatile int vi(0);
+vi = 10;
+std::cout << vi;
+++vi;
+--vi;
+```
+
+no matter what other thread does, the value of the _std::atomic_ is set in an atomic matter. a read will always produce a valid value, as will a write or any other operations. even the increment and decrement operations (_++_,_--_), which are usually considered to be read-modify-write (_RMW_) operations are atomic for this class (unlike `ai = ai+1;`, which is atomic in each sub expression, but not as a whole). even the comparison operators are atomic.
+
+in contrast, _volatile_ variables have no guarantees in a multi-threaded context. there are no assurances for the values in the variable.
+assume we have two counters, one atomic and one _volatile_, and two threads the increment them. we can use the example code from the previous chapter for this (_std::promise_ and _std::shared_future_).
+
+```cpp
+std::atomic<int> atomic_counter(0);
+volatile int volatile_counter(0);
+
+auto func = [&atomic_counter,&volatile_counter](){++atomic_counter;++volatile_counter;};
+// do run the code in two different threads.
+
+```
+
+we can be absolutely sure that the value of the atomic_counter is 2. but for the volatile_counter, we have no assurances.
+after all. this is a possible scenario
+
+> 1. Thread 1 reads vc’s value, which is 0.
+> 2. Thread 2 reads vc’s value, which is still 0.
+> 3. Thread 1 increments the 0 it read to 1, then writes that value into vc.
+> 4. Thread 2 increments the 0 it read to 1, then writes that value into vc.
+
+which in pseudo code will be like
+
+```cpp
+int temp_vc1 = vc; //0
+int temp_vc2 =vc; //0
+vc =temp_vc1 +1; //1
+vc =temp_vc2 +1; //1
+```
+
+the final value of the volatile_counter is 1, even if it was incremented twice. compilers are built to assume no data races, and they re-organize code to make it optimized and run faster. having a data race together with the compiler optimizations can lead to unexpected behavior.
+
+it isn't only the case of RMW that _std::atomic_ work and _volatile_ variable fail. this can also happen if we tried using a _volatile_ variable as a flag in inter-thread communication
+
+```cpp
+volatile bool valueAvailable(false);
+auto importantValue =computeImportantValue();
+valueAvailable = true;
+```
+
+while the programmer assumes this code is fine because the flag is set only after the important value is computed, but the compiler only sees two assignments which are independent from one another, so it can reorder them, or the hardware can reorder them. had we used an _std::atomic_ variable, things would have been different.
+
+```cpp
+std::atomic<bool> valueAvailable(false);
+auto importantValue =computeImportantValue();
+valueAvailable = true;
+```
+
+in this case, the compiler must create code in which anything before the assignment to the atomic variable must happen before, and anything afterwards must happen afterwards, the code is parted around the assignment. the compiler must also generate the machine code in a way that the hardware can't reorder the commands. (this is called _sequential consistency_, there are other models of consistency that are used for other cases).
+
+#### _volatile_ Variables are for Special Memory Addresses
+
+so, _volatile_ isn't good for operation atomicity or for code reordering, so what are they used for?
+
+> "In a nutshell, it’s for telling compilers that they’re dealing with memory that doesn’t behave normally"
+
+normal memory has values, and those values remain there unless the program changes them. so as long as the compiler can see who changes the values and who reads from them, it can optimize and reorder them as it pleases. so if we write to a memory address, never use the value, and then write to it again, a compiler might eliminate the first write.
+
+```cpp
+auto a = 5;
+auto b = 9
+auto c = b;
+
+//... do stuff without a and without changing b or c
+c=b; //c
+a= 10; // change a's value
+foo(a); // use a
+```
+
+a smart compiler would see that the first value of a is never used, so it will drop the instruction, and also that if b and c aren't changed, the second assignment is meaningless. these pointless read and writes are called _'redundant loads'_ and _'dead stores'_. and although human programmers don't write code like this directly, it can be generated from templates and inlining and other compiler work. after all that work, the compiler can remove all the pointless instructions it generated.
+but this is only for normal code and normal memory. there is **special** memory that behaves differently.
+
+the most common kind of special memory is _memory-mapped I/O_, or peripherals, like a screen, a controller, a sensor, network ports, etc.... if we mapped a memory address to an i/o device, those _redundant loads_ and _dead stores_ now make sense. we read from sensors multiple times, because the sensor can change that data, and when we write to a memory location that's mapped to a peripheral, we might be issuing commands to a radio or to the screen.
+
+the _volatile_ keyword tells the compiler that we are dealing with special memory, and that it shouldn't perform optimizations on this memory address.
+
+```cpp
+volatile int x;
+auto y =x; //y is int, auto deduces away cv qualifiers. can't be optimized because volatile x is involved
+y= 9;
+y=8; //can be optimized away
+y = x; //can't be optimized because volatile x is involve
+x =10; //not optimized away
+x=20; //not optimized away
+```
+
+this is something that _std::atomic_ variables can't do, actually, even though they are guaranteed to be atomic, the compiler can remove redundant operations on them. and also, atomic variables can't be copied or moved even. if we want to initialize a new _std::atomic_ variable, we need to get value explicitly. there is also an issue with performing read and write on atomic variables that requires using the _.load()_ and _.store()_ methods.
+
+```cpp
+std::atomic<int> ai1(5);
+ai1++;
+//auto ai2 = ai1; //error!
+auto i = ai1.load(); //i is int;
+std::atomic<int> ai2(ai1.load()); //this works
+ai2.store(ai1.load()); //also works, each part is atomic, but not atomic together
+```
+
+in the above case, the compiler might decide to store the results of the load in a register rather than read them again, which wouldn't work for io mapped memory.
+
+The situation should thus be clear:
+
+> - _std::atomic_ is useful for concurrent programming, but not for accessing special memory.
+> - _volatile_ is useful for accessing special memory, but not for concurrent programming.
+
+of course, we can actually use them together, maybe a special mapped memory is used by several threads.
+
+```cpp
+volatile std::atomic<int> val;
+```
+
+some programmers suggest to always use the _.load()_ and _.store()_ methods of the _std::atomic_ variables as a way to remind other programmers that this operations are costly, and seeing too many of them is a sign of a code that going to be hard to scale up.
+
+#### Things to Remember
+
+> - _std::atomic_ is for data accessed from multiple threads without using mutexe. It’s a tool for writing concurrent software.
+> - _volatile_ is for memory where reads and writes should not be optimized away. It’s a tool for working with special memory.
+
+</details>
