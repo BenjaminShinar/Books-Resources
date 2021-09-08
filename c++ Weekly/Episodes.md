@@ -131,9 +131,9 @@ Unsigned will always be unsigned
 ## C++ Weekly - Ep 50 - Inheriting Lambdas vs Generic Lambdas
 
 Variadic template <typename ..T>
-Inheriting from lambdas with stdforward and stddecay and using
-Stdvariant<double, int>
-Stdcommon_type<double,int>
+Inheriting from lambdas with std::forward and std::decay and using
+std::variant<double, int>
+std::common_type<double,int>
 Decltype(v)
 Lambda capturing []
 std::is_same<double, decltype(v)>

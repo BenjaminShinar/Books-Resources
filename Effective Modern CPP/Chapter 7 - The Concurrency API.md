@@ -1,6 +1,7 @@
 ## Chapter 7 - The Concurrency API
 
 <summary>
+Using the correct asynchronous tool from the standard library, understating different behavior and dangers associated with each.
 </summary>
 
 C++11 is the first time that the language has integrated support for threads and concurrency, until then, multi-threading was achieved with libraries like _pthread_ or windows threads. but now, there is finally a common set of building blocks in the standard library: tasks, futures and shared_futures, threads, mutex, conditional variables, atomic objects and others.

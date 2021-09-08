@@ -30,6 +30,7 @@
     "less",
     "pimpl",
     "pthread",
+    "ptrs",
     "rbegin",
     "t",
     "templatized",
