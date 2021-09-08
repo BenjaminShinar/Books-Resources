@@ -552,3 +552,68 @@ decltype(auto) x_decl = x; // the exact type of x, so const int
 > - 'const'-ness will be deduced only for reference and pointer types. when copying by value it won't maintain const.
 
 </details>
+
+## C++ Weekly - Ep 288 - Quick Perf Tip: Prefer _'auto'_
+
+<details>
+<summary>
+Using 'auto' is good for performance by protecting us from accidental type conversions.
+</summary>
+
+[Quick Perf Tip: Prefer _'auto'_](https://youtu.be/PJ-byW33-Hs)
+
+continuing the last video for understanding the _'auto'_ keyword.
+the compiler always had to do the work of 'auto', it had to know what's returning from functions in order to do implicit casts and return type errors.
+
+_'auto'_ will never do implicit cats. it will deduce const-ness (for reference and pointers), but will never perform a conversion.
+if we don't have the _-Wconversion_ compiler turned on, we won't know that we might be doing something silly.
+it really can come into play when iterating over a map or set. the key are const, if we forget to specify that we might cause a constructor call each iteration to construct the pair, just because we forgot to write const somewhere.
+_std::pair_ has an implicit conversion to change const-ness for the members.
+
+```cpp
+#include <map>
+const std::string &get_ref();
+const std::string &get_ref2();
+const char* get_str(){return "Hello World! or some other really long string to avoid optimizing";};
+const std::map<std::string,std::string> & get_date();
+int main()
+{
+    //int i = get_ref() + get_ref2();// can't do this, can't convert string + string to int
+    auto s; = get_ref() + get_ref2(); //what the difference for the compiler if it's auto or std::string?
+    std::string s1 = get_str(); //legal, compiles, but causes an implicit cast, a std::string was constructed here.
+    auto s2 = get_str(); //no type conversion.
+    std::string someString;
+    const int stringLen = someString.size(); //another conversion! from std::size_t (unsigned 64bit) to int (signed 32bit)
+
+    for (const std::pair<std::string, std::string> & elem : get_data())
+    {
+        //do something/
+        // OOPS! we create a temporary pair! 100 lines of instructions just to create the copy of the pair!
+        // binds to temporary rvalue
+    }
+
+    for (const std::pair<const std::string, std::string> & elem : get_data())
+    {
+        //do something/
+        // now we are ok! we actually use a reference, back to no extra work
+    }
+
+    for (const auto & elem : get_data())
+    {
+        //do something/
+        // now we are ok! we can't have an accidental type conversion. we might get an accidental copy if we don't specify a reference.
+    }
+    for (const auto & [key,value] : get_data())
+    {
+        //do something/
+        // c++17 structured binding! very easy with auto!
+    }
+}
+```
+
+> - _'auto'_ uses the same rules as template type parameters.
+> - _'auto'_ will never deduce a reference.
+> - 'const'-ness will be deduced only for reference and pointer types. when copying by value it won't maintain const.
+> - _'auto'_ will never never perform a conversion.
+
+</details>
