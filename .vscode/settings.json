@@ -43,5 +43,6 @@
     "up",
     "vals",
     "wchar"
-  ]
+  ],
+  "cSpell.allowCompoundWords": true
 }

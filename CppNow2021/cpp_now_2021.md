@@ -2,7 +2,7 @@
 
 [CppNow 2021 conference lectures](https://youtube.com/playlist?list=PL_AKIMJc4roXvFWuYzTL7Xe7j4qukOXPq)
 
-## Keynote: CMake: One Tool To Build Them All - Bill Hoffman [ CppNow 2021 ]
+## Keynote: CMake: One Tool To Build Them All - Bill Hoffman
 
 <details>
 <summary>
@@ -316,7 +316,7 @@ wishlist
 
 </details>
 
-## The C++ Rvalue Lifetime Disaster - Arno Schödl - [CppNow 2021]
+## The C++ Rvalue Lifetime Disaster - Arno Schödl
 
 <details>
 <summary>
@@ -564,7 +564,7 @@ how it would look with a pragma change. we would need a feature test macro, repl
 
 </details>
 
-## A Crash Course in Unicode for C++ Developers - Steve Downey - [CppNow 2021]
+## A Crash Course in Unicode for C++ Developers - Steve Downey
 
 <details>
 <summary>
@@ -668,3 +668,133 @@ what might be in the future, c++23 and c++26 are what they hope to achieve.
 | C++26   | Algorithms with ranges     |
 
 </details>
+
+## How to: Colony - Matthew Bentley
+
+<details>
+<summary>
+Explaining how the current plf::colony container works. it might become part of the standard library.
+</summary>
+
+[How to: Colony](https://youtu.be/V6ZVUBhls38)
+
+this talk is about a data structure called **Colony** that is int the process of being added to the standard.
+
+[PlfLib - Some Header-only libraries](https://plflib.org/)
+
+the main thing about it is that it maintains pointers/iterators/reference integrity.
+
+> use scenarios
+>
+> - you have a lot of unordered data and you're erasing/inserting on the fly.
+> - you have multiple collections of interrelated data.
+> - preserving the pointer/iterator validity of non-erased elements is important
+
+started from the design of a game, entities that have bidirectional references and many interrelationships, with a lot of inserting and creating entities which link to one another.
+
+an existing solution is a 'bucket array' and entries can be active or inactive to determine if they're processed or not.
+
+### Core Aspects
+
+> Three Core Aspects
+>
+> 1. A collection of element memory blocks + metadata, to prevent reallocation during insertions (as opposed to a single memory block).
+> 2. A method of skipping erased elements in O(1) time during iterations (as opposed to reallocating subsequent elements during erasure, or doing individual allocation of elements)
+> 3. An erased-element location recording mechanism, to enable the re-use of memory from erased element in subsequent insertions, which in turn increases cache locality and reduces the number of block allocations/de-allocations.
+
+Avoid reallocations to avoid invalidating iterators/pointers/references. Reuse memory locations that have been erased, keep the data together for cache locality.
+
+A collection of element memory blocks + metadata
+
+> - Can do linked list of blocks, or vector of pointers to blocks.
+> - Blocks have growth factor, so can not do vector of blocks.
+> - Minimum/Maximum block capacities can be user-defined.
+> - Can house block metadata separately, or together in a struct.
+> - Metadata includes skip-field of other erasure-skipping mechanism, and any data related to erased-location recording.
+> - Necessary metadata:
+>   - size - to remove blocks once empty.
+>   - capacity - to ascertain end-of-block.
+
+we remove empty blocks to maintain iteration at O(1). but we can retain them as reserved blocks for later use.
+
+considerations about which block to retain.
+A method of skipping erased elements in O(1)
+
+> Definitions:
+>
+> - LCJC:'low complexity jump-counting'.
+> - HCJC:'high complexity jump-counting'.
+> - Block: a colony's element memory block.
+> - Skipfield: an array of intgers of bits used to skip over certain object in an accompanying data structure during iteration. Separate from the elements.
+> - Skipblock: a run of skipped nodes within a skipfield.
+>   - Start node: the first node in any skipblock.
+>   - End node: the last node in any skipblock.
+>   - Middle node: any non start/end node in skipblock.
+
+booleans SkipFields are good because they simple, and might be usefull for multi-threaded environments (atomics, etc). they are prolemeatic because they aren't constant time (not O(1)), cause branching and latency.
+
+low and high complexity jump counting:
+time-complexity of algorithms differs for modification of fields, but both have O(1) for iteration.
+HCJC allows recording of middle nodes, LCJC doesn't allow.
+
+> acronym "Theyaton" - Traversing Homogenus Elements Yielding Amortised Time O(n).
+
+> boolean skipfield example
+> 0 0 0 1 1 1 1 1 1 0 0 0
+> equivalent HCJC
+> 0 0 0 6 2 3 4 5 6 0 0 0
+> the 6's are the start and end nodes. the other numbers are Middle nodes.Start and End record the length of runs of erased elements. Middle node record left distance to first non erased element.
+
+```
+// skipping
+++i;
+i +=S[i];
+```
+
+> equivalent LCJC. multiple forms.
+> 0 0 0 6 2 6 7 3 6 0 0 0
+> 0 0 0 6 0 0 0 0 6 0 0 0
+> 0 0 0 6 0 5 2 1 6 0 0 0
+
+The middle nodes are ignored and have no meaning. The start and end nodes record the skip length.
+good for recording and re-using skipblocks rather than individual skipped nodes. lower time complexity O(1) in all operations, where as HJCJ can have undefined time complexity, fewer instructions overall.
+
+```
+// skipping
+do {
+    ++i;
+} while(S[i] == 1);
+```
+
+we can have per-memory-block skip fields or global skipfields. global skipfields can create problems of reallocation (invalidating iterators and causing latency). the bit-width of the skipfield must be able to describe the memory block, so it must be about the same size (capacity -1),
+
+possible ideas with skipfields:
+
+- using two 8 skipblocks instead of 16 bit skipblocks. forces some computations.
+- using a boolean bitfield and storing the skipdata instrad of the elements. forces more memory reads.
+
+colony once used a stack of pointers, which was problematic because it meant creating memory allocation during erasure, which is not up to the standarts.
+
+**"Free List"**
+
+> Linked list of erased elements (typically singly-linked) using erased element memory space reinterpert_cast'd via pointers as linked list nodes.
+> requires over-alignment of the type to the width of a free list node.
+> per-block (not global) free-lists reduce bit depth.
+> a global free-list must use pointers (not indexes),also causes O(N) when erasure.
+
+effect of removing a block requires something with the skip-block. something about doubly-linked free list.
+
+summary of the current implementation, the container structure and the iterator structure.
+
+example with a blackboard.
+
+extra operations:
+
+- advance/next/prev/distance/range-erase optimization.
+- range/fill/initializer_list insert/assign optimization.
+- splicing.
+- sorting.
+
+</details>
+
+##
