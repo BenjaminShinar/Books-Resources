@@ -138,11 +138,11 @@ Decltype(v)
 Lambda capturing []
 std::is_same<double, decltype(v)>
 Constexpr
-Stdvisit
+Std::visit
 
-Stdcommon_type<decltyype(somename)> varname = 0;
+Std::common_type<decltyype(somename)> varname = 0;
 
-If (stdis_same<double,decltype(v)>{})
+If (std::is_same<double,decltype(v)>{})
 {
 }
 Else
@@ -155,7 +155,7 @@ Mutable
 std::exchange(a,b);
 Local class inside lambda, lambda capture list
 
-Return a struct with refernces to the capture list, and have it be modifiable from outside
+Return a struct with references to the capture list, and have it be modifiable from outside
 
 ## C++ Weekly - Ep 52 - C++ To C Compilation
 
@@ -615,5 +615,51 @@ int main()
 > - _'auto'_ will never deduce a reference.
 > - 'const'-ness will be deduced only for reference and pointer types. when copying by value it won't maintain const.
 > - _'auto'_ will never never perform a conversion.
+
+</details>
+
+## C++ Weekly - Ep 289 - Returning From The 'void'
+
+<details>
+<summary>
+We can return the result of a void() function.
+</summary>
+
+[Returning From The 'void'](https://youtu.be/26PtAmYk12M)
+
+we can have function that don't return anything (void return type). and we can nest those function calls and return their results. this is legal.
+
+```cpp
+void do_something();
+void do_something_else();
+
+void func(int i)
+{
+    switch(i)
+    {
+    case 0: return do_something();
+    case 1: return do_something_else();
+    }
+}
+```
+
+we can do auto type deduction. and decltype(auto) for "perfect returning"
+
+```cpp
+void fooVoid();
+int fooInt();
+int & fooIntReferenc1();
+const int & fooIntReferenc2();
+
+auto call(auto f) //maybe should be decltype(auto)
+{
+    return f();
+}
+
+call(fooVoid);
+call(fooInt);
+call(fooIntReferenc1); //what is the return type?
+call(fooIntReferenc2); //what is the return type?
+```
 
 </details>
