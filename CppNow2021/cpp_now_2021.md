@@ -1590,3 +1590,291 @@ but EBO (empty base optimization) doesn't play nice with 'final'.
 the book will be out in the future, check [this page](https://vittorioromeo.info/emcpps.html)
 
 </details>
+
+## Code Analysis++ - Anastasia Kazakova
+
+<details>
+<summary>
+Static analyzers, Tools to make our code better.
+</summary>
+
+[Code Analysis++](https://youtu.be/qUmG61aQyQE)
+
+### Software Quality
+
+not having bugs, readability, maintainability, extendability, scaleability
+
+> - a trade-off between quality and cost of development.
+> - external vs internal quality
+>   - external - features, performance.
+>   - internal - architecture.
+
+Developers frustration points: \
+What developes care about and worry about.
+Style
+
+look at this code, what does it do? it just constucrts an int from the number 42.
+
+```cpp
+template <class T, int ...X>
+T pi (T(X...));
+int main
+{
+    return pi<int,42>;
+}
+```
+
+if we have 10 ways to do one thing in the language, then our code base might use all ten ways.
+certification process.
+
+Undefined Behavior
+
+> - Data races.
+> - Memory accesses outside of array bounds.
+> - Signed integer overflow.
+> - Null pointer dereference.
+> - Access to an object through a pointer of a different type.
+> - etc...
+
+NDR - no diagnostic required - some code is illformed, but no warnings or errors.
+
+> **"Compilers are not required to diagnose undefined behavior"**
+
+### Code Analysis suggestions
+
+improve software quality, lower develop frustration, avoid undefined behavior. \
+getting help from the language, the lifetime safety suggestions for diagnostics with or without annotations. contracts, assertions (pre and post conditions),parameter passing semantics (in/in-out/out/move/forward). we do something in the code to help an external tool know what to look for.
+
+| Language & Compiler                               | Stand-alone analyzer                       |
+| ------------------------------------------------- | ------------------------------------------ |
+| core tool - hard to update                        | side tool, any adopted by tht team is ok   |
+| code base might require specific compiler version | no strong requirement for analyzer version |
+| set of checks is defined by compiler vendor       | custom checks are possible                 |
+| standard to everyone                              | depends on the tool                        |
+
+### Tooling
+
+software quality: how to
+
+> pre-compilation stage
+>
+> - Refactoring
+> - Pair programming
+> - Static analysis
+>
+> post-compilation state
+>
+> - Static analysis
+> - Unit testing
+> - Dynamic analysis
+> - Code review
+> - Other Testing
+
+static analysis can happen before compilation and after it.\
+we can get some help from the compiler with flags
+
+> - -Wall
+> - -Wextra
+> - -Wsign-compare
+> - -Wsizeof-pointer-memeacess
+> - -Wmisleading-indentation
+
+comparision between using the compiler and an external tool
+
+| Compiler checks                                | Stand-alone analyzer                 |
+| ---------------------------------------------- | ------------------------------------ |
+| Checks the code **after it's written**         | Check code **while writing** it      |
+| Analysing the code with the proper fags / vars | Should use compilation flags & env   |
+| Using specific compiler                        | Can get checks from other compilers  |
+| Different compiler flags                       | Checks are independent from compiler |
+
+lifetime safety
+
+```cpp
+std::string get_string();
+void dangaling_string_view()
+{
+    std::string_view sv =get_string();
+    auto c = sv.at(0);
+}
+
+void dangling_iterator()
+{
+    std::vector<int> v = {1,2,3};
+    auto it = v.begin();
+    *it = 0;
+    v.push_back(4);
+    *it = 0;
+}
+```
+
+gsl suggest annotations for owner, pointers, etc...
+
+> **gsl: guideline support library**
+
+### Data Flow Analysis (DFA)
+
+static analyzers can catch incoherent data flow, like in this example: \
+this example uses multiple assignment with the comma operator, but the important thing is that the second if statemt is always true. static analyzers can find things like this
+
+```cpp
+enum class Color {Red, Blue, Green, Yellow};
+void do_shadow_color(int shadow)
+{
+    Color cl1,cl2;
+    if (shadow)
+    cl1= Color::Red, cl2= Color::Blue;
+    else
+    cl1= Color::Green, cl2= Color::Yellow;
+    if (cl1 == Color::Red || cl2 == Color::Yellow)
+    {
+        //... always executed
+    }
+
+}
+```
+
+and it can also detect code like this, where we dereference a deleted pointer
+
+```cpp
+void linked_list::process()
+{
+    for (node *pt = head; pt!= nullptr; pt= pt->next)
+    {
+        delete pt;
+    }
+}
+```
+
+we can also do global data flow analysis, rather than just in the scope of a function or a code block. like seeing that we deallocate inside a function but then dereference the pointer.
+
+```cpp
+static void delete_ptr(int* p)
+{
+    delete p;
+}
+
+int handle_pointer()
+{
+    int *ptr = new int;
+    delete_ptr(ptr);
+    *ptr = 1; // local variable may point to deallocated memory
+    return 0;
+}
+```
+
+it's quite hard to do global static analysis on the entire program, so it's mostly contained into translation unit. we distinguish between private entities (entire operations happen in the translation unit, only called from this unit), and 'unsafe entities', which involve multiple translation units.
+
+we can use data flow analysis to identify
+
+> Local issues:
+>
+> - Constant conditions.
+> - Dead code.
+> - Null dereference.
+> - Dangling pointers.
+> - Endless loops.
+> - Infinite recursion.
+> - Unused values.
+> - Escape analysis (local memory being returned).
+>
+> Global issues (limited to translation unit):
+>
+> - Constant function result.
+> - Constant function parameters.
+> - Unreachable calls of function.
+
+some parts of this have been included in CLion.
+
+in the future there might be cross translation unit (CTU) analysis.
+
+### Core Guidelines Issues
+
+> "Within C++ is a smaller, simpler, safer language struggling to get out."
+> --Bjarne Strostrup
+
+we want the tools to enforce us to follow the guidelines, if it's possible. some guidelines are toolable, some aren't worth the work, some require changes to the language, and some are completely not toolable.
+
+for example, the following two guidelines are fairly easy to identify and write enforcements for.
+
+> Toolable guidelines:
+>
+> - F.16: "For "in" parameters, pass cheaply copied types by value and others by reference to const"
+>   - E1: Parameter being _passed by value_ has a _size > 2\*sizeof(void\*)_ -> suggest reference to const.
+>   - E2: Parameter being _passed by reference to const_ has a _size < 2\*sizeof(void\*)_ -> suggest passing by value.
+>   - E3: Warn when a parameter _passed by reference to const_ is _moved_.
+> - F.43: "Never (directly or indirectly) return a pointer or a reference to a local object"
+
+however, other guidelines aren't so easy. even if we can identify them somehow, it's harder to decide what to do with them.
+
+> Less toolable guidelines
+>
+> - F.1: ""Package" meaningfull operations as carefully names functions"
+>   - Detect identical and _similar_ lambdas used in diffrent places.
+> - F.2: "A function should preform a single logical operation"
+>   - More than one 'out' parameter or more than six parameters are suspicious.
+>   - Rule of one screen - 60 lines by 140 characters.
+> - F.3: "Keep functions short and simple"
+>   - Rule of one screen?
+>   - Cyclomatic complexity of more than 10 logical paths.
+
+it's hard to find duplicate code, there are some tools, but again, there are many ways to do the same things, and we would want the tool to identify them.
+
+there a guidelines that might be possible to enforce, but it isn't necessarily a smart idea, maybe the compiler can do this better, and maybe these decisions should be left to the programmer. the tool shouldn't decide for us, even if we didn't think about it. changing API shouldn't be done by a tool.
+
+> Guidelines that might not be worth the effort to make toolable
+>
+> F.4: "If a function might have to be evaluated at compile time, declare it constexpr"
+> F.5: "If a function is very small and time-critical, declare it inline"
+> F.6: "If your function may not throw, delcare it noexcept"
+
+core guidelines tools and static analyzers tool are available and some are open sourced. there might even be _too many_ options for normal projects. using too many tools and checks create noise.
+we can opt in or opt out for checks, in **Clang-Tidy** its either take all the checks except some, or take only some checks.
+
+```clang
+*, <disabled-checks>
+-*, <enabled-checks>
+```
+
+we can have additional checks, like LLVM coding standard, embedded programming checks, MISRA/AUTOSAR for security, and others
+
+MISRA
+
+we can have a diffrent set of operations for development stage and when we release the process.
+
+| Development stage                         | Certification stage               |
+| ----------------------------------------- | --------------------------------- |
+| Good to have                              | Must have                         |
+| Low costs                                 | High costs                        |
+| Flexible set of checks, detailed messages | Defined checks and error messages |
+| Checks + Quick-fixes                      | Rule violations messages only     |
+
+several standards and sets of guidelines exist (core, MISRA,CERT), and most of them have similar items and recomendations.
+
+### Style and Naming
+
+we also have tools for naming and styles, some of them can live on the build tool chain.
+clang format, for example, there are cases when it breaks compatibility, and it has a fuzzy parsing.
+
+Naming is hard
+
+naming conventions require a proper 'renaming' tool.
+
+- camelCase, PascalCase, SCREAMING_SNAKE_CASE
+- google style, llvm style, unreal engine conversions.
+
+syntax style, can the tool enforce this?
+
+- east const, west const.
+- when is auto used.
+- trailing return type, when to use.
+
+an idea for the future:
+how to reduce the noise generated by the tools? we can use "game-ify" the tool to motivate us, like create levels of required actions (beginner level, advanced level) to decompose the problem. we can added motivation units (points, score, whatever). it's better to show issues as call to action points than as a list of problems. Team collaborative work is always helpful
+
+### Questions and comments
+
+> "Code analysis only works when it's enforced by tools" - people don't like using external tools that just make the work harder. if we aren't enforcing the checks, they won't be used.
+> "Why are there so many standards?" - because different industries
+
+</details>
