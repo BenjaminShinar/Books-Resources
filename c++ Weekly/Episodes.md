@@ -663,3 +663,24 @@ call(fooIntReferenc2); //what is the return type?
 ```
 
 </details>
+
+## C++ Weekly - Ep 290 - C++14's Digit Separators and Binary Literals
+
+<details>
+<summary>
+Binary literals, digit seperators
+</summary>
+
+[C++14's Digit Separators and Binary Literals](https://youtu.be/Yop9D3V2KBk)
+
+binary literals to denote binary numbers and digit seprators to make code more readable.
+
+```cpp
+auto b = 0b11101;
+//auto b = 0b11121;
+auto o = 0x1A7'D4;
+auto b2=0b1110'1110;
+auto d=100'000;
+```
+
+</details>
