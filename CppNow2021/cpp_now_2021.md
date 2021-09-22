@@ -2176,3 +2176,82 @@ we want to inline, rearrange and inspect functions code, and virtual functions a
 we might be able to use variant and std::visit() to get better de-virtualization. if we have a different implementaition of visit (without a jump table), we could get a much better performace.
 
 </details>
+
+## Windows, MacOS and Web: Lessons from Cross-Platform Development @ think-cell - Sebastian Theophil
+
+<details>
+<summary>
+Challenges for cross platform code.
+</summary>
+
+[Windows, MacOS and Web: Lessons from Cross-Platform Development @ think-cell](https://youtu.be/Cmud1jO__VA)
+
+they started with a library that was developed in windows environment,it was a plug-in, and therefore, dynamically loaded and not in control of the entire process, many shared resources.
+they
+
+> "need a cross-platform toolkit that hides platforms specifics and **behaves identically** on different platforms"
+
+(if such things can exists)
+
+> Agenda
+>
+> 1. Levels of Abstraction: Hiding Platform Specifics
+> 2. Kernel Object Lifetimes: Interprocess Shared Memory
+> 3. Common Tooling I: Text Internationalization
+> 4. Common Tooling II: Error Reporting
+> 5. Moving to WebAssembly
+
+### Levels of Abstraction: Hiding Platform Specifics
+
+platform independent c++?
+there are easy cases, like rendering, http requests (with the system API), child process and setting IO pipes. theses cases can be
+
+> "Clearly defind as '**data In, data Out**'"
+
+but even these cases can be difficult to make true platfrom indpendent, like direct call to rename/move files, which has different behavior flag for windows and macOs.
+
+consider what the function really does and what it needs, what is the purpose of the function? if we know the "Why" - the reasoning for the function (what the user tries to achieve), we can tailor the "How" - what do we call in each platform. we don't simply route the arguments to the OS system call.
+
+creating a file that is automatically deleted by the OS when the system closes (even at crush) but while it's alive it can be used by other processes. this behavior can be easily down on windows, but not on Mac, so maybe we need to rethink the 'how', and use a sqlite database for this in macOS, rather than file.
+
+> - cross platform interfaces need to have well-defined, strong semantics.
+> - weak semantics lead to subtle errors.
+>   - Warning Sign: Having to look at the implementation.
+> - Strong semantics increase DoF (degrees of freedom) for the implementor.
+> - Too high-level.
+>   - missed chance to unify code. Rare, we are lazy.
+> - Too low-level.
+>   - You'll force identical interfaces on very different things.
+>   - semantics don't match operating system (_QFile::setPermissions_).
+>   - or you'll loose a lot of expressiveness (_rename_).
+
+### Kernel Object Lifetimes: Interprocess Shared Memory
+
+boost and other libraries solve some of the problems for us, but sometimes we can to better.
+
+boost offere interprocess communication tools, different shared memory behavior for windows and mac, windows cleans up, Posix can keep files alive for a long while. there are Robust Mutexes, file locking.
+
+### Common Tooling I: Text Internationalization
+
+a tool for text internationalization: translating, numbers formats.
+text, context, plurality forms, what we wants.
+
+[Boost.Locale] (https://www.boost.org/doc/libs/1_51_0/libs/locale/doc/html/main.html) was added in 2018 (boost 1.67), which supports tranlation by creating a catalog of transaltion, in boost it's runtime, in their implementation they try to make it constexpr. we don't want to read a file from disk, it's dangerous, we rather link the translations as part of the program.
+
+> reminder about constexpr
+
+strong and identical semantics can also refer to external tools in the build process.
+
+### Common Tooling II: Error Reporting
+
+dumping stack data to file, different for windows and Unix. they have an error report system that sends error to the backend and tries to identify the error. but file formats for dumps are different, and it needs to be standardized.
+macOS allows to send access permissions to other processes.
+
+### Moving to WebAssembly
+
+the products ships with chrome extensions and webapp. they tried to use TypeScript (not JavaScript). but they weren't able to share data with c++. using C++ was typeunsafe because it lacked wrappers for JavaScript. so they built something of their own.
+it's called 'Defiantly typed", and they have 'typescriptem'. which creates type safe c++ that does JavaScript.
+
+in typescript, decleration order doesn't matter. so there needs to be some dependency list. typescript has non-integer enums, so they created a marshal enum template, and they had to create function callbacks.
+
+</details>
