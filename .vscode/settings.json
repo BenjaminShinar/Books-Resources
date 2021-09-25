@@ -24,6 +24,7 @@
   ],
   "cSpell.ignoreWords": [
     "Amortised",
+    "Andrzej",
     "Asynchronicity",
     "Bazel",
     "Bjarne",
@@ -31,6 +32,7 @@
     "Gábor",
     "Horváth",
     "Kitware",
+    "Krzemieński",
     "Lakos",
     "Mateusz",
     "O'Dwyer",
@@ -42,6 +44,7 @@
     "Theophil",
     "Vittorio",
     "Xclang",
+    "cassert",
     "ccmake",
     "conio",
     "cplusplus",
