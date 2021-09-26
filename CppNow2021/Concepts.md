@@ -1,8 +1,12 @@
+<!--
+// cSpell:ignore Andrzej Krzemieński cassert
+ -->
+
 ## So You Think You Know How to Work With Concepts? - Andrzej Krzemieński
 
-<!-- <details> -->
+<details>
 <summary>
-
+a different perspective on concepts and some issues
 </summary>
 
 [So You Think You Know How to Work With Concepts?](https://youtu.be/IUPaAcIk1Us), [Slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/andrzej_concepts.pdf)

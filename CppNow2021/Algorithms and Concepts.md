@@ -1,3 +1,8 @@
+<!--
+ignore these words in spell check for this file
+// cSpell:ignore Gábor Horváth
+-->
+
 Algorithms
 
 ## Algorithms from a Compiler Developer's Toolbox - Gábor Horváth

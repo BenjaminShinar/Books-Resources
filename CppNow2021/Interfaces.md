@@ -1,3 +1,8 @@
+<!--
+ignore these words in spell check for this file
+// cSpell:ignore O'Dwyer Theophil conio
+-->
+
 Interfaces
 
 ## When Should You Give Two Things the Same Name? - Arthur O'Dwyer

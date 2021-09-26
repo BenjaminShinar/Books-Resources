@@ -1,3 +1,8 @@
+<!--
+ignore these words in spell check for this file
+// cSpell:ignore ostringstream ptrdiff_t
+ -->
+
 Type Design
 
 ## How to: Colony - Matthew Bentley
@@ -423,5 +428,482 @@ compilers can use PGO (profilers guided optimizations) or LTO (link time optimiz
 we want to inline, rearrange and inspect functions code, and virtual functions aren't great for that.
 
 we might be able to use variant and std::visit() to get better de-virtualization. if we have a different implementaition of visit (without a jump table), we could get a much better performace.
+
+</details>
+
+## Simplest Strong Typing Instead of Language Proposal ( P0109 ) - Peter Sommerlad
+
+<!-- <details> -->
+<summary>
+
+</summary>
+
+[Simplest Strong Typing instead of Language Proposal](https://youtu.be/ABkxMSbejZI), [slides](https://github.com/PeterSommerlad/talks_public/raw/master/C%2B%2Bnow/2021/SimplerStrongTypes-handout.pdf), [Peter Sommerlad's Simple Strong Typing](https://github.com/PeterSommerlad/PSsst)
+
+"Type-Errors are less likely than many other types of errors. This is why strong types are worthwhile."
+
+strong types capture errors in compile time, so in C++ the problem don't reach the field. built-in types have dangerous implicit conversions.
+
+motivations:
+
+> - Order of argument bug prevention.
+> - Communicate and check semantics of values.
+> - Limit operations to useful subset.
+
+### Order of Arguments
+
+function that takes arguments of the same type,
+
+we should use VOP - value oriented programming.
+
+Whole Value Pattern
+
+[CHECKS pattern language](http://c2.com/ppr/checks.html), PeterSo
+
+> "Because bits, strings and numbers can be used to represent almost anything, any one in isolation means almost nothing".
+>
+> - Instead of using built-in types for domain values, provide value types wrapping them.
+> - Define values types and use these as parameters
+> - Provide only useful operations and functions
+> - Include formatters for input and outpit
+> - Do not use string or numeric representations of the same information.
+
+strong typing is already available in all sorts of frameworks. all kinds of naming issues.\
+c++17 aggregate initialization allow to avoid all sorts of issues.\
+c++20 helps us with the spaceship operator<=> and constraints.
+
+limit the useful operations:
+
+prevent accidental expression errors.\
+for example, a strong type of distance (underlying integer) can be multiplied by a factor or we can added two distances together, but we can't meaningfully multiple distance by distance and get a distance back (we can get area).
+
+only useful operations\
+this mess of code is legal:
+
+```cpp
+ASSERT_EQUAL(42.0,7. *((((true << 3) *3) % 7 )<< true)); //
+```
+
+c++ has too many operations allowed for built-in types, and they can be called via **integral promotion** and **implicit arithemetic conversions**. when we use the built-in types, we can unintentionally call on them, this is basically the issue of comparing apples to oranges. we can add apples to apples (two apples plus one apples is three apples), but adding apples and oranges doesn't have a meaning (two apples plus one orange is still two apples and an orange), nor does multiplying appels by appels.
+
+```cpp
+int appels = 2;
+int oranges = 5;
+auto r1 = appels * 2; //legal, makes sense. twice as many appels
+auto r2 = appels +5; //legal, makes sense. five more apples
+auto r3 = appels * appels; //legal, but doesn't make sense, what is apples times apples
+auto r4 = appels + oranges;//legal, but doesn't make sense, adding apples to oranges
+```
+
+the P0109 paper\
+Function aliases + Extended inheritance = Opaque typedefs (a.k.a strong types)
+
+some goals that didn't make it into PSsst,
+
+simple example of P0109, a simple opaque int type and and opaque energy strong type.
+
+```cpp
+using opaqueTypeInt = public int {
+    opaqueTypeInt operator+(opaqueTypeInt o) {return opaqueTypeInt{+int{0}};}
+};
+opaqueTypeInt o1 = 16;
+auto o2 = +o1; //o2 is of type opaqueTypeInt
+
+using energy = protected double
+{
+    energy operator+ (energy, energy) = default;
+    energy& operator*= (energy, double) = default;
+    energy operator* (energy, energy) = delete;
+    energy operator* (energy, double) = default;
+    energy operator* (double, energy) = default;
+};
+
+energy e{1.23}; //ok, explicit
+double d{e}; //ok, explicit
+d=e; //error! protected disallows implicit type adjustments here
+e=e+e; //ok, sum has type energy
+e=e*e; // error, call to a deleted function
+e *= 2.71828; //okay
+```
+
+visibility defines convertibility.
+limiting operator defintions.
+we can have opaque types recursive chain, sort of like inheritance.
+
+peter has comments on the paper, liked it at start, but had some reservations,
+
+### Simpest Strong Type
+
+the simplest thing to use is struct with value.
+
+```cpp
+struct literGas{
+    double value;
+}
+struct kmDriven
+{
+    double value;
+}
+
+double consumption(literGas liter, kmDriven km)
+{
+    return liter.value/(km.value/100);
+}
+```
+
+this helps, but because of aggregate initialization, we can run into issues when a struct is wrongly initiated.
+
+```cpp
+void demonstrateStrongTypeProblem()
+{
+    literGas consumed{40};
+    kmDriven distance{500};
+    ASSERT_EQUAL(8.0,consumption(consume, distance)); //great.
+    ASSERT_EQUAL(8.0,consumption({500}, {40})); //oops! braced initialization! wrong again!
+}
+```
+
+but if we want to return another strong type (different struct), we need more and more boilerplate code. we write a lot of code for comparison, and then we might need more operators for i/o...
+
+lets try to eliminate duplication. we can use generics
+
+function template
+
+```cpp
+template <typename T>
+std::ostream& operator <<(std::ostream & out, const T & val)
+{
+    return out << val.value;
+}
+```
+
+> issues
+>
+> - Must be in the namespace of value classes for ADL
+> - May be selected by too many classes (concept might help)
+> - Assumes specific public member variables.
+
+we can use CRTP - curiously recurring template parameters pattern.
+
+```cpp
+template <typename derived>
+struct base{
+//...
+};
+struct X : base<X>{};
+struct Y : base<Y>{};
+```
+
+used for mix-ins, but we can't constrain derived because it's incomplete. c++17 allows derived class to remain an aggregate.
+
+usage: friend functions are instantiated when used, in c++17 we can use structured binding to take the single public member function()
+
+```cpp
+template <typename OutType>
+struct Out
+{
+    friend std::ostream& operator<<(std::ostream & out, const OutType &r)
+    {
+        return out<<r.value; //must be called value
+    }
+};
+
+struct Literper100km: Out<literper100km> //crtp patten
+{
+    double value;
+};
+
+template <typename OutTypeSingleValue>
+struct Out17
+{
+    friend std::ostream& operator<<(std::ostream & out, const OutTypeSingleValue &r)
+    {
+        auto const & [v]=r;  //structured binding name doesn't matter, as long as it's the only public member value and has defined output operator.
+        return out<<v;
+    }
+};
+```
+
+Structured bindind
+
+```cpp
+auto [x,y] = f_returningStruct();
+```
+
+> - Decompose aggregates on the fly.
+>   - _struct_, _std::tuple_, _std::pair_.
+> - Number of names in the bracket [] = Number of data members / array elements.
+> - Usually _auto_ or _const auto &_.
+>   - Might get lifetime extentsion
+> - _auto &_ only if function return lvalue reference.
+> - not possible yet - parameter pack
+>   ```cpp
+>   auto [x...] =f();
+>   ```
+
+example for a crtp pattern with structured bindings and type parameters. requires naming convetions for prefix and suffix.
+
+```cpp
+template <typename OutPreSuffix>
+struct OutStructured
+{
+    friend std::ostream& operator<<(std::ostream & out, const OutPreSuffix &r)
+    {
+        if constexpr(detail_::has_prefix<OutPreSuffix>{})
+        {
+            out << OutPreSuffix::prefix;
+        }
+        const auto &[v]=r;
+        out <<v;
+        if constexpr(detail_::has_suffix<OutPreSuffix>{})
+        {
+            out << OutPreSuffix::suffix;
+        }
+        return out;
+    }
+};
+struct literPer100km:OutStructured<literPer100km>
+{
+    double value;
+    constexpr static inline auto prefix ="consumption ";
+    constexpr static inline auto suffix =" 1/100km";
+};
+
+void demo_output_crtp()
+{
+    literPer100km consumed{{},9.5};//ugly see later
+    std::ostringstream out{};
+    out << consumed;
+    ASSERT_EQUAL("consumption 9.5 1/100km",out.str());
+}
+```
+
+detection idiom
+
+```cpp
+template <typename T,typename=void>
+struct has_prefix
+    : std::false_type{};
+
+template <typename T>
+struct has_prefix<T,std::void_t<decltype(T::prefix)>> // actual check
+    : std::true_type{};
+
+// same for suffix
+
+//actually does
+decltype(std::declval<std::ostream&>() << T::prefix>>)
+```
+
+in c++20 we have concepts,
+
+```cpp
+template <typename T>
+concept has_suffix = requires (T t){T::suffix;};
+//probably needs also to check for << operator of suffix
+```
+
+we had a boiler plate comparison in out struct before.\
+in cpp+17 we do with Mix-in comparison. Equality should never compare different strong types.
+
+```cpp
+template <typename T>
+struct Eq{
+    friend constexpr bool operator==(const T & lhs, const T & rhs) noexcept
+    {
+        auto const &[lhs_value] = lhs;
+        auto const &[rhs_value] = rhs;
+        return (lhs_value ==  rhs_value);
+    }
+    friend constexpr bool operator!=(const T & lhs, const T & rhs) noexcept
+    {
+        return !(lhs==rhs);
+    };
+}
+```
+
+we can also do order comparisons.in c++20 we can't default defind the spaceship operator for type T.
+
+```cpp
+template <typename T>
+struct Order:Eq<T>{
+    friend constexpr bool operator<(const T & lhs, const T & rhs) noexcept
+    {
+        auto const &[lhs_value] = lhs;
+        auto const &[rhs_value] = rhs;
+        return (lhs_value <  rhs_value);
+    }
+    friend constexpr bool operator>(const T & lhs, const T & rhs) noexcept
+    {
+        return  rhs<lhs;
+    };
+    friend constexpr bool operator<=(const T & lhs, const T & rhs) noexcept
+    {
+        return !(rhs<lhs);
+    };
+}
+```
+
+for arithmetics, example of adding template of friend functions, this works for some binary operations, but not all.
+
+```cpp
+template <typename R>
+struct Add<R>{
+    friend constexpr R& operator<(R & lhs, const R & rhs) noexcept
+    {
+        auto &[lhs_value] = lhs; //lvalue captured binding
+        auto const &[rhs_value] = rhs;
+        lhs_value += rhs_value;
+        return lhs;
+    }
+    friend constexpr R operator+(R & lhs, const R & rhs) noexcept
+    {
+        return lhs+=rhs;
+    };
+}
+```
+
+> "We can not contrain the mix-in class parameter"\
+> "When instantiated, argument type is still incomplete `struct energy : add<energy>`"
+
+crtp example for scalar multiplication, uses the type and a SCALAR type parameter, we need some tricks.
+
+```cpp
+template <typename R, typename Scalar>
+struct ScalarMultiImpl<R>{
+    friend constexpr R& operator*=*(R & lhs, const Scalar & rhs) noexcept
+    {
+        auto &[lhs_value] = lhs; //lvalue captured binding
+        lhs_value *= rhs;
+        return lhs;
+    }
+    friend constexpr R operator*(R & lhs, const Scalar & rhs) noexcept
+    {
+        return lhs*=rhs;
+    };
+        friend constexpr R operator*(const Scalar & lhs, R & rhs) noexcept
+    {
+        return rhs*=lhs;
+    };
+}
+```
+
+and lets see it in action. we still have too many {} curly braces in our code, this is because of all of our base classes that we pushed
+
+```cpp
+struct kmDriven:Out<kmDriven>,ScalarMultiImpl<kmDriven,double>
+{
+    double km;
+};
+lieterPer100km consumption (lieterGas l, kmDriven km)
+{
+    return {{},{},l.liter/(km*0.01).km};
+}
+
+void demonstrante()
+{
+    lieterGas l{{},40};
+    kmDriven km {{},{},500};
+    ASSERT_EQUAL(lieterPer100km({},{},8.0),consumption(l,km));
+}
+```
+
+do stuff with bit operator, only work for unsigned, we use _static_assert_. for shift operator,we have the type and the shifting number type, which might be a built-in type or a strong type. we can added another assert to check if we don't shift too many bits.
+
+### Making Mix-ins Work for strong types
+
+how do we remove the curly braces for all the base class of the CRTP? what about useful operator combinations?
+
+combining mix-ins Bases. using template parameter template packs.
+
+> - takes a strong type "derived class" T
+> - takes a list of mix-in bases class templates
+> - instantiates all bases with T
+
+```cpp
+
+template <typename T, template <typename ...> class ...CRTP>
+struct ops: CRTP<T>...{};
+template <typename T>
+using Additive =ops<T,TPlus,TMinus, Abs,Add,Sub, Inc,Dec>; // all sorts of structs we created earlier
+
+//usage
+struct liter :ops<liter,Additive, Order, Out> // also stuff, works recursive
+{
+    double l{};
+};
+```
+
+we can define an explist constructor to remove the curly braces. this will prevent implicitly conversions on return type
+
+```cpp
+struct literGs: ops<literGas, Additive, Order, Out>
+{
+    constexpr explicit litergas(double lit):l(lit){
+
+    }
+    double l{}
+}
+```
+
+other versions, put data member in the first base class object and the rest of the base classes get elided.
+
+```cpp
+template <typename V,typename TAG>
+struct holder {
+    static_assert(std::is_object_v<V>), "no reference or incomplete types allowed!");
+    using value_type= V;
+    V value{};
+};
+struct literGas : holder<double,literGas>, ops<literGas, Additive, Order, Out>{}; //no need to define constructor or type
+```
+
+we can get another level of indirection, put the data member first, and then combine with ops. variable template template pack.
+
+```cpp
+template <typename V, typenam Tag, template<typename...>class OPS>
+struct strong : detail_::holder<V,Tag>,ops<Tag,OPS...>
+{};
+
+//usage
+struct literGas: strong<double,literGas,Additive, Order, Out>
+{};
+```
+
+skipped slide for "Different Inits for return",slide "Trait for determinging init possibility"
+
+uas a mapping of mathematical functions for strong types. like absolute value of rounding operations. relies ob macros.
+
+but to scalar multiplication, module operations (different base classes and SFINAE), remember that `std::is_integral_v(bool)` is true. some how preventing repearing scalar types. template aliases with template members, so there is more trickery involved.
+
+we have different versions of this library for different c++ standards.
+
+### Linear spaces
+
+we use same type for a _vector space_ as well as for _affine space_. its a mixture of domains.
+
+| Vector Space    | Affine Space      |
+| --------------- | ----------------- |
+| displacement    | position          |
+| no origin       | definitive origin |
+| ptrdiff_t       | size_t            |
+| difference_type | size_type         |
+
+the chrono library does this right. the vector space is represented by 'duration' and the affine space is 'time_point'.
+
+time_point - time_point -> duration
+time_point + duration -> time_point
+time_point + time_point -> error 🐄💩
+
+we can affine spaces that are related, like celsius and kelvin, which are the same with different origin points.
+
+### Summary
+
+> - P0109 was a good attempt, but failed.
+> - A library solution allows simpler strong typing.
+> - Naming the domain type allows for nicer mangling.
+
+units library doesn't solve the same problems that strong types do
+slides continue with more stuff..
 
 </details>

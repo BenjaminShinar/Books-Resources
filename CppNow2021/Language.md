@@ -1,3 +1,8 @@
+<!--
+ignore these words in spell check for this file
+// cSpell:ignore Schödl Lakos Vittorio
+-->
+
 Language
 
 ## The C++ Rvalue Lifetime Disaster - Arno Schödl

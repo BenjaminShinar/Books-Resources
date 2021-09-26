@@ -1,3 +1,8 @@
+<!--
+ignore these words in spell check for this file
+// cSpell:ignore ostringstream Downey
+-->
+
 Text
 
 ## A Crash Course in Unicode for C++ Developers - Steve Downey

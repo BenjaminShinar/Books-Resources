@@ -1,3 +1,8 @@
+<!--
+ignore these words in spell check for this file
+// cSpell:ignore Bjarne Strostrup Mateusz Pusz Bazel libcxx libstdc libc cppstd soname ccmake spack
+ -->
+
 Tools
 
 ## Keynote: CMake: One Tool To Build Them All - Bill Hoffman
