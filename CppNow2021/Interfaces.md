@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore O'Dwyer Theophil conio
+// cSpell:ignore O'Dwyer Theophil conio Revzin
 -->
 
 Interfaces
@@ -492,5 +492,158 @@ the products ships with chrome extensions and webapp. they tried to use TypeScri
 it's called 'Defiantly typed", and they have 'typescriptem'. which creates type safe c++ that does JavaScript.
 
 in typescript, decleration order doesn't matter. so there needs to be some dependency list. typescript has non-integer enums, so they created a marshal enum template, and they had to create function callbacks.
+
+</details>
+
+## Iterators and Ranges: Comparing C++ to D to Rust - Barry Revzin
+
+<details>
+<summary>
+How ranges are represented in langauges, different models of iterators.
+</summary>
+
+[Iterators and Ranges: Comparing C++ to D to Rust](https://youtu.be/d3qY4dZ2r4w), [Slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/Iteration-Models-slides.pdf)
+
+a sequence (list, vector, map, generator,etc..) of data, we need a unifrom set of operations (read, advance, check if done?).
+C++ has an iterator pair model, one for the first elements (which we move), and one iterator for one-past-the last (end iterator), we can advance the iterator (forward, backward for bi-directional, or even jump if it's a random access), read from it and check if it's the same as the ending iterator.
+
+### C++ Ranges
+
+in c++ ranges, we have an iterator as one type and the sentinel as the end point.
+
+in this example we have the pair (begin, end), andvance, read, and check if done. it's deliberately a classic for loop and not a range for loop.
+
+```cpp
+template <range R>
+void print_all(R&& r)
+{
+    auto it = ranges::begin(r);
+    auto it = ranges::end(r);
+
+    for (;it != last;++it)
+    {
+        fmt::print("{}\n",*it);
+    }
+}
+```
+
+_transform_ (map in other langauges) and _filter_\
+a slide of how to implement c++ _transform_, a bit about the _end()_ method that returns iterator rather than the sentinel in case of _common_range_, all sorts of const overloads. transform is a wrapper around the iterator behavior, the 'read' behavior is a function that uses the value returned from the underlying 'read'. with filter, we have a problem that the we can't tell before hand what is the first element (it's not a one-to-one relationship), so there are some issues about constant times and stashing, but in the end it's wrapper over find-if
+
+### The D Ranages Model - Iterators Must Go
+
+D supports popping (shrinking, slicing), we work directly on the range object, we read the front element and pop it to advance.
+
+a slide about implementing D behavior in C++. a slide about map (c++ transform) and filter in D, a lot less boiler plate code, D has more pronounced problem with the filter behavior (it's harder to find the first element), it fixes it with something called 'prime', which ensures the first element is correct.
+
+in csharp, we use an enumerator that starts before the first element.
+
+```csharp
+var l = new List<int>{1,2,3};
+var e = l.GetEnumerator();
+while (e.MoveNext())
+{
+    Console.WriteLine(e.Current);
+}
+```
+
+he describes c++,D and c# as 'reading languages'
+
+> - _read_ is a distinct, idempotent function (can call it as many times as we want and get the same result)
+> - it has an intresting downside..
+>   - in the example below, how many times is the 'some_operation' invoked?
+
+```cpp
+auto some_operation(int)->int;
+void impl()
+{
+    std::vector<int> v = {1,2,3,4,5,6};
+    auto r = v
+        | map(some_operation) //c++ transform
+        | filter([](int i){return i % 2 === 0;});
+    for (int i:r)
+    {
+        fmt::print("{}\n",i);
+    }
+}
+```
+
+we actually have more than expected invocations! each element that satisfies the condition has an extra invocation, one to check if it's a match, and another to actually return the value. this happend in D and C# as well.
+
+if the D model is simpler than c++ iterator pair model, then why wasn't c++ ranges implemented like D?\
+looking at find-if example, and then trying to make a subrange of all the elements until that element. it's easy in c++, find the first match and use it as a cutoff point for the subrange.
+
+```cpp
+template <forward_iterator I, sentinel_for<I> S, indirect_unary_predicate<I> Pred>
+auto until(I first, S last, Pred pred)-> subrange<I>
+{
+    I firstMatch = find_if(first,last, pred);
+    return{first,firstMatch};
+}
+```
+
+in D, things aren't as easy. D works with ranges, and there is perfect way to do it, we can do it lazy, like _take-while_, which is a range that lazy evalutes and continues until the predicate is matched. alternatively, we can implement it as like _take-range_, we use the predicate to count the number of elements before the first element that fulfills the predicate, and then take exactly that many elements
+(position). in D we have a bit more algorithms, and we rely more on indices.
+
+splitting ranges, taking a subrange. or even breaking the range according to some idea. we build everything on top of the search functionality.
+
+```cpp
+template <forward_iterator I, sentinel_for<I> S,forward_iterator I2, sentinel_for<I2> S2>
+auto find_split(I first, S last, I2 first2, S2 last2)
+{
+    auto mid = ranges::search(first,last, first2,last2);
+    auto pre = ranges::subrange(first,mid.begin());
+    auto post = ranges::subrange(mid.end(),last);
+
+    return tuple{pre,mid,post};
+}
+```
+
+D has different methods for findSplit, findSplitAfter,findSplitBefore, and it doesn't have many chances for code reuse, it again needs to rely on indices.
+
+### The Rust Iterator Model
+
+Rust is very different from C++, it has one method, _next_, we can use it once to get the data, and that's it. it gives the data, moves to the next element, the checking is done by returning an OptionalReference.
+
+the map operation is rust is simply taking the next element, if it's nullopt, return the nullopt, otherwise, return the result of invoking the mapping function on it. filter moves forward until it reaches the end or an element that satisfies the condition.
+actually, python and java are similar.\
+we can call them 'iterator languages', read isn't a separate operation. java is a bit different than rust and python, it has the _.hasNext()_, which uses a cached element.
+
+rust also has cached element mechanics, which is called _peek_.
+
+### Iterator Languages
+
+if the reading languages, calling map and then filter had extra operations of the map function, in iterator languages, there is no extra overhead, the mapping is called once per element. but if we have drop operation, we still pay for the mapping, (because the read and advance operations are linker), while in reading langauges we don't need to read the data to advance over it.
+
+in c++, we can take the iterator returned from find_if, and simply delete it.
+
+in iterator languages, how do we remove the matched value? we need a different algorithm, instead of find_if to match the value, we search for the position and then delete the element in that position.
+
+for group_by (group_on, partitaion_by,chunkBy, chunkOn) there are two approaches: binary and unary. we can implement the unary approach in terms of the binary approach. they return a range of ranges.
+
+slides about rust, group*by and \_getlines*,
+
+> Functional gaps in iterator languages
+>
+> - No container/iterator cohesion
+> - What about algorithms?
+>   - no binary _group_by_
+>   - no _adjacent_find_ or _adjacent_difference_
+>   - no _sort_
+>   - no _slide_
+>   - no _search_, _mismatch_ of _find_end_
+>   - no _lower_bound_, _upper_bound_, _equal range_ or _binary_search_
+>   - no _next_permutation_ or _prev_permutation_
+>   - no _stable_partition_ or _rotate_ (_partition_ returns index)
+>   - no _min_element_, _max_element_ or _minmax_element_
+
+| language | type     | element       | read              | advance           | done?             |
+| -------- | -------- | ------------- | ----------------- | ----------------- | ----------------- |
+| C++      | reading  | iterator it   | \*it              | ++it              | it == last        |
+| D        | reading  | range r       | r.front()         | r.popFront()      | r.empty()         |
+| C#       | reading  | IEnumerator e | e.Current         | e.moveNext()      | e.moveNext()      |
+| Rust     | iterator | iterator it   | it.next()         | it.next()         | i.next()          |
+| Python   | iterator | iterator it   | it.\_\_next\_\_() | it.\_\_next\_\_() | it.\_\_next\_\_() |
+| Java     | iterator | iterator it   | it.next()         | it.next()         | it.hasNext()      |
 
 </details>

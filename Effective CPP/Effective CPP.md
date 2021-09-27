@@ -360,7 +360,7 @@ The memory structure for an arrays is different from that of a single object.
 If we use delete[] on a single item, we can fuck things up. Even an array of 1 is different than a single object in terms of the memory layout.
 
 Therefore, we should always match [new [] and delete[] .
-This can get weird in tyepdef.
+This can get weird in typedef.
 We might typedef an array[], and then we have no problems calling new on it, but when we call delete we mess up, as we should have been using delete[].
 
 </details>
@@ -389,7 +389,7 @@ If the priority function throws an exception, then the call to create the shared
 We should make our interfaces (prototypes) easy to use, and be aware of what errors the users might do, and be ready to protect against them,
 
 If we expect arguments from the same fundamental type, but with different meanings, our users might confuse the order and provide unreasonable values.
-We can avoid this by having specialized structs for arguments,
+We can avoid this by having specialized struct for arguments,
 
 We have class Data, with three int members,
 So instead of a constructor
@@ -417,7 +417,7 @@ It’s bigger, slower, uses dynamic memory, but all those runtime costs are noth
 
 ### Item 19: Treat class design as type design.
 
-If we write cpp as an object oriented programming language, we need to think about how our classes are defined. Clases will behave like built-in types, and we should give them proper consideration.
+If we write cpp as an object oriented programming language, we need to think about how our classes are defined. Classes will behave like built-in types, and we should give them proper consideration.
 Important questions for us to consider
 How should objects be created and destroyed?
 Constructors, destructors, new, delete, new[], delete[].
@@ -547,7 +547,7 @@ A assignment operator to copy b=temp.
 And then a destructor for temp.
 
 In some cases, this behavior might be costly, and unnecessary.
-The pimpi idiom (pointer to implementation).
+The pimpl idiom (pointer to implementation).
 If our objects really hold just pointers to data, why do we need to create all the data (deep copy) each time? And also to call delete before each assignment?
 If we could know that our class just holds pointers, we could swap the pointers and be done with this. No need for special copying, constructing, etc…
 
@@ -677,7 +677,7 @@ Nothrow guarantee- the call doesn’t throw exceptions (we usually can’t say t
 
 Our code must be one of those, preferably the stronger.
 
-The copy and swap strategy, closely related to the pimpi idiom. We hold all the data we might change in a different object, and once we are sure the new object is functional, we swap it in place of the new one.
+The copy and swap strategy, closely related to the pimpl idiom. We hold all the data we might change in a different object, and once we are sure the new object is functional, we swap it in place of the new one.
 We need to be careful when dealing with non local data, we can’t assure that if we reset our changes, we won’t we be changing that data in the progress.
 
 ### Item 30: Understand the ins and outs of inlining.
@@ -776,7 +776,7 @@ Regular virtual functions provide both an interface and an implementation, but w
 This is usually good practice for OOP, but it hold some dangers, and we might with to make this inheritance more explicit. This is done by making the public function pure virtual, and providing a protected ‘default’ function (non virtual) that the derived class can inline call. Any new derived class must explicitly call on this function to use it.
 If we don’t like having separate definition functions and implementation functions, we can have the implementation be defined as the pure virtual function, which means that the derived classes must still explicitly state what function they plan to use, and fully qualify that they with to use the base default version. This design has less functions in the namespace, but we lose the ability to hide the default implementation under the ‘protected’ access modifier.
 
-Non virtual functions should be the same across all classes, not override, not redeclared, not redefined, not anything, we want this variant to be called, not a specialized version (and if some one decide to declare it again, he’s doing a mistake that shouldn’t be done).
+Non virtual functions should be the same across all classes, not override, not redeclare, not redefined, not anything, we want this variant to be called, not a specialized version (and if some one decide to declare it again, he’s doing a mistake that shouldn’t be done).
 
 We should avoid creating a base class without any virtual functions (especially the destructor, which should always be virtual), or making all of them virtual without a good reason.
 
@@ -793,7 +793,7 @@ Virtual functions are great, but there are alternatives. Let’s get to know the
 
 #### The Template Method Pattern via the Non-Virtual Interface Idiom
 
-Have a non virtual function call a private virtual function. This is called non-virtual interface (NVI) idiom. Or a wrapper behavior. We seperate the non changeable parts (the shared, set in stone) behavior that the base class defines from the smaller portion that needs specializing.
+Have a non virtual function call a private virtual function. This is called non-virtual interface (NVI) idiom. Or a wrapper behavior. We separate the non changeable parts (the shared, set in stone) behavior that the base class defines from the smaller portion that needs specializing.
 We also separate that ‘how stuff is done’ into the virtual function, but the ‘when stuff is done’ is still controlled by the base class. This enforces order and structure.
 A special note is that derived class override function that they can’t access (private functions), which is odd, but legal. We can also make the function protected and expect the derived class to call the base class virtual function themselves.
 
@@ -929,7 +929,7 @@ Each line in the template is a constraint for the type, it’s an implicit inter
 </summary>
 
 Template <class T> and template <typename T> are usually the same.
-But not always, and typename should be prefered, because it has some stuff that only it can do.
+But not always, and typename should be preferred, because it has some stuff that only it can do.
 
 In a template, we can refer to two kinds of names.
 
@@ -937,7 +937,7 @@ Names in the template that depend on the template parameter are dependent names.
 Can also be nested dependant names. In the example, iter is a nested dependent type name. (suppose we pass it a std::vector<int>, then it’s type is std::vector<int>::const_iterator).
 The other variable, value, is not dependent, it’s just an int.
 
-We think Iter is going to be a pointer, but this isn’t always the case, maybe we pass to the template a type that happens to have a static member called const_itertaor (not a nested class), another weird thing:
+We think Iter is going to be a pointer, but this isn’t always the case, maybe we pass to the template a type that happens to have a static member called const_iterator (not a nested class), another weird thing:
 
 We think we are declaring a variable x from the nested class.
 But maybe c::const_iterator is a static member and x is global variable? Then our code will actually be a multiplication expression!
@@ -990,7 +990,7 @@ Base template:
 
 Derived template:
 
-The template doesn’t know that base class with ‘sendClear()’ function exists. It can’t know about the base class until it’s instancized, and it can’t instancize it without compiling!
+The template doesn’t know that base class with ‘sendClear()’ function exists. It can’t know about the base class until it’s instantiated, and it can’t instantiate it without compiling!
 
 There is a better example using specialized templates.
 
@@ -1077,7 +1077,7 @@ We use new and delete (new[], delete[] for arrays) to get memory, free it and ca
 
 When we can’t get enough memory from the system, old compilers returned a null pointer.
 Today, the behavior is different, and if there wasn’t enough memory, the program should call a new_handler function.
-This function is a client specific function, which we can set with the set_new_handler function from the standard library (similar to set_terminate and set_unexcpected).
+This function is a client specific function, which we can set with the set_new_handler function from the standard library (similar to set_terminate and set_unexpected).
 This is a void (void) function that doesn’t throw anything.
 If the handler function also can’t find memory, it’s called again repeatedly, which is troublesome, so the handler function should do one of the following
 Make more memory available - somehow, it’s suggested that we preemptively save a block of memory for the function to use before starting the program
@@ -1141,7 +1141,7 @@ We need an infinite loop, an handler function, and some way to throw an exceptio
 There is also a problem of requesting zero bytes, as we must return a legitimate point.
 
 We have an infinite loop of trying to allocate memory, if we succeed, we return a pointer to the memory, if we fail, we do the trick with our class specific handler function (which might be a problem in multithreaded environments) and try again, eventually we will either succeed in something, or we will run out of new_handlers and we will use the one that calls abort() and terminate early.
-Ofcourse, if our object is a derived class, it also needs the correct size to allocate for the derived class, we can make sure that the request size in bytes is the same as the size of the class whose new operator we are using, so we won’t end up using the base new operator for a derived class. Of course.
+Of course, if our object is a derived class, it also needs the correct size to allocate for the derived class, we can make sure that the request size in bytes is the same as the size of the class whose new operator we are using, so we won’t end up using the base new operator for a derived class. Of course.
 
 (this check also includes the request for zero sized memory, because even interfaces have non zero size).
 
