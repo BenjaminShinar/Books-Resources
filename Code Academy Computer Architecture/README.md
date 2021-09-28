@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore
+// cSpell:ignore nand
 -->
 
 # Computer Architecture
@@ -76,9 +76,131 @@ substracting binary numbers
 
 > 0b11010 -0b11 = 0b10111
 
-multiplication is taking each bit of the small number, and it with each bit of the large number, and shift the result by the bit position, then add everything together (horrible explainnation)
+multiplication is taking each bit of the small number, binary and (&) it with each bit of the large number, and shift the result by the bit position, then add everything together (horrible explainnation).
 
 division
+doing long division
+
+(can't figure this one out)
+
+### Logic gates: Voltage and bits
+
+- nand - not and
+- and
+- or
+- xor
+- not
+
+truth tables
+
+| NAND | a     | b     | output |
+| ---- | ----- | ----- | ------ |
+|      | true  | true  | false  |
+|      | true  | false | true   |
+|      | false | true  | true   |
+|      | false | false | true   |
+
+| NOT | a     | b   | output |
+| --- | ----- | --- | ------ |
+|     | true  |     | false  |
+|     | false |     | true   |
+
+| AND | a     | b     | output |
+| --- | ----- | ----- | ------ |
+|     | true  | true  | true   |
+|     | true  | false | false  |
+|     | false | true  | false  |
+|     | false | false | false  |
+
+| OR  | a     | b     | output |
+| --- | ----- | ----- | ------ |
+|     | true  | true  | true   |
+|     | true  | false | true   |
+|     | false | true  | true   |
+|     | false | false | false  |
+
+| XOR | a     | b     | output |
+| --- | ----- | ----- | ------ |
+|     | true  | true  | false  |
+|     | true  | false | true   |
+|     | false | true  | true   |
+|     | false | false | false  |
+
+we can pass the same value to a nand gate and it will act as not gate\
+
+not(a) == nand(a,a)\
+and(a,b) == not(nand(a,b))\
+or(a,b) == nand(not(a),not(b))\
+xor = and (nand(a,b),or(a,b))\
+
+### Creating a Circuit Adder
+
+ALU - arithemetic logic unit
+the adder part, is two half adders, half adders take two input, and return a sum bit and a carry bit
+
+| Half Adder | a   | b   | Output -> Sum bit | Output -> Carry bit |
+| ---------- | --- | --- | ----------------- | ------------------- |
+|            | 1   | 1   | 0                 | 1                   |
+|            | 1   | 0   | 1                 | 0                   |
+|            | 0   | 1   | 1                 | 0                   |
+|            | 0   | 0   | 0                 | 0                   |
+
+| Full Adder | a   | b   | Carry-in bit | Output -> Sum bit | Output-> Carry-out bit |
+| ---------- | --- | --- | ------------ | ----------------- | ---------------------- |
+|            | 1   | 1   | 1            | 1                 | 1                      |
+|            | 1   | 1   | 0            | 0                 | 1                      |
+|            | 1   | 0   | 1            | 0                 | 1                      |
+|            | 1   | 0   | 0            | 1                 | 0                      |
+|            | 0   | 1   | 1            | 0                 | 1                      |
+|            | 0   | 1   | 0            | 1                 | 0                      |
+|            | 0   | 0   | 1            | 1                 | 0                      |
+|            | 0   | 0   | 0            | 0                 | 0                      |
+
+trying to make an ALU
+
+```python
+from nand import NAND_gate
+from not_gate import NOT_gate
+from and_gate import AND_gate
+from or_gate import OR_gate
+from xor_gate import XOR_gate
+
+def half_adder(a,b):
+  s = XOR_gate(a,b)
+  c = AND_gate(a,b)
+  return (s,c)
+
+print(half_adder(1,1),"half adder expected(0,1)")
+print(half_adder(1,0),"half adder expected(1,0)")
+print(half_adder(0,1),"half adder expected(1,0)")
+print(half_adder(0,0),"half adder expected(0,0)")
+
+def full_adder(a,b,c):
+  x,y =half_adder(a,b)
+  s,c2=half_adder(x,c)
+  c_out= OR_gate(y,c2)
+  return(s,c_out)
+
+print(full_adder(1,1,1),"full adder expected(1,1)")
+print(full_adder(1,1,0),"full adder expected(0,1)")
+print(full_adder(1,0,1),"full adder expected(0,1)")
+print(full_adder(1,0,0),"full adder expected(1,0)")
+print(full_adder(0,1,1),"full adder expected(0,1)")
+print(full_adder(0,1,0),"full adder expected(1,0)")
+print(full_adder(0,0,1),"full adder expected(1,0)")
+print(full_adder(0,0,0),"full adder expected(0,0)")
+
+def ALU(a,b,c,opcode):
+  if (opcode ==0):
+    return half_adder(a,b)
+  elif(opcode ==1):
+    return full_adder(a,b,c)
+
+print(ALU(0,0,1,0),"ALU expected(0,0)")
+print(ALU(0,0,1,1),"ALU expected(1,0)")
+print(ALU(1,1,1,0),"ALU expected(0,1)")
+print(ALU(1,1,1,1),"ALU expected(1,1)")
+```
 
 ## Instruction Set
 
