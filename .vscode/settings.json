@@ -9,6 +9,7 @@
     "decltype",
     "Deque",
     "endl",
+    "ifdef",
     "iostream",
     "lvalue",
     "malloc",
