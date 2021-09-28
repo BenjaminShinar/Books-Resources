@@ -1,10 +1,14 @@
+<!--
+// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg
+ -->
+
 # C++ Weekly takeaways
 
 what I learned from each episode.
 
 [c++ Weekly Playlist](https//www.youtube.com/playlist?list=PLs3KjaCtOwSZ2tbuV1hx8Xz-rFZTan2J1)
 
-[Best Practices Book](https//github.com/lefticus/cppbestpractices)
+[Best Practices Book](https//github.com/lefticus/cppBestPractices)
 
 ## C++ Weekly - Ep 1 - ChaiScript_Parser Initialization Refactor
 
@@ -65,13 +69,13 @@ This is bad. Use ‘\n’ instead.
 
 ## C++ Weekly - Ep 27 - C++17 Changes To Sequence Containers
 
-## C++ Weekly - Ep 28 - C++17's [[fallthrough]] Attribute
+## C++ Weekly - Ep 28 - C++17's \[\[fallthrough]] Attribute
 
 [[fallthrough]]
 
 Tells the compiler we know we have a fallthrough in our switch case.
 
-## C++ Weekly - Ep 29 - C++17's [[maybe_unused]] Attribute
+## C++ Weekly - Ep 29 - C++17's \[\[maybe_unused]] Attribute
 
 <details>
 <summary>
@@ -81,7 +85,7 @@ Means that this variable might not be used in all version (build vs debug), this
 
 </details>
 
-## C++ Weekly - Ep 30 - C++17's [[nodiscard]] Attribute
+## C++ Weekly - Ep 30 - C++17's \[\[nodiscard]] Attribute
 
 ## C++ Weekly - Ep 31 - IncludeOS
 
@@ -140,7 +144,7 @@ std::is_same<double, decltype(v)>
 Constexpr
 Std::visit
 
-Std::common_type<decltyype(somename)> varname = 0;
+Std::common_type<decltype(somename)> varname = 0;
 
 If (std::is_same<double,decltype(v)>{})
 {
@@ -566,7 +570,7 @@ continuing the last video for understanding the _'auto'_ keyword.
 the compiler always had to do the work of 'auto', it had to know what's returning from functions in order to do implicit casts and return type errors.
 
 _'auto'_ will never do implicit cats. it will deduce const-ness (for reference and pointers), but will never perform a conversion.
-if we don't have the _-Wconversion_ compiler turned on, we won't know that we might be doing something silly.
+if we don't have the _'-Wconversion'_ compiler turned on, we won't know that we might be doing something silly.
 it really can come into play when iterating over a map or set. the key are const, if we forget to specify that we might cause a constructor call each iteration to construct the pair, just because we forgot to write const somewhere.
 _std::pair_ has an implicit conversion to change const-ness for the members.
 
@@ -681,6 +685,72 @@ auto b = 0b11101;
 auto o = 0x1A7'D4;
 auto b2=0b1110'1110;
 auto d=100'000;
+```
+
+</details>
+
+## C++ Weekly - Ep 291 - Start Using 'as_const'
+
+<details>
+<summary>
+Calling a const member function from a non const object.
+</summary>
+
+[Start Using 'as_const'](https://youtu.be/w996YXhkpkE), [std::as_const](https://en.cppreference.com/w/cpp/utility/as_const)
+
+objects can have const and non const member functions. if we want to use the const version function on a non-const variable
+
+1. use _static_cast_ (which can invoke implicit conversions)
+2. use _const_cast_ - can remove const, but won't invoke conversions
+3. take a const reference
+4. write as 'as_const' function (before c++17)
+5. use _std::as_const_ (from the utilities header in c++17 and above)
+
+```cpp
+struct S
+{
+    S() =default;
+    explicit S(int){};
+    std::string_view get_value()
+    {
+        return "non-const";
+    }
+    std::string_view get_value() const
+    {
+        return "const";
+    }
+};
+
+const S& as_const(const S &s) //take by const reference,always allowed
+{
+    return s;
+}
+
+//templated version
+template <typename T>
+const T& as_const(const T& t)
+{
+    return t;
+}
+
+int main()
+{
+    const S sc;
+    fmt::print("A string: '{}'\n",sc.get_value()); //"const"
+
+    S snc;
+    fmt::print("A string: '{}'\n",snc.get_value()); //"non-const"
+    fmt::print("A string: '{}'\n",(static_cast<const s>(snc)).get_value()); //"const" - static_cast
+    fmt::print("A string: '{}'\n",(const_cast<const s>(snc)).get_value()); //"const" - const_cast
+
+    //bad
+    fmt::print("A string: '{}'\n",(const_cast<const s>(1)).get_value()); //"const" oops, we called on the constructor
+
+    const S &sRef {snc}; //reference to const
+    fmt::print("A string: '{}'\n",sRef.get_value()); //"const"
+
+    fmt::print("A string: '{}'\n",as_const(snc).get_value()); //"const" -  using an 'as_const'
+}
 ```
 
 </details>
