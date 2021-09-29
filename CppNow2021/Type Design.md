@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore ostringstream ptrdiff_t
+// cSpell:ignore ostringstream ptrdiff_t Filipp
  -->
 
 Type Design
@@ -433,9 +433,9 @@ we might be able to use variant and std::visit() to get better de-virtualization
 
 ## Simplest Strong Typing Instead of Language Proposal ( P0109 ) - Peter Sommerlad
 
-<!-- <details> -->
+<details>
 <summary>
-
+Strong types.
 </summary>
 
 [Simplest Strong Typing instead of Language Proposal](https://youtu.be/ABkxMSbejZI), [slides](https://github.com/PeterSommerlad/talks_public/raw/master/C%2B%2Bnow/2021/SimplerStrongTypes-handout.pdf), [Peter Sommerlad's Simple Strong Typing](https://github.com/PeterSommerlad/PSsst)
@@ -905,5 +905,385 @@ we can affine spaces that are related, like celsius and kelvin, which are the sa
 
 units library doesn't solve the same problems that strong types do
 slides continue with more stuff..
+
+</details>
+
+## Techniques for Overloading any_invocable - Filipp Gelman
+
+<details>
+<summary>
+A template type that's like std::function, but with overloads
+</summary>
+
+[Techniques for Overloading any_invocable](https://youtu.be/JnXpGA7SYHQ), [Slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/tfoai.pdf)
+
+will probably a template heavy lecture
+
+outline
+
+### What is overloaded _any_invocable_
+
+_any_invocable_ is a type erasing container for function objects, similar to _std::function_, but it has move only semantics, and support overloads of operator().
+
+an example of an async interface
+
+- using a function pointer, if error code is zero, resp is the response recivied, if it's not zero (error), then respone is NULL. the data is opaque.
+- using std::function, encapsulates the type, but the function object is copied, and if we have a non copyable resource in the lambda, it fails.
+- using _any_invocable_, not requires copyability
+
+```cpp
+int sendAsyncFunctionPointer(Request const & request,
+             void (*on_response)(int error_code,Response const resp*, void* data),
+             void* data);
+
+int sendAsyncSTDFunction(Request const & request,
+            std::function<void(int error_code, Response const resp*)> on_response);
+
+int sendAsyncAnyInvocable(Request const & request,
+            any_invocable<void(int error_code, Response const resp*)> on_response);
+int main()
+{
+    Request request;
+    auto callback = [resource= std::make_unique<Resource>()](int error_code, Response const * resp){/*...code*/};
+    sendAsyncSTDFunction(request,std::move(callback)); //fails! tries to verify that copy operations exist, and fails.
+}
+```
+
+but we still need to handle both cases (request success or fail) in the same function, won't it be easier to have separate this logic? like having two overloads, one for error_code (when not zero) and one for the response (but the can still share state a private data, so not entirely separate). so now we can use a reference to the respone rather than a pointer, because we will never call it with null data.
+
+```cpp
+int sendAsyncAnyInvocable(Request const & request,
+            any_invocable<void(int error_code), void(Response const &resp)> on_response);
+
+struct Callback{
+    void operator()(int error_code)
+    {
+        //handle error
+    }
+    void operator()(Response const & resp)
+    {
+        //process response
+    }
+};
+any_invocable<void(int),void(Response const &)> f = Callback{};
+```
+
+this also allows us to use _std::overload_ (not part of the standart yet) to create a single object from many callable objects and produces a composed objects without type erasing.
+
+### Building _any_invocable_
+
+a simple _any_invocable_, it has a converting constructor and call operator.
+
+```cpp
+template <typename> class any_invocable;
+
+template <typename RET, typename... ARGS>
+class any_invocable<RET(ARGS ...)>
+{
+    //...
+public:
+    //special member functions
+
+    template </**/>
+    any_invocable(T object);
+    RET operator()(ARGS ...);
+};
+```
+
+one way to build is to use virtual inheritance, unique ptr, forwarding.
+
+```cpp
+template <typename RET, typename... ARGS>
+class any_invocable<RET(ARGS ...)>
+{
+    struct base{
+        virtual RET operator()(ARGS&& ...) = 0;
+        virtual ~base() = default;
+    };
+
+    template<typename T>
+    struct derived : base
+    {
+        T object;
+
+        template <typename... CARGS> //arguments for creation of the object
+        derived (CARGS&& ... cArgs) : object(std::forward<CARGS>(cArgs)...){} //constructor, forward constructor
+
+        RET operator()(ARGS&& ... args) override
+        {
+            return std::invoke(object, std::forward<ARGS>(args)...); //calling the callable function of object
+        }
+    };
+    std::unique_ptr<base> ptr_; //always points to a derived class
+public:
+    //...
+    any_invocable() noexcept= default;
+    any_invocable(any_invocable&& ) noexcept= default; //move constructor
+    any_invocable& operator=(any_invocable&&) noexcept= default; //move assignment
+    ~any_invocable() default; //destructor
+
+    //converting constructor
+    template <typename T>
+    any_invocable(T&& object):ptr_(std::make_unique<derived<std::decay_t<T>>>)(std::forward<T>(object)){}
+    //operator()
+    RET operator()(ARGS ...)
+    {
+        retrun (*ptr)(std::forward<ARGS>(args)...);
+    }
+};
+```
+
+it's important to constrain the constructor. so we we should concepts
+
+this example fails without constrains
+
+```cpp
+void test(std::string);
+void test(any_invocable);
+void call_test()
+{
+    test("Hi"); //not a std::string, a string literal, fails because it can also be any_invocable.
+}
+```
+
+but once we use concepts, the converting function no longer applies for string literals, because it's not invocable.
+
+```cpp
+template <typename RET, typename... ARGS>
+class any_invocable<RET(ARGS ...)>
+{
+    //all the stuff from before
+    public:
+    //converting constructor with constraints
+    template <typename T>
+    any_invocable(T&& object)
+        requires std::is_invocable_r_v<RET,std::decay_t<T>&, ARGS&&...>
+    :ptr_(std::make_unique<derived<std::decay_t<T>>>)(std::forward<T>(object)){}
+}
+```
+
+### Adding more overloads
+
+we want more than one overload, not just for type of arguments, but for a whole bunch of signatures, if we had refelection this would be easy.
+
+```cpp
+struct base{
+    virtual RET1 operator()(ARGS1&&...) =0;
+    virtual RET2 operator()(ARGS2&&...) =0;
+    virtual RET3 operator()(ARGS3&&...) =0;
+    //...
+};
+```
+
+we can still build it, just in a different way, polymorphism has many forms. rather than relay on the built-in virtual table, we can recreate it using templates.
+
+```cpp
+struct vtable {
+    void (&destroy)(base&);
+    RET1 (&invoke1)(base&, ARGS1...);
+    RET2 (&invoke2)(base&, ARGS2...);
+    RET3 (&invoke3)(base&, ARGS3...);
+};
+```
+
+we start by decomposing the vtable into table entries, each entry is a template, including the destructor.
+
+there is a bug here:
+
+```cpp
+template <typename> struct vtable_entry;
+
+template <typename RET, typename ... ARGS>
+struct vtable_entry<RET(ARGS...)>
+{
+    using fun_t = RET (&)(BASE&, ARGS&& ...);
+    fun_t invoke;
+};
+struct vtable_dtor{
+    using fun_t = void (&)(Base&) noexcept;
+    fun_t destroy;
+};
+
+//struct vtable: vtable_dtor, vtable_entry<FNS...> //the bug is here?
+struct vtable: vtable_dtor, vtable_entry<FNS>... //un bugged?
+{
+    constexpr explicit vtable(vtable_dtor::fun_t dtor,
+        typename vtable_entry<FNS>::fun_t ... invoke) noexcept :
+        vtable_dtor(dtor), vtable_entry<FNS>{invoke}...
+        {}
+};
+```
+
+now, lets look again at _any_invocable_, now the base isn't using the built virtual inheritance, it directly stores the pointer reference. for every function in the vtable, the derived class has to implement a static method,
+
+```cpp
+template <typename... FNS>
+class any_invocable
+{
+    // template struct vtable_entry
+    // struct vtable_dtor
+    // struct vtable
+
+    struct base {
+        vtable const & vtable_;
+    };
+
+    template <typename T>
+    struct derived : base {
+        T object;
+
+        static void destroy(base&) noexcept
+        {
+            delete &static_cast<derived&>(base);
+        }
+        template <typename RET, typename... ARGS>
+        static RET invoke(struct base& base, ARGS... args) //shouldn't it be &&?
+        {
+            return std::invoke(static_cast<derived&>(base).object, std::forward<ARGS>(args)...);
+        }
+        static inline constexpr struct vtable const vtable{
+            derived::destory,
+            static_cast<typename vtable_entry<FNS>::fun_t>(derived::invoke)...
+        };
+
+        //constructor
+        template <typename ... CARGS>
+        derived(CARGS&& ..cArgs): base{vtable},object(std::forward<CARGS>(cArgs)...){}
+    };
+
+    struct base* ptr_; //no longe a unique ptr
+    public:
+    //... constructors can no longer be defaulted
+    any_invocable() noexcept: ptr_(nullptr){}
+    any_invocable(any_invocable&& other ) noexcept : ptr_(std::exchange(other.ptr_,nullptr){}; //move constructor
+    any_invocable& operator=(any_invocable&& other) noexcept
+    {
+        any_invocable(std::move(other)).swap(*this); //move swap idiom
+        return *this;
+    }
+    ~any_invocable(){
+        if(ptr_)
+        {
+            ptr_->vtable_->destory(*ptr); //
+        }
+    } //destructor
+
+    //converting constructor
+    template <typename T>
+    any_invocable(T&& object):ptr_(std::make_unique<derived<std::decay_t<T>>>)(std::forward<T>(object)){}
+    //operator()
+};
+```
+
+we still need all the operators, we would want each of them to be something like this, and all of them inside the any_invocable
+
+```cpp
+RET1 operator()(ARGS1...args)
+{
+    //get the vtable
+    vtable const & vt = _ptr->vtable;
+    //get the function pointer
+    RET1 (& invokeOverload)(base&, ARGS1...) = vt.vtable_entry<RET1(ARGS1...)>::invoke;
+    //call with base
+    return invokeOverload(*ptr_, std::forward<ARGS1>(args)...);
+}
+```
+
+we can make an interface from this
+
+```cpp
+template <typename RET, typename... ARGS>
+struct invocable_interface<RET(ARGS...)>
+{
+    RET operator()(ARGS... args)
+    {
+        return ptr_->vtable::vtable_entry<RET(ARGS,,,)>::invoke(*ptr_, std::forward<ARGS>(args)...);
+    }
+};
+```
+
+but how can the interface access the pointer that is inside any_invocable? we can use the curiously recursive template pattern!
+it can downcast itself to get the pointer.
+
+```cpp
+template <typename,typename>
+struct invocable_interface;
+
+template <typename RET, typename... ARGS,typename ...FNS>
+struct invocable_interface<RET(ARGS...),and_invocable<FNS...>>
+{
+    RET operator()(ARGS... args)
+    {
+        any_invocable<FNS...>& self = static_cast<any_invocable<FNS...>&>(*this);
+        return self.ptr_->vtable::vtable_entry<RET(ARGS,,,)>::invoke(*(self.ptr_), std::forward<ARGS>(args)...);
+    }
+};
+```
+
+so now _any_invocable_ needs to inherit from this CRTP interface. and we also need to expose the ptr\_ as a friend, and we pull up the operator with the variadic using template alias.
+
+also we need to check if it's invocable, it can't be a concept, because reasons. so we have some tempate specialization before that.
+
+```cpp
+template <typename... FNS>
+class any_invocable: invocable_interface<FNS,any_invocable<FNS...>>...
+{
+    //...
+    template<typename, typename>
+    friend struct invocable_interface;
+public:
+    //...
+    using invocable_interface<FNS, any_invocable<FNS...>>::operator()...;
+
+    template<typename, typename>
+    inline constexpr bool is_invocable_v = false;
+
+    //template specialization
+    template<typename T, typename RET, typename... ARGS>
+    inline constexpr bool is_invocable_v<T,RET(ARGS...)> =
+        std::is_invocable_r_v<RET,T, ARGS&& ...>;
+
+        //converting constructor with constraints
+    template <typename T>
+    any_invocable(T&& object)
+        requires (std::is_invocable_v<std::decay_t<T>&, FNS> &&...)
+    :ptr_(new derived<std::decay_t<T>>>)(std::forward<T>(object)){}
+};
+```
+
+we can still do better! we have a statically allocated vtable, it always goes on the heap, maybe it can be allocated on the stack for small object optimizations? we can have buffer somewhere with all of those functions, lambda, objects and other stuff. this buffer can be on the stack or on the heap.
+
+(not writing this, some code of the buffer and changes in the other classes to accommodate).
+
+trivially relocatable proposal (P1144). if it was added to the standard, stuff would be easier.
+
+### Disassembly
+
+examples taken from compiler explorer. looking at the assembly code
+
+- comparing std::function and any_invocable.
+- constructors costs, depends on the triviality of the overloads and their size.
+
+### Benchmarks
+
+comapring std::function with any_invocable of different overloads. compile-time and object file size and runtime. compilation time and file-size were linear with the number overloads, but runtime was constant(and faster than std::function,maybe).
+
+### Alternative Implementions
+
+implementations could be different,
+
+> Function storage
+>
+> - Point to static struct with references to functions
+> - In-place pointers to non-member functions
+> - In-place pointers to member functions
+>
+>   Argument forwarding
+>
+> - forwarding references
+> - forwarding values
+
+different function storage could mean that some operations are easier and encapsulated into a storage class.
+all sorts of trade-offs.
 
 </details>

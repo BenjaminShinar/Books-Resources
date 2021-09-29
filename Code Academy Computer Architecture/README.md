@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore nand
+// cSpell:ignore nand elif
 -->
 
 # Computer Architecture

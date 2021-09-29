@@ -90,8 +90,68 @@ get back to people, keep the connection alive, respond, keep the other side info
 
 <!-- <details> -->
 <summary>
-
+//todo
 </summary>
+
+more grounded section about pragmatism.
+
+### The Evils of Duplication
+
+code maintenance doesn't begin at release, it starts whenever you start writing.\
+the dry principle
+
+> "Every piece of knowledge must have a single, unambiguous, authoritative representation within a system"
+
+duplication can arise from several sources
+
+> - Imposed duplication
+> - Inadvertent duplication
+> - Impatient duplication
+> - Interdeveloper duplication
+
+#### Imposed duplication
+
+sometimes it seems that we can't avoid duplication, comments are a form of duplication (the code is already there, and the comments aren't updated, and go out of sync). multiple platforms with different languages. client/server code.\
+we can try to make our code build from the same source, such as a schema or metadata, so class defintions are kept up-to-date and don't require manual work. comments that explain the 'how' are duplication, they should explain the 'why', unless there is a special reason. we can have duplication from the language, like header files and defintions in cpp,
+
+#### Inadvertent duplication
+
+issues in the design that cause duplication. maybe the same value exists in several classes and when it changes we need to update all of them, maybe a property of class is dependent on other properties but isn't generated from them (rectangle with height, width and area as members). we might decide to store this value for performance, but we need to make this decision knowingly
+
+#### Impatient duplication
+
+taking the easy way, duplicating code because it's easier, it's just a small thing...
+but remember, "short cuts make for long delays".
+
+#### Interdeveloper duplication
+
+many teams, all doing the same thing in differnet ways. teams that end up developing the same functionality across subsystems,
+we need to search for duplicated code, try and see if we can grab code from other rather than re-write it ourselves, etc..
+
+### Orthogonality
+
+in geometry, lines are orthogonal if the meet at the right angle (90 degrees). like the X and Y axis. in vector terms, if we move along one line, it doesn't change how our position is projected unto the other line. in coding, the term has come to mean independence or decoupling, in a well designed system, changes to one shouldn't effect other. if we change the database code, we don't need to change the interface code, and vice-versa.
+
+non orthogonal systems are such that change in one property can require changes in other. non-orthogonal systems are more complicated to control, harder to change, and there is no such thing as 'local fix' on an orthogonal system.
+orthogonal systems are self contained, independent,and have a single purpose (also called cohesion). components are isolated from one another, and communication between subsystem is clearly defined by an external interface.
+this means we can do localized changes, components are small, simple, isolated, and easy to test. they can also be reused across the system. the risk is also contained, the system is more flexile and isn't fragile, and it probably isn't tied to a specific vendor or external platform.
+
+there's also orthogonality in teams, if each person has a domain and a clear goal, they can work on it alone, without stepping on other developers toes. we should separate infrastructure from application. in design language, we call orthogonality 'modularity','component based' or 'layered', but it's all the same thing, we have distinct areas who only connect to one another through abstraction.
+
+a change in one module should only affect that module.
+using external libraries and toolkits can effect orthogonality, the way the library behaves might impose restrictions on you.
+CODING
+(continue later)
+
+### Reversibility
+
+### Tracer Bullets
+
+### Prototypes and Post-it Notes
+
+### Domain Languages
+
+### Estimating
 
 </details>
 
