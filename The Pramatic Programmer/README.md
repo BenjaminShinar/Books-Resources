@@ -140,12 +140,59 @@ there's also orthogonality in teams, if each person has a domain and a clear goa
 
 a change in one module should only affect that module.
 using external libraries and toolkits can effect orthogonality, the way the library behaves might impose restrictions on you.
-CODING
-(continue later)
+
+ways to conserve orthogonality when coding:\
+
+- keep code decoupled, don't reveals anything unnecessary to other modules, don't rely on other modules implementation (use only the public interface), and if we want to change a state of the object, get the object itself to do it.
+- avoid global data, don't tie yourself to data that others can read or change. it's better to explicitly pass the context than rely on global data. be careful of singletons, they tend to cause unnecessary linkage.
+- avoid similar functions, if there are too many function that look similar, do something about it.extract, dry, template, compose, whatever it takes. be critical of your code.
+
+orthogonality makes testing easier. it allows smaller unit tests to be run in isolation. but tests can also be orthogonal to the code, how related is the testing project to the actual project? does it need to import everything? why? does it rely on inner data from the code? how hard is it to run the tests?
+
+orthogonality is also part of documentation, separate appearance and content.
+
+if the DRY principle is about reducing duplication in the code, then orthogonality is about reducing interdepency. the two goals work together.
+
+#### challenges and questions
+
+open questions:
+
+- command line stuff are more flexible, of course, we can pipe into them, out of them, set them anywhere, log the results, run them automatically...
+- multiple inheritance is bad, is adds more complications, interfaces lessen the problem, as they don't introduce extra data, a interface is a public api, inheritance is an additional set of problems someone forces you to carry.
+
+questions
+
+1. Split2 looks more orthogonal. why do we need to call a void function without any parameters?
+2. no idea what this means
+3. OOP probably, just because they do encapsulation better (at least it was once true)
 
 ### Reversibility
 
+the world isn't stable, nothing is set in stone, things will change. constants, requirements, vendors. as time goes by, more decisions are made that limit the available options for us as programmers. many critical decisions are easily reversible.
+
+many of the suggestions from the earlier parts of the chapter support reversability, if our code is decoupled, orthogonal, and not duplicated, this can mitigate the costs of reversing decisions and changing course. one module that wraps around the database means that changing database vendors only effects that module,having clearly separated layers in a client-server model can help us deploy a stand alone version of the program if we need.
+
+nothing is set in stone, all decisions are only temporary final. and there is no such thing as a final decision.
+
+it's not just code that needs to be flexible, we should also strive for flexible architecture, deployment and vendor integration. we can use stuff like COBRA (is it used today???) to bring together components from different languages. we need to be ready for changes, and if we can't completely lock off each module in it's independent world, we should have a way to automatically find those weak points.
+
 ### Tracer Bullets
+
+in ammo, tracer bullets tell us where the bullets go, they are bright and visible, so it helps us aim and we can see if we're are getting off target.
+
+when we have a new project, one response to uncertainty is to requests specifications, more and more. a different response it to start moving and correct course, just like shooting tracer bullets. build code in a way that gets you closer to the target, even if the final target isn't yet unknown, check and validate the things you can do, and flesh it out gradually. don't get rid of those intermediate steps, they are the road blocks that any future change should follow.
+
+advantages:
+
+- users get to see something working early: there is always something new to present, progress is visible, which makes everyone involved more motivated.
+- developers build a structure to work in: there is a basis of code to start from, changes can be made, code can be expanded.
+- you have an integration platform: if we connect the system end-to-end early, we can see that it's being built correctly, no surprises of incompatible libraries, missing modules or other stuff at the last minute. integration is a continues progress, and problems are discovered early.
+- you have something to demonstrate: higher ups like to see results
+- you have a feel of progress: you can tell how much of the project was completed and how much more is left.
+
+of course, our initial guesses aren't perfect, and we might be missing the target. that's the point. find those problems early, get feedback, discover performance blocks, nick the problems in the bud before they get bigger and the deadline is close.
+
+Tracer code isn't prototyping. prototyping isn't part of the final product, it's a demonstartion of the expected final version product. tracer code is exactly the opposite, it's how things will work in practice, it's simple and it's operational, if the world ends tomorrow, this is the version we shipped. prototype is disposable code, tracer code is the skelton of the code.
 
 ### Prototypes and Post-it Notes
 
