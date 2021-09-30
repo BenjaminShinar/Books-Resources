@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore O'Dwyer Theophil conio Revzin
+// cSpell:ignore O'Dwyer Theophil conio Revzin swappable ssize Niebloids Hollman Niebler Sutter
 -->
 
 Interfaces
@@ -647,3 +647,260 @@ slides about rust, group*by and \_getlines*,
 | Java     | iterator | iterator it   | it.next()         | it.next()         | it.hasNext()      |
 
 </details>
+
+## Semantic Sugar: Tips for Effective Template Library APIs - Roi Barkan
+
+<details>
+<summary>
+different way that templates could be used and specialized
+</summary>
+
+[Semantic Sugar: Tips for Effective Template Library API](https://youtu.be/u0rvEMV8Qq4), [slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/Semantic-Sugar_-Tips-for-Effective-Template-Library-APIs-1.pdf)
+
+template libraries. concepts were conceptualized even back in 2013,2014, before the language was able to provide them.
+
+templates and overload resultion, writing the same algorithm for multiple types, metaprogramming for implementing different overloaded algorithms.
+
+```cpp
+template <class T>
+constexpr const T & min(const T &a, const T &b)
+{
+    return (b<a) ? b :a;
+}
+
+template <class T>
+constexpr void swap(T &a, T &b) noexcept;
+
+template <class T2, std::size_t N>
+constexpr void swap(T2 (&a)[N], T2 (&b)[N]) noexcept;
+```
+
+somtimes multiple overloads are legitmate, but one is preferable, so we can use _std::enable_if_ and SFINEA[^1].
+
+things that we will see this lecture
+
+- Putting constrains on our templates
+- C++20 Concepts- alternatives and ancestors
+- Many opinions, some facts
+- Tips and ideas, when should use various mechanisms
+- Suggestions for changes to the language (opinions, not facts)
+- Snippets from the STL
+- Clips from Youtube
+
+concepts are:
+
+### A Bunch of Boolean Expressions
+
+defining concepts with boolean expressions, and with c++20 'requires' keyword.
+
+```cpp
+template <class T>
+concept integral = std::is_integral_v<T>;
+
+template <class T>
+concept signed_integral = std::is_integral_v<T> && std::is_signed_v<T>;
+
+template <class T>
+concept swappable = requires(T& a,T& b)
+    {
+        ranges::swap(a,b;)
+    };
+```
+
+we could do this before c++20, with type traits (classes that have `::value` member), variable templates and function templates
+
+[integral_constant](https://en.cppreference.com/w/cpp/types/integral_constant), \
+[std::enable_borrowed_range](https://en.cppreference.com/w/cpp/ranges/borrowed_range), \
+[std::is_pointer_interconvertible_with_class](https://en.cppreference.com/w/cpp/types/is_pointer_interconvertible_with_class)
+
+```cpp
+template <bool B>
+using bool_constant = std::integral_constant<bool,B>;
+typedef bool_constant<true> true_type;
+
+template <class R>
+inline constexpr bool std::enable_borrowed_range= false;
+
+template <class S, class M>
+constexpr bool std::is_pointer_interconvertible_with_class(M S::* mp) noexcept;
+```
+
+full expressiveness is possible [std::is_scalar](https://en.cppreference.com/w/cpp/types/is_scalar), is defined with boolean OR expressions
+
+```cpp
+template <class T>
+struct is_scalar : integral_constant<bool,
+        is_arithemetic<T>::value ||
+        is_enum<T>::value ||
+        is_pointer<T>::value ||
+        is_member_pointer<T>::value ||
+        is_null_pointer<T>::value
+    >
+```
+
+SFINEA[^1], void_t, the detection idiom a way, to use something like 'required' in pre c++20 standards (the new syntax makes things easier to read a and write). the default is false, but we specialize on the true types.
+
+```cpp
+template <typename T,typename =void>
+struct has_meow : std::false_type{};
+template <typename T>
+struct has_meow<T, void_t<decltype(std::declval<T>().meow())>>
+    : std::true_type();
+```
+
+**concepts still don't allow specialization**
+
+```cpp
+template <class T> struct is_const : std::false_type{};
+template <class T> struct is_const<const T> : std::true_type{};
+```
+
+out in/opt out specialization, the std::enable_borrowed_range can specialized to true and opt-in to get some functionality.
+
+```cpp
+template <class R>
+inline constexpr bool std::enable_borrowed_range= false;
+```
+
+predicates on traits (not type traits), here the temperature class is specialized to have predicate
+
+```cpp
+namespace std {
+    template<>
+    struct numeric_limits<Temperature>{
+        static constexpr bool has_infinity = false;
+    };
+}
+```
+
+### Take the Overload that Meets the Largest Number of Predicates
+
+controlling library-application interation
+
+> - When applications use libraries there's a risk of error due to incorrect expections.
+> - Overload-resolution is a way to try and verify expectations are matched.
+> - This can be an 'on/off' constraining to allow/disallow certain interactions, or more advance mechanism to choose or tailer specifs of an interactions.
+> - some resolution mechanisms can easily be bypassed, while other are less negotiable.
+
+overload resolution with concepts:
+
+> - 'requires' clause
+>   - Two more syntax alternatives for good measure
+> - The most specialized version wins (see standard for details)
+> - SFINAE[^1] friendly
+> - Clear error messages
+> - Faster compilation speed
+> - Library defines requirements - Application must conform.
+
+a 'requires clause' is not a 'requires expression'
+
+we can impose restriction from the library side - the library dictates the constraints
+
+> - std::enable_if
+>   - library guided, the requirements are defind by the library
+>   - no ranking, error on multiple matchs
+> - "partial specialization" - choose the function more specialized than others (be carefull of universal forwarding functions)
+> - ranking down by the compiler
+> - Tag dispatch
+>   - this is what the STL uses
+>   - iterators opt-in to their category/concept
+>   - in the STL this dispatch is hiedden as an implementation detail,
+>   - libraries could technically allow call-site override.
+
+```cpp
+//from the stl
+template <class _InputIter>
+inline void advance (_InputIter & __i,typename iterator_traits<_InputIter>::differene_type __n)
+{
+   __advance(__i,__n,typename iterator_traits<_InputIter>::iterator_category() );
+}
+```
+
+alternatively, we can have constraints coming from the application,
+
+```cpp
+template <class ForwardIt, class Compare= std::less<>>
+constexpr ForwardIt max_element(ForwardIt first, ForwardIt last, Compare comp =Compare{});
+```
+
+> - Policy-Based Desgin
+>   - this is what we use in many stl algorithms.
+>   - the callers can overide at the call-site.
+>   - (isn't this the strategy design pattern?)
+> - Customization Points (and CPOs, tag_invoke)
+>   - Algorithms have a default.
+>   - Algorithms that can be specialized by the library, but for the entire type, not per call.
+>   - Examples: std::swap, ranges::ssize, ranges::empty,
+>   - CPOs are objects with operator() that deal with overload resolution intricacies.
+>   - 'Niebloids' - similar mechanism for ADL avoidance.
+> - Behavioral Properties (P1393, C++23 executors, Hollman & Niebler)
+>   - _std::require(executor, execution::blocking.always);_
+>   - Library defines properties and Application can use them.
+
+CPO (customization points objects) are callable objects (have the `()` method) that help with overload resolution,tag invokes is an attempt to standardize the CPO idea. Niebloids are a similar but different mechanism.
+
+maybe in c++23 we can have behavioral properties,
+
+Overload Resolution / Customizations
+
+| type                   | On/Off (compiler error?) | Choose from Few | User Code   | Simplicity                                             |
+| ---------------------- | ------------------------ | --------------- | ----------- | ------------------------------------------------------ |
+| _requires_             | Library                  | Library         | No          | Yes                                                    |
+| _std::enable_if_       | Library                  | Library         | No          | No                                                     |
+| 'Specialization'       | Library                  | Library         | No          | Yes                                                    |
+| 'Tag Dispatch'         | Application              | Application     | No          | Medium                                                 |
+| Policy Based Design    | N/A                      | No              | Caller      | (simple for algorithms, less so for classes and types) |
+| CPOs                   | Application              | No              | Application | Medium                                                 |
+| _std::require_ (c++23) | No                       | Caller          | No          | Yes                                                    |
+
+Advanced Overload Resolution Schemes
+
+| type                   | On/Off      | Choose from Few       | User Code        | How?        |
+| ---------------------- | ----------- | --------------------- | ---------------- | ----------- |
+| _requires_             | Library     | Library \ Application | No               | Warrents    |
+| _std::enable_if_       | Library     | Library \ Application | No               | Warrents    |
+| 'Specialization'       | Library     | Library               | No               | N/A         |
+| 'Tag Dispatch'         | Application | Application \ Caller  | No \ Application | Expose/Add  |
+| Policy Based Design    | N/A         | No \ Caller           | Caller           | Policy tags |
+| CPOs                   | Application | No (runtime)          | Application      | N/A         |
+| _std::require_ (c++23) | No          | Caller                | No               | N/A         |
+
+### Syntactic and Semantic
+
+semantics can be tricky. like
+
+> - _std::is_trivially_copyable_v\<std::pair\<int, int>>_ -> **false**.
+> - the complexicy of _std::list::size()_ - was constant or linear until c++11, but required to be constant in c++11.
+
+trivially copyable means we can do memcopy rather than call constructors, but despite that, a standard pair of int is syntactically not trivially copyable (same as tuples), because it would constitute as an ABI break because of past reasons. std::pair has none-trivial assignment operators (to work with rvalue references).
+
+std::list::size() was implementation dependant (linear or constant) for a while, but this was changed (which required an ABI break) for c++11.
+
+there are escape hatches that allow specialization to opt out from behaviors in order to implement things differently. a positive escape hatch is a 'warrant', a way to opt-in to behaviors that are default disabled. this is dangerous, 'footguns' (a way to shot yourself in the foot). we saw this earlier with _std::ranges::enable_borrowed_range_, which is default false.
+
+'cheaply_copyable_t' - from Herb Sutter's lecture in CppCon2020.
+
+special cases:
+
+_std::equivalence_relation_ - a relation that is reflexive (f(x,x) is true), symmetric(f(a,b) == f(b,a)) and transitive (if f(a,b) is true and f(b,c) is true, then f(a,c) is true). there is an issue that the compiler can't differentiate between the general relation and specific equivalence_relation.
+
+example of semantic sugars to attach semantics to lambdas.
+
+### Take Away
+
+> - Concepts are great
+> - 'requires' doesn’t require concepts
+> - Library writers - give your users power
+>   - Build escape hatches / warrants
+>   - Consider call-site customizations
+> - C++ Standard
+>   - Consider concept specialization
+>   - Consider type-trait specialization
+
+</details>
+
+##
+
+<!-- footnotes -->
+
+[^1]: Substuition-Failure-is-not-an-Error
