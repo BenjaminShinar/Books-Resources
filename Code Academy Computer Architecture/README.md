@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore nand elif shmat
+// cSpell:ignore nand elif shmat addiu  mult mflo
 -->
 
 # Computer Architecture
@@ -324,6 +324,186 @@ also needed
 see python code in file 'ultrasupercalculationcomputer'
 
 ## Assembly
+
+The code we write in c, python, js or any other language is the source code, but this isn't what the machine can execute. the instructions to the cpu need to simplified, and that's the assembly language.
+
+### Assembly language
+
+Assembly language is directly translated instructions, it's human readable, but still the same.
+
+most of the assembly language was abstracted away from most programming languages, it's hidden behind layers of high-level programming. however, it is still used in embedded programming, direct hardware testing and software optimizations.
+
+embedded systems have low memory and storage, so assembly allows us to manually optimize and control each task separately to ensure that we don't overtax the hardware.
+
+assembly languages vary by the ISA used, MIPS, X86 (CISC) and ARM(RISC) and by vendor.
+
+#### Compilation
+
+when we write source code, we need to eventually turn it into machine instructions, this is achieved by following the four stages of software:
+
+1. preprocessing - removing comments, expanding macro, etc...
+2. compiling - turning into assembly code
+3. assembling - turning the assembly code into machine instructions.
+4. linking - filling in the blanks, like locations, addresses and additional libraries.
+
+#### Assembly code format
+
+assembly are strongly related to the machine instructions (nearly identical):\
+assembly begins with an opcode, but rather than six bits, it's one of the predefined words.
+
+this assembly code multiplies the data in register 3 by that of the data in register 2.
+
+```MIPS
+MULT $3,$2
+```
+
+is the same as the machine code
+
+```
+00000000111001100000000000011000
+000000  00111 00110 00000 00000 011000
+op 0 rs 7 rt 6 rd 0 shmat 0 func 24
+```
+
+the $ symbol in MIPS means direct register addresses.as before we have opcode and operands.
+
+#### Arithmetic Operations
+
+most of the stuff the cpu does is arithmetics, but different arithmetic operations depend on how the numbers are stored at hardware, registers, cache and other types of storage have fixed binary lengths, so there needs to be somewhere to store 'overflow' from operations, we can have operations that act on two values from registers or one from register and one constant (and immediate).\
+for example ADD takes three arguments, two register to take the value from and one to store it, ADDI (add immediate) takes one register of data, a register to store the result, and the immediate constant (the order is different!)
+
+```mips
+ADD $4,$5, $6
+ADDI $4,$6, 7
+```
+
+other common arithmetics operations are SUB,SUBI, MULT,MULTII,DIV,DIVI.
+
+#### Memory Access Operations
+
+we can control where information is stored, we can store it in a register for immediate use or push it back into a different memory storage location. the commands are LW and SW: load word, store word. a "word" is a fixed size data, usually 32 bit.
+
+load what's inside register 3 (indirect accesses) into register 1.\
+add the constant 15 to what's inside register 1 and store the result inside register 1.\
+store what inside register 1 into where register 3 points to ((indirect accesses)
+XOR with self is basically resting the register back to zero
+
+```mips
+LW $1,($3)
+ADDI $1,$1, 15
+SW $1, ($3)
+XOR $1,$1,$1
+```
+
+in assembly coding, there are no variables, and the programmer must keep track of everything.
+
+#### Control Flow Operations
+
+we get some branching and stuff for control, we can also jump directly to memory locations
+
+- BEQ (branch on equal ==)
+- BNE (branch on not equal != )
+- BGTZ, BGEZ (branch on greater than zero, branch on greater or equal to zero >0, >= 0)
+- BLTZ, BLEZ (branch on less than zero, branch on less or equal to zero <0, <= 0)
+- J (jump to location)
+
+#### Memory Addressing, Direct and Indirect
+
+the parentheses in some of the code aren't just for show, they can mean direct and indirect reference. we can use the registers to store the address of other pieces of memory, and then read from that.
+direct access takes the data in the register, indirect access (with parentheses) uses that value to read from a different memory locations
+
+in our example, register 5 has the value `0b1101000111` (839 decimal), and somewhere we have memory with that adderess that contains `0b10001110001112` (4551 decimal).
+
+```mips
+ADD $5,$5,$6
+```
+
+now registers six has the result of adding 839 with 839.
+
+however
+
+```mips
+LW $4,($5)
+ADD $5,$4,$6
+```
+
+we first load the indirect value from the address in register 5 so now register 4 stores (4551 decimal), and then we add them together and store the result in register 6 (4551+839 =5390)
+
+#### Translation between Assembly and Binary
+
+there is nearly a one-to-one relation between assembly code and machine code.
+
+trying to understand this code
+
+```mips
+  square:
+     addiu $sp,$sp,8
+     sw $fp,4($sp)
+     move $fp,$sp
+     sw $4,8($fp)
+     lw $3,8($fp)
+     lw $2,8($fp)
+     nop
+     mult $3,$2
+     mflo $2
+     move $sp,$fp
+     lw $fp,4($sp)
+     addiu $sp,$sp,8
+     j $31
+     nop
+```
+
+- ADDIU - add immediate unsigned word
+- MOVE- move function pointer
+- MFLO - move from lower register
+
+my guess
+
+1. add 8 to stack pointer
+2. store what inside function into offset 4 from stack pointer
+3. move fp to the stack pointer
+4. load into register 3 the value which is offest 8 from stack pointer
+5. load into register 2 the value which is offest 8 from stack pointer
+6. do nothing
+7. multiply register $3 and $2
+8. move value into register 2
+9. move stack pointer to function pointer
+10. load into function pointer offset 4 from stack pointer
+11. add 8 to stack pointer
+12. jump to register 31 value
+13. do nothing
+
+(sure as hell Im not trying to write this myself)
+
+| opcode | rt    | rs    | rd    | shmat | func   | assembly                 |
+| ------ | ----- | ----- | ----- | ----- | ------ | ------------------------ |
+| 001001 | 11101 | 11101 | 00000 | 00000 | 001000 | `addiu $sp,$sp,8 `       |
+| 101011 | 11101 | 11110 | 00000 | 00000 | 000100 | `sw $fp,4($sp) `         |
+| 010001 | 00000 | 00000 | 11101 | 11110 | 000110 | `move $fp,$sp`           |
+| 101011 | 11110 | 00100 | 00000 | 00000 | 001000 | `sw $4,8($fp) `          |
+| 100011 | 11110 | 00011 | 00000 | 00000 | 001000 | `lw $3,8($fp) `          |
+| 100011 | 11110 | 00010 | 00000 | 00000 | 001000 | `lw $2,8($fp) `          |
+| 000000 | 00000 | 00000 | 00000 | 00000 | 000000 | `nop `                   |
+| 000000 | 00011 | 00010 | 00000 | 00000 | 011000 | `mult $3,$2 `            |
+| 000000 | 00000 | 00000 | 00010 | 00000 | 010010 | `mflo $2 `               |
+| 010001 | 00000 | 00000 | 11110 | 11101 | 000110 | `move $sp,$fp `          |
+| 100011 | 11101 | 11110 | 00000 | 00000 | 000100 | `lw $fp,4($sp) `         |
+| 001001 | 11101 | 11101 | 00000 | 00000 | 001000 | `add : addiu $sp,$sp,8 ` |
+| 000010 | 00000 | 00000 | 00000 | 00000 | 011111 | `j $31 `                 |
+| 000000 | 00000 | 00000 | 00000 | 00000 | 000000 | `nop `                   |
+
+### Assembly language problem Set
+
+some question with assembly that are ridiculous to think of
+
+00000000000000000000000000101001 \* 00000000000000000000000111100111 == \
+(41\*423) \
+00000000000000000000000111100111 + \
+00000000000000000000111100111000 + \
+00000000000000000011110011100000 == \
+################################ \
+00000000000000000100110111111111 == \
+19967
 
 ## Cache
 
