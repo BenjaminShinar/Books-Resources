@@ -75,7 +75,7 @@ examples of constants time running algorithms, linear time, quadric time. logari
 
 </details>
 
-## Static and dynamic arrays
+## Static and Dynamic Arrays
 
 <details>
 <summary>
@@ -107,7 +107,7 @@ java source code implementation. the only intersting part is the implementation 
 
 </details>
 
-## Linked lists
+## Linked Lists
 
 <details>
 <summary>
@@ -168,17 +168,88 @@ java source code implementation. uses a NODE\<T> class. size is stored (not calc
 
 ## Stacks
 
+<details>
+<summary>
+Last in, First out data structure.
+</summary>
+
+LIFO - last in, first out. push, pop, and peek.
+
+> "one ended linear data structure which models a real world stack by having two primary operations, namely **push** and **pop**."
+
+stacks are used in text editors, to undo operations, to keep track of matching brackets, used in programming to model recursion, using Depth First Search (DFS) on a graph.
+
+getting the size is O(1), searching is O(N), because we need to pop all elements, and then push them back.
+
+Example of using a stack to match brackets:\
+every left bracket we find, we push to the stack, for a right brackets, we check if the stack not empty, and we check the top of the stack, if the top of the stack is the same type of the incoming bracket, we pop and continue. if they don't match then there is a problem, no need to check anymore. in the end we check that the stack is empty at the end of the operation.
+
+Tower of Hanoi:\
+moving elemens from stacks with constraints.
+
+Stacks are usually implemented with arrays, linked list or double linked list. we have a head, and each time we add an element, we add it before the head, and it becomes the new head. popping an element is removing the head and setting the head to what is wasp pointing to. if we use an array then we keep track of the index of the last added element.
+
+java source code implementation. uses a doubly linked list, nothing intresting.
+
+</details>
+
 ## Queues
 
-## Priority queues
+<details>
+<summary>
+First in, First out data structure. Push to the tail, pop from the head.
+</summary>
 
-## Union find/Disjoint set
+FIFO - First in, first out.
 
-## Binary search trees
+> "Linear data structure which models a real world queues by having two primary operations, namely **enqueue** and **dequeue**."
 
-## Hash tables
+we can enqueue (push element to the back), or dequeue (remove from front). terminology can be inconsistent, "enqueuing = adding = offering - pushing to the back", while "dequeue = polling = pop front = removing".
 
-## Fenwick tree/Binary indexed tree
+we always have a front and a back back end.
+
+queues are used to model Breadth First Search (BFS) graph traversal, to keep track of a limited number of elements, to manage requests in order.
+
+### Breadth First Search (BFS)
+
+we have a graph, for every element, we (enqueue) push all the connections of the node into the queue, and then search from the front element (dequeue it) and repeat this until the queue is empty. in this pseudo code we modify the elements.
+
+```pseudo
+Let Q be a Queue
+Q.enqueue(starting_model)
+starting_node.visited = true
+While Q is not Empty Do:
+    node = Q.dequeue()
+    For neighbor in neighbors(node):
+        If neighbor as not been visited:
+            neighbot.visited = true;
+            Q.enqueue(neighbor)
+```
+
+### Implementations
+
+We can implement queues with arrays (circular buffer?), or with linked lists. for a singly linked list, we add(enqueue) at the tail (back), and we pop (dequeue) from the head, each time we move the head forward.
+
+java source code implementation. uses a doubly linked list, nothing intresting.
+
+</details>
+
+## Priority Queues
+
+<!-- <details> -->
+<summary>
+
+</summary>
+
+</details>
+
+## Union Find/Disjoint Set
+
+## Binary Search Trees
+
+## Hash Tables
+
+## Fenwick Tree/Binary Indexed Tree
 
 ## AVL Tree
 
@@ -190,9 +261,11 @@ java source code implementation. uses a NODE\<T> class. size is stored (not calc
 
 complexity table
 
-| Data structure     | Access | Search | Insertion    | Appending    | Deletion                                   |
-| ------------------ | ------ | ------ | ------------ | ------------ | ------------------------------------------ |
-| Static Array       | O(1)   | O(n)   | N/A          | N/A          | N/A                                        |
-| Dynamic Array      | O(1)   | O(n)   | O(n)         | O(n)         | O(n)                                       |
-| Singly Linked List | N/A    | O(n)   | at head O(1) | at tail O(1) | at head O(1), at tail O(n), in middle O(n) |
-| Doubly Linked List | N/A    | O(n)   | at head O(1) | at tail O(1) | at head O(1), at tail O(1), in middle O(n) |
+| Data structure     | Access        | Search | Insertion        | Appending            | Deletion                                   |
+| ------------------ | ------------- | ------ | ---------------- | -------------------- | ------------------------------------------ |
+| Static Array       | O(1)          | O(n)   | N/A              | N/A                  | N/A                                        |
+| Dynamic Array      | O(1)          | O(n)   | O(n)             | O(n)                 | O(n)                                       |
+| Singly Linked List | N/A           | O(n)   | at head O(1)     | at tail O(1)         | at head O(1), at tail O(n), in middle O(n) |
+| Doubly Linked List | N/A           | O(n)   | at head O(1)     | at tail O(1)         | at head O(1), at tail O(1), in middle O(n) |
+| Stack              | peek top O(1) | O(N)   | N/A, only push   | push at top O(1)     | pop top O(1)                               |
+| Queue              | front O(1)    | O(N)   | N/A,only enqueue | enqueue at back O(1) | dequeue front O(1) in middle O(N)          |
