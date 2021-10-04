@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore nand elif shmat addiu  mult mflo
+// cSpell:ignore nand elif shmat addiu mult mflo fifo_indicies
 -->
 
 # Computer Architecture
@@ -506,6 +506,621 @@ some question with assembly that are ridiculous to think of
 19967
 
 ## Cache
+
+### Introduction to Cache
+
+Cache memory, minimizing the delay when accessing the memory.
+
+DDR: Double Data Rate Synchronous Dynamic Random Access
+
+#### Memory Hierarchy
+
+performance speed (processing data) grew faster tha memory speed (accessing the data), so getting data became a bottle neck. the performance of memory operations decreases (get slower) the larger the memory is. the registers store only a few bytes each, and are very fast, while the hdd can store terrabytes of data, and is very slow. between them we have the _cache_ and the _RAM_.
+
+```python
+from isa import ISA
+from memory import Memory, MainMemory
+
+if __name__ == "__main__":
+  cache_arch = ISA()
+  # Write your code below
+  cache_arch.set_memory(MainMemory())
+
+
+  # Architecture runs the instructions
+  cache_arch.read_instructions("ex2_instructions")
+
+  # This outputs the memory data and code execution time
+  exec_time = cache_arch.get_exec_time()
+  if exec_time > 0:
+    print(f"OUTPUT STRING: {cache_arch.output}")
+    print(f"EXECUTION TIME: {exec_time:.2f} nanoseconds")
+```
+
+#### Cache Memory
+
+The cache holds more memory than the processor (registers), and less memory than the main memory (RAM). the speed is also between them.
+the cache is composed out of blocks, each blocks stores a copy of the memory from the main data, and is paired with a 'tag' which is the address of the data is the main memory, so the same address are used for both the cache and the main data.
+together, each pair of tag and data are called 'entries'.
+
+```python
+from isa import ISA
+from memory import Memory, MainMemory
+
+class Cache(Memory):
+  def __init__(self):
+    # Write your code below
+    super().__init__(name="Cache", access_time=0.5)
+    self.data = [
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""}
+    ]
+
+
+
+  # Returns the cache total execution time
+  def get_exec_time(self):
+    return self.exec_time
+
+if __name__ == "__main__":
+  cache_arch = ISA()
+  # Change the code below
+  cache_arch.set_memory(Cache())
+
+  # Architecture runs the instructions
+  cache_arch.read_instructions("ex3_instructions")
+
+  # This outputs the memory data and code execution time
+  exec_time = cache_arch.get_exec_time()
+  if exec_time > 0:
+    print(f"OUTPUT STRING: {cache_arch.output}")
+    print(f"EXECUTION TIME: {exec_time:.2f} seconds")
+```
+
+#### Cache Hit
+
+when we request data from the cache, we check if it exists, if it does, it's called a 'Cache hit', this is good.
+
+```python
+from isa import ISA
+from memory import Memory, MainMemory
+
+class Cache(Memory):
+  def __init__(self):
+    super().__init__(name="Cache", access_time=0.5)
+
+    self.data = [
+      {"tag": 0, "data": "M"},
+      {"tag": 1, "data": "i"},
+      {"tag": 2, "data": "s"},
+      {"tag": 3, "data": "p"},
+    ]
+
+
+  def read(self, address):
+    super().read()
+    data = None
+    # Write your code below
+    entry = self.get_entry(address)
+    if entry is not None:
+      data=entry["data"]
+    return data
+
+  # Returns entry on cache hit
+  # Returns None on cache miss
+  def get_entry(self, address):
+    for entry in self.data:
+      if entry["tag"] == address:
+          print(f"HIT: ", end="")
+          return entry
+
+    print(f"MISS", end="")
+    return None
+
+  def get_exec_time(self):
+    return self.exec_time
+
+if __name__ == "__main__":
+  cache_arch = ISA()
+  cache_arch.set_memory(Cache())
+
+  # Architecture runs the instructions
+  cache_arch.read_instructions("ex4_instructions")
+
+  # This outputs the memory data and code execution time
+  exec_time = cache_arch.get_exec_time()
+  if exec_time > 0:
+    print(f"OUTPUT STRING: {cache_arch.output}")
+    print(f"EXECUTION TIME: {exec_time:.2f} nanoseconds")
+```
+
+#### Cache Miss
+
+when we request data that wasn't found in the cache, it's called a 'Cache miss', which means that we should access the main memory instead, the data is retrived from the main memory and stored in the cache, and is returned from there. we would ideally like as few cache misses as we can.
+
+```python
+from isa import ISA
+from memory import Memory, MainMemory
+
+class Cache(Memory):
+  def __init__(self):
+    super().__init__(name="Cache", access_time=0.5)
+    self.main_memory = MainMemory()
+
+    self.data = [
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+    ]
+
+  def read(self, address):
+    super().read()
+    data = None
+    entry = self.get_entry(address)
+    if entry is not None:
+      data = entry["data"]
+    # Write your code below
+    else:
+      data = self.main_memory.read(address)
+      self.add_entry(address,data)
+
+
+    return data
+  # Adds data to an empty entry
+  def add_entry(self, address, data):
+    for entry in self.data:
+      if entry["tag"] == None:
+        entry["tag"] = address
+        entry["data"] = data
+        return
+
+  # Returns entry on cache hit
+  # Returns None on cache miss
+  def get_entry(self, address):
+    for entry in self.data:
+      if entry["tag"] == address:
+          print(f"HIT: ", end="")
+          return entry
+
+    print(f"MISS", end="")
+    return None
+
+  def get_exec_time(self):
+    exec_time = self.exec_time + self.main_memory.get_exec_time()
+    return exec_time
+
+if __name__ == "__main__":
+  cache_arch = ISA()
+  cache_arch.set_memory(Cache())
+
+  # Architecture runs the instructions
+  cache_arch.read_instructions("ex5_instructions")
+
+  # This outputs the memory data and code execution time
+  exec_time = cache_arch.get_exec_time()
+  if exec_time > 0:
+    print(f"OUTPUT STRING: {cache_arch.output}")
+    print(f"EXECUTION TIME: {exec_time:.2f} nanoseconds")
+```
+
+#### Replament Policy
+
+when we get a cache miss, we would want to add the entry to the cache, but what do we do when the cache is full? we need to decide which entries get overwritten. this is decided by the 'replacement policy' of the cache. this is part of the architecture design, simple policies can be:
+
+- FIFO - first in, first out. keep an index of the last entry used, and rollover back to the start when finished.
+- LRU - Least recently used. keep track of the entry which wasn't used the most time and replace it, the cost of calculating this might not be worth the benefits.
+- Random Replacement. choose at random.
+
+the goal is to increase the number of cache hits and limit cache misses.
+
+```python
+from isa import ISA
+from memory import Memory, MainMemory
+from random import randint
+
+class Cache(Memory):
+  def __init__(self):
+    super().__init__(name="Cache", access_time=0.5)
+    self.main_memory = MainMemory()
+    self.fifo_index = 0
+
+    self.data = [
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+    ]
+
+  def read(self, address):
+    super().read()
+    data = None
+    entry = self.get_entry(address)
+    if entry is not None:
+      data = entry["data"]
+    else:
+      data = self.main_memory.read(address)
+      # Change the code below
+      self.replace_entry(address, data)
+
+    return data
+
+  def replace_entry(self, address, data):
+    # Change the code below
+    index = self.fifo_policy()
+    self.data[index] = {"tag": address, "data": data}
+
+  def random_policy(self):
+    return randint(0, len(self.data)-1)
+
+  def fifo_policy(self):
+    index = self.fifo_index
+    self.fifo_index += 1
+    if self.fifo_index == len(self.data):
+      self.fifo_index = 0
+
+    return index
+
+  # Adds data in an empty entry
+  def add_entry(self, address, data):
+    for entry in self.data:
+      if entry["tag"] == None:
+        entry["tag"] = address
+        entry["data"] = data
+        return
+
+  # Returns entry on cache hit
+  # Returns None on cache miss
+  def get_entry(self, address):
+    for entry in self.data:
+      if entry["tag"] == address:
+          print(f"HIT: ", end="")
+          return entry
+
+    print(f"MISS", end="")
+    return None
+
+  def get_exec_time(self):
+    exec_time = self.exec_time + self.main_memory.get_exec_time()
+    return exec_time
+
+if __name__ == "__main__":
+  cache_arch = ISA()
+  cache_arch.set_memory(Cache())
+
+  # Architecture runs the instructions
+  cache_arch.read_instructions("ex6_instructions")
+
+  # This outputs the memory data and code execution time
+  exec_time = cache_arch.get_exec_time()
+  if exec_time > 0:
+    print(f"OUTPUT STRING: {cache_arch.output}")
+    print(f"EXECUTION TIME: {exec_time:.2f} nanoseconds")
+```
+
+#### Associativity
+
+what id data from the main memory is placed in a specific location inside the cache?
+
+- Fully Associative. any location on the main memory can go anywhere.
+- Direct Mapped. a main memory location can only appear in a specific location, this overrides the replacement policy.
+- N-Way Set Associative. ~~a main memory location is limited to a specific set of blocks in which it can appear. the 'n' determins how many possible locations are there. a 2 way set associative mapping means that a single main memory address can only appear in one of two locations in the cache, if it's not in one of those two, then it's a cache miss. replacement policy is required, but can only replace the data in those places.~~
+
+~~if we have a cache with 32 locations, then Fully Associative can be described as 1-Way set associative, Direct-Mapped is 32-way set associative.~~
+
+```python
+from isa import ISA
+from memory import Memory, MainMemory
+from random import randint
+
+class Cache(Memory):
+  def __init__(self):
+    super().__init__(name="Cache", access_time=0.5)
+    self.main_memory = MainMemory()
+    # Change the value below
+    self.sets = 4 # Set to 1, 2 or 4
+    self.fifo_indices = [0, None, None, None]
+
+    # Sets self.fifo_indicies based on
+    # the number of sets in the cache
+    if self.sets == 2:
+      self.fifo_indices = [0, 2, None, None]
+    elif self.sets == 4:
+      self.fifo_indices = [0, 1, 2, 3]
+
+    self.data = [
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+    ]
+
+  def read(self, address):
+    super().read()
+    data = None
+    entry = self.get_entry(address)
+    if entry is not None:
+      data = entry["data"]
+    else:
+      data = self.main_memory.read(address)
+      self.replace_entry(address, data)
+
+    return data
+
+  def replace_entry(self, address, data):
+    index = 0
+    # Write your code below
+    set_number = address % self.sets
+    index = self.fifo_policy(set_number)
+
+
+    self.data[index] = {"tag": address, "data": data}
+
+  def random_policy(self, set_number):
+    if self.sets == 1:
+      return randint(0, len(self.data)-1)
+    elif self.sets == 2:
+      return randint(set_number*2, set_number*2+1)
+
+    return set_number
+
+  def fifo_policy(self, set_number):
+    index = self.fifo_indices[set_number]
+    self.fifo_indices[set_number] += 1
+    if self.fifo_indices[set_number] == len(self.data)/self.sets+(set_number*int(len(self.data)/self.sets)):
+      self.fifo_indices[set_number] = set_number*int(len(self.data)/self.sets)
+
+    return index
+
+  # Returns entry on cache hit
+  # Returns None on cache miss
+  def get_entry(self, address):
+    for entry in self.data:
+      if entry["tag"] == address:
+          print(f"HIT: ", end="")
+          return entry
+
+    print(f"MISS", end="")
+    return None
+
+  def get_exec_time(self):
+    exec_time = self.exec_time + self.main_memory.get_exec_time()
+    return exec_time
+
+if __name__ == "__main__":
+  cache_arch = ISA()
+  cache_arch.set_memory(Cache())
+
+  # Architecture runs the instructions
+  cache_arch.read_instructions("ex7_instructions")
+
+  # This outputs the memory data and code execution time
+  exec_time = cache_arch.get_exec_time()
+  if exec_time > 0:
+    print(f"OUTPUT STRING: {cache_arch.output}")
+    print(f"EXECUTION TIME: {exec_time:.2f} nanoseconds")
+```
+
+#### Writing Policy
+
+eventually, we would want to write the data in the cache to the memory (so we could retrive it, or even write to the long term memory).
+
+the decsion when to send data from the cache to the main memory is handled by the 'Write Policy'.
+
+- Write-through. when data is written to the cache, it's also written to the main memory, easy to implement, but costly, as we require the slow process of writing to the main memory each time we change the cache memory.
+- Write-back. the data is written to the main memory only when the entry is overwritten. so right before we lose the data in the cache, it's stored in the main memory.
+
+```python
+from isa import ISA
+from memory import Memory, MainMemory
+from random import randint
+
+class Cache(Memory):
+  def __init__(self):
+    super().__init__(name="Cache", access_time=0.5)
+    self.main_memory = MainMemory()
+    self.fifo_indices = [0, 0, 0, 0]
+    self.sets = 1 # Set to 1, 2 or 4
+    self.fifo_indices = [0, None, None, None]
+
+    if self.sets == 2:
+      self.fifo_indices = [0, 2, None, None]
+    elif self.sets == 4:
+      self.fifo_indices = [0, 1, 2, 3]
+
+    self.data = [
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+      {"tag": None, "data": ""},
+    ]
+
+  def write(self, address, data):
+    super().write()
+    entry = self.get_entry(address)
+    # Write your code below
+    if entry is not None:
+      entry["data"]=data
+    else:
+      self.replace_entry(address,data)
+    self.main_memory.write(address,data)
+
+
+  def read(self, address):
+    super().read()
+    data = None
+    entry = self.get_entry(address)
+    if entry is not None:
+      data = entry["data"]
+    else:
+      data = self.main_memory.read(address)
+      self.replace_entry(address, data)
+
+    return data
+
+  def replace_entry(self, address, data):
+    index = 0
+    set_number = address % self.sets
+    index = self.fifo_policy(set_number)
+    self.data[index] = {"tag": address, "data": data}
+
+  def random_policy(self, set_number):
+    if self.sets == 1:
+      return randint(0, len(self.data)-1)
+    elif self.sets == 2:
+      return randint(set_number*2, set_number*2+1)
+
+    return set_number
+
+  def fifo_policy(self, set_number):
+    index = self.fifo_indices[set_number]
+    self.fifo_indices[set_number] += 1
+    if self.fifo_indices[set_number] == len(self.data)/self.sets+(set_number*int(len(self.data)/self.sets)):
+      self.fifo_indices[set_number] = set_number*int(len(self.data)/self.sets)
+
+    return self.fifo_indices[set_number]
+
+  # Returns entry on cache hit
+  # Returns None on cache miss
+  def get_entry(self, address):
+    for entry in self.data:
+      if entry["tag"] == address and entry["data"] is not "":
+          print(f"HIT: ", end="")
+          return entry
+
+    print(f"MISS", end="")
+    return None
+
+  def get_exec_time(self):
+    exec_time = self.exec_time + self.main_memory.get_exec_time()
+    return exec_time
+
+if __name__ == "__main__":
+  cache_arch = ISA()
+  cache_arch.set_memory(Cache())
+
+  # Architecture runs the instructions
+  cache_arch.read_instructions("ex8_instructions")
+
+  # This outputs the memory data and code execution time
+  exec_time = cache_arch.get_exec_time()
+  if exec_time > 0:
+    print(f"OUTPUT STRING: {cache_arch.output}")
+    print(f"EXECUTION TIME: {exec_time:.2f} nanoseconds")
+```
+
+### Cache Problem Set
+
+#### Problem 1-A
+
+four blocks cache, main memory of 16, reading the following data (address)
+\[8,3,4,12,10,7,3,2,6,3,1,7,8,6], fifo replacement policy
+
+1. how many cache misses?
+2. how many cache hits?
+3. what is the final state of the cache?
+
+- 8 Miss \[8]
+- 3 Miss \[8,3]
+- 4 Miss \[8,3,4]
+- 12 Miss \[8,3,4,12]
+- 10 Miss \[**10**,3,4,12]
+- 7 Miss \[10,**7**,4,12]
+- 3 Miss \[10,7,**3**,12]
+- 2 Miss \[10,7,3,**2**]
+- 6 Miss \[**6**,7,3,2]
+- 3 Hit \[6,7,3,2]
+- 1 Miss \[6,**1**,3,2]
+- 7 Miss \[6,1,**7**,2]
+- 8 Miss \[6,1,7,**8**]
+- 6 Hit \[6,1,7,8]
+
+#### Problem 1-B
+
+four blocks cache, main memory of 16, reading the following data (address)
+\[8,3,4,12,10,7,3,2,6,3,1,7,8,6], fifo replacement policy, now with 2 set associativity, which alternates each time,
+
+1. how many cache misses?
+2. how many cache hits?
+3. what is the final state of the cache?
+
+(replace the sets, even on the left, odd on the right)
+
+- 8 Miss \[, ,~ , ]
+- 3 Miss \[3, ,~ 8,]
+- 4 Miss \[3, ,~8,4]
+- 12 Miss \[3, ,~**12**,4]
+- 10 Miss \[3, ,~12,**10**]
+- 7 Miss\[3,7~12,**10**]
+- 3 Hit\[3,7 ~12,**10** ]
+- 2 Miss\[3,7 ~**2**,10 ]
+- 6 Miss \[3,7 ~2,**6** ]
+- 3 Hit\[ 3,7~2,**6** ]
+- 1 Miss\[**1**,7 ~2,**6** ]
+- 7 Hit \[**1**,7 ~ 2,**6**]
+- 8 Miss\[**1**,7 ~ **8**,6 ]
+- 6 Hit\[**1**,7 ~ **8**,6]
+
+#### Problem 1-C
+
+four blocks cache, main memory of 16, reading the following data (address)
+\[8,3,4,12,10,7,3,2,6,3,1,7,8,6], fifo replacement policy, direct mapped, which is like 4 way set associative (???)
+
+1. how many cache misses?
+2. how many cache hits?
+3. what is the final state of the cache?
+
+- 8 -> 0 miss
+- 3 -> 3 miss
+- 4 -> 0 miss
+- 12 -> 0 miss
+- 10 -> 2 miss
+- 7 -> 3 miss
+- 3 -> 3 miss
+- 2 -> 2 miss
+- 6 -> 2 miss
+- 3 -> 3 hit
+- 1 -> 1 hit
+- 7 -> 3 miss
+- 8 -> 0 miss
+- 6 -> 2 hit
+
+3 hits, 11 misses, \[8,1,6,7]
+
+#### Problem 2-A
+
+four blocks cache, fully associate, FIFO replacement policy, access to cache cost 0.5 ns and access to main memory is 30 ns. data is \[1,4,6,2,1,4,7,4,1,4,7,0].
+write policy is write-through,
+
+1. what is the total access time of cache writes
+2. what is the total access time of the main memory writes
+3. what is the total access time of both cache and main memory writes.
+
+- 1 \[1,,,] 0.5
+- 4 \[1,4,,] 0.5
+- 6 \[1,4,6,] 0.5
+- 2 \[1,4,6,2] 0.5
+- 1 \[1,4,6,2] 0.5
+- 4 \[1,4,6,2] 0.5
+- 7 \[**7**,4,6,2] 0.5, 30
+- 4 \[**7**,4,6,2] 0.5
+- 1 \[7,**1**,6,2] 0.5, 30
+- 4 \[7,1,**4**,2] 0.5, 30
+- 7 \[7,1,**4**,6] 0.5
+- 0 \[7,1,4,**0**] 0.5, 30
+
+#### Problem 2-B
+
+four blocks cache, fully associate, FIFO replacement policy, access to cache cost 0.5 ns and access to main memory is 30 ns. data is \[1,4,6,2,1,4,7,4,1,4,7,0].
+write policy is write-back,
+
+1. what is the total access time of cache writes
+2. what is the total access time of the main memory writes
+3. what is the total access time of both cache and main memory writes.
+
+12 writes, each to the cache (0.5\*12 = 6) and the main memory (30\*12=360), total is 366.
 
 ## Instruction Parallelism
 
