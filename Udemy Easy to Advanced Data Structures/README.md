@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore
+// cSpell:ignore nlex heapify
 -->
 
 # Easy to Advanced Data Structures
@@ -236,10 +236,98 @@ java source code implementation. uses a doubly linked list, nothing intresting.
 
 ## Priority Queues
 
-<!-- <details> -->
+<details>
 <summary>
-
+Priority queue, Binary heap (a complete binary tree in a continues memory).
 </summary>
+
+Priority queues and heaps. Min and Max priority queues, binary heaps (sinking and swimming, sift down and sift up, bubble up and bubble down).
+
+> "An ADT that operates similarly to a regular queue, except that **each elements has a certain priority**. The priority of the elements in the priority queue determines the order in which elements are removed from it"
+>
+> Priority queues can only hold elements that are comparable (support ordering, usually the 'less than' operator).
+
+example with numbers, taking the smallest number.
+
+we implement this ADT with a **heap**.
+
+> - "A heap is a **tree** based DS that satisfies the **heap invariant** (the heap property): If A is a parent node of B then A is ordered with respect to B for all nodes A, B in the heap."
+> - this means that the value of the parent node is always at the same relation to all of it's child nodes.
+> - in a max heap, the parent node is always larger than than the child nodes, and in a min heap, always smaller. there is no defined relation between sibling nodes.
+
+the heap helps us implement the priority queue. heaps aren't necessarily binary, they must be trees (can't contain cycles).
+
+Priority queues usages:
+
+- certain implementations of Dijkstras's shortest path algorithm.
+- anytime we dynamically use 'get next best' or 'next worst'.
+- Huffman encoding (lossless data compression).
+- Best First Search algorithms such as **A\***.
+- Minimum Spanning Tree algorithms/
+
+complexity:
+
+- construction is O(n) - from linear array, basis for heap sort.
+- polling is O(log(n)) - take the root, might require reordering the heap to maintain the heap invariant.
+- peeking is O(1) - without removing.
+- adding is O(log(n)) - might need to reshuffle the heap.
+- naive removing O(n)
+- advanced removing (with hash table) O(log(n))
+- naive contains O(n)
+- advance contains (with has table) O(1)
+
+as we can see, we can use a hash table to optmize some methods. this will be covered later.
+
+### Turning Min Priority queue into a max Priority queue
+
+most libraries provide just one of these two, either a max or a min priority queue. if we want the other, we need to make it ourselves. one way to hack this is to provide the comparable function and negate it. the other way is to negate the numbers before inserting them and when removing them. this works for signed numbers, not so much for classes or unsigned numbers.\
+for strings, suppose we have compartoar _lex_,and it' negation _nlex_, s1 and s2 are strings, to get nlex we simply negate the value of lex (multiplying by -1).
+
+### Inserting elements to binary heap
+
+we use binary heaps for priority queues because it usually gives the best time complexity (better than linked list). There are many types of heaps(binary, fibonacci, binomial, pairing...).
+
+> - "A binary is a binary tree that supports the heap in variant. in a binary tree, every node has exactly two children".
+> - even leafs have exactly two children, its just that those children are null.
+> - "A complete binary tree is a tree in which at every level, except possibly the last, is completely filled and all the nodes are as far left as possbile"
+
+a canonical way of representing the complete tree haps is with an array. this gives us fast operations, as long as we maintain the structure of the complete binary tree.
+
+- level 0 : index 0 (1)
+- level 1 : index 1,2 (2)
+- level 2 : index 3,4,5,6 (4)
+- level 3 : index 7,8,9,10,11,12,13,14 (8)
+
+> "let i be the parent node index:
+>
+> - left child index: 2i +1
+> - right child index: 2i + 2
+>
+> (assuming zero based)"
+
+- level 0 : 0 -> \[1,2]
+- level 1 : 1 -> \[3,4], 2 -> \[5,6]
+- level 2 : index 3 -> \[7,8], 4 -> \[9,10], 5 -> \[11,12], 6 -> \[13,14]
+
+when we add nodes, we should manitain the heap invariants, we always add the new element at the lowest, first empty position, and from there we start bubbling up if needed. if the element is larger than parent, swap with parent, contniue to do so until we no longer violate the heap invariant.
+
+### Removing elements from binary heap
+
+removing the root is called polling, we don't need to search for the index, it's always the top element at index 0. to remove the root, we swap it with the last element index, remove the last element (which contained the previous root). and now that we are violating the heap invariant, we start bubbling down. we look at the children and swap with the smallest (prefring the left node), continue doing so.\
+if we want to remove an element which isn't the root, we first search for it in the tree (linear search), we swap it with the last node, and do a bubble up again.\
+we always work with swapping the last element and then bubbling up and down.
+
+- polling is O(log(n)) - we know where the root is, and we do one operations per tree level.
+- removing is O(n), we first search for the element, and then we perform the bubbling operations from that point.
+- there is actually a better way to remove element.
+  > "The inefficiency of the removal algorithm comes from the fact that we have to perform a linear search to find out where the an element is indexed at. What if instead we did a lookup using a _Hashtable_ to find out where a node is indexed at?\
+  > A _hashtable_ provides constant time lookup and update for mapping from a key (the node value) to a value (the index)"
+
+every value is mapped to the index, we can map the value to several indices with a set or tree set of indexes. at each bubbling operations we swap the values in both trees (data tree and index tree).
+
+### Implementations
+
+java implementations, using a comparable interface, heap size (last added index), heap capacity (which can grow), the '_heapify_' process (complexity of O(n)), we also have a map for the indices, which we use for checking if a heap contains an element, and for removing elements. swim is bubble up, sink is bubble down. swapping requires additional overhead for swapping the index map. when we remove from the middle of the heap we first check sinking, ad afterwards we check swimming.
 
 </details>
 
@@ -257,15 +345,14 @@ java source code implementation. uses a doubly linked list, nothing intresting.
 
 ## Sparse Tables
 
-##
+## Complexity Table
 
-complexity table
-
-| Data structure     | Access        | Search | Insertion        | Appending            | Deletion                                   |
-| ------------------ | ------------- | ------ | ---------------- | -------------------- | ------------------------------------------ |
-| Static Array       | O(1)          | O(n)   | N/A              | N/A                  | N/A                                        |
-| Dynamic Array      | O(1)          | O(n)   | O(n)             | O(n)                 | O(n)                                       |
-| Singly Linked List | N/A           | O(n)   | at head O(1)     | at tail O(1)         | at head O(1), at tail O(n), in middle O(n) |
-| Doubly Linked List | N/A           | O(n)   | at head O(1)     | at tail O(1)         | at head O(1), at tail O(1), in middle O(n) |
-| Stack              | peek top O(1) | O(N)   | N/A, only push   | push at top O(1)     | pop top O(1)                               |
-| Queue              | front O(1)    | O(N)   | N/A,only enqueue | enqueue at back O(1) | dequeue front O(1) in middle O(N)          |
+| Data structure                  | Access        | Search | Insertion        | Appending            | Deletion                                   |
+| ------------------------------- | ------------- | ------ | ---------------- | -------------------- | ------------------------------------------ |
+| Static Array                    | O(1)          | O(n)   | N/A              | N/A                  | N/A                                        |
+| Dynamic Array                   | O(1)          | O(n)   | O(n)             | O(n)                 | O(n)                                       |
+| Singly Linked List              | N/A           | O(n)   | at head O(1)     | at tail O(1)         | at head O(1), at tail O(n), in middle O(n) |
+| Doubly Linked List              | N/A           | O(n)   | at head O(1)     | at tail O(1)         | at head O(1), at tail O(1), in middle O(n) |
+| Stack                           | peek top O(1) | O(N)   | N/A, only push   | push at top O(1)     | pop top O(1)                               |
+| Queue                           | front O(1)    | O(N)   | N/A,only enqueue | enqueue at back O(1) | dequeue front O(1) in middle O(N)          |
+| Priority Queue with Binary Heap | Peeking O(1)  | N/A    |                  | Adding O(log(n))     | Polling O(log(n))                          |
