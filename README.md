@@ -1,3 +1,8 @@
+<!--
+ignore these words in spell check for this file
+// cSpell:ignore
+-->
+
 # Books-Resources
 
 where I store my learning from books, youtube videos, and other sources which don't fit elsewhere.
