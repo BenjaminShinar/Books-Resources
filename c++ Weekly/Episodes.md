@@ -754,3 +754,21 @@ int main()
 ```
 
 </details>
+
+## C++ Weekly - Ep 292 - Safely Using 'goto' In C++
+
+<details>
+<summary>
+What the compiler stops us from doing with 'goto'.
+</summary>
+
+[Safely Using 'goto' In C++](https://youtu.be/ELCc7JYW49k)
+
+it's a common saying that we shouldn't use 'goto' in our programmes.
+
+examples of some usages of goto that fail.
+
+- can't jump and skip initialization of a variable.
+- can't jump between functions (labels are scoped).
+- can't have blank labels.
+</details>
