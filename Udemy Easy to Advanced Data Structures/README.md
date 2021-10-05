@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore nlex heapify
+// cSpell:ignore nlex heapify Kruskal
 -->
 
 # Easy to Advanced Data Structures
@@ -333,7 +333,181 @@ java implementations, using a comparable interface, heap size (last added index)
 
 ## Union Find/Disjoint Set
 
+<details>
+<summary>
+The Union-Find, uses group of elements with a root for each group. Can get good performance by amortizing.
+</summary>
+
+> "Union Find is a data structure that keeps track of elements which are split into one or more **disjoint sets**. It has two primary operations: **find** and **union**."
+
+- find - given an element, find which group it belongs to
+- union - merge two group together
+
+example with magnets:
+
+- we label all the numbers and merge them together based on attraction (proximity).
+- each round we unify magnets into groups, or groups with other group.
+- eventually we get one group.
+- (this looks like an HLM thing)
+
+Union Find (**UF**) are used in Kruskal's algorithm, grid percolation, network connectivity, finding the least common ancestor in trees, image processing.
+
+the complexity for construction is O(n) uses &alpha;(n), which is amortized constant time for most operations.
+
+### Kruskal Algorithm
+
+Kruskal's minimum spanning tree algorithm.
+
+> "Given a graph G = (V,E), we want to find a **Minimum Spanning Tree** in the graph (it may not be unique). A minimum spanning tree is a subset of the edges which connect all vertices in the graph with the minimal total edge cost."
+
+each edge/link (connection between vetices/nodes) has a cost, and we want to touch all the vertices with the minimal cost total.
+
+steps:
+
+1. sort edges by ascending edge weight.
+2. walk through the sorted edges and look at the nodes that are connected, if they are already unified (belong in the same group), keep going, otherwise, unify them and include the edge.
+3. the algorithm terminates when every edge has been processed or all vertices have been unified into one group.
+
+### Union and Find operations.
+
+> "To begin using Union Find, first construct a bijection (a mapping) between your object and the intgers in the range [0,n)"
+
+note: this step is not necessary, but it will allow us to construct and array-based union-find.
+
+we don't have a specific order to how to map object to numbers, it just needs to be one-to-one relation, we should store it a lookup table. \
+we then create an array, where each element is the mapping index of an object.
+
+example, 12 objects, mapped into A-L, for now, we don't use path compression
+
+| Object     | E     | F     | I     | D     | C   | A     | J     | L     | G     | K     | B     | H     |
+| ---------- | ----- | ----- | ----- | ----- | --- | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
+| Lookup     | 0     | 1     | 2     | 3     | 4   | 5     | 6     | 7     | 8     | 9     | 10    | 11    |
+| Unions - 1 | 0     | **0** | **4** | **4** | 4   | **6** | 6     | **0** | 8     | **4** | **6** | 11    |
+| Unions - 2 | **4** | 0     | 4     | 4     | 4   | 6     | **4** | 0     | **0** | 4     | 6     | **8** |
+
+for some index i in the array,the parent is going to be what's inside i in the array.
+to unify, we look at the root node, and we change the parents.
+
+- Union(C,K) root nodes are 4,9, so one of them (C) becomes the parent.
+- Union (F,E) root nodes are 0,1, so one of them (F) becomes the parent.
+- Union (A,J) root nodes are 5,6, J becomes the parent
+- Union (A,B) root nodes are 6,10, so we merge the smaller group, and J is the parent.
+- Union (C,D) root nodes are 4,3, C is the bigger group, now parent
+- Union (D,I) root nodes are 4,2, C is the bigger group, now parent
+- Union (L,F) root nodes are 6,0, E is the parent
+- Union (C,A) root nodes are 4,6, both are groups, C is larger, J's parent is C, but A,B still point to J,
+- Union (A,B) root nodes are 4,4 no need to do anything
+- Union (H,G) root nodes are 11,8, choose one as parent
+- Union (H,F) root nodes are 8,0, E group is larger.
+- Union (H,B) root nodes are 8,4, C group is larger
+
+and now we are done.
+
+> - Find: "To _find_ which componenet a particular element belongs to find the root of that componenet by following the parent nodes until a self loop is reached (a node who's parent is itself)."
+> - Union: "To _unify_ two elements find which are the root nodes of each component and if the root nodes are different make one of the root nodes be the parent of the other."
+>   we don't "un-union' elements, we only change the top root nodes, not all the children.
+>   the number of componenets is the number of the roots remaning, the number of root nodes never increase.
+
+so far, we don't support the nice amortized &alpha;(n) complexity.\
+checking if H and B belong to the same group requires five hops, and this can get much worse. depending on how we grouped them together.
+H->G->E->C \
+B->J->C
+
+### Path Compression
+
+this is what makes the Union-Find have &alpha;(n) complexity.
+
+everything point to the root node, at each search we change the root node, we should always have at most two levels.
+
+| Object   | A   | B   | C   | D   | E   | F   | G   | H   | I   | J   |
+| -------- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Lookup   | 0   | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   |
+| Unions-1 | 0   | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   |
+
+- Union(A,B)
+- Union(C,D)
+- Union(E,F)
+- Union(G,H)
+- Union(I,J)
+- Union(J,G)
+- Union(H,F)
+- Union(A,C)
+- Union(D,E)
+- Union(G,B)
+- Union(I,J)
+
+regular mode:
+
+> A->B->C->D->E \
+> F->E \
+> G->H->E \
+> J->I->H-->>E
+
+checking if J and A are in the same group will take a lot of jumps.
+
+with path compression:
+
+> C->D->E \
+> A->D->E \
+> B->E \
+> G->E \
+> J->E \
+> I->E \
+> F->E \
+> H->E
+
+the check is much shorter, because we reduced the levels between each node and the parent. it also becomes stable. at each iteration we compress the path, so subsequent checks become faster.
+
+### Implementation
+
+java source code, we track the parents of each element (root), we have an array of sizes for each component. we start with each elements having itself as a root and size of 1. when we call find, we first find the root regularly, and then we update the path from it to the parent and making all elements point to the root as their root element.\
+the root nodes contain the sizes, once something has been merged, the 'size' of it becomes irreverent, and we would never look it up again. we use intgers rather than objects, it's easier to do so, we can simply keep the elements in a map and use the index number to find it in our arrays.
+
+```java
+public int find (int p){
+  int root = p;
+  while (root != id[root])
+  {
+    root = id[root]; // find root
+  }
+  while (p! =root)
+  {
+    int next = id[p]; //exchange and update
+    id[p] = root;
+    p= next;
+  }
+  return root;
+}
+
+public void unify(int p, int q){
+  int root1 =find(p); //path compression happens here
+  int root2 =find(q); //path compression happens here
+  if (root1 == root2) return; //same group already
+  if (sz[root1] < sz[root2]) //which root is larger
+  {
+    sz[root2]+= sz[root1]; // update sizes
+    id[root1] = root2; //make one the root of the other
+  }
+  else
+  {
+    sz[root1]+= sz[root2];
+    id[root2] = root1;
+  }
+
+  --numComponents; // decrease the number of components, because we merged two groups
+}
+```
+
+</details>
+
 ## Binary Search Trees
+
+<!-- <details> -->
+<summary>
+
+</summary>
+
+</details>
 
 ## Hash Tables
 
@@ -347,6 +521,11 @@ java implementations, using a comparable interface, heap size (last added index)
 
 ## Complexity Table
 
+<details>
+<summary>
+Complexity for data structure operations.
+</summary>
+
 | Data structure                  | Access        | Search | Insertion        | Appending            | Deletion                                   |
 | ------------------------------- | ------------- | ------ | ---------------- | -------------------- | ------------------------------------------ |
 | Static Array                    | O(1)          | O(n)   | N/A              | N/A                  | N/A                                        |
@@ -356,3 +535,18 @@ java implementations, using a comparable interface, heap size (last added index)
 | Stack                           | peek top O(1) | O(N)   | N/A, only push   | push at top O(1)     | pop top O(1)                               |
 | Queue                           | front O(1)    | O(N)   | N/A,only enqueue | enqueue at back O(1) | dequeue front O(1) in middle O(N)          |
 | Priority Queue with Binary Heap | Peeking O(1)  | N/A    |                  | Adding O(log(n))     | Polling O(log(n))                          |
+
+### Union Find / Disjoint Sets
+
+&alpha; stands for _Amortized constat time_.
+
+| Operation          | Complexicy |
+| ------------------ | ---------- |
+| Construction       | O(n)       |
+| Union              | &alpha;(n) |
+| Find               | &alpha;(n) |
+| Get component size | &alpha;(n) |
+| Check if connected | &alpha;(n) |
+| Count components   | O(1)       |
+
+</details>
