@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore ostringstream ptrdiff_t Filipp
+// cSpell:ignore ostringstream ptrdiff_t Filipp Downey Inlines fmodules
  -->
 
 Type Design
@@ -1285,5 +1285,476 @@ implementations could be different,
 
 different function storage could mean that some operations are easier and encapsulated into a storage class.
 all sorts of trade-offs.
+
+</details>
+
+## Writing a C++20 Module - Steve Downey
+
+<details>
+<summary>
+Modules in C++20, what exists, what can we do, what are the problems?
+</summary>
+
+[Writing a C++20 Module](https://youtu.be/AO4piAqV9mg),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/modulating-a-component-slides.pdf)
+
+creating a c++20 module interface, implementing a simple data structure (functional tree),exporting types, inline code, hiding implementation, making sure that necessary un-exported defintions are still reachable.
+
+### C++20 Modules Overview
+
+Modules are hygiene. Modules are not packages, they don't solve the problem of packaging, they add more to the problem.
+
+> terminology
+>
+> - Module Unit - a TU that contains a module declaration.
+> - Named Module - the collection of Module Units module name.
+> - Module Interface Unit (**MIU**) - a module unit that **exports**.
+> - Module Implementation Unit - a module unit that **does not** export.
+> - Primary Module Interface Unit (**PIMU**) - there will exactly one MIU that is not a partition.
+> - Module Partition - Part of the module, MIU partitions must be exported by the PMIU.
+
+example (from the IS). each translation unit should be a different file
+
+```cpp
+//Translation unit #1: PMI
+export module A; //export module A
+export import :Foo; // import and then export
+export int baz(); // export declaration of function.
+
+//Translation unit #2: Partion A:Foo
+export module A:Foo //export module A:Foo
+import :Internals; // import internals
+export int foo() {return 2*(bar() +1);} //export declertion and defintion
+
+//Translation unit #3: Partition A:Internals
+module A:Internals; //declare self as module A:Internals
+int bar(); // function declaration
+
+//Translation unit #4: an implementation unit
+module A; //declare self as module A
+import :Internals; //import Internals
+int bar(){return baz()-10;} //definition
+int baz(){return 30;} //defintion
+```
+
+we have control over what we want to see, we can export declerations, defintions, we can forward exports (import and export).
+
+> The models is Retrofiting existing tech
+>
+> - The standard is complicated because it is trying not to describe and implementation.
+> - a module interface TU produces an object file and BMI.
+> - a module TU is a TU and produces an object file.
+> - the consumer of a module reads the BMI.
+> - The program links the library or objects from the module.
+
+> "**Export**s make names from the module available to the consumers"
+
+we can still get the un-exported types, we can use decltyp or such.
+
+> "**Import**s make names from the module visible in the current TU"
+
+this code makes module M's exported names visible to the importer (consumer) of the current module.
+
+```cpp
+export import M; //import and re-export
+```
+
+Private module fragments (**PMF**) \
+similar to java style single file modules.\
+when we write this in the Primary Module Interface Unit (PMUI), the names and definitions thereafter are not reachable from the importers.
+
+```cpp
+//reachable
+module: private
+//unreachable
+```
+
+> "**Instation context **- how we figure out what declarations are in play for ADL and which are reachable"
+
+reachability isn't the same as name availability, things can be reachable even when not exported.
+
+> "Whether a declarations is exported has no bearing on whether it is reachable."
+>
+> **A tranlation unit U is reachable from P**
+>
+> - if the unit P is in has an interface dependency on U.
+> - if the unit P is in imports U.
+> - other unspecified reasons we should not depend on.
+>
+> **A declartion is reachable from P**
+>
+> - if it appears before P in the same TU.
+> - if it's not discarded, is in a unit reachable from P, not in a PMF (private module fragment).
+>
+> "The things we export make more things reachable"\
+> The consumer can use what we export, we don't have to export everything.
+
+in this example, we can use Y, which is internally X, because X is reachable, however, we can't directly initialize X, because it's not visible (not exported).
+
+```cpp
+//translation unit #1:
+export module A; //declare export module
+struct X{};
+export using Y= X; //exporting alias
+
+//translation unit #2:
+module B;
+import A;
+Y y; //ok,Y is exported, defintion of X is reachable
+X x; //error, X is not visible to unqualified lookup.
+```
+
+**Reachability is ABI.**
+
+export is making the names available for the programmer writing source code.
+
+### Moduleing example - before Changing.
+
+next, we will modulate a component [fringeTree](https://github.com/steve-downey/fringetree), which was designed as an example of the [same fringe problem](http://nsl.com/papers/samefringe.htm). this is an intentionally poor implementations of a tree that is non-mutable and produces a new tree at updates(functional programming). the real implementation is called 'fingertree', which is more complicated. fringe trees store all the data in the leaves, internal branches don't store data by themselves.\
+this uses _std::variant_, _std::shared_ptr_ and visitors. the templated nature of these classes mean they must be exposed in the header file, even thought the interface doesn't require them.
+
+> terminology
+>
+> - Tag - "a monodial type describing the tree"
+> - Nodes of the tree can be:
+>   - Branch - points to left and right tree
+>   - Leaf - holds data and tag
+>   - Empty - nill value, not nulls
+>   - Tree - a variant of \<Empty, Leaf, Branch>
+
+```cpp
+//branch
+template <typename Tag, typename Value>
+class Branch
+{
+    Tag tag_;
+    std::shared_ptr<Tree<Tag,Value>> left_;
+    std::shared_ptr<Tree<Tag,Value>> right_;
+};
+// leaf
+template <typename Tag, typename Value>
+class Leaf
+{
+    Tag tag_;
+    Value v_;
+};
+
+// empty
+template <typename Tag, typename Value>
+class Empty
+{
+    public:
+        empty(){};
+        auto tag() const -> Tag { return {};}
+};
+
+// Tree
+template <typename Tag, typename Value>
+class Tree
+{
+    private:
+        std::variant<Empty_, Leaf_, Branch_> data_; //the class with _ are aliases
+    public:
+        Tree(Empty_ const & empty): data_(empty){};
+        Tree(Leaf_ const & leaf): data_(leaf){};
+        Tree(Branch_ const & branch): data_(branch){};
+        //...
+        template <typename Callable>
+        auto visit(Callable && c) const
+        {
+            return std::visit(c, data_);
+        }
+};
+```
+
+operations on trees produces trees that share nodes with the original. Tree exposes factory functions that return _std::shared_ptr\<Tree>_ constructing empty, leaf or branch ("smart constructor" idiom).
+tag of a branch is the result of adding the tags of it's left and right children. ags must be monodial (see slide)
+
+expose function objects as interface, such as Depth (a callable struct that knows to visit Branch,Leaf, Empty), flattenToVector (another visitor), printer(external visitor object).
+
+example. see slides for photos of results.
+
+```cpp
+auto t0= Tree::branch(
+    Tree::branch(
+        Tree::leaf(1),Tree:leaf(2)
+        ),
+    Tree:leaf(3)
+    );
+
+auto t1 = prepend(0,t0);
+auto t2 = append(4,t1);
+
+std::cout << "digraph G {\n";
+printer _p(std::cout);
+t0->visit(p);
+t1->visit(p);
+t1->visit(p);
+std::cout << "{\n";
+```
+
+### Consideratios for a Module
+
+Export has fine-grained control (compared to header files), we choose everything or just particular names. we should export the things the client needs to name. we shouldn't export implementation details and infrastructure (at least not initially). as a rule of thumb, if it's part of the tests, it's probably a good idea to expose it. when we write unit tests we usually probe the state of the objects, which is probably something the user will want to do.
+
+Exporting code for inlining
+
+> "if you want to export code as part of your interface you must explicitly inline. Functions defined in the class declaration are not implicitly inline in a module. Inlines cant not refer to anything with internal linkage."
+
+this is unlike header files where the class defintion functions are implicitly inlined if we write them in the header file (think templates).
+
+Organization is Not Exposed to Customers
+
+> - "you can use partitions, the PMF, Module implementation units, and all of it looks the same to the customers."
+>   - changes can be done without worries.
+> - "Re-exporting a name from a different module might be visible. Names attached to modules, and that may be part of the name."
+>   - name conflicts, depends on strong vs weak models of name ownership from modules. currently different for gcc and windows compiler.
+
+### Hello World Module
+
+includes before the modules are not exported.
+
+```cpp
+module;
+#include <iostream>
+#include <string_view>
+
+export module smd.hello;
+
+//export namespace and all it's content, names don't have to match
+export namespace hello {
+    void hello(std::string_view name)
+    {
+        std::cout << "Hello, "<< name << '\n';
+    }
+}
+```
+
+usage:
+
+```cpp
+import smd.hello; //import module
+int main()
+{
+    hello:hello("steve"); //use function from namespace hello
+}
+```
+
+makefile, requires g++11.\
+_(couldn't get this to run on my machine)_
+
+```makefile
+hello_main: hello_main.o hello.o
+	g++11 -o hello_main hello_main.o hello.o
+
+hello_main.o: hello_main.cpp gcm.cache/smd.hello.gcm
+	g++11 -fPIC -fmodules-ts -x c++ -o hello_main.o -c hello_main.cpp
+
+hello.o: hello.cpp
+	g++11 -fPIC -fmodules-ts -x c++ -o hello.o -c hello.cpp
+
+gcm.cache/smd.hello.gcm: hello.o
+	@test -f $@ || rm-f hello.o
+	@test -f $@ || $(MAKE) hello.o
+
+clean:
+	rm hello.o hello_main.o gcm.cache/smd.hello.gcm
+
+clean-gcm:
+	rm gcm.cache/smd.hello.gcm
+
+test:
+	.hello_main
+```
+
+gcm is the binary artifact of modules which gcc produces.
+
+### Coding
+
+primary module interface.
+
+> "every name that that clients consume is exported through the primary module interface. those may be rexported from module partitions or from other modules."
+
+```cpp
+module;
+//global module fragment;
+
+#include <non_module.h>
+export module foo;
+export import :part; //exports foo:part. a module partition
+import std; // maybe we can do better someday
+import bar; //not exported, reachable
+
+export namespace foo{
+    //everything inside is exported
+    int theAnswer();
+}
+```
+
+> modules compose\
+> "as long as there is a strict dependency directed acyclic graph (**DAG**) between the more fine grained modules. the dot (.) is a a convetion. It has has no hierarchical meaning to the compiler."
+
+```cpp
+export module foo;
+export import foo.bar;
+export import foo.baz;
+export import foo.qua;
+```
+
+module implementation units. almost the same as regular translation unit, except they have access to module linkage names.
+
+```cpp
+module foo;
+int foo::theAnswer(){ //foo is the name space, not the module
+    return 42;
+}
+```
+
+Module partitions can be used to decompose large modules. no one outside the module can import a partition, only from inside the module. Module partitions have access to all of the names and defintions from the module interface.
+
+```cpp
+export module foo:part;
+export int qua_foo(int);
+```
+
+Private fragment
+
+> "A special partition that can appear in a primary module interface. they allow unexposed and and unreachable defintions to be included in the PMI."
+
+example the standard
+
+```cpp
+export module A;
+export inline void fn_e(); //error, exported inline function not defined before private module fragment
+
+inline void fn_m(); //ok, module-linkage inline function
+static void vn_s(); //old style 'static', only visible here
+
+export struct X;
+export void g(X *x)
+{
+    fn_s(); //ok, call to static function in the same translation unit
+    fn_m(); //ok, call to module linkage inline function
+}
+export X *factory(); //ok
+
+module :private; //special name
+struct X{}; //defintion not reachable from importers of A
+X *factory()
+{
+    return new X();
+}
+void fn_e(){};
+void fn_m(){};
+void fn_s(){};
+```
+
+export needs to be applied at the first point of declaration. with private module fragments, we can conceal the type, it's an opaque pointer,we can't get the type with `decltype`. this option mixes interface and defintions. probably not the best idea, but usefull to allow single file modules (like header only libraries). will probably cause a complete re-build process.
+
+### Building Modules
+
+things won't work smoothly, module names are not the file name which means parsing c++ rather than the usual file-based dependency lookup for current configurations.\
+we must built the module in the DAG order (directed acyclic graph), and hope that linking will fail rather than simply being wrong (modules imported before being built).\
+We will probably have a period where we use something like 'MakeDeps' from the old times,which run before the build and updated all the dependencies. the makefile example did that by hand.
+
+we don't have a solution yet for packaging modules, stuff are still too dependant on compiler internals.
+
+### Modulating Fringetree
+
+it worked for him the day before, depending on the compiler.
+
+the header file moved into a interface file (_.ixx_)
+
+- smd is a module space, arbitrary name.
+- the fringetree namepace is not exposed.
+- the node types are reachable, but not visible
+
+```cpp
+//fringetree.ixx
+module;
+#include <memory>
+#include <variant>
+#include <vector>
+
+export module smd.fringetree;
+namespace fringetree{
+
+//branch
+template <typename Tag, typename Value>
+class Branch
+{
+    //same as before
+};
+
+// leaf
+template <typename Tag, typename Value>
+class Leaf
+{
+    //same as before
+};
+
+// empty
+template <typename Tag, typename Value>
+class Empty
+{
+    //same as before
+};
+
+// Tree
+export // make the Tree template available
+template <typename Tag, typename Value>
+class Tree
+{
+    //same as before
+};
+}
+```
+
+usage
+
+```cpp
+using namespace fringetree;
+using Tree = tree<int, int>; //alias
+auto t0 = Tree::branch(Tree::branch(Tree::leaf(1),Tree:leaf(2))
+                        ,Tree:leaf(3));
+```
+
+inline only happens explicitly. the definition of 'branch' is not inlined in client code, trade off with exposing implementation vs optimization oppertunities
+
+```cpp
+// Tree, still inside the namespace from before
+export // make the Tree template available
+template <typename Tag, typename Value>
+class Tree
+{
+    //same as before
+    public:
+    bool isEmpty() {return std::holds_alternative<Empty_>(data_);} //not inlined
+};
+```
+
+exporting function objects
+
+```cpp
+constexpr inline struct breadth
+{
+    template <typename T, typename V>
+    auto operator()(Empty<T,V> const &) const -> T
+    {
+        return 0;
+    }
+        template <typename T, typename V>
+    auto operator()(Leaf<T,V> const &) const -> T
+    {
+        return 1;
+    }
+        template <typename T, typename V>
+    auto operator()(Branch<T,V> const &) const -> T
+    {
+        return b.left()->visit(*this) + b.right()->visit(*this);
+    }
+} breath_;
+//lambda object that uses the breath_ object. exported.
+export constexpr auto breadth = [](auto tree){return tree->visit(breadth_);};
+```
 
 </details>
