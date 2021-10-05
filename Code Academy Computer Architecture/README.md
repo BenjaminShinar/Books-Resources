@@ -7,7 +7,14 @@ ignore these words in spell check for this file
 
 [code academy](https://www.codecademy.com/learn/computer-architecture)
 
+(I wouldn't trust the python code to run outside of code academy platform)
+
 ## Introduction
+
+<details>
+<summary>
+TODO
+</summary>
 
 ### How computers work
 
@@ -202,7 +209,14 @@ print(ALU(1,1,1,0),"ALU expected(0,1)")
 print(ALU(1,1,1,1),"ALU expected(1,1)")
 ```
 
+</details>
+
 ## Instruction Set
+
+<details>
+<summary>
+TODO
+</summary>
 
 ### Intro
 
@@ -323,7 +337,14 @@ also needed
 
 see python code in file 'ultrasupercalculationcomputer'
 
+</details>
+
 ## Assembly
+
+<details>
+<summary>
+TODO
+</summary>
 
 The code we write in c, python, js or any other language is the source code, but this isn't what the machine can execute. the instructions to the cpu need to simplified, and that's the assembly language.
 
@@ -505,7 +526,14 @@ some question with assembly that are ridiculous to think of
 00000000000000000100110111111111 == \
 19967
 
+</details>
+
 ## Cache
+
+<details>
+<summary>
+TODO
+</summary>
 
 ### Introduction to Cache
 
@@ -1122,6 +1150,133 @@ write policy is write-back,
 
 12 writes, each to the cache (0.5\*12 = 6) and the main memory (30\*12=360), total is 366.
 
+</details>
+
 ## Instruction Parallelism
 
+<details>
+<summary>
+TODO
+</summary>
+
+### The Instruction Cycle
+
+a set of operations the cpu must to to execute a single instruction.also called the fetch-excute cycle. depending on the cpu, but usually consists of
+
+- fetch
+- decode
+- execute
+- memory access
+- registry write-back
+
+#### Fetching
+
+using the **program counter register** (PC) and the **instruction register** (IR), the PC stores the memory address of the next instruction to run, when the fetch cycle starts, this value is copied into the IR for decoding.
+
+#### Decoding
+
+now the Control Unit decodes (deciphers) what the instruction in the IR is and what should it send to to which components, such as as the ALU or other hardware. a single instruction is turned into a series of control signals.
+
+#### Executing
+
+now the control signlas are sent to the correct part of the ALU for processing.
+
+#### Memory Access
+
+Sometimes we need to retrive data in order to perform an instruction, if we used immediate, then there's no need, but when we get data from registers, we do need to perform memory access (even go to the cache).
+
+#### Registry Write Back
+
+if our instruction requires to store the data in memory (not for use in immediate calculations), we need to perform a write to the registers.
+
+#### Deli Example
+
+the example they give is buying something in a deli.
+
+- an instruction is a note with our order
+- fetching is when someone looks at our order
+- decoding is when he understands what we wanted
+- executing is when the deli works on our order
+- memory access is when the deli needs to open up a new jar of mustard for our order
+- write back is when the deli writes our name as a favorite guest or something.
+
+### Instruction Pipelining
+
+rather then perform a single instructions at a time, the cpu can actually process multiple instructions at the same time. this is done by the hardware, pipelinning is the connecting tissue between hardware and software.
+
+#### Linear Instructions
+
+example of a laundrymat taking orders.
+
+if we have to wait for each stage of the fetch-excute cycle to complete,we might have dead time waiting, once we decoded the instructions, there no reason to keep it in the IR register, so maybe we can start fetching the next instruction?
+
+#### Pipelinning
+
+in a none-digital world, like our laundrymat, we don't have to wait for all the clothes to be folded from one order before we start the next order (putting the clothes in the washing machine), the same is true for instructions. ideally, we would want to process them in parallel.
+
+The cost of this pipelining is on the hardware, this means more operations, some the cpu is running more (and is hotter) and more complex (more expansive).
+
+### Hazards of Instruction Pipelining
+
+Pipelining is useful, but can also have problems. we might skip processing instructions in a cycle, we might have a 'pipeline flush' that causes us to lose all of the instructions currently in the pipeline.
+
+#### Strutural hazards
+
+limitations of the hardware itself, like when we need to access the RAM rather than the cache, which brings the speed down. the ALU can do only one instruction at a time, and some instructions are more demanding (division), so this too can create hazards on the pipeline.
+
+#### Data hazards
+
+a data hazard occurs when an instruction is dependent on another instruction still in the pipeline. if we have to finish the previous instruction before we can start the current one.
+
+#### Control hazards
+
+control hazards happen at branches (if,loops, virtual tables). if we don't know which operation will be next, we can't start processing it, the cpu takes a guess, but is sometimes wrong, and it has to do a pipeline flush and start again with the right instruction.
+
+#### Reducing Hazards in Pipline
+
+there is no one perfect way to remove all risks, we can try to find and limit them.
+
+for data hazards, we can reduce memory read/write back chaining results from one instruction to another. we can reorder the instructions to reduce the risk of direct dependency, this is done by the processor.\
+a last method is for the processor to create 'bubble', opeartions that take time to buffer between instructions that are dependent on one another.
+
+for control hazards, processors can stall (wait until they know which instruction to run), or they can try predict which branch to take. for loops, they can simply unroll the loop into sequential commands, which are faster.
+
+structural hazards can be mitigated by the design of the processor, like getting a better cache strategy.
+
+### Superscaler Architecture
+
+a strategy to run parallel process by having several execution context units.
+
+#### What is a Superscaler
+
+a design that tries to make things more parallel by sending instructions to different execution units at the same time, each execution unit (such as the ALU) is inside a single cpu, so if we come across instructions that can be run in parallel, we can direct them to a specific unit. we can also have units dedicated for some tasks (intger ALU and floating point ALU). in modern computer, other than very low level embedded devices, we use superscaler CPUs.
+
+#### How it is different from pipelining
+
+pipelining parallels instructions by separating the stages of the fetch-execute cycle, superscaler has multiple instructions in the same stage of the cycle, running inside different (specialized) execution units.
+they can be used together.
+
+#### How is it different from multicore processor
+
+multi core processors are at a higher level the superscaler, a multicore system can have several cores, each running a cpu with pipelining and superscalering.
+
+#### Hazards that come with Superscaler
+
+nothing is free, we can get a poor assignment of instructions to execution units, which would be sub-optimal, we can get registry conflicts as well. for control hazards, we can sometimes process both branches and discard the unused results, trading heat for speed. superscaling makes data hazards more dangerous and complex, we have to be sure that the order is maintained. which might mean that we can't use a free execution context because we must wait for an instruction to be finished.
+
+#### limitations
+
+sometimes, the cost of trying to predict hazards and problems is more than giving up and doing the simple thing, the cost of checking dependencies and unrolling loops might be more than taking the hit and running instructions in sequence
+
+###
+
+- </details>
+
 ## Data-level Parallelism
+
+<!-- <details> -->
+<summary>
+TODO
+</summary>
+
+</details>
