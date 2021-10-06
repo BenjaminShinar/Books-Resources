@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore ostringstream ptrdiff_t Filipp Downey Inlines fmodules
+// cSpell:ignore ostringstream ptrdiff_t Filipp Downey Inlines fmodules Andrzej Krzemieński nodiscard
  -->
 
 Type Design
@@ -1756,5 +1756,651 @@ constexpr inline struct breadth
 //lambda object that uses the breath_ object. exported.
 export constexpr auto breadth = [](auto tree){return tree->visit(breadth_);};
 ```
+
+</details>
+
+## Preconditions, Postconditions, Invariants: How They Help Write Robust Programs - Andrzej Krzemieński
+
+<details>
+<summary>
+Contracts as opposed to interfaces, how can we detect them, what can we do to enforce them.
+</summary>
+
+[Preconditions, Postconditions, Invariants: How They Help Write Robust Programs](https://youtu.be/4Qyu8uBrRUs), [slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/andrzej_preconditions.pdf)
+
+### Function Contract
+
+we start with a need, then we write the interface, and eventually we write the code that will satisty the need.
+
+lets say we have a collection of aircrafts and we want to sort them according to their weight.
+
+```cpp
+double Aircraft::weight() const; //weight in kilograms
+std::vector<Aircraft*> aircrafts;
+bool is_lighter(const Aircraft *a,const Aircraft b*);
+```
+
+abstraction gaps: the difference between what we mean and what we write.
+
+- we mean aircrafts, but we actually have memory address (pointers).
+- we mean weight in KG, but we have type _double_.
+- pointers are abstractions, we have memory address, but we assume they aren't null pointers, and they refer to an actual valid object.
+
+another need, determine if an integral value is in a close range.
+
+```cpp
+int lower = config.get("LOWER_BOUND");
+int upper = config.get("UPPER_BOUND");
+bool is_in_range(int val, int lo, int hi);
+bool f(int a, int b, int c);
+```
+
+the two functions are the same for the type system, but the first has some sort of assumption that is part of the abstraction. we can call it in a way that fits the type system, but not the abstraction.
+
+> _Function Contract_ - all you need to know to call the function correctly
+>
+> - How the inputs and outputs are interpetted.
+> - Limits (domain).
+> - What must happen before or after the call.
+> - Effects.
+
+parts of the contracts can be managed by the language, such as the number and the types of the arguments, and their immutability. other parts cannot be managed: exception safety guarantees, disallowed values.
+
+we can define _interface_ as either the complete function contract, or as the parts of it which can be expressed in the language (which is the conventional defintion).
+
+in the 'setlocale' case, locale is an optional string, it **may be** null. in the 'strlen' case, s is a required string, it **must not** be null. we can't get the complete picture just from reading the function signature (the interface)
+
+```cpp
+char * setlocale(int category,const char * locale);
+size_t strlen(const char* s);
+```
+
+### Strong and Weak Contracts
+
+```cpp
+bool is_in_range(int val, int lo,int hi)
+{
+    // checks if val is in closed range [lo,hi]
+    // expects lo <= hi
+}
+is_in_range(3,2,1); // valid language expression, but not the intended use
+```
+
+what do we do? how do we cope with the possibility of passing unreasonable values? we can weaken the contract.
+
+```cpp
+bool is_in_range(int val, int lo,int hi)
+{
+    // if lo <= hi
+    //      checks if val is in closed range[lo,hi]
+    // otherwise return false;
+}
+```
+
+> Weak contracts have drawbacks:
+>
+> - Weaker abstractios.
+> - Increased complexity.
+> - No use.
+> - False sense of safety.
+> - Missed opportunity to detect bugs.
+
+we no longer talk about ranges, we moved to lower level abstractios, this encourages bugs. we add additional if statement, which means the code is more complicated, and we need more testing to be sure.
+
+'no use' means that we code for a situation that shouldn't happen.
+
+in the aircraft example, we add a check for null, which is an additional responsability, and more importantly, we ignore the serious question of why would someone pass a null pointer to this function anyway?
+
+```cpp
+bool is_lighter(const Aircraft *a,const Aircraft b*);
+// if a or b is null, retrun false
+// otherwise return whether *a has lower weight than *b
+```
+
+false sense of security: what if there are other bad values, like 0xffff`ffff or 0x12345678? we only protected against one possible bad value.
+
+the weaker contract hides the bug in this example, we mistakenly messed up the order of the arguments. if every value is "good", we don't detect "bad" input.
+
+```cpp
+bool validate(int val)
+{
+    int lower = config.get("LOWER_BOUND");
+    int upper = config.get("UPPER_BOUND");
+    retrun is_in_range(lower, upper, val); //wrong order of arguments
+}
+```
+
+in contract, strong contract are the opposite.
+
+> Strong Contacts:
+>
+> - Simple abstraction.
+> - Discourage bugs.
+> - Can help detect bugs.
+
+we shouldn't weaken contracts, we need to look for language features that enforce strong contracts.
+
+### Checking Contract Violation
+
+```cpp
+bool is_lighter(const Aircraft *a, const Aircraft *b);
+//expects a and b point to objects of type Aircraft
+```
+
+pointer dereference. the need is to access the object under a given address. it can't be null, and it must be a valid Aircraft objects.
+
+```cpp
+bool is_lighter(const Aircraft *a, const Aircraft *b)
+{
+    if (!a || !b) std::abort(); //injected by UB-sanitizer
+    return a->weight() < b-> weight();
+}
+```
+
+if the code is entirely available, a static analyzer can see both defintion and usage, it can warn about bugs. inlining helps.
+
+```cpp
+inline bool is_lighter(const Aircraft *a, const Aircraft *b)
+{
+    return a->weight() < b-> weight();
+}
+
+Aircraft *p = nullptr;
+Aircraft *q = getAircraft();
+Aircraft *r = getAircraft();
+return is_lighter(p,r); // static analyzer warning.
+```
+
+std::string has in it's contract that it cannot receive a null pointer to the constructor. a clever compiler (or a UB sanitizer) could detect this.
+
+```cpp
+const char *p=nullptr;
+const char *q="config.cfg";
+
+if (!p) std::abort(); //can be injected by UB-sanitizer
+std::string file_name(p);
+```
+
+the library can also enforce the contract with asserts.
+
+```cpp
+basic_string(CharT* __str) : /*... */
+{
+    assert(__str != nullptr); // contract enforcement in std implementation
+    //...
+}
+```
+
+we would like similar behavior in our code. _Contract check_ - derived from a function contract. It can determine that a program has a bug.
+
+when we write the implementation of the code, we forget about the world outside. and we implicitly prefer bugs over UB. we assume we can avoid UB entirely.
+
+#### Preconditions
+
+```cpp
+bool is_in_range(int val, int lo, int hi)
+{
+    return lo <= val && val <= hi;
+}
+
+bool exceeds_weight(const Aircraft 8 a, double limit_kg)
+{
+    if (!a)
+    {
+        REACT(); //try to avoid UB of dereferencing a null pointer.
+    }
+    return a->weight() > limit_kg;
+}
+```
+
+if our functions are visible to the static analyzer, it might be able to detect the UB bug, rather than simply hide it.
+
+```cpp
+bool exceeds_weight(const Aircraft 8 a, double limit_kg)
+{
+    if (!a)
+    {
+        return true; // "safe deafult"
+    }
+    return a->weight() > limit_kg;
+}
+```
+
+this also assumes the user doesn't care for the difference betwen exceeding the weight limit and being unable to compute the result (and getting the default true return value).\
+Imagine the same function in a different context:
+
+```cpp
+bool enough_fuel = exceeds_weight(&a,required_fuel);
+if (!enough_fuel)
+{
+    report_danger();
+}
+```
+
+the user did something stupid and used the function for the wrong intent. the default behavior is now very wrong and potentially dangerous.
+
+we can throw an exception, which won't necessarily be detected by a static analyzer, and postones the bug detection to runtime. it assumes that after throwing the exception, the program is in a valid, not bugged, state.
+
+```cpp
+bool is_in_range(int val, int lo, int hi)
+{
+    if(lo > hi) throw Bug{}; //skip me and the caller
+    return lo <= val && val <= hi;
+}
+
+bool exceeds_weight(const Aircraft 8 a, double limit_kg)
+{
+    if (!a)
+    {
+        throw Bug{}; //skip me and he caller
+    }
+    return a->weight() > limit_kg;
+}
+exceeds_weight(nullptr,120`000); //no help from static analyzer
+```
+
+in this example, the arguments are in the correct order,
+but
+
+> "Upon UB your code no longer coressponds with _the binary_"\
+> "You cannot draw any conclusions from the code"
+
+```cpp
+bool validate(int val)
+{
+    int lower = 0;
+    int upper = std::max(100, config.get("LIMIT"));
+    return is_in_range(val,lower,upper);
+}
+```
+
+> Preconditions violation can be caused by prior undefined behavior:
+>
+> - Dangling pointers.
+> - Bad usage of _memset_.
+> - Data races.
+
+#### Undefined Behavior
+
+example:
+
+```cpp
+bool is_small (int * p)
+{
+    return *p <10;
+}
+
+is_small(nullptr);
+```
+
+what does this mean in the language? pointer dereference means accessing memory under address. nullptr means no address. so we have a contract violation,no guarneed behavior, a bug.
+
+but why is there no guaranteed behavior? why aren't all UB defined?\
+the reason is that there is no use case, there is no viable case for a program to meaningfully dereference a null pointer. this would be sanctioning bugs.
+
+(_there is quote somewhere about how users use every observable part of the interface, not just the intended ones. somewhere there is a user relining on our bug to make their programs work_)
+
+the outcome of the code is either getting some junk code, or (more likely), a program shutdown.
+
+if we update our code, we trade 'bugs' for crashes, which might be ok sometimes, but we still have to worry about it being used in situations where crashes are dangerous.
+
+```cpp
+bool is_in_range(int val, int lo, int hi)
+{
+    if(lo > hi) std::abort(); //fail on this case,
+    return lo <= val && val <= hi;
+}
+
+bool in_danger(Aircraft const &ac)
+{
+    return is_in_range(danger_zoner.lower(),
+                        danger_zone.upper(),
+                        ac.stress()); //order of arguments
+}
+```
+
+the bug is outside the function (wrong order), and the implementation might change in the future. the positive sides of calling abort are that we protect against further damage, we usually get a core-dump for fixing, and it keeps our program stable.
+
+```cpp
+bool is_in_range(int val, int lo, int hi)
+{
+    if(lo > hi) std::abort(); //fail on this case,
+    _stats[hi-lo] +=1; //for logging, it critical that hi > lo here, otherwise we get a negative index.
+    return lo <= val && val <= hi;
+}
+```
+
+> Is crashing a good idea? depends on the context:
+>
+> - Weight & balance calculator: user can go to manual.
+> - Word processor: better to waste 1hr of work that 1 day of work.
+> - Drone: better to restart than do random actions.
+> - Financial server: better go down than make bad decisions.
+> - Assisting troops: better go down than give false sense of security.
+
+the primary goad of the applications it to give good results, it's better to have no program (crashing) than give misleading results. not crashing is a secondary requirement.
+
+giving a hint to the static analyzer. explicitly invoking UB.\
+a bug is a violation of the function contract.\
+UB is a violation of the language contract.
+
+```cpp
+inline bool is_in_range(int val, int lo, int hi)
+{
+    if(lo > hi)
+    {
+        *((int*)0)=0; //explicit UB,
+    }
+
+    return lo <= val && val <= hi;
+}
+
+is_in_range(0,100,50); //static analyzer warring, null pointer dereference
+```
+
+we can do this conditionally with a macro.
+
+```cpp
+#ifdef STATIC_ANALYSIS
+#define TRAP() {*((int*)0)=;} //explicit UB, for testing ca
+#else
+#define TRAP() std::abort() //abort, for production
+#endif
+inline bool is_in_range(int val, int lo, int hi)
+{
+    if(lo > hi) TRAP();
+
+    return lo <= val && val <= hi;
+}
+
+is_in_range(0,100,50); //static analyzer warring, null pointer dereference
+```
+
+this is very close to what assert does. it declares the bug criterion, and its' effect is depending on the configuration. assert statements is about communicating intent, what we know about the behavior. we know what the situation should be, and what is considers a bug.
+
+```cpp
+bool is_in_range(int val, int lo, int hi)
+{
+    assert(lo <= hi);
+    //Expects(lo<= hi)l //GSL.assert
+    return lo <= val && val <= hi;
+}
+```
+
+GSL.assert: `Expects()` is for preconditions, `Ensures()` is for postconditions
+we can still get bugs,
+
+```cpp
+bool check(int lo, int hi, int val)
+{
+    return is_in_range(lo,hi,val); //wrong order, but check passes
+}
+return check(1,2,3);
+```
+
+contract checks can determine that we have a bug, but they cannot determine we don't have a bug.
+
+> - we **don't mean** that `a != nullptr && b != nullptr` is good.
+> - we **mean** that `a == nullptr || b == nullptr` is bad.
+
+```cpp
+bool is_lighter(const Aircraft *a, const Aircraft *b)
+{
+    //asserts, expects, etc...
+    return a->weight() < b-> weight();
+}
+```
+
+a better approach is to wrap the two integers into a class, this will protect us from some problems with the order of the arguments. we got the type system involved.
+
+```cpp
+bool is_in_range(int val, Range r)
+{
+    //expects r.lo() <= r.hi()
+}
+
+bool validate(int val)
+{
+    int lower = config.get("LOWER_BOUND");
+    int upper = config.get("UPPER_BOUND");
+    retrun is_in_range(val,Range{lower,upper});
+}
+```
+
+### Constrained Types for Enforcing Contracts
+
+#### Invariant
+
+what we gained was both a stricter check of the arguments passed, and now we made the properties of lo and hi into class invariants. we expose the constraint as a class invariant.
+
+```cpp
+class Range {
+    int _lo, _hi;
+    public:
+    Range(int l, int h)
+    int lo() const {return _lo;}
+    int hi() const {return _hi;}
+    //invariant lo() <= hi()
+};
+class Range2 {
+    int _lo, _hi;
+    public:
+    Range2(int l, int h)
+    int lo() const {assert(invariant()); return _lo;}
+    int hi() const {assert(invariant()); return _hi;}
+    bool invaraint() const {return lo() <= hi();}
+};
+
+bool is_in_range(int val, Range r)
+{
+    //expects r.invarint(); // this is redundant
+}
+```
+
+we can check the invariant inside the calls to the objects, or before using it (but that is redundant). an invariant on function parameters is an implied precondition.
+
+it's still possible to pass the values in the wrong order;
+
+```cpp
+if (is_in_range(1,Range(highLimit,lowLimit))) //oops, wrong order
+```
+
+lets try to enforce it
+
+```cpp
+class Range {
+    int _lo, _hi;
+    public:
+    Range(int l, int h) : //precondition l <= h
+    _lo((assert(l<=h),l), //use the comma operator
+    _hi(h)
+    {}
+    int lo() const {return _lo;}
+    int hi() const { return _hi;}
+    bool invaraint() const {return lo() <= hi();}
+};
+```
+
+> "An invariant is a _conditional_ guarantee. It depends on the preconditions of member functions."
+
+we still have bugs, we only catch them when we create the range, but we narrowed the scope. if we could propigate this type across the program, we would get reduce the bugs earlier.
+
+if only one function can create ranges, we know where the bugs can originate. the bugs cannot happen from passing the object, only from constructing it.
+
+```cpp
+auto [a,b]= bounds(); //a >b
+is_in_range(x,Range{a,b}); // bug
+is_in_range(y,Range{a,b}); // bug
+is_in_range(z,Range{a,b}); // bugs
+Range r= boundsR();
+is_in_range(x,r);
+is_in_range(y,r);
+is_in_range(z,r);
+```
+
+not everything can be expressed as a contract
+
+not every precondition can be turned into a type. we can't precondition the indexing of the vector `[]` operator, because the size can change.
+
+```cpp
+class Kilograms {
+double _value; // weight difference can be negative
+public:
+explicit Kilograms(double val) : _value{val} {} //we don't want random constructor calls
+static Kilograms from_double(double val) { return Kilograms{val};
+};
+Kilograms Aircraft::weight() const;
+```
+
+our classes reflect the invariant, and how the values are interpretted.
+
+```cpp
+size_t length(const char* str)
+// expects: str != nullptr
+// expects: "str is null terminated" // inexpressible,
+;
+class C_string {
+const char * _str;
+public:
+// invariant: _str != nullptr && "str is nul terminated"
+};
+
+size_t length(C_string str);
+C_string str = get_name()
+return length(str);
+```
+
+but if we eventually do need the `const char *` type for other libraries, we would need a converting constructor. we cant make this runtime check, but maybe a static analyzer could detect bug.
+
+```cpp
+class C_string {
+const char * _str;
+public:
+explicit(false) C_string (const char * s)
+    //expects: s!= nullptr && "s is nul terminated"
+// invariant: _str != nullptr && "str is nul terminated"
+};
+```
+
+a fantasy, a function that changes it's behavior on static analyzer runs, it's a no-op in runtime, but matches preconditions and postconditions of function.
+
+#### Post Conditions
+
+> A postcondition is expected to hold if:
+>
+> - Function does not report failure (e.g., by throwing exception)
+> - Function’s preconditions are satisfied
+
+### Language Support
+
+what can add to the language to support this?
+so far we saw comments, but they are for humans or some dedicated tools. we saw assertions, which help prevent damage, help testing, but don't detect bugs. post-condition asserts require changing implementation (making code longer, possibly messing with RVO).\
+a possible solution would be 'contart Annotations', which would appear in function declarations, and are checked by the compiler.
+
+```cpp
+int better(int a, int b)
+[[pre: a >= 0]] // fantasy contract annotation
+[[pre: b >= 0]] // fantasy contract annotation
+[[post r: r>=0]] // fantasy contract annotation
+;
+```
+
+> Standardized contract anntations:
+>
+> - Communicate (parts of) our contracts to different tools.
+> - Provide same bug-detection experience as with language contracts.
+> - Static Analyzer can detect bugs without seeing function bodies (no need to inline).
+> - The IDE could hint the user when using the function (an correctly map the names of the argument and parameters)
+> - The UB sanitizer could inject runtime checks based on the precondition.
+
+however, this will make the function declaration even more cumbersome. this entire block of code is just one function declaraton ('clone').
+
+```cpp
+class window : public widget {
+[[deprecated("use simpler decl")]] [[nodiscard]] const widget & clone
+(const point & x, const point& y) const & noexcept override
+[[pre: are_rectangle(x, y)]]
+[[pre: ordered([](const auto& a) -> auto && { return a.h; }, x, y) ]]
+[[post x: *this == x]];
+};
+```
+
+### Bug Source vs Bug Symptom
+
+fixing bugs isn't the same as concealing the source of those bugs.
+
+```cpp
+Aircraft * get_aircraft(std::string_view name)
+[[post a: a!= nullptr]]; // function declaration with contract annotation
+//...
+Aircraft *x = nullptr, *y = nullptr;
+try
+{
+    x = get_aircraft("x");
+    y = get_aircraft("y");
+}
+catch(...) {
+    // TODO: handle it
+}
+if (!x)
+    return is_lighter(x, y); // <-- analyzer warning: y might be null
+```
+
+the analyzer only mentions y, not x. it doesn't understand the bug.
+
+> Analyzer detects only a symptom of a bug.
+>
+> - Analyzer does not know where the bug is.
+> - Programmer must look for it.
+
+we might fix the symptom (the warning), without fixing the cause. the situation is worse, we don't see the warning anymore, but the bug didn't go away.
+
+```cpp
+//...
+if (!x || !y)
+    return is_lighter(x, y); // warning silenced, bug is still present
+```
+
+the real bug was that we had a premature try-catch block, we resumed normal operations too quickly.
+
+```cpp
+Aircraft *x = nullptr, *y = nullptr;
+try
+{
+    x = get_aircraft("x");
+    y = get_aircraft("y");
+    return is_lighter(x, y);
+}
+catch(...)  // <-- real bug: the premature try catch statement
+{
+    // TODO: handle it
+}
+```
+
+and if we don't know what to do with the exception, why are we even catching it? (other than to pinpoint it's location?).
+
+```cpp
+Aircraft *x = get_aircraft("x");
+Aircraft *y = get_aircraft("t");
+return is_lighter(x,y);
+```
+
+a warning is a start of an instigation process.
+
+### Summary
+
+> Function contract
+>
+> - Inexpressible, human-to-human
+> - Try to express parts of it in the language
+> - Classes for providing interpretation of values
+> - Contract annotations for expressing disallowed values
+>
+> Contract annotations – not only about runtime checks
+>
+> - Provide same tool experience as the language contract
+> - Static analysis
+> - IDE hints
+> - Human understanding
 
 </details>

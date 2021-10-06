@@ -1268,9 +1268,7 @@ nothing is free, we can get a poor assignment of instructions to execution units
 
 sometimes, the cost of trying to predict hazards and problems is more than giving up and doing the simple thing, the cost of checking dependencies and unrolling loops might be more than taking the hit and running instructions in sequence
 
-###
-
-- </details>
+</details>
 
 ## Data-level Parallelism
 
