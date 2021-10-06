@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore nlex heapify Kruskal
+// cSpell:ignore nlex heapify Kruskal Treap inorder
 -->
 
 # Easy to Advanced Data Structures
@@ -502,6 +502,127 @@ public void unify(int p, int q){
 
 ## Binary Search Trees
 
+<details>
+<summary>
+A tree with at most two child nodes, where the elements in the left sub tree are all smaller than the root node, and the elements in the right subtree are all larger than it.
+</summary>
+
+> "A tree is an undirected graph which satisfies any of the following defintions:
+>
+> - An acyclic connected graph (no cycles).
+> - A connected graph with N nodes and N-1 edges.
+> - A graph in which any two vertices are connected by _exactly_ one path"
+
+a tree has a root node. any node can be a root.
+a child is a node extending from another node. A parent node is the inverse of this. the root note has no parent (although it's sometimes useful to assign to sat that it's its' own parent, like file systems tree). a leaf node is a node with no children. subtree is a tree entirely containted inside a another tree. a single node is a subtree.
+
+a binarty tree is a tree in which every node has at most two child nodes.
+
+> "A **binary search tree** is a binary tree that satisfies the **BST invariant**: left subtree has smaller elements and right subtree has larger elements than of that of parent node."
+
+duplicate values are sometimes allowed, but we usually don't need them.
+
+usages
+
+- Binary search tree (BSTs)
+  - Implementation of some Map and Set ADTs
+  - Red black Tree
+  - AVL Tree
+  - Splay Tree
+  - etc...
+- Implementain a binary heap
+- Syntax tree (for the compiler and calculator)
+- Treap - a probabilistic DS (a randomized BST)
+
+the complexity of a binary search tree operations is O(log(n)) in the average case, but in the worst case (degenerate tree) we can have worse performance (linear complexicy).
+
+[tree visualization tool](https://www.cs.usfca.edu/~galles/visualization/BST.html)
+
+### Insertion
+
+elements must be comparable, so that they could be ordered inside the tree.
+we compare a the value of the inserted element to the current node, if larger, we move to the right node, if smaller, the left node,if the child node it that direction doesn't exist, we create a new node. for equality cases we can allow duplicates or not.
+
+on random data, we get O(log(n)) complexity, but for sorted data we get linear complexity.
+
+### Removal
+
+removing elements is more complicated, but we can look at is a two steps process.
+
+> 1.  Find the element we wish to remove (if it exists)\
+>     when we search, there are four options.
+>
+>     1.  we hit a null node, which means the value does not exist within our tree.
+>     2.  Compeator value equal to 0, element found
+>     3.  Compeator value less than 0, the value can be the left subtree
+>     4.  Compeator value less greater 0, the value can be the right subtree
+>
+> 2.  Replace the node we want to remove with it's successor (if any) to maintain the BST invariant.\
+>     to remove a node, there are again four cases:
+>     1. Node to remove is a Leaf node (no children). just remove it,don't forget to fix it from the parent (remove the reference).
+>     2. node to remove has left subtree, but not right subtree. the successor of the node we remove will become the root of the subtree (don't forget to fix the parent link).
+>     3. node to remove has right subtree, but not left subtree. same as the earlier case.
+>     4. node to remove has both subtrees. the successor can "either the **largest value** in the _left subtree_, or the the **smallest value** in the _right subtree_".
+
+> "the **largest value** in the _left subtree_ satisfies the BST invariant because it is larger then anything else in the left subtree, but smaller than anything in the right subtree, because it was found in the left subtree."
+
+same logic applies for the **smallest value** in the _right subtree_.
+
+we go once to one side, and then continue all the way with the other side.
+
+we copy the value from the successor and overwrite the value we wanted to remove, now we perform the remove operation on the 'duplicated' successor element. the successor node will never have both children nodes, so we don't have much complications to worry about.
+
+### Traversal
+
+three types of traversals that are defined recursively
+-PreOrder - current node is processed _before_ the children node
+-InOrder - current node is processed _between_ children node
+-PostOrder - current node is processed _after_ the children node
+-Level Order Traversal - process layers by layer. uses breadth first search with a queue.
+
+```
+preorder(node):
+  if node == null: return
+  print(node.value)
+  preorder(node.left)
+  postorder(node.right)
+
+inorder(node):
+if node == null: return
+  inorder(node.left)
+  print(node.value)
+  inorder(node.right)
+
+postorder(node)
+  if node == null: return
+  preorder(node.left)
+  postorder(node.right)
+  print(node.value)
+```
+
+when we do **inorder** traversal and print, it means we print the elements in ascending order.
+
+a level order travesal uses a queue, we do a breadth first search, we push the root to the queue, and then we start cycling until the queue is empty, we take the element from the queue, and push the children of that node into the queue.
+
+```
+let q = Queue
+q.push(root)
+while (!q.empty):
+  let n = q.pop()
+  process(n)
+  q.push(n.left)
+  q.push(n.right)
+
+```
+
+### Implementation
+
+java source code. the data must extend the Comparable interface, some iterator stuff, as usual.
+
+</details>
+
+## Hash Tables
+
 <!-- <details> -->
 <summary>
 
@@ -509,15 +630,41 @@ public void unify(int p, int q){
 
 </details>
 
-## Hash Tables
-
 ## Fenwick Tree/Binary Indexed Tree
+
+<!-- <details> -->
+<summary>
+
+</summary>
+
+</details>
 
 ## AVL Tree
 
+<!-- <details> -->
+<summary>
+
+</summary>
+
+</details>
+
 ## Indexed Priority Queue
 
+<!-- <details> -->
+<summary>
+
+</summary>
+
+</details>
+
 ## Sparse Tables
+
+<!-- <details> -->
+<summary>
+
+</summary>
+
+</details>
 
 ## Complexity Table
 
@@ -548,5 +695,14 @@ Complexity for data structure operations.
 | Get component size | &alpha;(n) |
 | Check if connected | &alpha;(n) |
 | Count components   | O(1)       |
+
+### Binary Search Tree
+
+| Operation | Average   | Worst |
+| --------- | --------- | ----- |
+| Insert    | O(log(n)) | O(n)  |
+| Delete    | O(log(n)) | O(n)  |
+| Remove    | O(log(n)) | O(n)  |
+| Search    | O(log(n)) | O(n)  |
 
 </details>
