@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore ostringstream ptrdiff_t Filipp Downey Inlines fmodules Andrzej Krzemieński nodiscard
+// cSpell:ignore ostringstream ptrdiff_t Filipp Downey Inlines fmodules Andrzej Krzemieński nodiscard Richárd Szalay Levehnstein
  -->
 
 Type Design
@@ -2402,5 +2402,155 @@ a warning is a start of an instigation process.
 > - Static analysis
 > - IDE hints
 > - Human understanding
+
+</details>
+
+## Weak Interfaces --> Weak Defences: The Bane of Implicit Conversion in Function Calls - Richárd Szalay
+
+<details>
+<summary>
+Finding situations where we might have incorrect calls to functions because of how conversions work, we should write defensive design to make misusing hard.
+</summary>
+
+[Weak Interfaces --> Weak Defences: The Bane of Implicit Conversion in Function Calls](https://youtu.be/-UW4tA5r2QE), [Slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/Richard-Szalay_Weak-Interfaces-Weak-Defences_SLIDES.pdf)
+
+preventing misuse of funcions
+
+### Argument Swapping
+
+- "Name-based analysis"
+- Reactiveness --> Proactiveness
+- Existing guidelines
+
+one problem is calling the arguments in the wrong order, or calling them with arguments that don't have the right meaning. adjacency increases the chance of mistake, the more parameters the function takes, the more likely it is for the user to make a mistake.
+
+```cpp
+int f (std::string host_name, int port, std::string message);
+int f2 (std::string host_name, std::string message,int port);
+std::string author = "richard";
+std::string greeting = "hello, world";
+f(author,8080,greeting); //correct order, but author is not a host name
+f2(greeting,author,8080); //correct order, but author is not a host name
+```
+
+one idea of detecting swapped arguments is to use "name-based analysis", which somehow tries to detect swapped arguments, algorithms exist, but tools aren't as common.
+
+Ways to detect swaps: trying to figure out if one argument is a better match to a different parameter than the one it was sent to.
+
+- String equality, suffix/prefix coverage, pattern containment
+- Edit distances (e.g. Levehnstein-distance, ...)
+- Morpheme extraction
+- Typo analysis (e.g. key distance)
+  The problem is that this approach requires naming, not only does this require the user to properly name stuff, it also has problem with literals and expressions as arguments. and some API signature don't provide parameter names.
+
+the problem is that this approach is reactive, it helps after the fact, it requires the code to be deployed and analyzed afterwards, and it has bad accuracy. we would want something that helps us before the code is deployed, that catches potential errors in compile time, and possibly takes advnatage of the type system.
+
+the c++ core guidelines contain a section about avoiding unrelated adjacent unrelated parameters of the same type.
+
+we are in a static, strongly typed language, we can use this for our advantage.
+
+> issues
+>
+> - typedef / using
+> - const T & troubles
+> - const T == T?
+
+example, will this be caught?
+
+```cpp
+struct Complex
+{
+    double Re,Im;
+    //...
+};
+void h (int Scalar,Complex comp);
+void test()
+{
+    int S = 8;
+    Complex C = Complex{.5f,-.25f}; // = (1/2 - 1/4i)
+
+    h(C,S); // bug
+}
+```
+
+the answer is that this depends, if the complex number can be converted (like with conversion to double which is then narrowed), and if the complex number can be created from a integer (like having a constructor that takes a double and uses 0 for the imaginary part), then the compiler will accept this call. this is a bug.
+
+```cpp
+struct Complex {
+    double R, I;
+    Complex(double real): R(real),I(0.0){}
+    operator double() const {return R;}
+    //...
+}
+void h (int Scalar,Complex comp);
+void test()
+{
+    h(Complex{.5f,-.25f},8); // same call as below
+    h(0,Complex{8.0}); // same call as above
+}
+```
+
+### Implicit Conversions
+
+there is a sequence of conversions, not all stages must be used, but if they are, the must be followed in order.
+
+> An **implicit conversion sequence** T1 -> T2 exists and defined as:
+>
+> 1. _Maybe_ **standard conversion sequence**:
+>    1. Maybe decay (lvalue→rvalue, array/function→pointer)
+>    2. Maybe numeric adjustment
+>       - integral ↔ integral, enum → integral
+>       - floating ↔ integral
+>       - derived → base class, T\* → **void\***
+>       - **null**-constants → pointer (?!)
+>       - **Anything you can imagine → bool (!!)**
+>    3. Maybe function pointer adjustment ("lose _noexcept_")
+>    4. Maybe qualifier adjustment ("gain _const volatile_")
+> 2. Maybe user-defined conversion (one function call!)
+> 3. Maybe standard conversion sequence (same as above)
+>
+> ... if the path taken uniquely exists.
+
+it might be possible to remove some of those conversions in the language, but that might break user code everywhere (even if the standard library will be ok), but some conversions can't be removed.
+
+but there exists a better way, we can use the type system. we should provide good types and good interface, in other words. **strong(er) type(s)**.
+
+### Type Based Guards
+
+#### Mixable Adjacent Parameter Ranges
+
+```cpp
+void p (int i, int j,, double d, Complex c, std::string s);
+```
+
+we go through our functions parameters and determine which of them might be mixed with one another.
+
+> - int mixed with int (same type)
+> - int mixed with double (standard conversion)
+> - int mixed with Complex (standard conversion + user conversion)
+> - double mixed with Complex (user conversion)
+> - complex can't be mixed with with std::string
+
+there is a proposal for a clang-tidy check, which performs this mixable parameters analysis, and tells us which parameters are easily mixable and prone to errors
+
+lots of graphs of analysis of popular packages. where is the danger coming from?
+
+some ways to reduce the number of false positive, we get far too many warning.
+there are some funcions that we can't really fix, like max, or binary operations on the same type, and functions that concatenate strings. they have to take the same type of parameters, and the result of swapping them won't 'really' effect the output of the program.
+
+> "avoid adjacent **unrelated** parameters of same type" \
+> "... can be invoked .. either order ... different meaning"
+
+what does "unrelated" mean?
+
+can we deterimine which parameters want to be used together? can we check if the order matters? this is a way to remove what we think is a false positive.
+
+when we get those warnings, we find that we might have some strong types waiting to be found, or some functions that should have different arguments, etc...
+
+### Summary
+
+> - Built-in types are bad, implicit conversions are dangerous.
+> - Help users not to make mistakes, before the fact.
+> - Use tools to find the low hanging fruits.
 
 </details>
