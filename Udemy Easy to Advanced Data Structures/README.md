@@ -623,28 +623,641 @@ java source code. the data must extend the Comparable interface, some iterator s
 
 ## Hash Tables
 
-<!-- <details> -->
+<details>
 <summary>
-
+Key-Value mapping. collision resolution schemes (separate chainning, open addressing)
 </summary>
+
+> "A Hash table is a data structure that provides a mapping form the key to the values using a technique called _hasing_."
+
+key values pair, kays must be unique (values don't have to be), a key is mapped to a value. we can use Hash table to track frequencies.
+
+we can construct a mapping between any type of keys and value, as long as the key is **hashable**.
+
+### Hash Functions
+
+> "A hash function _H(x)_ is a function that maps a key 'x' to a whole number in a fixed range."
+
+the result of the hash funcion doesn't have to be unique,we can have hash functions for any type of key, not just numeric values(strings and objects). hash function can be simple or complicated
+
+> "if _H(x) == H(y)_ then objects x,y **might be equal**, but if _H(x) != H(y)_ then x,y are **certainly not equal**."
+
+this property means we can use hash functions to speed up comparison of objects, if we have their hash value, we can compare the hash value to see if they match or don't match, if they don't match, we don't need to compare the objects themselves, only if they match, we need to check the complete contents. for files, this is part of the checksum.
+
+a hash function must be **deterministic**, _H(x)_ should always produce the same hash value, and never something else. we would like the function to be uniform, so that we minimize the number of _hash collision_, a hash collision is when two elements map to the same hash value.
+
+> Q: "What makes a key of type T _hashable?"_
+>
+> A: "Since we are going to use hash functions in the implementaton of our hash tale we need our hash functions to be _deterministic_. To Enforce this behavior,we demand the the _keys used in our has table are immutable data types_. Hence, if a key of type T is immutable, and we have a hash function _H(k)_ defind for keys k of type T then we say a key of type T is hashable."
+
+we would like a very fast insertion, lookup and removal time the data we are placing within our hash table. we can get this is O(1) complexcity by using a hash function as a way to index into as hash table. the O(1) applies only if we really do have a good unifrom hash function.
+
+### Collision Resolutions
+
+when two values are hashed to the same location, we get a hash collision. there are many techniques two solve this issue, we will focus on two of them
+
+> - "**Separate chainging** deals with hash collisions by maintaining a data structure (usually a linked list) to hold all the different values which hashed to a particular value."
+> - "**Open addressing** deals with hash collisions by finding another place within the hash table for the object to go by offsetting it from the position to which it hashed to."
+
+### Separate Chaining
+
+we store both the key and the value in the linked list block. when we insert and detect a collision, we push the new value into the contained data structure. for searching (finding), we use the hash function to detect where (at which bin/list) the element should be, and then we limit our search.\
+if our hashtable becomes too big (with too many elements in each bin), and we want to maintain the constant time behavior, we can use a larger hash table (have more bins that keys can match into) with shorter chains, so we re-calculate the hash value for each element and insert it into the new hash table.\
+we don't necessarily have to use a linked lists, we can use a tree (binary, self balancing), an array, or some hybrid combinantion (like Java HashMap, switching from linked list to tree), these might be more memory intensive then simple linked lists and harder to implement.
+
+source code in java, we might want to cache the hash code (calculate once and store) so we don't repeat this calculation (especially for keys with linear time complexity to calculate the hash). we have a deafult capacity (number of bins) and some logic to decide when to increase the the capacity. our keys are created from a separate function that uses the hash value (which is an unconstrained number) and normalizes it into the range of the capacity. a method to resize the table.
+
+### Open Addresssing
+
+key &rarr; hash value &rarr; index.
+
+in open addressing, they key-value pairs are stored in the table (the array) itself, and not in a separeate data structure. this means we really care about the the size of the hash table and how many elements are currently in it.
+
+the load factor is denoted as &alpha;, and is the ration between the number of element in the table and the size (capacity).
+$$ Load\ factor = \frac{Items\ in \ Table}{Size\ of\ Table}$$
+
+once we have too many elements in the table, it becomes diffult to find empty places to add elements, and matching elements can also become less efficient.
+
+> "The O(1) constant time behavior attributed to hash tables assumes the load factor(&alpha;) is kept below a certain fixed value. this means that once &alpha; > _threshold_ we need to grow the table size (ideally exponentially, e.g double)."
+
+a graph from wikipedia the shows that once we reach a certain threshold of the load factor, the performance of the linear probing methods (such as open addressing) becomes much worse than that of separate chainning.
+
+when we insert an element into an open addressing table, we compute the original hash value for the key and the required position, if the position is empty, great, we add the element there. if it's occupied, we use a probing sequence _P(x)_ and offset the current position, we keep doing this until we find an onoccupied spot.
+
+there are an infinite number of probing sequences, such as:
+
+- Linear probing $P(x) = ax+b$. a,b are constants.
+- Quadratic probing $P(x) = ax^2+bx +c$. a,b,c are constants.
+- Double Hashing $P(k,x) = X*H_2(k)$. H2 is c secondary hash function on the key.
+- Pseudo random $P(k,x) = x*RNG(H(k),x))$. RNG is a random number generator function seeded with H(k).
+
+pseudo random will still be determinsic, as we always seed it using the hash value of the key.
+
+Chaos with cycles:\
+a problem is that most probing sequences tend to produce a cycle shorter than the table size itself, this means that even if the load factor is below 1 (there are still open locations), we won't reach them and be stuck in a loop. we usually restrict the domain of the probing to those who produce cycles of size n.
+
+for table of size N, H(k) is a hashing function and P(k,x) is a probing function. the following is the general insertion method.
+
+```
+x:=1
+keyHash :=H(k)
+index := keyHash
+
+while table[index] != null:
+  index = (keyHash + P(k,x)) Mod N
+  x=x+1
+
+insert (k,v) at table [index]
+```
+
+#### Linear Probing
+
+we offset the index by using a probing function.
+
+Linear probing is a method which probes according to a linear formula: $P(x) = ax +b$. where a and b are constants and a is not zero. the constant b is obsolete. the problem is that this probing won't necessarily produce a fully cycle of size n.\
+assume p(x) = 3x, H(k) =4, N=9. we get an infinite loop of probing only three locations.
+
+> 1. H(k) + P(0) Mod N = 4
+> 2. H(k) + P(1) Mod N = 7
+> 3. H(k) + P(2) Mod N = 1
+> 4. H(k) + P(3) Mod N = 4
+> 5. H(k) + P(4) Mod N = 7
+> 6. H(k) + P(5) Mod N = 1
+> 7. H(k) + P(6) Mod N = 4
+> 8. H(k) + P(7) Mod N = 7
+> 9. H(k) + P(8) Mod N = 1
+>
+> ...
+
+we need to determine:
+
+> Q: "which value(s) of consant _a_ in P(x) = ax produce a full cycle module N?"\
+> A: "This happens when _a_ and N are **relatively prime**. two number are relatively prime if the **greatest common denominator (GCD)** is equal to one. Hence, when GCD(_a_,N) = 1 the probing function P(x) will be able to generate a complete cycle and we will ways be able fo find an empty bucket!."
+
+relatively prime numbers examples:
+
+| N   | _a_ | GCD | relatively prime? |
+| --- | --- | --- | ----------------- |
+| 9   | 6   | 3   | No                |
+| 9   | 9   | 9   | No                |
+| 10  | 6   | 2   | No                |
+| 11  | 6   | 1   | Yes               |
+| 11  | 22  | 11  | No                |
+| 15  | 14  | 1   | Yes               |
+| 15  | 12  | 1   | Yes               |
+
+a common choice is to use P(x) =1\*x, because the gcd will always be 1. when we resize the table the probing function shouldn't change (so the GCD will still be 1).
+
+#### Quadratic Probing
+
+this time, our probing function P(x) is quadratic formula $P(x) = ax^2 +bx +c$. where a,b,c are constants, a is not zero, and c is obsolete. we still need to be worried about infinite loops.
+
+assume p(x) = 2x^2 +2 , H(k) =4, N=9. we get an infinite loop of probing only two locations.
+
+> 1. H(k) + P(0) Mod N = 4
+> 2. H(k) + P(1) Mod N = 7
+> 3. H(k) + P(3) Mod N = 4
+> 4. H(k) + P(4) Mod N = 7
+> 5. H(k) + P(6) Mod N = 4
+> 6. H(k) + P(7) Mod N = 7
+>
+> ...
+
+> so what kinds of probing function do always work?
+>
+> 1. let P(x) = x^2, keep the table size a prime number greater than 3 and keep the load factor (&alpha;) below 0.5
+> 2. let P(x) = (x^2 + x)/2 and keep the table size a power of 2.
+> 3. let P(x) = (-1^x)\*x^2 and keep the table size a prime N when N is congruent to 3 mod 4;
+
+(e.g N = 23, a prime where 23 mod 4 = 3)
+
+we will focus on the second form, $P(x) = (x^2 +x)/2$. where table size is power of 2.
+
+assume N=8 (power of two), load factor = 0.4. so threshold before resize is 3.
+
+| Operation       | Hash          | Probing result          | index | note                            |
+| --------------- | ------------- | ----------------------- | ----- | ------------------------------- |
+| insert(k1,v1)   | H(k1) = 6     | p(0)=0                  | 6     |                                 |
+| insert(k2,v2)   | H(k2) = 5     | p(0)=0                  | 5     |                                 |
+| insert(k3,v3)   | H(k3) = 5     | p(1)=1,P(2)=3           | 0     | collisions, resize from 8 to 16 |
+| re-inset(k3,v3) | H(k3) = 5     | P(0)=0                  | 5     |                                 |
+| re-inset(k2,v2) | H(k2) = 5     | p(1)=1                  | 9     | collision                       |
+| re-inset(k1,v1) | H(k1) = 6     | p(1)=1                  | 7     | collision                       |
+| insert(k4,v4)   | H(k4) = 35410 | P(0)=0                  | 2     |                                 |
+| update(k3,v5)   | H(k3) = 5     | P(1)=0                  | 5     | update value, k3 already exists |
+| insert(k6,v6)   | H(k6) = -6413 | P(0)                    | 3     |                                 |
+| insert(k7,v7)   | H(k7) = 2     | P(1)=1, p(2)=3, P(3) =6 | 8     | collisions                      |
+
+#### Double Hashing
+
+This time we use a double hashing probing function, $P(k,x) = x*H_2(k)$ where H2(k) is a second hash function.
+h2(k) must has the same types of keys as h1(k),
+
+> Note: double hashing reduces to linear probing (except that the constant is unknown until linear run time)
+
+we still can run into the same problem where we can run into infinite cycles.
+to fix this we can pick a table size which is a prime factor and choose a delta value &delta;
+$\delta =H_2(K)\ mod\ N$. if delta is zero, we are guranteed to be stuck in a cycle. so we limit the delta between 1 inclusive and N (exclusive), so if N is prime, the gcd will always be 1.
+this ensures that we won't get in a cycle.
+
+we need an additional hash function that works with the same type, we want a systematic way to produce a hash function.
+there are many well known hash function (a pool called _universal hash functions_), which operate on fundamental data types.
+
+example with double hashing, P(x)= x\*H2(K), table size n =7, factor &alpha; = 0.75, so we resize at 5 elements/
+
+| Operation        | Hash                      | delta &delta;          | Result                                   | index | note                                        |
+| ---------------- | ------------------------- | ---------------------- | ---------------------------------------- | ----- | ------------------------------------------- |
+| insert(k1,v1)    | H1(k1) = 67 , H2(k1) = 34 | 34 mod 7 = 6           | 67 + 0\*6 mod 7                          | 4     |                                             |
+| insert(k2,v2)    | H1(k2) = 2, H2(k2) = -79  | -79 mod 7 = 5          | 2 + 0\*5 mod 7                           | 2     |                                             |
+| insert(k3,v3)    | H1(k3) = 2, H2(k3) =10    | 10 mod 7 =3            | 2 +0\*3 mod 7, 2+1\*3 mod 7              | 5     | hash collision                              |
+| insert(k4,v4)    | H1(k4) = 2, H2(k4) = 7    | 7 mod 7 =0 -> **1**    | 2 +0 \*1 mod 7, 2+1 \*1 mod 7            | 3     | limit delta to 1, hash collision            |
+| update(k3,v5)    | H1(k3) =2 , H2(k3) = 10   | 10 mod 7 =3            |                                          | 5     | update                                      |
+| insert(k6,v6)    | H1(k6) =3 , H2(k6) =23    | 23 mod 7 =2            | 3+0\*2 mod 7, 3+1\*2 mod 7, 3+2\*2 mod 7 | 1     | collisions, need to resize, 7\*2 = 14 ~= 17 |
+| re-insert(k6,v16 | H1(k6) = 3 , H2(k6) = 23  | 23 mode 17 = 6         | 3 + 0\*6 mod 17                          | 3     |                                             |
+| re-insert(k2,v2) | H1(k2) = 2, H2(k2) = -79  | -79 mod 17 = 11        | 2 + 0\*11 mod 7                          | 2     |                                             |
+| re-insert(k4,v4) | H1(k4) = 2, H2(k4) = 7    | 7 mod 17 =7            | 2 +0 \*7 mod 17, 2+1 \* 7 mod 17         | 9     | hash collision                              |
+| re-insert(k1,v1) | H1(k1) = 67, H2(k1) =34   | 34 mod 17 = 0 -> **1** | 67 +0\*\1 mod 17                         | 16    |                                             |
+| re-insert(k3,v5) | H1(k3) = 2, H2(k3) =10    | 10 mod 17 =10          | 2 +0\*10 mod 17, 2+1\*10 mod 17          | 12    | hash collision                              |
+| insert(k7,v7)    | H1(k7) = 15, H2(k7) =3    | 3 mod 17 =3            | 15+0\*3 mod 17                           | 15    |                                             |
+
+#### Removing Elements
+
+when we remove naively, we will run into problem, we replace a remove element with a null, but that means we stop searching.
+one method to handle this is to use a specific marker called 'a tombstone', which indicates that this index once contained an element, so we need to keep searching.
+tombstone count as filled elements, so once we increase the size we get rid of them as part of the re-insertion process.
+Additionally, we can replace a tombstone when we insert elements. when we search for values and go over tombstone, we can replace the first tombstone with the value we found.
+
+### Implementation
+
+java, generic, implements Iterable, has default capacity and load factors, threshold.
+Tombstone element, a method to get a number which is a power of 2. quadratic probing function, normalizing indexes (make positive, mod by capacity).
+resizing the table, trying to replace the tombstones we encounter, we will never run out of space because we keep increasing the size.
 
 </details>
 
 ## Fenwick Tree/Binary Indexed Tree
 
-<!-- <details> -->
+<details>
 <summary>
-
+A tree like structure that stores computed values in an hierarchical order and allows range based operations on cached values.
 </summary>
+Binary indexed tree.
+
+- Range Query
+- Point updates
+- Construction
+
+motivation:
+
+> "given an array of integer value, compute the range sum betwen index \[i,j) (include i, exclude j)"
+
+we can do this for each range, start from the buttom and search upwards. but this gets redundant, we end up calculating the same values many times.
+instead we can define P to ba array containing all the **prefix sums** of the array
+
+> Array A: [5,-3,6,1,0,-4,11,6,2,7]\
+> Array P: [0,5,2,8,9,9,5,16,22,24,31]
+
+so when we want a sum of a range, we can compute the differences.
+The problem is that when we want to update the original data, we need to calculate all the prefix sums again.
+this means that we get O(1) for static unchanging arrays, but O(n) for updates.
+
+> "A Fenwick Tree (also called a binary indexed tree) is a data structure that supports _sum ranges queries_
+> as well as setting values in a static array and getting the value of the prefix sum up some index efficiently."
+
+the construction is linear time, point update and range operations (sum, update) are log linear.
+
+each cll is resposbile not only for itself, but also for other cells.
+
+> "Unlike a regular array, in a fenwick tee, a specific cell is responsible for other cells as well.
+> the position of the **least significant bit** (LSB) determins the range of responsability the cell has to the cells below himself."
+
+fenwick trees are one based.
+
+- for index 12, the binary is 1100, lsb is position 3, so this cells is responsible for 2^(3-1) = 4 cells.
+- for index 11, the binary is 1001, lsb is position 1, so this cells is responsible for 2^(1-1) = 1 cells (itself).
+- for index 10, the binary is 1010, lsb is position 2, so this cells is responsible for 2^(2-1) = 2 cells.
+
+cells with odd number indexing (one-based) have lsb at position 1, so they are only responsible for themselves
+
+to do a range query, we compute the prefix sum up to c certain index, which let's us perform the range sum queries. we start at some index and cascade down until we reach zero.
+
+sum of up to 7 = A\[7] + A\[6]+ A\[4]. A\[7] is responsible only for itself,A\[6] is responsible for both itself and another cell, A\[4] is responsible for itself and three more cells, so we reach zero.
+sum of up to 11 = A\[11] (self), + A\[10] (self + one), A\[8] (self + seven), which get us to zero.
+sum of up to 4 = A\[4] (self + 3), we got to zero.
+
+lets try an interval sum between 11 and 15:\
+sum of 15 = A\[15] (1) + A\[14] (2) + A\[12] (4) ->A\[8] (8)\
+sum of 11 (exclusive) = A\[10] (2) + A\[8] (8)
+
+in the worst case,we are querying a cell that has a binary representation of all ones (number of the form 2^n-1), like 7,15,31... .
+so, the worst case is for us to do two queries that cost log2(n) operations each.
+
+> Range Query Algorithm:
+> "To do a range query from [i,j] (both inclusive), a Fenwick tree of size N:
+
+```
+function prefixSum(i):
+  sum:= 0
+  while i!=0:
+    sum = sum +tree[i]
+    i = i - LSB(i)
+  return sum
+
+function rangeQuery(i,j):
+  return prefixSum(j) - prefixSum(i-1)
+```
+
+### Tree Point Update
+
+the reverse of the query sum
+
+"we started at a value, and then continuously removed the lsb until we reach zero"
+
+> - 13 = 0b1101 ,0b1101-0b0001 = 0b1100 = 12
+> - 12 = 0b1100 ,0b1100-0b0100 = 0b1000 = 8
+> - 8 = 0b1000 ,0b1000-0b1000 = 0b0000 = 0
+> - 0 = 0b0000
+
+a point update is adding the lsb, and cascading up until we land out of the array bounds. at every index we reach we need to update it with the new value
+
+> - 9 = 0b1001, 0b1001 + 0b0001 = 0b1010 = 10
+> - 10 = 0b1010, 0b1010 + 0b0010 = 0b1100 = 12
+> - 12 = 0b1100, 0b1100 + 0b0100 = 0b10000 = 16
+> - 16 = 0b10000, 0b10000 +0b10000 =0b100000 = 32
+
+if we add x to postion 6, we need to update three cells in the fenwick tree. we add x to postions, 6,8,16
+6 = 0b0110 -> 8 =0b1000 -> 16 = 0b10000
+
+> To update the cell at index i in a fenwick Tree of size N:
+
+```
+function add(i,x):
+  while i<N:
+    tree[i] = tree[i]+x
+    i = i + LSB(i)
+```
+
+### Fenwick Tree Construction
+
+construction is O(n).
+
+> Naive construction:\
+> "Let A be an array of values, for each element in A at index i do a point update on the fenwick tree with a value of A\[i], there are n elements and each point update takes O(log(n)) for a total of *O(n*log(n))\*, can we do better?"
+
+```
+A=[a1,a2,,...,aN] //array
+for (i=1 ;i <= N,++i )
+{
+  tree.add(i,a[i]);
+}
+```
+
+> Linear construction:\
+> Input values we wish to turn into a legitmate fenwick tree
+>
+> "Add the value in the current cell to the immediate cell that is responsible for us, this resembles what we did for th point update, but only once cell at a time.
+> this is make the 'cascading' in range queries possible by propagatin the value in each cell throughout the tree."
+>
+> let i be the current index, the immediate cell above us is at position j given by: j:= i+LSB(i)
+
+```
+A=[a1,a2,,...,aN] //array
+for (i=1 ;i <= N,++i )
+{
+  tree[i] +=A[i];
+  tree[i+LSB(i)] += A[i]
+}
+```
+
+or
+
+```
+A=[a1,a2,,...,aN] //array
+for (i=1 ;i <= N,++i )
+{
+  tree[i] = A[i]; //initial construction
+}
+
+for (i=1 ;i <= N,++i )
+{
+  j = i + LSB(i)
+  if j <= N:
+    tree[j] += tree[i] ; update parents
+}
+```
+
+we update two cells at each time, so the construction is linear time. we ignore parent which are out of bounds
+
+```
+#make sure vales is 1-based
+function construct(values):
+  N:= length(values)
+
+  #clone the values
+  tree = deepCopy(values)
+  for i= 1,2,3,...,N:
+    j:=i + LSB(i)
+    if J<= N:
+      tree[j] = tree[j]+tree[i]
+  return tree
+```
+
+### Implementation
+
+Java source code. take care about the indexing, we never use index zero. we need things to be one-based.
+cascading up, cascading down, method set
+
+```java
+private int lsb(int i)
+{
+  return i & i-1;
+  //return Integer.LowestOneBit(i); // java built in
+}
+
+public long prefixSum(int i)
+{
+  long sum = 0L;
+  while (i !0)
+  {
+    sum += tree[i];
+    i &= ~lsb(i); // same as i -= lsb(i); equivalent forms
+  }
+  return sum;
+}
+public long sum(int, int j)
+{
+  //make sure i <j and the are in the range
+  return prefixSum(j)- prefixSum(i-1);
+}
+//add k value to index i (one base)
+public add(int i,long k)
+{
+  while (i< tree.length)
+  {
+    tree[i]+=k;
+    i+=lsb(i);
+  }
+}
+// set index i to be equal to k, one based
+public void set(int i, long k)
+{
+  long value = sum(i,i); //check what inside/ like tree[i]
+  add(i,k-value); // add the difference, and let it propegate upwards
+}
+```
 
 </details>
 
-## AVL Tree
+## AVL Balanced Binary Search Tree
 
-<!-- <details> -->
+<details>
 <summary>
-
+Balanced Binary Search Trees. 
 </summary>
+
+> "A **Balanced Binary Search Tree (BBST)** is a _self-balancing_ binary search tree.
+> This type of tree will adjust itself in order to maintain a low (logarithmic) height allowing for faster operation such as insertions and deletions."
+
+binary tree don't perform well with sorted data, but balanced search tree keep themselves balanced and maintain the form which allows them the same complexicy of O(long(n)) without degradation
+
+> "The secret ingredient to most BBST algorithms is the clever usage of a _tree invariant_ and _tree rotations_.\
+> A tree invariant is a property/rule you impose on your tree that it must meet after each operation.
+> To ensure that the invariant is always satisfied a series of tree rotations are normally applied."
+
+<img src='https://g.gravizo.com/svg?
+ digraph Tree {
+   A1 -> B1;
+   A1 -> C1;
+   B1 -> D1;
+   B1 -> E1;
+   ;
+   B2 -> D2;
+   B2 -> A2;
+   A2 -> E2;
+   A2 -> C2;
+ }
+'/>
+
+we know that in the left tree, D < B < E < A < C, and this holds true in the right tree as well. for every node is the left sub tree, all the value are smaller than the parent and the element in the right subTree
+
+we don't care about which is the root, as long as the binary tree invariant remains. we are free to shuffle and transform the tree.
+
+we start with tree where P->[A,] A->[B,C], B->[D,E], where p may or may not exist.
+
+```
+function rightRotate(A):
+  B:= A.left
+  A.left = B.right
+  B.right = A
+  return B
+```
+
+we end up with a tree B->[D,A],A->[E,C].
+if node A has a parent node P, then we end up with it still pointing to node A, so we would have two nodes pointing to it, which is bad. we need to update this link as well.
+this is usually down with the return value, so it's sometimes easier to store the parent references in each node, which makes the rotations more complicated (six pointers instead of three).
+
+```
+function rightRotate(A):
+  P:=A.parent
+  B:=A.left
+  A.left = B.right
+  if B.right != null:
+    B.right.parent = A
+  B.right = A
+  A.parent = B
+  B.parent= P
+
+  #update parent down link
+
+  if P != null:
+    if P.left == A:
+      P.left =B
+    else:
+      P.right = B
+  return B
+```
+
+### AVL Inserting Elements
+
+> "An **AVL tree** is one of many types of balacned binary search trees which allow for logarithmic O(log(n)) insertions, deleteion and search operations.
+>
+> In fact, it was the first type of BBST to be discovered, soon after, many other types of BBST's statered to emerge
+> including the 2-3 tree the AA tree, the scapegoat tree, and it's main rival, the red-black tree."
+
+the AVL tree is governed by the **AVL Tree Invariant**:\
+
+> The property which keeps an ABL tree balanced is called the **Balanced Factor (BF)**.\
+> BF(node) = H(node.right) - H(node.left)\
+> Where H(x) is the height of node x, recall that H(x) is calculated as the _number of edges_ between x and the furthest leaf.\
+> The invariant in the AVL which forces it remain balanced is the requirement that the balance factor to always be either -1,0 or +1
+
+the difference between the heights must be [-1,0,+1], in other words, one subtree can't have more than one layyer deeper than it's sibling.
+
+> Node information to store:\
+>
+> - The actual value we are storing in the node (must be comparable, so we can insert it).
+> - A value storing this node's _balance factor_.
+> - The _height_ of this node in the tree.
+> - Pointers to the left/right child nodes (subtrees).
+
+when the algorithm runs, we need to update those values.
+if the balanced factor isn't {-1,0,+1}, then it must be either {-2,+2}, which we can adjust using tree rotations.
+
+there are four cases: two simple cases and tow complex case that resolve into the simple cases. they are all symmetrical.\
+In this example, A =5,B= 4,C=3
+
+| case        | initial state    | action                                                                       | action states             |
+| ----------- | ---------------- | ---------------------------------------------------------------------------- | ------------------------- |
+| left left   | A->[B,], B->[C,] | right notation                                                               | B->[C,A]                  |
+| left right  | A->[B,], B->[,C] | left rotation on the right child and, then a right rotation (left left case) | A->[B,],B->[C,]. B->[C,A] |
+| right right | C->[,B], B->[,A] | left rotation                                                                | B->[C,A]                  |
+| right left  | C->[,A], A->[B,] | right rotation on the left child, and then left rotation(right right case)   | C->[,B],B->[,A]. B->[C,A] |
+
+public facing method, returning true when successfully inserted, and false when it already exists.
+
+```
+function insert(value):
+  if value == null:
+    return false
+  # Only insert Unique values
+  if !contains(root,value):
+    root = insert(root,value)
+    nodeCount = nodeCount +1
+    return true
+  # Value already exists in tree
+    return false
+
+# Private function
+function insert(node,value):
+  cmp:= compate(value,node.value)
+
+  if (cmp<0):
+    node.left = insert(node.left, value)
+  else:
+    node.right = insert(node.right,value)
+
+  # Update balance factor and height values
+  update(node)
+
+  # Rebalance tree.
+  return balance(node)
+
+function update(node):
+  lh:= -1;
+  rh:= -1
+  if node.left != null: lh = node.left.height
+  if node.right != null: rh = node.right.height
+
+  # Update this Node height
+  node.height = 1+ max(lh,rh)
+  # Update balance factor
+  node.bf = rh-lh
+
+function balance(node):
+  #left Heavy subtree
+  if node.bf == -2:
+    if node.left.bf <= 0:
+      return leftLeftCase(node)
+    else:
+      return leftRightCase(node)
+
+  #right heavy subtree
+  else if node.bf== 2:
+    if node.right.bf >= 0:
+      return rightRightCase(node)
+    else:
+      return rightLeftCase(node)
+
+  # balance factor is -1,0,+1
+  # no need to balance
+  return node;
+
+
+# cases
+
+function leftLeftCase(node):
+  return rightRotation(node)
+
+function leftRightCase(node):
+  node.left = leftRotation(node.left)
+  return leftLeftCase(node)
+
+function rightRightCase(node):
+  return leftRotation(node)
+
+function leftLeftCase(node):
+  node.right = rightRotation(node.right)
+  return rightRightCase(node)
+```
+
+we also need out update function inside the rotations to augment the height when we do rotations.
+
+### AVL Removing Elements
+
+removing elements is similar to removing elements from a regular binary tree.
+
+reminder:
+
+> removal phases:
+>
+> 1. _Find_ the element we wish to remove.
+> 2. _Replace_ the node with it's successor (if it has any) to maintain the BST invariant.
+>
+> the four cases of removing:
+>
+> 1. removing leaf.
+> 2. removing a node with only left subtree.
+> 3. removing a node with only right subtree.
+> 4. removing a node with both left and right subtrees.
+
+for an AVL tree, we need to ensure the AVL invaraint, just like when we insert nodes,we update the height and balance factor, and then re-balance them.
+
+### Implementation
+
+Java source code. each node contains the balance factor and the height,doesn't allow duplicates or nulls.
+updating and rebalancing the tree. we get the balance factor from the heights, and then we balance according to it and then update again in the rotations (order matters, child before parent).
+in the remove methods we choose to replace with the successor node from the subtree which is higher (hoping this will make balancing easier).
+when we remove nodes we update and rebalance. this is done in a recursive way.
 
 </details>
 
@@ -705,4 +1318,36 @@ Complexity for data structure operations.
 | Remove    | O(log(n)) | O(n)  |
 | Search    | O(log(n)) | O(n)  |
 
+### Hash Table
+
+the constant time behavior attributed to hash tables is only true if there is a good **uniform** hash function.
+
+| Operation | Average | Worst |
+| --------- | ------- | ----- |
+| Insert    | O(1)    | O(n)  |
+| Remove    | O(1)    | O(n)  |
+| Search    | O(1)    | O(n)  |
+
+### Fenwick Tree
+
+| Operation      | Complexicy |
+| -------------- | ---------- |
+| Construction   | O(n)       |
+| Point update   | O(log(n))  |
+| Range sum      | O(log(n))  |
+| Range update   | O(log(n))  |
+| Adding index   | N/A        |
+| Removing index | N/A        |
+
 </details>
+
+### Balanced Binary Search Tree (AVL)
+
+| Operation | Average   | Worst     |
+| --------- | --------- | --------- |
+| Insert    | O(log(n)) | O(log(n)) |
+| Delete    | O(log(n)) | O(log(n)) |
+| Remove    | O(log(n)) | O(log(n)) |
+| Search    | O(log(n)) | O(log(n)) |
+
+&#x23DA;
