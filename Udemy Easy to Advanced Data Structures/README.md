@@ -1263,19 +1263,453 @@ when we remove nodes we update and rebalance. this is done in a recursive way.
 
 ## Indexed Priority Queue
 
-<!-- <details> -->
+<details>
 <summary>
-
+A heap that provides faster operations by maintaining a lookup between the key and the index of the element in an array. mapping exist from the key to the position and the value, and from the position to the key index.
 </summary>
+
+building on top of priority queues.
+
+> "An indexed Priority Queue is a traditional priority queue varian which on top of the regular PQ operations also supports _quick updates and deletions_ of _key-value pairs_."
+
+looking up and dynamically changing values inside the queue.
+we assign index values to all the keys, we form bi-directional mapping.
+
+A typicall priority queue is implemented as heaps under the hood (which are internally arrays), so we map between the keys (which can be of any type) and the index (a number between 0 and N) with an hash table for the mapping.
+
+> Supported opperations of the IPQ ADT Interface:\
+> assume k is the key, so the index is **ki=map\[k]**
+>
+> - delete(ki)
+> - valueOf(ki)
+> - contains(ki)
+> - peekMinKeyIndex()
+> - pollMinKeyIndex()
+> - peekMinValue()
+> - pollMinValue
+> - insert(ki, value)
+> - update(ki, value)
+> - decreaseKey(ki, value)
+> - increaseKey(ki, value)
+
+there are several ways to implement this ADT, but we will use a binary heap, which gets some logarithmic operations as opposed to linear time.
+
+recall that in a binary heap, for index i, children are 2i+1, 2i+2 (zero based). insertion is done at the end of the heap and bubbling up and down to maintain the heap invariant. removal is done by swapping and then bubbling.
+key-> key Index -> value (index in heap?)
+
+we maintain an N array of values a **position map** for the lookup. "the index of the node in the heap for a given key index (ki)". and an **inverse map** for the reverse lookup. "getting a key given the node position".
+
+1. map from key to key index.
+2. values are orgainzed in an array (vals) which the keyIndex maps to.
+3. the positional array is mapping from the key index to the heap index.
+4. an inverse lookup table, Inverse Map, from the node position to the key index.
+5. ~~the heap itself~~
+
+> to find a node:
+>
+> - get the key index from the mapping of the keys to indexing.
+> - use that key index in the positional mapping to get the index of the node in the heap.
+> - (?verify that the value in the values array matches the value in the heap?)
+>
+>   to find a key from the node:
+>
+> - use the node index as a key on the inverse map
+
+bidirectional hash table: key to key index
+
+| name (key) | key index (ki) |
+| ---------- | -------------- |
+| Anna       | 0              |
+| Bella      | 1              |
+| Carly      | 2              |
+| ...        | ...            |
+| Laura      | 11             |
+
+| index          | 0   | 1   | 2   | ... | 10  | 11  | 12  | 13  | 14  | notes                           |
+| -------------- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ------------------------------- |
+| Values         | 3   | 15  | 11  | ... | 16  | 14  | -1  | -1  | -1  | ki -> value                     |
+| Positional Map | 2   | 9   | 11  | ... | 10  | 5   | -1  | -1  | -1  | ki -> heap index                |
+| Inverse Map    | 7   | 6   | 0   | ... | 10  | 2   | -1  | -1  | -1  | heap index -> key mapping index |
+
+### Inserting Elements
+
+> insertion:
+>
+> 1. add key to the bidirectional hash table
+> 2. add node at the end of the heap, and update the values array, the Positional map and inverse map accordingly.
+> 3. if heap invariant isn't satisfied perform bubbling, at each bubbling stage, use the inverse map to find the key index of the swapped node, and swap both the values in the positional mapping and the inverse mapping.
+> 4. keep doing so until the heap invariant is satisfied.
+
+```
+# Insert a value into the min indexed binary heap.
+# The key index must no already be in the heap.
+# The value may not be null.
+
+function insert(ki, value):
+  values[ki] = value
+  #'sz' is the current size of the heap
+  pm[ki] = sz
+  im[sz] = ki
+  swim(sz)
+  za = sz+1
+
+#swims up node i (zero based) until the heap invariant is satisfied
+function swim(i):
+   for(p = i-1/2; i> 0 and less(i,p); ):
+    swap(i,p)
+    i=p
+    p=i-1/2;
+
+#swap inverse map and positional mapping, not the values
+function swap(i,j):
+  #update positional mapping
+  pm[im[j]] =i
+  pm[im[i]] =j
+
+  #swap inverse mapping
+  temp:= im[i]
+  im[i] = im[j]
+  im[j] = temp
+
+function less(i,j):
+  #compare values with the inverse mapping
+  return values[im[i]] < values[im[j]]
+
+```
+
+### Polling and Removing Elemens
+
+_Polling_ is still O(log(n)) in an IPQ, but _removing_ is improved from O(n) in the tradition PQ to O(log(n)) since the node position lookup are O(1) but repositioning is O(log(n)).
+
+> Polling:
+>
+> 1.  Exchange the root node with the buttom node.
+> 2.  Swap the index values in the positional map and the inverse map.
+> 3.  Remove the node from the heap and return the key-value pair.
+> 4.  Mark the position of the remove value as null in the values array.
+> 5.  Restore the heap invariant by moving the swapped node up or down as needed (update arrays as needed).
+>
+> To Remove a node by a key:
+>
+> 1. use the bidirectional map to find the key index.
+> 2. use the positional map and the key index to find the node position.
+> 3. swap that node with the last node, (update positional mapping and inverse mapping)
+> 4. remove the node from the heap and return the key-value pair.
+> 5. continue as before (sink up or down as needed)
+
+```
+# Deletes the node with the key index ki in the heap.
+# The key index ki must exists and be present in the heap.
+
+function remove(ki):
+  i := pm[ki]
+  # sz is the size of the heap
+  swap(i, sz)
+  sz = sz-1
+  sink(i)
+  swim(i)
+  value[ki] = null
+  pm[ki] = -1
+  im[sz] = -1
+
+# Sinks the node at index i by swapping itself withe the smallest of the right or left child nodes
+function swim(i):
+    while(true):
+      left = 2*i+1
+      right = 2*i+2
+      # Default left
+      smallest:= left
+      if right < sz and less(right,left):
+        smallest = right
+
+      # Exit condition, no children or no need to swap anymore
+      if left >= sz or less(i, smallest):
+        break
+
+      swap(smallest,i)
+      i = smallest
+```
+
+### Updates
+
+like removals, updates also take O(log(n)) time, because lookup is O(1) with the positional mapping, but adjusting the heap after the change is O(log(n)).
+
+> Update value by key
+>
+> 1. find key index with the key.
+> 2. update the values array
+> 3. maintain the heap invariant by sinking or swimming
+
+```
+# Update the value of a key in a binary heap.
+# The key index ki must exists and be present in the heap.
+
+function update(ki, value):
+  i=pm[ki]
+  values=[ki] = value
+  sink(i)
+  swim(i)
+```
+
+### Decrease and Increase Key
+
+> "In many applications (e.g Dijkstra's and Prims algorithm) it is often useful to only update a given key to make its value either always smaller (or larger). in the even that worse value is given the value in the IPQ should not be updated.\
+> In such situations it is useful to define a more restrictive form of update operation we call _increaseKey(ki,v)_ and _decreaseKey(ki,v)_."
+
+the update only happens if the new value is towards one particular direction as compared to the existing value
+
+```
+# assume ki and newValue are valid inputs, and we are dealing with a min indexed binary heap
+
+function decreaseKey(ki,newValue):
+  if less(newValue, values[ki]):
+    values[ki] =newValue
+    swim(pm[ki])
+
+function increase(ki,newValue):
+  if less(values[ki],newValue):
+    values[ki] =newValue
+    sink(pm[ki])
+```
+
+### Implementation
+
+java source code. size, capacity, values, positional mapping, inverse mapping.\
+also has child-parent arrays for quick lookups, but that's not required.\ positional mapping and inverted map are initiliazed to -1. operations use the KeyIndex, rather than the key itself.
 
 </details>
 
 ## Sparse Tables
 
-<!-- <details> -->
+<details>
 <summary>
-
+a table used to pre-compute results of associative function on a static range of inputs, which can later be used for range queries. gets even better performance with overlap friendly functions, costly in memory.
 </summary>
+
+> "Sparese tables are all about doing efficient **range queries** on _static arrays_. Range queries come in a variety of flavors, but the most common types are _min_, _max_, _sum_ and _gcd_ range queries.
+
+| index  | 0   | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   | 10  | 11  | 12  |
+| ------ | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Values | 4   | 2   | 3   | 7   | 1   | 5   | 3   | 3   | 9   | 6   | 7   | -1  | 4   |
+
+for example, we can ask what is the maximum value between \[4,12], the gcd between \[6,9] or the sum of values between \[2,11].
+
+the data is immutable, it won't change.
+
+> Intuition for sparse tables
+>
+> - Every positive integer can be easily represented as a sum of powers of 2 given it's binary representation.
+>   - 19 = 0b10011 = 2^4 (16) + 2^1 (2) + 2^0(1) = 19
+> - Similarly, any interval \[l,r] can be broken into smaller intervals of powers of two.
+>   - \[5,17] = \[5, 5+2^3) U \[13, 13+2^2) U \[17, 17+2^0) = \[5, 13) U \[13,17) U \[17,18)
+
+the length of the intervals is powers of two.
+
+### Range Combination Function
+
+> "A sparse table can help us answer all these questions efficiently, for **associative functions**, a sparse table can answer range queries in _O(log(n))_."\
+> a function f(x,y) is associative if:\
+> f(a,f(b,c)) = f(f(a,b),c) for all a,b,c\
+> Operations such as addition and multiplication are associative, but substraction and exponantation are not.
+
+- $1+(2+3) = 6 = (1+2)+3$
+- $2*(3*4) = 24 = (2*3)*4$
+- $1-(2-3) = 2 \ne (1-2)-3 = -4$
+
+but we can do better.
+
+> "When the range query combination function is **"overlap friendly**, then range queries on a sparse table can answered in O(1)."\
+> being overlap friendly mean a function yields the same answer regardless of whether it is combining ranges which overlap or those that do not:\
+> f(f(a,b),f(b,c)) = f(a,f(b,c)) for all valid a,b,c\
+
+assume array \[4,2,3,-6,6,7,1,-2,8,9,8,1,1,3,-6,2], where f(x,y) = x+y.\
+r1\[0,6] = 16, r2\[7,9] = 7, r3\[10,16] = 18
+
+addition is not overlap friendly:
+
+$
+f(f(r1,r2),f(r2,r3)) = f(f(16,7),f(7,18)) = (16+7) + (7+18) =48 \\
+\ne \\
+f(r1,f(r2,r3)) = f(16,f(7,18)) = 16 +7 +18 = 41
+$
+
+| function f(a,b) | associative | overlap friendly? | notes          |
+| --------------- | ----------- | ----------------- | -------------- |
+| 1\*b            |             | yes               |                |
+| a\*\*b          | yes         | no                | multiplication |
+| min(a,b)        | yes         | yes               |                |
+| max(a,b)        | yes         | yes               |                |
+| a\*\*b          | no          | no                | substraction   |
+| (a\*b)/a, a!=0  |             | yes               | same as 1\*b   |
+| gcd(a,b)        | yes         | yes               |                |
+
+the idea behind a sparse table is to precompute the answer for all interval of size 2^x to efficiently answer range queries.
+
+N = size of the input, 2^P is the largest power of 2 that fits in the length of the values array.\
+for N = 13:
+P = floor(log2(N)) = floor(log2(13)) =3
+
+| index  | 0   | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   | 10  | 11  | 12  |
+| ------ | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Values | 4   | 2   | 3   | 7   | 1   | 5   | 3   | 3   | 9   | 6   | 7   | -1  | 4   |
+
+the memory is stored in memory, we need N^N memory to store them.\
+we initialize a table with P+1 rows,and N columns, each cell (i,j) represents the answer for the range \[j,j+2^i) in the original array.\
+thr first row is the same as the input values. the rest of the rows are filled according to the function.
+
+|         | 0   | 1   | 2                                              | 3   | 4   | 5                      | 6       | 7          | 8       | 9       | 10      | 11      | 12      |
+| ------- | --- | --- | ---------------------------------------------- | --- | --- | ---------------------- | ------- | ---------- | ------- | ------- | ------- | ------- | ------- |
+| $0,2^0$ | 4   | 2   | 3                                              | 7   | 1   | 5                      | 3       | 3          | 9       | 6       | 7       | -1      | 4       |
+| $1,2^1$ |     |     |                                                |     |     |                        |         | $f(a7,a8)$ |         |         |         |         | &empty; |
+| $2,2^2$ |     |     |                                                |     |     | $f(f(a5,a6),f(a7,a8))$ |         |            |         |         | &empty; | &empty; | &empty; |
+| $3,2^3$ |     |     | $f(f(f(a2,a3),f(a4,a5)),f(f(a6,a7),f(a8,a9)))$ |     |     |                        | &empty; | &empty;    | &empty; | &empty; | &empty; | &empty; | &empty; |
+
+for example:
+
+- cell(1,7) represents the answer for range \[7,9), so for a min sparse table it will be the value of min(3,9) -> 3. for a sum sparse table query, the value will be sum(3,9) -> 12.
+- cell(2,5) represents the answer for range \[5,9), so for a min sparse table it will be the value of min(5,3,9,9) -> 3. for a sum sparse table query, the value will be sum(5,3,3,9) -> 20.
+- cell(3,2) represents the answer for the range \[2,10), so for min value it's min(3,7,1,5,3,3,3,9,6)-> 1, and fo sum it's sum(3,7,1,5,3,3,3,9,6) -> 40.
+- cell(2,10) is the range \[10,14), which is out of bounds. we can simply ignore it, we don't care about partial ranges. let's mark this cell as &empty;, and all the other partial cells as well.
+
+now for an example with a range combinnation value. we need a range combination function, so let f(x,y) = min(x,y)
+
+we can combine use the results of the above cells because of the associativity, each range can be split into two intervals of even length. cell (i,j) can be split into ranges \[j,j+2^i) and \[(j+2^i) -1, j+2^(i-1)), which corespond to cells(i-1,j) and (i-1, j+2^(i-1)).
+
+| min range | 0   | 1   | 2          | 3   | 4          | 5   | 6          | 7       | 8          | 9       | 10      | 11      | 12      |
+| --------- | --- | --- | ---------- | --- | ---------- | --- | ---------- | ------- | ---------- | ------- | ------- | ------- | ------- |
+| $0,2^0$   | 4   | 2   | 3          | 7   | 1          | 5   | 3          | 3       | 9          | 6       | 7       | -1      | 4       |
+| $1,2^1$   |     |     | $f(3,7)=3$ |     | $f(1,5)=1$ |     | $f(3,3)=3$ |         | $f(9,6)=6$ |         |         |         | &empty; |
+| $2,2^2$   |     |     | $f(3,1)=1$ |     |            |     | $f(3,6)=3$ |         |            |         | &empty; | &empty; | &empty; |
+| $3,2^3$   |     |     | $f(1,3)=1$ |     |            |     | &empty;    | &empty; | &empty;    | &empty; | &empty; | &empty; | &empty; |
+
+we can continue to fill the table by combining values from the previous rows.
+
+suppose we want to know the minimal value between \[1,11]? the table already includes the answer for intervals of lengths which are power of 2.
+
+> "Let k be the largest power of two that fits in the length of the range between \[l,r].\
+> Knowing k we can easily do a lookup in the table to find the minimum in between the ranges \[l, l+k] (left interval) and \[r-k+1,r] (right interval). the right and the left intervals may overlap, but this doesn't matter (given the overlap friendly property), so long as the the entire range is covered."
+
+in our example,p =3, k=2^3=8, we can compute the result of ranges \[1,1+8=9) and \[11-8+1=4,11) and get a correct answer. we don't care about the overlap of the ranges.\
+another example, minimal of \[2,7], $p=floor(\log_2(7-2+1))$, so this time p is 2, k=4.\
+the ranges are \[2,2+4=6) and \[7-4+1=4,7), so we look at cells(2,2) and 2(,4).\
+final example \[3,5], p = $floor(\log_2(5-3+1))$ = 1, k=2, ranges are \[3,3+2=5) and \[5-2+1=4,5) so cells (1,3) and (1,4).
+
+### Associative Function Queries (non overlap friendly)
+
+> "Some functions such as multiplication and summation are associative, but are _not overlap friendly_. A sparse table can still handle these types of queries, but in _O(log(n))_ rather than O(1). The main issue with non-overlap friendly function with our previous approach is that overlapping intervals would yield the wrong answer.\
+> The alternative approach to performing a range query is to do a **cascading query** on the sparse table by breaking the range \[l,r] into smaller ranger of size 2^x which **do not overlap**."
+
+for example, the range \[2,15] can be split into three intervals of lengths 8,4 and 2.\
+\[2,15] = \[2,2+2^3) U \[10,10+2^2) U \[14,14+2^1) \
+= \[2,10) U \[10,14) U \[14,16)
+
+in this example we use our sparse table to calculate products, f(x,y) = x\*y.
+
+| product | 0   | 1   | 2   | 3   | 4       | 5       | 6       |
+| ------- | --- | --- | --- | --- | ------- | ------- | ------- |
+| $0,2^0$ | 1   | 2   | -3  | 2   | 4       | -1      | 5       |
+| $1,2^1$ | 2   | -6  | -6  | 8   | -4      | -5      | &empty; |
+| $2,2^2$ | -12 | -48 | 24  | -40 | &empty; | &empty; | &empty; |
+
+for the product of range \[0,6], we break it apart p = $floor(\log_2(6-0+1))=2$, k =4.\
+range \[0,6] -> \[0,0+2^2) U \[4,4+2^1) U \[6,6+2^0)
+
+$
+cell(2,0)*cell(1,4)*cell(0,6) \\
+= -12*-4*5 \\
+= 240
+$
+
+example for range \[1,5] -> \[1,1+2^2) U \[5,5+2^0)
+$
+cell(2,1)*cell(0,5) \\
+= -48 * -1 \\
+= 48
+$
+
+sometimes we want to get the index of the value, not just the value itself, this only makes sense for some operations (min, max), and not other(sum, gcd)
+
+```
+# The number of elements in the input array;
+N =...
+
+# Short for power,the larger 2^p that fits in N
+P =... # calculated as flor(log_2(N))
+
+# A quick lookup table for floor(log2(i)), 1<= i <= N
+log2[] =... # size N+1, index 0 unused
+
+# the sparse table contining integer values
+dp[][] = .... #P+1 rows, N columns
+
+# index table, associated with the values in the sparse table.
+# only useful to query the index of the min(or max) element in the range [l,r] and not the value
+# doesn't make sense for most other range query types like gcd or sum
+it[][] = .... #P+1 rows, N columns
+
+function BuildMinSparseTable(values):
+  N = length(values)
+  P = floor(log(n)/log(2))
+
+  # Quick lookup table
+  log2=[0,0,...,0,0] #size N+1
+  for (i:=2;i <= N;i++):
+    log2[i] = log2[i/2]+1
+
+  #fill the first row
+
+  for (i:=0;i < N;i++):
+    dp[0][i] = values[i]
+    it[0][i] = i
+
+  # fill other rows
+  for (p:=1;p <=P;p++):
+    for (i:=0; i + (1<<p) <= N; i++):
+      left := dp[p-1][i]
+      right := dp[p-1][i+(1<<(p-1))]
+      dp[p][i]= min(left,right)
+
+      # Save/Propgate the index of smallest elements
+      if left <= right:
+        it[p][i] = it[p-1][i]
+      else:
+        it[p][i] = it[p-1][i+(1<<(p-1))]
+
+# Query the smallest element in the range[l,r], O(1)
+function MinQuery(l,r):
+  len:= r-l-1
+  p:= log2[len]
+  left := dp[p-1][l]
+  right := dp[p-1][r+(1<<(p-1))]
+  return min(left, right)
+
+# Query the smallest element in the range[l,r] by doing a cascading min query, O(log(n))
+function CascadingMinQuery(l,r):
+  min_val := +∞ # initialize with max value
+  for (p:=log2[r-l+1]; l <=r; p =log2[r-l+1]):
+    min_val = min(min_val,dp[p][l]
+    l+= (1<<p)
+
+  return min_val
+
+# Return the index of the minimum element in the range [l,r] in the input array
+# Will return the left most index if there are multiple elements of the same minimal value
+function MinIndexQuery(l,r):
+  len:= r-l-1
+  p:= log2[len]
+  left := dp[p-1][l]
+  right := dp[p-1][r-(1<<p)+1]
+  if left <= right:
+    return it[p][l]
+  else:
+    return it[p][r-(1<<p) +1]
+
+```
+
+### Implementation
+
+java source code, min range query table. storing the number of values = n, the maximum power of 2 (floor(log_2(n))) = p, a quick lookup table for the log_2 values for each length, storing the results in the two dimensional array dp (dynamic programming, data points), also storing the index in the two dimensional array it (index table).\
+the input array can only contain immutable values. we use the left shift operator to get the interval sizes for each 'row' (value of p). method for O(1) look up, and method for finding the index of the minimal element in the range.
 
 </details>
 
@@ -1339,8 +1773,6 @@ the constant time behavior attributed to hash tables is only true if there is a 
 | Adding index   | N/A        |
 | Removing index | N/A        |
 
-</details>
-
 ### Balanced Binary Search Tree (AVL)
 
 | Operation | Average   | Worst     |
@@ -1350,4 +1782,27 @@ the constant time behavior attributed to hash tables is only true if there is a 
 | Remove    | O(log(n)) | O(log(n)) |
 | Search    | O(log(n)) | O(log(n)) |
 
-&#x23DA;
+### Index Priority Queue as a binary Heap
+
+| Operation              | Complexity |
+| ---------------------- | ---------- |
+| delete(ki)             | O(log(n))  |
+| valueOf(ki)            | O(1)       |
+| contains(ki)           | O(1)       |
+| peekMinKeyIndex()      | O(1)       |
+| pollMinKeyIndex()      | O(log(n))  |
+| peekMinValue()         | O(1)       |
+| pollMinValue           | O(log(n))  |
+| insert(ki, value)      | O(log(n))  |
+| update(ki, value)      | O(log(n))  |
+| decreaseKey(ki, value) | O(log(n))  |
+| increaseKey(ki, value) | O(log(n))  |
+
+### Sparse Tables
+
+| Function type                        | Complexity |
+| ------------------------------------ | ---------- |
+| Associative but not overlap friendly | O(log(n))  |
+| Associative and overlap friendly     | O(1)       |
+
+</details>
