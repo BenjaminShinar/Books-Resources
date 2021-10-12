@@ -772,3 +772,21 @@ examples of some usages of goto that fail.
 - can't jump between functions (labels are scoped).
 - can't have blank labels.
 </details>
+
+## C++ Weekly - Ep 293 - RPG in C++20 Project: Major Updates!
+
+<details>
+<summary>
+Update about the game progress.
+</summary>
+
+[RPG in C++20 Project: Major Updates!](https://youtu.be/IWEdaC9evBc)
+
+status update for the rpg game with new feature.\
+running on a commador emulator.
+
+optimization passes, we see the differences between different levels of optimization, in execution and size. ascii vs pscii(?spelling?) \
+AVR architecture processor? \
+looking at object assembly code.
+
+</details>

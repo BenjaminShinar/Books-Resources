@@ -1277,4 +1277,88 @@ sometimes, the cost of trying to predict hazards and problems is more than givin
 TODO
 </summary>
 
+### Data-level Parallelism
+
+if a pipeline is a instruction level parallism approach for processing multiple instructions simultaneously, then data-level parallism represents another step for increase throughput of processing.
+
+- Defining three DLP approaches.
+- Connecting how DLP approaches influence each other.
+- Exploring the hardware implementations of each application.
+
+#### SIMD
+
+Single instruction, multiple data.
+
+analog to walking four dogs at once in the same route, rather than walking them one by one. we can do the same instruction on multiple data at once.
+this is used for:
+
+- Vector processing
+- SIMD extentsions
+- Graphical Processing Units (GPUs)
+
+#### Vector Processing
+
+the old way of doing stuff is scalar processing (as opposed to vector processing).
+
+using a single instruction on multiple points of data at once. turning loops into a single instruction.
+
+this increase performance.
+
+- Less instruction overhead: fewer fetch and decode stages, we pay a slight overhead for the initial instruction, but then multiple data elements can go through the pipeline without additional instructions.
+- Memory access Bandwidth: we can also pipeline the memory access, we take the set of the data from the memory at once, rather than piece by piece.
+- Pipelining: we can leverage the pipelining of the data for better performance because we don't require a write back.
+
+#### Vector Architecture
+
+there is a difference in the architecture between a scalar architecture and a vector.
+
+- Vector registers: holding large amounts of data from the same type. can be much larger than normal registers.
+- Internal looping: rather then fetch and decode the same instruction over and over for each element, we can store it inside the vector register.
+- Lanes: processing vector data happens across _lanes_, each lane can do all the operations a scalar processor can do.
+
+vector registers are more complex than scalar ones, but they provide better performance.
+
+#### SIMD Extentsions
+
+processor can carry both the scalar operations and the new vector operations, these additions are called SIMD extensions.
+
+in the x86 instruction set, SIMD extensions began with _Streaming SIMD Extensions (SSE)_, which added 8 registers (xmm0 to xmm7), each with 128 bits (16 bytes, 4 floating points values).
+Over the years more registers were added, such as zmm registers which hold 512 bits (64 bytes, 16 floating points,8 doubles... etc)
+
+x86 instructions:
+
+```MIPS
+# add instruction
+ADD r1, r2
+
+# add packed floating-point
+ADDPS xmm1, xmm2
+VADDPS zmm1, zmm2, zmm3
+```
+
+ADDPS adds together the first and second operands, and stores the result back into the first one. VADDPS is an updated version, it supports up to 512 bits of data, it adds the results of adding the second and third operands and stores them inside the first operand.
+
+#### GPU
+
+GPU: Graphical Processing Unit
+
+today gpus perform processing not only for graphics, also for many other things, like digital singaling, machine learning and cryptocurrency. some GPUs come together with the CPU, and some are external.\
+Since GPUS were designed to handle graphics, they are built differently, they use simpler functionalities and favor volume over complexicy, they were build to handle large amounts of data. their internal clock may lag behind that of the cpu, and they aren't as efficient as cpu when dealing with branches and predictions.
+
+**SIMT - Single instruction, Multiple Thread**
+
+the SIMT architecture is designed to address the issue of high workloads of simple instructions over large data. the processing is done in bulk.
+
+#### Summary
+
+> "Great work finishing the topics on Data-Level Parallelism. In this lesson you covered:"
+>
+> - SIMD architectures and their benefits in data-heavy applications.
+> - Vector processors and their early influence on SIMD architecture.
+> - Vector architecture elements such as vector registers, lanes, and internal looping.
+> - SIMD extensions and how vector processors influenced their implementation of commercial processing.
+> - GPUs and how they take a different approach to SIMD architecture.
+
+### Data-Level Parallelism Problem Set
+
 </details>
