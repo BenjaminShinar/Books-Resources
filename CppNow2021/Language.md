@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Schödl Lakos Vittorio
+// cSpell:ignore Schödl Lakos Vittorio Ivica Bogosavljevic mmap strided Emde
 -->
 
 Language
@@ -633,5 +633,291 @@ but EBO (empty base optimization) doesn't play nice with 'final'.
 > - All features have good use cases and nasty pitfalls.
 
 the book will be out in the future, check [this page](https://vittorioromeo.info/emcpps.html)
+
+</details>
+
+## The Performance Price of Dynamic Memory in C++ - Ivica Bogosavljevic
+
+<details>
+<summary>
+The performance costs of using dynamic memory, in terms of allocating and deallocating memory from the system and in terms of accessing the memory and data locality. suggestions to improve our software desgin to make it cache aware.
+</summary>
+
+[The Performance Price of Dynamic Memory in C++](https://youtu.be/LC4jOs6z-ZI), [slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/Price-of-Dynamic-Memory-CNow2021.pdf)
+
+### Introduction
+
+two types of programs when it comes to memory allocations:
+
+- allocate all memory in few large blocks of memory, like how arrays, vector and matrices have continuous memory blocks. this is used in image, audio and video processing, where the algorithm requires large buffers.
+- allocate many blocks of data on demand during runtime. fast random access, pointer types.
+
+there is a performance cost to allocating and deallocting memory during runtime. malloc(new) and free(delete) can be the bottleneck, this will show up in the profiler. but this can also lead to increased cache misses, which require specialized tools to see this.
+
+### Performance of Memory Allocation
+
+the system allocator, not the same as the stl allocator. they allocate large memory to the program, and then give the application parts of the block when a _malloc_ is perfromed. allocation algorithm find the free chunk inside the block. the more allocations are done, the more time it takes to find a correct sized chunk of memory. so performance degrades over time.
+
+there are three possible reasons to why memory allocation and deallocation are slow:
+
+> - Your program is allocating and deallocating a lot of memory, especially small memory chunks.
+> - Memory fragmentation.
+> - Your program is using an inefficient implementation of malloc (new) and free (delete).
+
+if we can fix one of those, we can get better performance. there are some guidelines:
+
+The worst offenders are vector of pointers, they require lots of allocations/deallocations, and they have poor cache locality. an alternative is to use a separate vector per type (struct of arrays rather than array of struct approach), or use _std::variant_ instead of pointers , which will force locality and reduce memory fragmentation. both suggestions reduce the number of calls to the allocator.
+
+Another solution is to use the [STL allocator](https://en.cppreference.com/w/cpp/memory/allocator) for our data structures, each data structure gets it's own dedicated block of memory, so fragmentation is reduced.
+
+in this custom allocator example, we allocate the memory using mmap (so it's only POSIX compatible), which is deallocated in the destructor. the system memory allocation is done only when the allocator is created or destroyed, not for each time.
+
+```cpp
+template <typename _Tp>
+class zone_allocator
+{
+private:
+    _Tp* my_memory;
+    int free_block_index;
+    static constexpr int mem_size = 1000*1024*1024; //1GB?
+public:
+    zone_allocator()
+    {
+        my_memory = reinterpret_cast<_Tp*>(mmap(0, mem_size, PROT_READ|PROT_WRITE,
+        MAP_PRIVATE|MAP_ANONYMOUS, -1, 0));
+        free_block_index = 0;
+    }
+    ~zone_allocator()
+    {
+        munmap(my_memory, mem_size);
+    }
+    //...
+    pointer allocate(size_type __n, const void* = 0)
+    {
+        pointer result = &my_memory[free_block_index];
+        free_block_index += __n;
+        return result;
+    }
+    void deallocate(pointer __p, size_type __n)
+    {
+        // We deallocate everything when destroyed, not for each deallocation
+    }
+    //...
+};
+
+std::map<int, my_class, std::less<int>, zone_allocator<std::pair<const int, my_class>>>  some_map;
+```
+
+something similar is part of the standard since c++17 _std::pmr::polymorphic_allocator_.
+
+Another issue is allocating objects for communication:
+
+a common pattern is sending messages between threads as objects, the sends allocates the object and sends it, while the receiver thread reads and deallocates them.\
+Obviously, this causes a lot of allocations and deallocations, and additionally, system allocators don't play nice when they need do allocate memory in one thread and deallocate it in another.\
+a solution for this issue is to avoid releasing memory back to the allocator, and to cache it instead:
+
+```cpp
+T* memory = allocator.get_memory_chunk(); //uninitlazed memory chunk
+new (memory) T (args...); // in-place constructor
+//...
+memory->~T(); //destructor
+allocator.release_memory_chunk();
+```
+
+other solutions:
+
+- Preallocate all the needed memory upfront (like in embedded systems), if data structure has a limit, request that limit upfront.
+- Restart the program (when possible), don't forget to save the state!
+- Use _small buffer optimizations_ for small enough data structure, such as std::string.
+- Use special system allocators that promise low fragmentation.
+
+there are off-the-shelf allocators. we need to consider:
+
+- allocation speed
+- memory consumption
+- memory fragmentation
+- data locality
+
+we can get allocators other than the standard one, most of the big companies have an allocator they use (microsot, google, facebook). we can change allcators without recompiling by switching the environment variable.
+
+### Performance of Memory Access
+
+if we allocate and deallocate a lot of memory, we need to think about the layout of the memory, how is it stored in memory? We also need to consider how we access the memory itself, sequential access is better than random access in terms of speed.\
+the allocator operates under the abstraction of the underlying hardware, but if we break this abstraction and make it aware of the hardware, the allocator algorithm can give us better results. Memory speed is a bottleneck on modern systems. Waiting for memory fetch (load into register) is about 200-300 cycles of cpu. this is the _cache memory_ (located on the cpu) cost is much faster (3-15 cycles). also called _dataset_.
+
+stages of memory access:
+
+1. check if the data is already present in the cache memory.
+2. if so, load it into the registers, otherwise, fetch it from the main memory.
+3. when the data in the dataset isn't accessed for some time, the modified results are written back to the main memory and removed to make space for new data, this is called _eviction_.
+
+example with hash maps, the larger the data, the smaller the chance we use the same data again before it's evicted.
+
+There is a way to pre-fetch data, this is done if our program has a predictable access pattern (usually means iterating linearly over a vector of objects) then the cache memory preFetcher can figure that out an load the data from the memory before it's needed by the cpu. this means major improvements in speed.\
+the prefetcher works with sequential and strided memory access, but is powerless with random memory access.
+
+Cache memories are divided into _cache lines_ (usually 64 bytes), each line corresponds to a block of the same size in memory. Taking one byte from that memory means the whole line will be fetched. So access to other data on that line will also be fast.\
+We take advantage of this by organizing our data so that data that is close in usage is close together in layout. we also should use as much data that we can once we load a cache line.
+
+> "It is a sin to load data into the cache line and then not use it."
+
+this explains why the stride example is worse than sequential access, and why large strides are worse than small ones.
+
+- CPU always works with simple types: char, int, double, float, etc.
+- From the performance point of view, dependence between the memory
+  access pattern and the access speed looks like this:
+
+  - **Sequential access**: you are accessing neighboring simple types - best performance.
+    ```cpp
+    vector<int> a;
+    int sum = 0;
+    for (i = 0; i < a.size(); i++)
+    {
+        sum += a[i];
+    }
+    ```
+  - **Strided access**: you are accessing simple type in a vector of class instances - bad for performance, the bigger the class, the worse the performance.
+    ```cpp
+    vector<rectangle> a;
+    int sum = 0;
+    for (i = 0; i < a.size(); i++)
+    {
+       sum += a[i].visible; //each rectangle is located at a difference from one another, so we don't use all of our cacheline
+    }
+    ```
+  - **Random access**: you are randomly accessing objects in memory (std::set, std::map, std::list), or accessing an object through a pointer
+
+    ```cpp
+    set<rectangle> a;
+    int sum = 0;
+    for (auto& r: a) //set is not continuous in memory
+    {
+        sum += r.visible;
+    }
+
+    class car
+    {
+        driver* m_driver;
+    };
+
+    if (my_car.m_driver->experience() > 5) //access through pointer
+    {
+        //..
+    }
+    ```
+
+experimenting with class size and member layout:
+
+the two methods differ by how many members of the objects they access. when we change the class size (by increasing the padding) the performance becomes worse, but for a fixed class size of 248, changing the padding between the _m_visible_ and the points members effects the version that checks for visibility (calculate visible), but not the method which doesn't check for visibility.
+
+```cpp
+template <int pad1_size, int pad2_size>
+class rectangle
+{
+    bool isVisible();
+    int surface();
+private:
+    bool m_visible;
+    int m_padding1[pad1_size]; //padding, unused memory
+    point m_p1;
+    point m_p2;
+    int m_padding2[pad2_size]; //padding, unused memory
+};
+
+template <typename R>
+int calculate_surface_visible(std::vector<R>&rectangles)
+{
+    int sum = 0;
+    for (int i = 0; i < rectangles.size(); i++)
+    {
+        if (rectangles[i].is_visible())
+        {
+            sum += rectangles[i].surface();
+        }
+    }
+    return sum;
+}
+
+template <typename R>
+int calculate_surface(std::vector<R>&rectangles)
+{
+    int sum = 0;
+    for (int i = 0; i < rectangles.size(); i++)
+    {
+        sum += rectangles[i].surface();
+    }
+    return sum;
+}
+```
+
+### Principles of Cache-Aware Software
+
+this means that making data access predictable helps us.\
+Removing branches makes access predictable. We also get better performance with vectors of objects rather than vector of pointers, random access memory containers aren't as good for cache locality.
+Pointers are bad because of the dereferencing (to other heap allocated classes). instead of linked list we can use an array based alternative (colony, bucket array, gap-buffer).
+
+the optional layout of memory for array pointers is having the pointers point to object ordered in the same order, pointer1 to obj1, p2 to o2, etc... but this order isn't likely at all.
+
+#### arrays of values are better than arrays of pointers
+
+- All memory allocated in a single block.
+- Sequential access to objects translates into sequential access to memory addresses.
+- No calls to malloc/free.
+- No virtual dispatching.
+- Enables small function inlining because typ is known at compile time.
+- **Downside** - no polymorphism
+
+the whole block of 64 bytes is loaded into memory, we shouldn't let data into cache line go wasted. we would like classes to be small, we would prefer them separate from the large class in the vector.
+
+because of how memory is mapped, we should have members that are used together packed together.
+
+#### Paradigms
+
+> object oriented paradigm can be inefficient from the performance perspective.
+>
+> - Containers of pointers.
+> - Contianers of objects of different types.
+> - Large classes
+> - Classes that have member that point to other heap allocated classes.
+
+in game development, they use Entity-Component-System (ECS) paradigm.
+
+> - Get rid of large classes.
+> - Get rid of inheritance.
+>   - Instead of inheritance An entity consists of components.
+> - Components are processed independent of the entity they belong to.
+> - Entity can change its "type" at runtime.
+
+more principles of cache-aware software design.
+
+- If we need to use trees, we should prefer n-ary trees over binary trees, as they get better cache line effectiveness.
+- We should store pointers in a hash map, we should store the whole objects (to reduce cache misses).
+- Hash maps with **open addressing** perfrom better than separate chainning maps (all the data is stored in the table itself) in cases of collisions, but they have downsides when the load factor is high.
+
+#### Binary tree example
+
+how to optimally represent the tree in memory? there are three options for the layout:
+
+- Breadth First Search (BFS)
+- Depth First Search (DFS)
+- Random order
+
+the DFS is more efficient than the others, but the most efficient is called _Van Emde Boas layout_. which lays out nodes in triplets, the node and it's children together.
+
+we gain performance if we allocate a dedicated block of memory for the data structure (using a custom allocator). if we keep the block of memory as compact as possible, and if we take advantage of cache line organization by storing adjacent nodes in the tree in adjacent memory locations.\
+we can also play with the struct to get better performance, like decreasing the size of the struct or playing with the pointers data.\
+Modifying the tree hurts the memory layout, we can recreate the tree after some time to make it optimal again, we can perform defragmentaiton on it or keep the 'removed nodes' without deleting them in case they need to be reused.
+
+#### Hash map example
+
+elements are number (count) and pointer to array. we usually store zero, one or two elements, so it's better to optimize the struct to either contain the value itself (for one value, the common case) or the pointer to array (for the rare case of many values)
+
+don't let data that we will reuse get evicted from the cache.
+don't reiterate the same collection two times (finding min and max)
+
+### When Not to Optimize
+
+Most optimizations only make sense for large data sets. we can classify the sizes by how they fit into cache levels. the small size fits into L1 cache, about 16Kb - 32Kb in size. large datasets are those which are larger than the last layer (LL), which is usually a few megabytes.\
+Data structures with short life cycles don't benefit much from optimizations, as the creation costs of an optimal layout are usually larger than the savings for an object that won't be used in the future.
 
 </details>
