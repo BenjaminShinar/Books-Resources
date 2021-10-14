@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Gábor Horváth Andrzej Krzemieński cassert
+// cSpell:ignore Gábor Horváth Andrzej Krzemieński cassert Dargo invokable default_initializable Clonable
 -->
 
 ## Algorithms from a Compiler Developer's Toolbox - Gábor Horváth
@@ -643,5 +643,719 @@ why doesn't this happen in OOP? in objects the type says it implements some base
 
 we can add more test to ensure compile time correctness, and we can try to emulate OOP by forcing the used type to specify they confrom to us. we add a template parameter (false) and specialize for it (opt in for what we want). or we can do the inverse, and specialize to optout the non confroming types.
 the standard library has a similar trick wth _std::view_ and _std::range_
+
+</details>
+
+## The Concepts of Concepts - Sandor Dargo
+
+<details>
+<summary>
+More about concepts, constraints and combining them.
+</summary>
+
+[The Concepts of concepts](https://youtu.be/weJD_ZCr6S8), [slides-pptx](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/The-Concepts-of-Concepts-CNow.pptx)
+
+### Why Do We Need Concepts?
+
+part of the big four changes of c++20(concepts,ranges, coroutines, modules).
+
+concepts are extensions of templates, help us validate template arguments at compile time.
+
+overloads don't scale
+
+```cpp
+long double add(long double a, long double b)
+{
+    return a+b;
+}
+int add(int a, int b)
+{
+    return a+b;
+}
+```
+
+templates are better, but there are no constraints on them, and they might cause unexpected behavior.
+
+```cpp
+template <typename T>
+T add(T a,T,b)
+{
+    return a+b;
+}
+
+int main()
+{
+    add(42,66);
+    add(42.42L,66.6L);
+    add('a','b'); //is this ok for us?, characters
+}
+```
+
+we can use templates and forbid some specialization, which works, but we are back to the problem that it doesn't scale well.
+
+```cpp
+template <>
+std::string add(std::string, std::string) = delete;
+
+int main()
+{
+    add(std::string{"a"},std::string{"b"}); //deleted function
+}
+```
+
+type traits and asserts are one step up, with better (sometimes) error messages, all the code is in one place. the problem is that the assert statement becomes a code smell once we try to use it in many places.
+
+```cpp
+template<typename T>
+T add(T a, T b)
+{
+    static_assert(std::is_integral_v<T> || std::is_floating_point_v<T>,"add can be called only with numbers")
+    return a+b;
+}
+
+int main()
+{
+    add(std::string{"a"},std::string{"b"}); //assertion fails
+}
+```
+
+Concepts are a way to scale that idea up, we can express the earlier assertions as a 'type'.
+
+```cpp
+template <typename T>
+concept Number = std::integral<T> || std::floating_point<T>;
+
+template <Number T>
+auto add (T a,T b)
+{
+    return a+b;
+}
+
+int main()
+{
+    add(1,2);
+}
+```
+
+this makes templates more safe to use, generic programming becomes scalable, and we can put more of our domain knowledge into code
+
+### 4 Ways to Use Concepts With Functions
+
+for now, we will use the 'Number' concept from before.
+
+```cpp
+#include <concepts>
+template <typename T>
+concept Number = std::integral<T> || std::floating_point<T>;
+```
+
+#### Using the _requires_ clause
+
+> - _requires_ following the template parameter list.
+> - After _requires_ write your concept(s) to be satisfied.
+
+```cpp
+template <typename T>
+requires Number<T>
+auto add(T a, T b)
+{
+    return a+b;
+}
+```
+
+we can also write the constraints directly, without creating the concept.
+
+```cpp
+template <typename T>
+requires std::integral<T> || std::floating_point<T>
+auto add(T a, T b)
+{
+    return a+b;
+}
+```
+
+we constrain multiple template parameters type
+
+```cpp
+template <typename T,typename U>
+requires Number<T> && Number<U>
+auto add(T a, U b)
+{
+    return a+b;
+}
+```
+
+function calls are written as usual, but the error messages are better and mention which concept fail
+
+#### Trailing _requires_ clause
+
+the _requires_ comes after the parameters and the CV qualifiers. other than that, same as before, supports combinations and multiple parameter types.
+
+```cpp
+template <typename T>
+auto add(T a, T b)
+requires Number<T>
+{
+    return a+b;
+}
+```
+
+#### Constrained template parameter
+
+this is currently the suggested form by the guidelines.
+
+not writing _requires_ any more, the _typename_ is replaced by the concept. supports multiple parameters, but doesn't support combinations of concepts.
+
+```cpp
+template <Number T>
+auto add(T a, T b)
+{
+    return a+b;
+}
+```
+
+#### Abbreviated function templates
+
+no _requires_, no template parameter list. use _conceptName auto_ in the parameter list. parameter types can be implicitly different. no support for combinations.
+
+```cpp
+auto add(Number auto a, Number auto b)
+{
+    return a+b;
+}
+```
+
+we have to write both the concept and auto to make sure this is a concept and not a type which happens to have the same name...
+
+#### How to choose?
+
+| style                          | example                                                        | combinations | multiple types |
+| ------------------------------ | -------------------------------------------------------------- | ------------ | -------------- |
+| requires clause                | `template <typename T> requires Number<T> auto add(T a, T b) ` | possible     | possible       |
+| trailing clause                | `template <typename T> auto add(T a, T b) requires Number<T>`  | possible     | possible       |
+| constrained template parameter | `template <Number T> auto add(T a, T b)`                       | impossible   | possible       |
+| abbreviated function temples   | `auto add(Number auto a, Number auto b)`                       | impossible   | implicit       |
+
+If we have complex requirement that isn't expressed in a concept, we need to use _requires_.\
+For a simple constraints we should use the abbreviated function template.\
+If it's a simple constraint and we want to control the types, we can use the constrained template parameter style.
+
+they are all the same thing underneath (if we have multiple parameters)
+
+### Concepts with Classes
+
+For classes there are fewer styles available. Abbreviated function templates won't make sense, and trailing _requires_ clause only fit certain circumstances.
+
+#### The _requires clause_
+
+same as with functions, we can use concepts and complex expression combinations.
+
+```cpp
+template <typename T>
+requires Number<T>
+class WrappedNumber {
+public:
+    WrappedNumber(T num) : m_num(num){}
+private:
+    T m_num;
+};
+```
+
+#### Constrained template parameters
+
+replace the `typename` with the concept name. no extra constraints and complex expressions.
+
+```cpp
+template <Number T>
+class WrappedNumber {
+public:
+    WrappedNumber(T num) : m_num(num){}
+private:
+    T m_num;
+};
+```
+
+#### Trailing _requires_ clause
+
+class level templates with concepts on the functions. provide different 'overloads' for different parameter types. this is what we would do with _std::enable_if_.
+
+```cpp
+template <typename T>
+class MyNumber {
+public:
+    T divide(const T& divisor)
+    requires std::integral<T>
+    {
+        //...
+    }
+    T divide(const T& divisor)
+    requires std::floating_point<T>
+    {
+        //...
+    }
+};
+```
+
+### What is in the STL?
+
+there are about 50 or so concepts in the STL in 3 headers.
+
+#### \<concepts>
+
+> - Core language concepts (_same_as_, _integral_, _constructible_from_,...)
+> - Comparison concepts (_totally_ordered_,...)
+> - Object concepts (_copyable_, _regular_,...)
+> - Callable concepts (_invokable_, _predicate_,..)
+
+concepts are also combined together to create more complex concepts.
+
+_std::constructible_from_ uses _destructible_ concept and _std::is_constructable_v_ and from the type traits.
+
+> ```cpp
+> template < class T, class... Args >
+> concept constructible_from =
+>   std::destructible<T> && std::is_constructible_v<T, Args...>
+> ```
+
+_std::default_initializable_ uses the _constructible_from_ concept and combines it with expressions that dictate it has a parameterless constructor and can be constructed on the heap with the default allocator.
+
+> ```cpp
+> template<class T>
+> concept default_initializable =
+>   std::constructible_from<T> &&
+>    requires { T{}; } &&
+>    requires { ::new (static_cast<void*>(nullptr)) T; };
+> ```
+
+#### \<iterator>
+
+> - Iterator concepts (_incrementable_, _input_iterator_,...)
+> - Indirect callable concepts (_indirectly_unary_invocable_,...)
+> - Common algorithm requirements (_mergeable_, _sortable_,...)
+
+the _std::output_iterator_ concept build on the input/output iterator concept and requires it to be writeable and others.
+
+_std::indirect_unary_predicate\<F,I>_ combines iterator concepts and predicate concepts.
+
+#### \<ranges>
+
+concepts from ranges (not in the lecture)
+
+> - ranges::range
+> - ranges::borrowed_range
+> - ranges::sized_range
+> - ranges::view
+> - ranges::input_range
+> - ranges::output_range
+> - ranges::forward_range
+> - ranges::bidirectional_range
+> - ranges::random_access_range
+> - ranges::contiguous_range
+> - ranges::common_range
+> - ranges::viewable_range
+
+### How to Write Concepts?
+
+to write a concepts we first list all the template parameters, then the word concept and the concept name, and finally all the requirements.
+
+the simplest concept looks like this, with the name 'Any'.
+
+```cpp
+template <typename T>
+concept Any = true;
+```
+
+we already had the Number concept, we used predefined concepts and combined them together.
+
+#### What does combining concept mean?
+
+we can use conjunctions (_and &&_) and disjunctions (_or ||_).\
+
+> - concepts
+> - bool literals
+> - bool expressions
+> - type traits (_::value_, _\_v_)
+> - _requires_ expressions
+
+**We should be careful with the negation operator (_not ,!_)**
+
+the negation means diffrent things: \
+for **boolean expressions**, a negation means that the all subexpressions are well-formed, compile, but return _false_.\
+
+for **concepts**, a subexpression can be ill-formed, might return false, and the rest can be still satisfied
+
+example:
+
+> - It doesn’t have to be compilable.
+> - It can return false.
+> - Expecting false is possible With a cast to bool or with a more explicit way.
+
+```cpp
+template <typename T, typename U>
+requires
+    std::unsigned_integral<typename T::Blah> ||
+    std::unsigned_integral<typename U::Blah>
+void foo(T bar, U baz) { /*...*/ }
+class MyType
+{
+public:
+    using Blah = unsigned int;
+// ...
+};
+```
+
+if just one type (T or U) has 'blah' that is an unsigned integer, it's fine. even if the other doesn't even have 'blah', this should not compile, but the concept is ok.
+
+if we want both of them to have the nested type, and one of those types should be unsigned integer, we can write it differently
+
+if we cast it to a boolen expression, it must be a well formed expression, so it won't compile if one of them doesn't have the nested type.
+
+```cpp
+template <typename T, typename U>
+requires (bool(
+    std::unsigned_integral<typename T::Blah> ||
+    std::unsigned_integral<typename U::Blah>))
+void foo(T bar, U baz)
+{
+/*...*/
+}
+```
+
+the other option is a nested require expression. we first require both of them to exists and then require that one of them to be an unsigned integer. this is more verbose, and doesn't require understanding the small prints of boolean expressions as opposed to concepts, but it also seems messy
+
+```cpp
+template <typename T, typename U>
+requires (
+    //one constraint
+    requires {typename T::Blah;} &&
+    requires {typename U::Blah;})
+    &&
+    (
+    // second constraint
+    std::unsigned_integral< typename T::Blah> ||
+    std::unsigned_integral<typename U::Blah>)
+void foo(T bar, U baz)
+{
+/*...*/
+}
+```
+
+#### How to find the most constrained constraint
+
+the most constrained one will be chosen, based on the call
+
+```cpp
+template <typename Key>
+class Ignition
+{
+public:
+    void Start(Key key)
+    requires(!Smart<Key>)
+    {
+        //... no concept
+    }
+    void Start(Key key)
+    requires Smart<Key>
+    {
+        //... concept
+    }
+};
+```
+
+this is a bad design, we should have one overload with constrains and the other without.
+
+```cpp
+template <typename Key>
+class Ignition
+{
+public:
+    void Start(Key key)
+    {
+        //... no concept,
+    }
+    void Start(Key key)
+    requires Smart<Key>
+    {
+        //... concept, the most constrained.
+    }
+};
+```
+
+if we had more overloads, the most constrained one will be chosen in compile time. this is called 'concepts subsumption'.
+
+```cpp
+template <typename Key>
+class Ignition
+{
+public:
+    void Start(Key key)
+    {
+        //... no concept,
+    }
+    void Start(Key key)
+    requires Smart<Key>
+    {
+        //... concept
+    }
+    void Start(Key key)
+    requires Smart<Key> && Personal<Key>
+    {
+        //... concept, most constrained
+    }
+};
+```
+
+in this case, negation brings ambiguity into the picture. the negation must use parentheses, and relies on source location of each constraints. the negation creates a new 'temporary concept', so if the overloads use the same syntax of negation, it's still parsed as two different concepts, and we can't choose either.
+
+```cpp
+template <typename Key>
+class Ignition
+{
+public:
+    void Start(Key key)
+    {}
+    void Start(Key key)
+    requires (!Smart<Key>)
+    {}
+    void Start(Key key)
+    requires (!Smart<Key>) && Personal<Key>
+    {}
+};
+```
+
+instead, we should have a named negative concept, even though the core guidelines caution against unnecessary named concepts.
+
+```cpp
+template <typename Key>
+class Ignition
+{
+public:
+    void Start(Key key)
+    {}
+    void Start(Key key)
+    requires NotSmart<Key>
+    {}
+    void Start(Key key)
+    requires NotSmart<Key> && Personal<Key>
+    {}
+};
+```
+
+#### So how to write?
+
+when we write concepts we should list all the variables used in the requirement and their operations and function calls
+
+```cpp
+#include <concepts>
+
+template <typename T>
+concept Addable =
+requires (T a, T b)
+{
+    a+b;
+};
+
+template <typename T>
+concept HasSquare =
+requires (T t)
+{
+    t.square(); //type T must have a function called square
+};
+
+template <typename T>
+concept HasPower =
+requires (T t, int exponenet)
+{
+    t.power(exponenet); //type T must have a function called power that can take an integer
+};
+```
+
+if we want to define the return type, we can use _compound requirements_ with _std::convertable_to\<T>_ and _std::same_as\<T>_.\
+We should pay attention to the **curly braces**.\
+no bare types for future generalizations.
+
+```cpp
+template <typename T>
+concept HasSquare =
+requires (T t)
+{
+    {t.square()} -> std::convertable_to<int>;
+};
+```
+
+we can also have 'Type requirements', such as:
+
+> - A certain nested type exists.
+
+```cpp
+template<typename T>
+concept TypeRequirement =
+requires
+{
+    typename T::value_type;
+};
+
+int main()
+{
+    TypeRequirement auto myVec =  std::vector<int>{1, 2, 3};  // has value_type
+    TypeRequirement auto myInt {3}; //error, deduced type int doesn't satisfy constraint
+}
+```
+
+> - A class tempate specialization names a type.
+
+the type can be used as type template parameter for a different type
+
+```cpp
+template <typename T>
+requires (!std::same_as<T, std::vector<int>>)
+struct Other {};
+
+template<typename T>
+concept TypeRequirement = requires
+{
+    typename Other<T>;
+};
+
+int main()
+{
+    TypeRequirement auto myVec =  std::vector<char>{'a', 'b', 'c'}; //works, Other can take vector<char>
+    TypeRequirement auto myVec2 = std::vector<int>{1, 2, 3}; // error, Other can't be used with vector<int>
+}
+
+```
+
+> - An alias template specialization names a type.
+
+```cpp
+template<typename T>
+using Reference = T&;
+
+template<typename T>
+concept TypeRequirement = requires
+{
+  typename Reference<T>;
+};
+```
+
+concepts can be nested, we can have new constains without new named constraints
+
+```cpp
+template<typename C>
+concept Car = requires (C car)
+{
+    car.startEngine();
+};
+
+template<typename C>
+concept Convertible = Car<C> && requires (C car)
+{
+    car.openRoof();
+};
+
+template<typename C>
+concept Coupe = Car<C> && requires (C car)
+{
+    requires !Convertible<C>; //must be a car, but not must be convertable,
+};
+```
+
+the better way is to do this, the parentheses and negation rules apply for _requires_ clauses.
+
+```cpp
+template <typename C>
+concept Coupe = Car<C> && !Convertible<C>;
+```
+
+clones example:
+
+```cpp
+
+struct Droid {
+    Droid clone(){return Droid{};}
+};
+
+struct DroidV2 {
+    Droid clone(){return Droid{};} //oops! we made a copy and paste error!
+};
+template <typename C>
+concept Clonable = requires (C cloneable)
+{
+    cloneable.clone(); // has function clone
+    requires std::same_as<C,std::decaltype(<cloneable.clone())>>; //return type of clone must be the same as the calling object
+}
+
+int main()
+{
+    Clonable auto c1 =Droid{}; //fine
+    Clonable auto c2 =DroidV2{}; //error! DroidV2.clone() doesn't satisfy the cloneable requirement!
+}
+```
+
+and the easier syntax is
+
+```cpp
+template <typename C>
+concept Clonable = requires (C cloneable)
+{
+    {cloneable.clone()} ->std::same_as<C>; // has function clone that returns the same type
+}
+```
+
+we can use nested requirement to simulate boolean expressions, like we saw above. we should consider readability.
+
+### Real-life Examples
+
+some integral types are not numbers, such as bool and char, so we add this to our concept.
+
+```cpp
+template <typename T>
+concept Number = (std::integral<T> || std::floating_point<T>)
+&& !std::same_as<T,bool>
+&& !std::same_as<T,char>
+&& !std::same_as<T,unsigned char>
+&& !std::same_as<T,char8_t>
+&& !std::same_as<T,char16_t>
+&& !std::same_as<T,char32_t>
+&& !std::same_as<T,wchar_t>;
+
+auto add(Number a,Number b)
+{
+    return a+b
+}
+```
+
+we can turn utility template functions (sometimes without documentation, and with bad naming conventions) into self documenting code. we go into the template implementations and extract a concept outside and use it as a type. now the functions is constrained, explains the constraint and all the information is combined. we put the domain knowledge into the code.\
+We make bad code better, its now more maintainable and easier to understand. even if it's not bad code, it's better code.
+
+if we don't want a named concept, we can have '_requires requires_' to get us able to use parameters in an unnamed context.
+
+```cpp
+template <typename BOWithEncodeableStuff_t>
+requires requires (BOWithEncodeableStuff_t bo) //get the ability to use the parameter Type
+{
+  bo.interfaceA();
+  bo.interfaceB();
+  { bo.interfaceC() } -> std::same_as<int>;
+}
+
+void encodeSomeStuff(BOWithEncodeableStuff_t iBusinessObject)
+{ /*...*/ }
+```
+
+### Conclusion
+
+> TakeAways:
+>
+> - Concepts help validate template arguments at compile-time.
+> - Concepts provide a reusable and scalable way to constrain templates.
+> - The standard library gives dozens of generic concepts.
+> - There are plenty of ways to define our concepts.
+>
+> How to Start:
+>
+> - Start using concepts as soon as you switch to C++20.
+> - Use them for your applications.
+> - No more naked Ts and typenames.
 
 </details>
