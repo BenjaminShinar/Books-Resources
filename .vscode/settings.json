@@ -18,6 +18,7 @@
     "nulltpr",
     "ostream",
     "precompile",
+    "printf",
     "rvalues",
     "struct",
     "t",

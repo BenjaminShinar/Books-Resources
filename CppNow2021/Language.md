@@ -1,6 +1,8 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Schödl Lakos Vittorio Ivica Bogosavljevic mmap strided Emde
+// cSpell:ignore Schödl Lakos Vittorio Ivica Bogosavljevic mmap strided Emde Dwyer \ prvalue
+
+
 -->
 
 Language
@@ -919,5 +921,283 @@ don't reiterate the same collection two times (finding min and max)
 
 Most optimizations only make sense for large data sets. we can classify the sizes by how they fit into cache levels. the small size fits into L1 cache, about 16Kb - 32Kb in size. large datasets are those which are larger than the last layer (LL), which is usually a few megabytes.\
 Data structures with short life cycles don't benefit much from optimizations, as the creation costs of an optimal layout are usually larger than the savings for an object that won't be used in the future.
+
+</details>
+
+## The Complete Guide to 'return x;' - Arthur O'Dwyer
+
+<details>
+<summary>
+optimizations for returning values - getting moves rather than copies and dropping those calls alltogether. there are still probelms to solve!
+</summary>
+
+[The Complete Guide to `return x;`](https://youtu.be/OGKAJD7bmr8),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/2021-05-04_-The-Complete-Guide-to-return-x-1.pdf)
+
+### The "return slot", **NRVO**, C++17 **"deferred materialization"**
+
+in x86 machines, the return value usually goes to the %eax register.
+
+copy semantics, depending on size, if the return type size is too large, the caller should also pass an empty space (return slot).
+
+```cpp
+struct S {int m[3]}; //too large to copy in register
+
+S f()
+{
+    S i = S {{1,2,3}};
+    printf("%p\n",&i);
+    return i;
+}
+
+S test()
+{
+    S j =f();
+    printf("%p\n",&j);
+    return j;
+}
+```
+
+the test can allocate the local variable j on the return slot, the optimization is transparent and invisible.\
+C++98 even had special cases where we could do this "copy ellision" on types with user created explicit constructors.\
+In c++14 f() was "eagerly evaluated" into a temporary object and then moved/copied.\
+In c++17, this was expanded into "deferred prvalue materialization", a result object.
+
+function f controls the allocation of element i, so f can allocate the struct immediately inside the return slot.
+
+NRVO - named return value optimization.
+
+conditions to NRVO of variable _i_ from function _f_.
+
+> - There must be a return slot. Trivial types can just be returned in registers, But types with non-trivial SMFs (special member function) will always be returned via return slot.
+> - The allocation of “return variable” _i_ must be under _f_’s control, Otherwise _f_ can’t allocate _i_ into the return slot!
+> - _i_ must have the exact same type (modulo cv-qualification) as _f_’s return slot, Otherwise _i_ won’t fit into the return slot!
+> - One mental — not physical — caveat: The return’s operand must be exactly
+>   (possibly parenthesized) id-expression, such as _i_. Nothing more complicated. Otherwise things could get very confusing for the human programmer!
+
+examples of cases where NRVO doesn't happen
+
+```cpp
+struct Trivial { int m; };
+struct S { S(); ~S(); };
+struct D : public S { int n; };
+Trivial f() { Trivial x; return x; } // no return slot. trivial type. fits in a register.
+S x;
+S g1() { return x; } // g doesn’t control allocation of x
+S g2() { static S x; return x; } // same deal
+S g3(S x) { return x; } // same deal (params are caller-allocated!)
+S h() { D x; return x; } // D is too big for the return slot
+```
+
+in c++11 we added move semantics to the mix, this doesn't play well with NRVVO.
+
+```cpp
+template <typename T>
+unique_ptr<T> f() {
+ unique_ptr<T> x =T(1,2,3); //... assume this works
+ return x;
+}
+```
+
+x is an lvalue, not an rvalue, _std::unique_ptr_ is a move only type, we can't construct it from an lvalue, only an rvalue. if we wrote _std::move(x)_, then our NRVO won't work, because it only works on simple _return x_ statements!
+
+the text it self is:
+
+> \[...] overload resolution to select the constructor for the copy is first performed as if the object were designated by an rvalue. If overload resolution fails, or if the type of the first parameter of the selected constructor is not an rvalue reference to the object’s type (possibly cv-qualified), overload resolution is performed again, considering the object as an lvalue...
+
+### C++11 Implicit Move
+
+in c++11, the solution is implicit move, we have an overload resultion, if we see a valid move constructor, we use it,even if it's an lvalue. if this is an well formed expression, this will still work with RNVO. if overload resultion fails, then regular rules apply.
+
+"first try as if it was an rvalue"
+
+(example with the deprecated _std::auto_ptr_)
+
+> \[...] overload resolution to select the constructor for the copy is first performed as if the object were designated by an rvalue. **If overload resolution fails, or if the type of the first parameter of the selected constructor is not an rvalue reference** to the object’s type (possibly cv-qualified), overload resolution is performed again, considering the object as an lvalue...
+
+after c++11 was released, it was modified to allow implicit moves even to cases where _copy elision_ wasn't considered. such as when trying to return a move only function parameter, or when the return type isn't the same, but an move constructor exists.
+
+```cpp
+unique_ptr<Base> g3(unique_ptr<Base> x) {
+ return x; // OK, implicit move! return a move only parameter
+}
+unique_ptr<Base> h2() {
+ unique_ptr<Derived> x = Derived();
+ return x; // OK, implicit move! there is a well defined move constructor
+}
+```
+
+### Problems in C++11, Solutions in C++20
+
+things didn't change that much in c++14 and c++17. but there were still problematic cases.
+
+this example is well formed, the return type is constructed with the copy constructor `(Const base &)`, but we would prefer it to use the move constructor `(Base &&)`.
+
+```cpp
+Base h3() {
+ Derived x = Derived();
+ return x; // Ugh, copy! slicing!
+}
+```
+
+this is because the standard require the move constructor to take the object type, rather than something that can be considered as such.
+
+> \[...] overload resolution to select the constructor for the copy is first performed as if the object were designated by an rvalue. If overload resolution fails, or if the type of the first parameter of the selected **constructor** is not an rvalue reference **to the object’s type (possibly cv-qualified)**, overload resolution is performed again, considering the object as an lvalue...
+
+other examples of failing to call implicit move.
+
+```cpp
+struct Source {
+    Source(Source&&);
+    Source(const Source&);
+    };
+struct Sink {
+    Sink(Source);
+    Sink(unique_ptr<int>);
+    };
+
+Sink f() { Source x; return x; } // C++17 calls Source(const Source&), then Sink(Source)
+Sink g() { unique_ptr<int> p; return p; } // C++17: ill-formed, not a moveable type
+```
+
+we don't want to write _std::move_, as it hampers optimizations.
+
+we also fail to move when we have a conversion operator and not a constructor. we don't consider them as part of the overload resultion.
+
+```cpp
+struct To {};
+struct From {
+    operator To() &&;
+    operator To() const&;
+    };
+
+To f()
+{
+   From x;
+   return x; // C++17 calls From::operator To() const&
+}
+```
+
+because of those, the c++20 standard was expanded to include "More implicit move".
+
+> \[...] overload resolution to select the constructor for the copy is first performed as if the object were designated by an rvalue. If overload resolution fails, ~~or if the type of the first parameter of the selected constructor is not an rvalue reference to the object’s type (possibly cv-qualified),~~ overload resolution is performed again, considering the object as an lvalue...
+
+and now things can work better, overload resolution is expanded. this helped with other cases like throw and co_return (coroutine), and function parameters.
+
+actually, even before c++20 changed the standard, compiler vendors had optimizations for implicit move, which were more efficient. even if not 'up to standard'. updating the standard closed the gap between formal specification and performance.
+
+c++20 had other big changes, paper P0527 "Implicitly move from rvalue references in return statement" expanded the possibilities of implicit moving, allowing for returnning named entities (lvalues) as implicit moves.
+
+"perfect backwarding", maintain the exact type. allow for more moves and less copying. things aren't perfect yet. returning decaltype(auto) required a _std::move_, the wording didn't allow for implicit move of returnning references.
+
+so function that returns an object can be implicitly moved constructed from a rvalue (universal?) reference, but we couldn't properly implicitly return that reference.
+
+```cpp
+MoveOnly one(MoveOnly&& rr)
+{
+ return rr; // OK, move-constructs from rr (in C++20)
+}
+MoveOnly&& two(MoveOnly&& rr)
+{
+ return rr; // ill-formed, rr is an lvalue
+}
+```
+
+we can add _std::forward_, but it will stop NRVO from happenning.
+
+### The _reference_wrapper_ Saga, Pretty Tables of Vendor Divergence
+
+the reference wrapper from c++98. this code compiles but creates a dangaling reference to a garbage memory.
+
+```cpp
+reference_wrapper<int> f() {
+    int x = 42;
+    return x;
+}
+template<class T>
+struct reference_wrapper {
+reference_wrapper(T&);
+reference_wrapper(T&&) = delete; //c++11
+};
+```
+
+in c++11 the rules for implicit moves were introduced, so the candidate of the move constructor was found, but it was also deleted, which made the entire thing ill-formed (which was good). but in some context we want to ignore the deleted functions in overload resolutions.
+
+this was mended by introducting a SFINAE test rather than deleting the overload, which is still the current situation.
+
+the question still remains, what does matching a deleted function mean in this context. how is ambiguity in overload resolution considered?
+
+```cpp
+struct RefWrap { RefWrap(T&); RefWrap(T&&) = delete; };
+
+RefWrap f() { T x; return x; } // ill-formed since CWG1579 (C++11)
+
+struct Left {};
+struct Right {};
+struct Both: Left, Right {};
+struct Ambiguous {
+    Ambiguous(Left&&);
+    Ambiguous(Right&&);
+    Ambiguous(Both&);
+};
+
+Ambiguous f() { Both x; return x; } // ill-formed since P1155 (C++20)
+```
+
+the implicit move rules only apply for objects, not references, not pointers, etc..
+vendors still have differences between them and the standard.
+
+### Quick Sidebar on Coroutines and Related Topics
+
+c++20 expanded implicit moves to handle co-routines returns, but the wording doesn't necessarily limit the return type to be objects, so technically, behavior is different again.
+
+co_yield also might seem to require moves, but it doesn't.
+
+```cpp
+template<class T>
+struct generator {
+    struct promise_type {
+        std::suspend_always yield_value(const T&);
+        std::suspend_always yield_value(T&&);
+    };
+};
+
+generator<std::string> g() {
+    for (int i=0; i < 100; ++i)
+    {
+        std::string x = std::to_string(i);
+        co_yield x; // Hmm... Couldn’t we move-from x here?
+    }
+}
+
+```
+
+this doesn't work, because the frame of the coroutine doesn't go away, we might want to use the value again after we 'yielded' it.
+
+returning a member variable is like that, we shouldn't move it from return statement in member functions, lambdas are also like that, if we can't control the lifetime/allocation of a variable, we can't move from them. we would have to explicitly move with stdmove.
+
+strutted bindings are also not playing well with implicit moves, and nor are references.
+
+### P2266 proposed for C++23
+
+this is all confusing, here is what arthur suggest - paper P2266 "Simpler Implicit move".
+
+remove the fallbacks that were created to allow using auto_ptr- like types, find a unifrom definition, do one overload resolution.
+
+might break compatibility with auto_ptr, might change some bad code and allow other bad code.
+
+some stuff with decaltype(auto)
+
+**P2266 and decltype(expr):**
+
+| Return type                                     | C++14,17, 20     | P2266(C++23)    |
+| ----------------------------------------------- | ---------------- | --------------- |
+| auto a(T x) -> decltype(x) { return x; }        | T                | T               |
+| auto b(T x) -> decltype((x)) { return (x); }    | T&               | T& (ill-formed) |
+| auto c(T x) -> decltype(auto) { return x; }     | T                | T               |
+| auto d(T x) -> decltype(auto) { return (x); }   | T&               | T&&             |
+| auto e(T&& x) -> decltype(x) { return x; }      | T&& (ill-formed) | T&&             |
+| auto f(T&& x) -> decltype((x)) { return (x); }  | T&               | T& (ill-formed) |
+| auto g(T&& x) -> decltype(auto) { return x; }   | T&& (ill-formed) | T&&             |
+| auto h(T&& x) -> decltype(auto) { return (x); } | T&               | T&&             |
 
 </details>
