@@ -790,3 +790,16 @@ AVR architecture processor? \
 looking at object assembly code.
 
 </details>
+
+## C++ Weekly - Ep 294 - Hello Commander X16
+
+<details>
+<summary>
+Video controller addressing
+</summary>
+
+[Hello Commander X16](https://youtu.be/JVoBZA2u2eM)
+
+commander 16 is a modern retro computer design. getting the RPG project running on the new system. getting the video correctly, difference between x560 in how the addressing works
+
+</details>
