@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg
+// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg pscii
  -->
 
 # C++ Weekly takeaways

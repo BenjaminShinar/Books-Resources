@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore O'Dwyer Theophil conio Revzin swappable ssize Niebloids Hollman Niebler Sutter
+// cSpell:ignore O'Dwyer Theophil conio Revzin swappable ssize Niebloids Hollman Niebler Sutter Clow libstdc
 -->
 
 Interfaces
@@ -899,8 +899,197 @@ example of semantic sugars to attach semantics to lambdas.
 
 </details>
 
+## What is an ABI and Why is Breaking it a Problem? - Marshall Clow
+
+<details>
+<summary>
+What are ABI changes, and what would happen if we break the ABI?
+</summary>
+
+[What is an ABI and Why is Breaking it a Problem?](https://youtu.be/-XjUiLgJE2Y), [slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/Slides.pdf)
+
+in 2020, there was a formal request to the standard committee to commit to breaking ABI in the future, people wanted to know that the committee was ready to do so if needed and in order to improve the language. the committee didn't fully respond.
+
+ABI[^2] - application binary interface.
+
+changes to the standard library that would entail an ABI break.
+
+> the ABI includes stuff such as:
+>
+> - Structure layout.
+> - Vtable layout.
+> - Parameter passing convetions.
+> - Name mangling.
+> - Exception handling methods.
+>
+> But also - Library changes, which are different from compiler changes.
+
+### The One Defintion Rule (ODR)
+
+> "If there is more than one (non-identical) defintion of an entity visible in a program than the behavior of the program is undefined"
+
+the actual term for the standard is "Ill-formed, no diagnostic required" (IF-NDR[^3]). this means that the toolchain is allowed to produce a program that the can do anything, and doesn't have to tell you that it has done so.
+
+examples of ODR violations:
+
+> 1. Two diffrent defintions.
+> 2. Change the layout of the struct.
+> 3. Add a virtual method.
+> 4. More subtle things.
+
+in this example, code with header1.h belives that Foo's size is 8 and b is at offset 4, and code with header2.h believes the size is 12 with b at offset 8. if we go around passing objects, the defintions are different and things will go bad.
+cpp isn't python, we use offset to determine members, not member names.
+
+when this effects class inheritance or composotion, it is called "**the fragile base class problem**", if we change the base, everything must be re-built.
+
+```cpp
+//header1.h
+struct Foo
+{
+    int32_t a;
+    int32_t b;
+};
+
+//header2.h
+struct Foo
+{
+    int32_t a;
+    int32_t added;
+    int32_t b;
+};
+```
+
+adding a virtual method is the same is changing the layout of the vtable.
+
+> Variations on a theme:
+>
+> 1. Removing a member.
+> 2. Reordering members.
+> 3. #pragma pack.
+
+removing a problem is the same as adding, reordering changes the offset, changing the #pragma pack can both change the size and the offsets.
+
+```cpp
+//header 1.h
+struct Bar{
+    virtual int One(int);
+    virtual ~Bar();
+};
+
+//header 2.h
+struct Bar{
+    virtual int One(int);
+    virtual double Two(std::string);
+    virtual ~Bar();
+};
+```
+
+the vtable is a static struct with function pointers, we can't say how the members are ordered, it is up to the implementation of the compiler, it can be in lexical order or the order of declaration.
+
+in this example we have a pair with two members and a copy constructor with memberwise copy. the other pair uses default copy constructor. but with trivially copyable pairs, we can get better performance specialization.
+
+```cpp
+//header 1.h
+template<Typename T1, typename T2>
+struct pair {
+    T1 first;
+    T2 second;
+    //...
+    pair(const pair &p): first(p.first),second(p.second) //copy constructor
+    {}
+};
+
+//header 2.h
+template<Typename T1, typename T2>
+struct pair {
+    T1 first;
+    T2 second;
+    //...
+    pair(const pair &p)=default
+};
+```
+
+> on some platforms, parameters of trivially-copyable types which can fit into a register are passed in a register instead of on the stack.
+
+if one piece of code expects the data to be on the stack and the other puts it on the register, this is a serious debugging challenge. this will be solved with a full re-compile of the code.
+
+users can re-compile all of their code to make it fit the new defintions, but this can't work with the standard library. this was an actual problem that required the committee to do some special trickery to ensure this issue won't happen.
+
+| issue                    | header1.h | header2.h        |
+| ------------------------ | --------- | ---------------- |
+| size of Foo              | 8         | 12               |
+| offset of Foo.b          | 4         | 8                |
+| Bar vtable size          | $2*8=16$  | $3 * 8 = 24$     |
+| trivially copyable pairs | no        | yes (supposedly) |
+
+so if IF-NDR[^3] is so scary, why can't the compiler diagnose this?
+
+three cases to consider
+
+> - Two different defintions in the same translation unit.
+> - Two different defintions in different translation units, statically linked.
+> - Two different defintions in different translation units, dynamically linked.
+
+the first case is covered, we get a warning from the compiler. the second case is theoretically possible to diagnose, if we make object files bigger and the linker does more work. the third case doesn't involve the toolchain, it's getting done by the program loader, it happens after the compiler and the linker did the work, the objects might have been compiled by different compilers at different times. the chain of dynamic linking can include many object files.
+
+### From ODR to ABI Break
+
+> - "ODR violation between the environment in which the program was built and the environment in which it is run."
+> - "An ABI break is just an ODR violation in time."
+>
+> we can also consider two different versions of the same file as two files. say we install a new version of a shared library with an updated header file, we have program A that uses this library, but we don't recompile it. when we run A, it will load the updated shared library, but will use it as if it was the old version.
+
+but what can we do with this?
+
+> - Don't change things that effect ABI.
+> - Don't have 'stale binaries'.
+> - Have only one defintion for everything.
+
+we don't always know that something is an ABI change. avoiding stale binaries mean building everything, everytime, from scratch, which is not only time consuming, but what about external libraries which we don't have the source code for?
+
+### Examples of ABI Breaks Happenning in the Past
+
+in c++17, _emplace_back_ was changed to return a reference to the newly created emplaced object (rather than void), this didn't cause problems for existing code. (the return type is not part of the mangling).
+
+for c++11, _libstdc++_ changed the layout and behavior of _std::basic_string_ . the old string class implemented '_copy-on-write_' semantics, while the new one did not. this change was mitigated by providing a flag that retained the old behavior \_GLIBCXX\*USE_CXX11_ABI\*. so it was more of transition than a break, but it was still a big pain in the ass, which occasionally pops up in these days. there are actually two basic_strings implementations still lurking around, and each vendoer chooses which layout to use.
+
+in c++20, there was rejected proposal for a 'half float' type (16 bit, like short), which would play very well with GPUs. it was rejected (in part) because that would involve adding virtual functions on the iostream to support _num_put_ and _num_get_, which would break code using iostream. (there were also other reasons).
+
+### And Back Into Politics
+
+the standard doesn't say anything about ABI, compatability, versions, and so on. in the past, ABI breaks were stopped by implementors, they would warn about this or speak up about changes. they don't want the flack from users, and they are the ones who interact with users.
+
+[P2028: What is ABI, and What Should WG21 Do about it?](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2028r0.pdf) - the paper by Titus which called for ABI changes (breaks). this would improve performance, but the suggestion generated a lot of discussion (which this talk is part of).
+
+These changes would have to be detectable, we can't have wide-spread ABI changes running around.
+
+One suggestion would be to change name mangaling scheme and prevent linkage of new files with old files. effectively breaking the c++ language in half. new programs could only interact with new object files.
+
+Another suggestion is to have 'fat binaries', which contain defintions for both the old versions and the new versions, and then stuff would be determined at run time / linkage. the problem is that until the program is run, we don't know what is used (which shared library, plugin's, executables, etc...), and by that time, information has already been stripped away and it's impossible to tell which version/vendor was responsible for them.
+
+for users:
+
+> - If you have source to every bit of software that you use, and are willing to rebuild it, then this is not a problem for you.
+> - If you never use any third-party software, then this is not a problem for you - your OS vendor will resolve any issues.
+> - Otherwise, if you have binaries that use C++ internally, then this would affect you.
+
+a case from a photoshop user, a story of how ABI breaks would effect it. the user has 3rd party-plugins (shared libraries), which assuming an ABI change, all break on update (in the best case, we know that the problem is the abi change). some plug-in creators will have the update, some will charge for it, some will take short time, some long time, and some will never update. most users will avoid the update to keep their current plug-ins operational.
+
+### Summary
+
+> - There’s a real problem here.
+> - Historically, the committee has prized stability.
+> - ”We” would like a solution that will allow us to make changes.
+> - We do not have such a solution today.
+
+We assume stability and backward compatibility, this was historically prized in c++. but we don't stability to mean stagnation, if changes can be made to make stuff better, we want those changes to happen. can we make them happen? what about closed-source software - how can users be protected? and if we change the ABI, how do we make this safe to change more than once?
+
+</details>
+
 ##
 
 <!-- footnotes -->
 
 [^1]: Substuition-Failure-is-not-an-Error
+[^2]: Application-Binary-Interface
+[^3]: Ill-Formed,No-Diagnostic-Required
