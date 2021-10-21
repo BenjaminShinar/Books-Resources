@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore ostringstream ptrdiff_t Filipp Downey Inlines fmodules Andrzej Krzemieński nodiscard Richárd Szalay Levehnstein
+// cSpell:ignore ostringstream ptrdiff_t Filipp Downey Inlines fmodules Andrzej Krzemieński nodiscard Richárd Szalay Levehnstein Loew varargs Dimov arity Alloc cvref deducer
  -->
 
 Type Design
@@ -2552,5 +2552,623 @@ when we get those warnings, we find that we might have some strong types waiting
 > - Built-in types are bad, implicit conversions are dangerous.
 > - Help users not to make mistakes, before the fact.
 > - Use tools to find the low hanging fruits.
+
+</details>
+
+## hop: A Language to Design Function-Overload-Sets - Tobias Loew
+
+<details>
+<summary>
+A library to better match overload in templated functions.
+Limiting types and using multiple arguments while retaining the regular overload resolution rules.
+</summary>
+
+[hop: A Language to Design Function-Overload-Sets](https://youtu.be/XykLWWBHXGk),[github](https://github.com/tobias-loew/hop)
+
+### Homogenous Variadic Functions
+
+Homogenous Variadic Functions (HFV) are functions such as
+
+```cpp
+void logger("this","is","a","log","message");
+double max(0.0,d1,d2,d3,d4,d5);
+Array<double,1> vec(1000);
+Array<double,2> matrix(6,100);
+Array<double,3> cube(2,3,5);
+```
+
+> "Homogenous Variadic Functions are functions that take an arbitrary (non-zero) number of arguments, all of the **same type**."
+
+blitz++ is a library that started with c++98, it was used for linear algebra calculations, pioneered expression templates.\
+it has an custom Array class template, with many, many constructors and `operator()` overloads, as well as several other Homogenous Variadic Functions with reapeating code.
+
+[fluent-c++: How to Define a Variadic Number of Arguments of the Same Type](https://www.fluentcpp.com/2019/01/25/variadic-number-function-parameters-type/) a multipart blog post about different approches.
+
+in c++98, we would write overloads manually. it was explicit, easy to understand, beginner friendly (no templates or macros), but this is the example of bad code writing and violating DRY.
+
+```cpp
+R foo(A a1);
+R foo(A a1, A a2);
+R foo(A a1, A a2, A a3);
+R foo(A a1, A a2, A a3,A a4);
+R foo(A a1, A a2, A a3,A a4,A a5);
+```
+
+c++98 also had **Boost.Preprocessor**, which is the exact opposite, it avoids repetitions and easily scalable, but it's hard to write, harder to read, even harder to debug. and the number of arguments is still fixed.
+
+```cpp
+#define NUMBER_OF_ARGUMENT_OF_F 10
+#define GENERATE_OVERLOAD_OF_F(Z,N,_) \
+    R foo(BOOST_PP_ENUM_PARAMS(N,A a)) {/*...code...*/}
+
+BOOST_PP_REPEAT_FROM_TO(1,BOOST_PP_INC(NUMBER_OF_ARGUMENTS_OF_F), GENERATE_OVERLOAD_OF_F,_)
+```
+
+in c++11 we got _std::initializer_list_, which works for any number of arguments, but requires additional braces when called, is inflexible for mutability (need to use reference wrapper of some sort), and can even be called with empty list, and causes weird behavior for overload resolution
+
+```cpp
+R foo(std::initializer_list<A> as)
+{
+    /*...*/
+}
+```
+
+but we also got parameter packs, which could work for any number of arguments, but on the downside, matched any input, and hade potential for hard to define errors in compilation and runtime, and could lead to logical errors.
+
+```cpp
+template <typename T,typename... Ts>
+R foo (T,t,TS.... ts)
+{
+    /*...*/
+}
+```
+
+this could be expanded to incorporate SFINEA, below is a c++14 example, where we could limit the number of argument to be non zero, and matches only valid input
+
+```cpp
+template <typename ... Ts,
+    std::enable_of<(sizeof...(Ts) > 0) && //at least one argument
+    (std::is_convertible_v(Ts,A) && ...) // all arguments are convertible to A
+    >*= nullptr>
+R foo(Ts&&... ts)
+{
+    /*....*/
+}
+```
+
+c++20 simplifies the syntax, replacing SFINEA with requires.
+
+```cpp
+template <typename ... Ts>
+requires
+    (sizeof...(Ts) > 0) && //at least one argument
+    (std::is_convertible_v(Ts,A) && ...) // all arguments are convertible to A
+R foo(Ts&&... ts)
+{
+    /*....*/
+}
+```
+
+future versions of c++ might make this even easier
+
+P1219R2 suggested HFV parameters become supported by native language, so we could write template parameter packs directly (without template parameter types), which would be simpler and finally easy to understand, but the syntax would conflict with varargs syntax. apparently the comma before the trailing `...` is optional, so varargs `R foo(int,...)` is equivalent to `R foo(int...)`. so this suggestion was scrapped and is consider dead today.
+
+```cpp
+R foo(A a, A...as){/*....*/}
+```
+
+| version        | usage                                    | pros                                                        | cons                                                                |
+| -------------- | ---------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------- |
+| c++98 vanila   | manually writing overloads               | easy to understand                                          | violation of DRY                                                    |
+| c++98 Boost    | Boost.Preprocessor macro                 | write once                                                  | hard to use                                                         |
+| c++11          | std::initializer_list                    | works for any number of arguments                           | additional braces {}, mutability issues, overload resolution issues |
+| c++11          | parameter pack                           | simple                                                      | matches any input                                                   |
+| c++11          | parameter pack + SFINAE                  | matches any non-zero number of arguments, only valid inputs | none                                                                |
+| c++20          | parameter pack + _requires_              | simpler syntax than SFINEA                                  | none                                                                |
+| P1219R2 (dead) | Homogenous variadic functions parameters | native language support for HVF                             | syntax conflict with varargs                                        |
+
+the current best practices for HVF are to use parameter packs with SFINAE or with the _requires_ clause (if possible). but those ignore overload resolutions and implicit converstions.
+
+in the following example, there are two visible overloads, one for int types and one for float, there are also thee calls with different arguments, so which is called? does it even compile?
+
+```cpp
+template <typename ... Ts>
+requires
+    (sizeof...(Ts) > 0) && //at least one argument
+    (std::is_convertible_v(Ts,int) && ...) // all arguments are convertible to int
+R foo(Ts&&... ts)
+{
+    /*....*/
+}
+
+template <typename ... Ts>
+requires
+    (sizeof...(Ts) > 0) && //at least one argument
+    (std::is_convertible_v(Ts,float) && ...) // all arguments are convertible to float
+R foo(Ts&&... ts)
+{
+    /*....*/
+}
+
+foo(1,2,3); // (a)
+foo(0.5f, -2.4f); //(b)
+foo(1.5f,3); // (c)
+```
+
+in actuality, all calls are ambiguous and the program doesn't compile. [compiler explorer](https://godbolt.org/z/YbbY5ah7d). all arguments are convertible to eachother (int to float, implicitly), both overloads use forwarding reference `&&` which gives a perfect match, and according the SFINAE condition,only tests if overload is viable, it is not part of overload resolution. both overloads are equivalent.
+
+Can this be solved by c++20 concepts?
+
+> \[over.match.best.general]: desired overload must be _more constrained_
+>
+> - requires creating concepts like `Matches_T1_BetterThan_T2`.
+> - this means rebuilding overload-resolution with concepts.
+> - maybe possible for two types, probably messy for 3 or more.
+> - technical issue: fold expression over constraints is an atomic constraint.
+
+so for now, parameter pack + SFINAE (either clean or with the _requires_ clause) is the best we have, but it doesn't play well with overload resolution. if more than one overload is viable, we get ambiguity and errors.
+
+can the solution be letting overloaded function know about one another?
+
+> merging overloaded HVFs: step-by-step guide
+>
+> 1. provide interface to specify the overloaded type.
+> 2. perform overloaded resolution
+>
+>    - generate all possible overloads
+>    - use built-in overload-resolution to resolve call
+>
+> 3. report select type to the user
+>
+> - this guide uses C++17 for simplicity.
+> - this guid uses Peter Dimov's **Boost.MP11**
+
+the interface to the overloaded types uses template parameter pack, and is encapsulated in Boost.MP11 `mp_list`.
+
+arity means the number of arguments.
+
+```cpp
+// list containing types for overloaded-resolution
+using overloaded_types = mp_list<int, float>;
+
+// helper alias template
+template <typename... Args>
+using enabler = decltype(enable<overloaded_types,Args... >());
+
+// "overloaded" HVF for int and float
+template <typename... Args, enabler<Args...>* = nullptr>
+void foo(Args&& ... args) {/*...*/}
+```
+
+to perform the overload resolution, we generate all possible overloads (which is a possbile infinite number, but actually just for those viable on the call site), we generate the test-function for they type and run the built-in overload resolution on all of them.
+
+library for overloading HVFs (26 LOCS), complete code.
+
+```cpp
+template <size_t Index, class Params>
+struct single_function;
+
+template <size_t Index, class... Params>
+struct single_function<Index, mp_list<Params ...>>
+{
+    constexpr std::integral_constant<size_t,Index> test (Params...) const;
+};
+
+template <size_t arity, class Indices, class... Types>
+struct _overloads;
+
+template <size_t arity, size_t... Indices, class... Types>
+struct _overloads<arity, std::index_sequence<Indices...>,Types...>
+    : single_function<Indices, mp_repeat_c<mp_list<Types>,arity>>...
+{
+    using single_function<Indices, mp_repeat_c<mp_list<Types>,arity>>::test...; // c++17 required
+}
+
+// required to create compile time index-sequence
+template <class Types, size_t arity>
+struct overloads;
+
+template <class .. Types, size_t arity>
+struct overloads<mp_list<Types...>,arity>
+    : _overload<arity,std::index_sequence_for<Types...>, Types...>
+{};
+
+template <class Types, typename... Args>
+constexpr decltype(overloads<Types, sizeof...(Args)>{}.test(std::declval<Args>()...)) enable();
+```
+
+that's too much to understand at once, so we look at it piece by piece, first, the enable function. it is invoked by the caller with type list and actual arguments. the return type is the result of the overload resolution calling `test`, which will be an `std::integral_constant<size_t,Index>` indicating the best match.
+
+```cpp
+template <class Types, typename... Args>
+constexpr
+decltype(overloads<Types, sizeof...(Args)>{}.test(std::declval<Args>()...)) enable();
+```
+
+we now move to the part where we are creating the 'viable' type-lists. we get all the types, and create the list of the types with desired arity. instantiate `single_function` with such a list for each 'overloaded' type using pack expansion.
+the `using single_function`... line brings all the base class functions into the scope of the struct and make them visible.
+
+```cpp
+template <size_t arity, class Indices, class... Types>
+struct _overloads;
+
+template <size_t arity, size_t... Indices, class... Types>
+struct _overloads<arity, std::index_sequence<Indices...>,Types...>
+    : single_function<Indices, mp_repeat_c<mp_list<Types>,arity>>...
+{
+    using single_function<Indices, mp_repeat_c<mp_list<Types>,arity>>::test...; // c++17 required
+}
+```
+
+the 'overloads' (without the underscore) are used for unpacking the mp_list and getting the types and index_sequence.
+
+```cpp
+// required to create compile time index-sequence
+template <class Types, size_t arity>
+struct overloads;
+
+template <class .. Types, size_t arity>
+struct overloads<mp_list<Types...>,arity>
+    : _overload<arity,std::index_sequence_for<Types...>, Types...>
+{};
+```
+
+the core of the library generates the test function, the function generated is the overload of each option.
+
+> - instanitated for each overloaded type
+> - the `sizeof...(Params)` is the arity of the call.
+> - defines `test` with desired argument type and arity.
+> - this is also used in the STL implementions to genereed the converting constructors in _std::variant_ for type-alternatives.
+
+```cpp
+template <size_t Index, class Params>
+struct single_function;
+
+template <size_t Index, class... Params>
+struct single_function<Index, mp_list<Params ...>>
+{
+    constexpr std::integral_constant<size_t,Index> test (Params...) const;
+};
+```
+
+the final part is to report the selected type or fail in compilation. we have a function that decides in compile time which 'overload' is used.
+
+```cpp
+// list containing types for overload-resolution
+using overload_types = mp_list<int,float>'
+
+// helper alias template (simplifies repetitions)
+template <typename... Args>
+using enabler= decltype(enable<overloaded_types, Args...>());
+
+// "overloaded" function for int and float
+template <typename... Args,enabler<Args...>* = nullptr>
+void foo(Args&&... args)
+{
+    constexpr auto selected_type_index = enabler<Args...>::value; //index of the select overload
+    if constexpr (selected_type_index == 0)
+    {
+        // int overload invoked
+        std::cout<< "overload:(int,...") <<'\n';
+    }
+    else if constexpr (selected_type_index == 1)
+    {
+        // float overload invoked
+        std::cout<< "overload:(float,...") <<'\n';
+    }
+}
+```
+
+[example in compiler explorer](https://godbolt.org/z/94nGrbaxd)
+
+this time the call with the none-matching types is rejected. also the empty call is rejected. this is what we would like to see. if we use a double instead of float, we get an error, because conversion from double to float and from double to int are the same priority in overload resolution, but it does work if we overload on double and send floats.
+
+### Hop - Function-Parameter Building Blocks
+
+> **"From HVF to function-parameter building blocks"**
+> a solution to expand the previous idea and make things better.
+
+> required features for the library
+>
+> - create parameter-list with type-generators.
+> - create overload-resultion condition from overload-set.
+> - within the function implementations
+>   - identify active overload.
+>   - aceessing /forwarding arguments (especially defaulted parmeters).
+>
+> hop: type-generators
+>
+> - any cv-qualified C++ type
+> - repetition
+> - sequencing
+> - alternatives
+> - trailing/not-trailing default parameters.
+> - forwarding references with/without condition
+> - template argument deduction (per argument, global, mixed)
+> - adapt existing functions
+> - tag types/overloads for easier access
+
+Template for **repetition**: match min to max times.\
+base case and some syntactic sugar specializations for it.
+
+```cpp
+// base case repetition
+template <class T, size_t _min, size_t _max = infinite>
+struct repeat;
+
+template <class T>
+using pack = repeat<T,0,infinite>;  // parameter pack
+
+template <class T>
+using non_empty_pack = repeat<T,1,infinite>;  // non-empty parameter pack
+
+template <class T>
+using optional = repeat<T,0,1>;  // optional parameter, with or without default value
+
+template <class T, size_t _times>
+using n_times = repeat<T,_times,_times>;  // exactly n-times
+
+using eps = repeat<char,0,0>;  // no parameter(epsilon)
+```
+
+**sequenceing**: matching type list one after the other
+
+```cpp
+template <typename... Ts>
+struct seq;
+```
+
+**alternatives**: matching exactly one of the specified type lists
+
+```cpp
+template <typename... Ts>
+struct alt;
+```
+
+**defaulted parameters**: consume argument, if it fits the type, use it, otherwise inject default created argument.
+
+```cpp
+// c++ style default parameter, only at the end of the parameter list (trailing)
+template <class T, class _Init = impl::default_create<T>>
+struct cpp_defaulted_param;
+
+// general default parameter, can appear anywhere in the parameter list (non-trailing)
+template <class T, class _Init = impl::default_create<T>>
+struct general_defaulted_param;
+```
+
+**forwarding references**, either unrestriced or conditional (with SFINAE). quoted function are described in mp11 documentation.
+
+```cpp
+// unrestricted perfect forwarding
+struct fwd;
+
+// forward reference guarded by meta-function
+template<template<class> class _If>
+struct fwd_if;
+
+// forward reference guarded by quoted meta-function
+template<class _If>
+struct fwd_if_q;
+```
+
+**template argument deduction**:
+
+- global: all instances deduce the same set of types.
+- local: deduced instances are independent of each other.
+- mixed: specify which template arguments are matched globally.
+  - like sequence of _std::vector/<T,Alloc>_ where T is the same but differnet Allocator.
+  - sequence of _std::map_ with the same key-type.
+
+```cpp
+// global
+template<template<class...> class Patterns>
+struct deduce;
+
+// local
+template<template<class...> class Patterns>
+struct deduce_local;
+
+// mixed
+template<GlobalDeductionBindings,template<class...> class Pattern>
+struct deduce_mixed;
+```
+
+**adapting existing functions**: either simple functions or those with overload-sets, template, or defaulted parameters.
+
+```cpp
+template<auto function>
+struct adapt;
+
+
+template<class Adapter>
+struct adapted;
+// adapt overload-set 'qux'
+struct adapt_qux
+{
+    template <class... Ts>
+    static decltype(qux(std::declval<Ts>()...)) forward(Ts&&... ts)
+    {
+        return qux(std::forward<Ts>(ts)...);
+    }
+};
+```
+
+other stuff:
+
+- tagging types to refer to type by name and not position.
+  - tagging overloads
+  - tagging type. acessing arguments from a pack
+- SFINAE condition on teh whole overload set
+
+The hop grammer for function parameters
+
+```
+CppType ::= any(cv-qualified) C++ type
+
+Type ::= CppType | tagged_by<tag,Type>
+
+ArgumentList ::= Argument | ArgumentList, Argument
+
+Argument ::= Type
+| repeat<Argument,min,max>
+| seq<ArgumentList>
+| alt<ArgumentList>
+| cpp_defaulted_param<Type,init>
+| general_defaulted_param<Type,init>
+| fwd
+| fwd_if<condition>
+| deduce{_local|_mixed}<Pattern>
+```
+
+examples for the hop-grammer:
+
+```cpp
+// at least one int
+non_empty_pack<int>;
+
+// list of double, followed by optional options_t
+seq<pack<double>,cpp_defaulted_param<options_t>>;
+
+// optional options_t, followed by a list of double
+seq<general_defaulted_param<options_t>,pack<double>>;
+
+// name-value pairs
+pack<seq<string, alt<bool, int,double,string>>>;
+
+// local type deduction, a list of vector of arbitrary (different) value types
+template <typename T>
+using vector_alias = vector<T>const&;
+pack<deduce_local<vector_alias>>;
+
+// mixed global/local type deduction: a pack of maps, all having the same key-type
+{
+    // T1 is bound with globabl_deduction_binding
+    template <typename T1,typename T2>
+    using map_alias = map<T1,T2>const&;
+
+    // map index in pattern to tag-type
+    // all deduced types with that index have to be the same
+    using bindings = mp_list<global_deduction_binding<0,tag_map_key_type>>;
+    pack<deduce_mixed<bindings,map_alias>>;
+}
+
+// only types fitting into a pointer (word size)
+template <typename T>
+struct is_small : mp_bool<sizeof(remove_cvref_t<T>) <= sizeof(void*)> {};
+pack<fwd_if<is_small>>;
+
+
+// matching all the above as an overload set
+using overloads = ol_list<>
+    ol<non_empty_pack<int>>,
+    ol<pack<double>,cpp_defaulted_param<options_t>>,
+    ol<general_defaulted_param<options_t>,pack<double>>,
+    ol<pack<seq<string, alt<bool, int,double,string>>>>,
+    ol<pack<deduce_local<vector_alias>>>,
+    ol<pack<deduce_mixed<bindings,map_alias>>>,
+    ol<pack<fwd_if<is_small>>>
+    >;
+```
+
+of course there can still be ambiguity.
+
+if we want to expand the grammar, we might want to generate type-list for an overload.
+
+for HFVs, we had "repeat the type _arity_ times".
+
+```cpp
+mp_repeat_c<mp_list<Types,arity>>;
+```
+
+but for hop, we have a combinatorial problem.
+
+> "generatea all parameter-lists that accept _arity_ arguments"
+
+we can do this by recursively travesing the overload, and we have to ensure progress to avoid infinit recursion.
+
+> 1. for each sub-expression of the overload:
+>    - analyse the min/max length of the producible type-list.
+> 2. recursively traverse the overload:
+>    - build types lists, `TL1,TL2,...,TLn` for all sub expressions.
+>    - genereate cartesian product `TL1 x ... x TLn` and concatenate tuples.
+>    - prohibit infinite recursion by using the min/max info to limit to types-list that can match the call's arity.
+>    - avoid repeating type-lists.
+
+generating test function from the type list:
+
+for HFVs, we had to unpack mp_list and expand it as arguments of test
+
+```cpp
+template <size_t Index,class... Params>
+struct single_function<Index, mp_list<Params...>>
+{
+    constexpr std::integral_constant<size_t, Index> test(Params...) const;
+};
+```
+
+> for the hop, we have additional tasks
+>
+> - templated arguments:
+>   - forwarding references, local/global conditions, adapters.
+> - templated arguments deduction.
+> - removing the tag-types.
+>   in the
+
+- the `mp_invoke_q<_If,Args>` checks global conditions of the overload against actual parameter types.
+- `decoction_helper` - global template argument deduction
+- `unpack`
+  - returns parameter types/ geneters types for forwarded parameters.
+  - check local condition
+  - local template argument deduction
+  - removes tag-types
+
+```cpp
+template<typename ... Args,
+std::enable_if_t<mp_invoke_q<_If,Args...>::value &&
+deduction_helper<mp_list<Args...>, mp_list<TypeList ...>>::value,
+int* > = nullptr>
+constexpr result_t test(typename unpack<typeList,Args>::type...) const;
+```
+
+the test function - template argument deduction
+
+in an ideal world it would be be validated against a pack of types,
+
+```cpp
+template <template<class...> class... Patterns> //deduction patterns
+struct deducer_t
+{
+    template <template<class...> class... Patterns, class T> //deduction types
+    static mp_list<std::true_type,mp_list<T....>> test(Patterns<T...>...);
+    static mp_list<std::false_type,mp_list<>> test();
+};
+```
+
+but in the real world, we have some problems doing that, this code is invalid in C++. `Patterns` might be an alias template, which is not allowed with a pack.
+
+```cpp
+//invalid code
+template <template<class...> class... Patterns, class T> //deduction types
+static mp_list<std::true_type,mp_list<T....>> test(Patterns<T...>...);
+```
+
+we overcome that with **Booset.Preprocessor** to generate type-deduction test functions.
+
+some stuff still remain.
+
+### Summary
+
+we can see some demos on compiler explorer
+
+- [int and floats](https://godbolt.org/z/esqc6GMsY)
+- [reference-types](https://godbolt.org/z/359Y34b9P)
+- [tagging overloads](https://godbolt.org/z/8oT5T7Wb6)
+- [default arguments](https://godbolt.org/z/aWPMdb6jG)
+- [one entry point to rule them all?](https://godbolt.org/z/)
+- [template argument deduction](https://godbolt.org/z/19ddvTfvW)
+
+some statistics about the library, about ~2000 lines of code.
+what's missing.
 
 </details>
