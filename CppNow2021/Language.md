@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Schödl Lakos Vittorio Ivica Bogosavljevic mmap strided Emde Dwyer \ prvalue
+// cSpell:ignore Schödl Lakos Vittorio Ivica Bogosavljevic mmap strided Emde Dwyer prvalue
 
 
 -->
@@ -1199,5 +1199,23 @@ some stuff with decaltype(auto)
 | auto f(T&& x) -> decltype((x)) { return (x); }  | T&               | T& (ill-formed) |
 | auto g(T&& x) -> decltype(auto) { return x; }   | T&& (ill-formed) | T&&             |
 | auto h(T&& x) -> decltype(auto) { return (x); } | T&               | T&&             |
+
+</details>
+
+## The Worst Best Practices - Jason Turner
+
+<details>
+<summary>
+Thoughts about being a C++ content creator, as told by jason after doing this for the past 15 years.
+</summary>
+
+[The Worst Best Practices](https://youtu.be/KeI03tv9EKE),
+[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/Jason-Turner-CNow-2021-The-Worst-Best-Practices.pdf), [github](https://github.com/cpp-best-practices/cppbestpractices)
+
+jason retelling some old blog posts of his and talking about comments that he got, talking about resources he read and stuff that he wrote, talks he gave over the years.
+
+talking about weird comments in youtube he got and saw others getting. how he got into making his own c++ content. what he thinks about publishing in leanpub (pros and cons). how the pricing and sales work for the book. setting the expectation of what the readers will get from the book.
+
+critisms he got for the book, what people disagreed with in the book.
 
 </details>
