@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Bjarne Strostrup Mateusz Pusz Bazel libcxx libstdc libc cppstd soname ccmake spack
+// cSpell:ignore Bjarne Strostrup Mateusz Pusz Bazel libcxx libstdc libc cppstd soname ccmake spack Andreas Fertig cstdio
  -->
 
 Tools
@@ -1246,5 +1246,258 @@ conan new -m v2_cmake my_project/0.1.0
 conan creates a unique identifier for each configuration, which is used to store ABI information. we can also use package_id to override the creation of different versions.
 
 (many more slides)
+
+</details>
+
+## C++ Insights: How Stuff Works, Lambdas and More! - Andreas Fertig
+
+<details>
+<summary>
+How C++ Insight does some stuff. seeing how common problems are actually created and how the fixes effect them.
+</summary>
+
+[C++ Insights: How Stuff Works, Lambdas and More!](https://youtu.be/p-8wndrTaTs),[slides](https://andreasfertig.info/talks/dl/afertig-2021-cppnow-cpp-insights.pdf), [C++ Insights](https://cppinsights.io/)
+
+c++ Insights shows us what is going on, how the compiler handles the source code
+
+> - Show what is going on.
+> - Make invisible things visible to assist in teaching.
+> - Create valid code.
+> - Create code that compiles.
+> - Of course, it is open-source
+
+example of showing implicit conversions, this code prints **1**, why is that? cpp insight shows us all the implicit conversions.
+
+```cpp
+short int max(short int a, short int b)
+{
+    return (a > b) ? a : b;
+}
+
+void Use()
+{
+    short int a = 1;
+    unsigned short int b = 65'530;
+    printf("max: %d\n", max(a, b));
+}
+```
+
+the above code turns into the code below: numeric comparisons are only possible on integers, not shorts. and the unsigned short is converted to signed int (overflowing into negative), and we can view all the implicit conversions happening.
+
+```cpp
+short max(short a, short b)
+{
+  return (static_cast<int>(a) > static_cast<int>(b)) ? a : b;
+}
+
+void Use()
+{
+  short a = 1;
+  unsigned short b = 65530;
+  printf("max: %d\n", static_cast<int>(max(a, static_cast<short>(b))));
+}
+```
+
+c++ insights takes c++ code and returns c++ code, it uses Clang AST (abstract syntax tree), so it's more than just a preprocessor stage. six lines of code turn into thousends of AST code.
+
+there are limitations with templates. what is instantiated and what is not?
+default parameters and default member initializer. constexpr functions, differences in c++11 and 14 (implicit const in 11, not in 14).
+
+captures and lambdas: this code captures _a_ by value(copy),but prints 4,5, rather than the expected 4,4. cpp insights show use what was really captured (not the value actually)
+
+```cpp
+class Test
+{
+    int a;
+
+    public:
+    Test(int x) : a{x}
+    {
+        auto l1 = [=] { return a + 2; };
+        printf(”l1: %d\n”, l1());
+        ++a;
+        printf(”l1: %d\n”, l1());
+    }
+};
+
+int main()
+{
+    Test t{2};
+}
+```
+
+the reason being that the capture is actually a class, and it captures the _\*this_ pointer by value, so it reflects the change.
+
+```cpp
+class Test
+{
+    int a;
+
+    public:
+    Test(int x) : a{x}
+    {
+        auto l1 = [*this] { return a + 2; }; // capture the dereferenced object by value
+        printf(”l1: %d\n”, l1());
+        ++a;
+        printf(”l1: %d\n”, l1());
+    }
+};
+```
+
+the better way is to do an init capture, which means we specify exactly what we want.
+
+```cpp
+class Test
+{
+    int a;
+    int b{}
+
+    public:
+    Test(int x) : a{x}
+    {
+        auto l1 = [y=a] { return y + 2; }; //init capture of this->a
+        printf(”l1: %d\n”, l1());
+        ++a;
+        printf(”l1: %d\n”, l1());
+    }
+};
+
+int main()
+{
+    Test t{2};
+}
+```
+
+c++20 brought us templated lambdas, but we first need to look at c++14 generic lambdas. cpp insight shows what lambdas were created.
+
+```cpp
+int main()
+{
+    auto max =[](auto x, auto y){
+        return (x>y) ? x :y;
+    }
+    max(2,3); //ok
+    max(2,3.0); //works, but not what we wanted, mixed types, integer promotion
+}
+```
+
+the compiler creates one function for int and int, and one for int and double which returns double.
+in c++20, the lambda can be templated and we get better control of the types.
+
+```cpp
+int main()
+{
+    auto max =[]<typename T>(T x, T y){
+        return (x>y) ? x :y;
+    }
+    max(2,3); //ok
+    max(2,3.0); //no longer compiles, we decided that both must be the same type
+}
+```
+
+range statements with temporary objects, this code is Undefined behavior, the Keeper object is a temporary object, and we don't get lifetime extention. cpp insights shows that we actually have a non const reference.
+
+```cpp
+struct Keeper
+{
+    std::vector<int> data{2, 3, 4};
+
+    auto& items()
+    {
+        return data;
+    }
+};
+
+Keeper get()
+{
+    return {};
+}
+
+int main()
+{
+    for(auto& item : get().items())
+    {
+        std::cout << item << ’\n’;
+    }
+}
+```
+
+c++20 range based for statement with initializer. the life time extension might be part of the standard in c++23, but it's still a long way to go. if we look at this code in c++ insights, we can see that the object is alive for entirety of the loop.
+
+```cpp
+int main()
+{
+    for(auto && obj = get();
+        auto & item : obj.items())
+    {
+        std::cout << item << ’\n’;
+    }
+}
+```
+
+this also allows us to get an index, just like python or JavaScript.
+
+```cpp
+ #include <cstdio>
+ #include <vector>
+
+int main()
+{
+    std::vector<int> v{2, 3, 4, 5, 6};
+
+    for(size_t idx{0}; const auto& e : v)
+    {
+        printf(”[%ld] %d\n”, idx++, e);
+    }
+}
+```
+
+c++20 gave us the spaceship operator. which allows us to replace six operators with one (lower than, greater then, lower equal, greater equal, equal, not equal), we can even default it! .c++ insights lets us see what is instatinated and how it looks. unfortunately, this time we we make use of library internals so the code isn't very readable.
+
+```cpp
+struct Spaceship
+{
+    int x;
+    std::weak_ordering operator<=>(const Spaceship& value) const = default;
+};
+
+bool Use()
+{
+    Spaceship enterprise{2};
+    Spaceship millenniumFalcon{2};
+
+    return enterprise <= millenniumFalcon;
+}
+```
+
+but if we change the example and introduce an equality operator for a integer value. switching the order isn't allowed in c++17 (we would need to write a friend function and stuff). but c++20 has **operator reordering** for cases like this. c++ insight shows us this reordering in action. we also see how instatianted member function are `const noexcept` while the spaceship operator isn't (this is done to save some compiler checks, apparently).
+
+```cpp
+struct Spaceship
+{
+    int x;
+    auto operator<=>(const Spaceship& value) const = default;
+    bool operator==(const int & rhs) const {return rhs ==x;}
+};
+
+bool Use()
+{
+    constexpr Spaceship enterprise{2};
+    constexpr Spaceship millenniumFalcon{2};
+
+    //return enterprise ==2; this will work
+    return 2 == enterprise; //won't work in c++17
+}
+```
+
+we can see how the default initialization is happenning. how private and public members effect us. how copy destructors, constructors and assignment operators are created depending on the members in the type. we can see NRVO optimizations in c++ insights. this can help us stop writing _std::move_ when we don't need to.
+
+summary: how can c++ insights help us?
+
+> - Seeing is a very valuable thing. Even if you know something in general, C++ Insights may put your attention on it.
+> - Classes I taught using C++ Insights (as well as Matt Godbolt’s Compiler Explorer) tend to be more interactive. Attendees start asking
+>   broader questions about certain constructs.
+> - C++ Insights can help to settle two different opinions by visualizing what the compiler (at least Clang) does.
+> - Like Integrated Development Environments (IDEs), C++ Insights visualizes template instantiations. Seeing them often helps, but seeing the absence of a specific instantiation may lead you to the issue you’re looking for.
 
 </details>
