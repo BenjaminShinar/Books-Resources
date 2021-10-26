@@ -803,3 +803,19 @@ Video controller addressing
 commander 16 is a modern retro computer design. getting the RPG project running on the new system. getting the video correctly, difference between x560 in how the addressing works
 
 </details>
+
+## C++ Weekly - Ep 295 - API Design: Principle of Least Surprise
+
+<details>
+<summary>
+getting the api names and behaviors right.
+</summary>
+
+[API Design: Principle of Least Surprise](https://youtu.be/Qs4nje3KaFw)
+
+continuing from _xoroshiro_ episode 285, changing the name from _'fork'_ to _'split'_ because thats the name of that functionality in the domain of generating random numbers.\
+Also looking at the copy constructor and whether it should do the same. that would require a copy constructor which is mutable, so that would be two different methods, which behave differently depending on the const qualifier. and that's completely confusing which we should never do.
+
+finally, thinking about the 'jump' functionality for random number generators (skip a large number of iterations), which in a naive way would take years to finish.
+
+</details>
