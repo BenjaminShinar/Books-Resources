@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg pscii
+// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg pscii endl constexpr decltype mutex noexcept struct
  -->
 
 # C++ Weekly takeaways
@@ -652,8 +652,8 @@ we can do auto type deduction. and decltype(auto) for "perfect returning"
 ```cpp
 void fooVoid();
 int fooInt();
-int & fooIntReferenc1();
-const int & fooIntReferenc2();
+int & fooIntReference1();
+const int & fooIntReference2();
 
 auto call(auto f) //maybe should be decltype(auto)
 {
@@ -662,8 +662,8 @@ auto call(auto f) //maybe should be decltype(auto)
 
 call(fooVoid);
 call(fooInt);
-call(fooIntReferenc1); //what is the return type?
-call(fooIntReferenc2); //what is the return type?
+call(fooIntReference1); //what is the return type?
+call(fooIntReference2); //what is the return type?
 ```
 
 </details>
@@ -672,12 +672,12 @@ call(fooIntReferenc2); //what is the return type?
 
 <details>
 <summary>
-Binary literals, digit seperators
+Binary literals, digit separators
 </summary>
 
 [C++14's Digit Separators and Binary Literals](https://youtu.be/Yop9D3V2KBk)
 
-binary literals to denote binary numbers and digit seprators to make code more readable.
+binary literals to denote binary numbers and digit separators to make code more readable.
 
 ```cpp
 auto b = 0b11101;
@@ -795,11 +795,62 @@ looking at object assembly code.
 
 <details>
 <summary>
-Video controller addressing
+Video controller addressing.
 </summary>
 
 [Hello Commander X16](https://youtu.be/JVoBZA2u2eM)
 
 commander 16 is a modern retro computer design. getting the RPG project running on the new system. getting the video correctly, difference between x560 in how the addressing works
+
+</details>
+
+## C++ Weekly - Ep 296 - Constraining `auto` in C++20
+
+<details>
+<summary>
+
+</summary>
+
+[Constraining `auto` in C++20](https://youtu.be/A8nNjpaiP5M)
+
+constraining the deduction of *auto* by using concepts.
+
+```cpp
+std::integral auto some_function()
+{
+    return 1;
+    //return 2.5; // this will fail!
+}
+int main()
+{
+    const auto p1 = some_function();
+    const std::integral auto p2 = some_function(); 
+    
+    //const std::floating_point auto p3 = some_function(); // this will fail
+}
+```
+some confusion about pointers: the auto can hide the ptr type, we should be clear with the names and the types.
+```cpp
+
+int * get_object_ptr();
+int get_object();
+int main()
+{
+const auto obj_ptr1 = get_object_ptr(); //obj_ptr_1 is a pointer
+const auto * obj_ptr2 = get_object(); //obj_ptr_2 wants to be a pointer, but receives a value, so we will get an error
+}
+```
+we can define our own concept that "is not a pointer" so we can require the variable to fit our expectations. this all happens in compile time.
+```cpp
+template <typename T>
+concept not_pointer = !std::is_pointer_v<T>;
+
+int * get_some_pointer();
+int main()
+{
+    const auto val1 = get_some_pointer(); //legal code, but the pointer is hidden!
+    const not_pointer auto val2 = get_some_pointer(); // error!
+}
+```
 
 </details>
