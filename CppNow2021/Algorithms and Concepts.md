@@ -1359,3 +1359,316 @@ void encodeSomeStuff(BOWithEncodeableStuff_t iBusinessObject)
 > - No more naked Ts and typenames.
 
 </details>
+
+## Using Concepts: C++ Design in a Concept World - Jeff Garland
+
+<details>
+<summary>
+//todo: add
+</summary>
+
+[Using Concepts: C++ Design in a Concept World - part1](https://youtu.be/Ffu9C1BZ4-c),[part2](),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/2021cppnow_learning_concepts.pdf)
+
+A two parts session about concepts. we now have tools and first class language support for concepts.
+
+goals:
+> climb up the concept ladder
+> 	- What's a concept
+> 	- Using concepts in code
+>	- Reading concepts: `requires` expressions and clauses
+>	- Writing concepts: its hard
+>	- Designing with concepts
+
+
+we want to get the community to use concepts, even people who don't write concepts will still see them in the documentation.
+
+
+### Concept Basics
+
+> - overview of concepts
+> - concepts vs types
+
+The reasons for concepts: we want good generic libraries, which are fast, and that fellow programmers can read, understand and maintain, which means they have reasonable error messages.
+
+when we have unconstrained templates, we might see hundreds of lines for error messages. direct language support can help with tooling, debugging, and even better compiling time.
+it will also make template code more readable, more descriptive, and give us better interface to use.
+
+we can see the history of concepts starting in the 80's, but the modern idea began in the STL in the 90's, but without language specifications. in those days the world was dominated by object oriented programming.
+Boost had a library called "concept check", which was mostly macro based, in 2011 concepts were supposed to become part of the language, but the committee decided it wasn't ready.
+eventually, in c++20 we got a language definition of concepts, and even some libraries (ranges library) are specified in terms of concepts. but there are still mistakes that were made.
+
+in the last minute, it was decided that concepts use snake\_case (not PascalCase), and the _concept bool_ was replaced with _concept_.
+
+> Concepts
+> - boolean predicate on types and values
+> - type requirement examples
+> 	- required methods
+> 	- required semantics*
+> 	- required subtypes or base types
+> - c++ realization includes
+> 	- new keywords `concept` and `requires`
+> 	- `\<concept_name> auto` for describing a set of types
+> 	- new rules for function overloading
+
+Concepts are __predicates__ that can check against types and against values. we mostly focus on types, but the size can also help with stuff. like running SIMD on small objects if possible.
+we can use concepts to require a type to have specif methods, we can also require certain semantics (but this might not be feasible in terms of what the compiler can do) or require them to have some subtypes or base types (like inheritance).
+
+> boolean predicate composition
+> - support complex compile time logic composition
+> - conjunction and disjunction (and/or) logic
+> - used to classify types
+> 	- in or out of a set
+> 	- that share syntax/semantic
+> 	- (although semantics is the desire only syntax is checked)
+
+we can have complex logical composition, based on compile time logic,
+	
+> types versus concepts
+> - type
+> 	- describes a set of operation that can perform
+> 	- relationships with other types
+> 		- example: base class
+> 		- example: declared dependent type
+> 	- describes a memory layout
+> 	- for built in types this can be implicit
+> - concept
+> 	- describes how a type can be used
+> 	- operations it can perform
+> 	- relationships with other types	
+
+a type (primitive, built-in or something that we built),has operations, relationship with other types, dependencies. types have memory layout, with members and inner variables.
+the concepts has similar functionalities, but it doesn't describe a memory layout. concepts are more abstracted than types.
+
+in this code, we have a concept that allows "printing" into an ostream. we declare the concept and the type which we want to check, and then we check if the type satisfies the concept.
+concepts should go into a namespace, we don't want naming conflicts.
+because templates aren't evaluated until they are called, we need to check manually, so a static asset is a good idea.
+
+```cpp
+namespace io 
+{
+	// Type T has print ( std::ostream& )const member function
+	template<class T>
+	concept printable = requires //...more later
+}
+class my_type
+{
+	std::string s = "foo\n";
+	public:
+	void print( std::ostream& os ) const
+	{
+		os << "s: " << s;
+	}
+};
+static_assert(io::printable<my_type> ); //good
+```
+
+concepts are entirely compile time, no runtime footprint. the dependency on a concept means that if we change it, then we probably need to recompile everything.
+the core use of concept is to constrain the usage of templates.
+
+
+### Using Concepts in Code
+
+> - overloading, variables, pointers
+> - std library concepts
+
+what we use concepts for:
+
+> concepts can:
+> - Constrain an overload set
+> - Initialize a variable with _\<concept_name> auto_
+> - Conditional compilation with constexpr if
+> - Can use a pointer or _unique_ptr_ of concept
+> - Partially specialize a template with concept
+> - Make template code into 'regular code'
+>
+> concepts cannot:
+> - Cannot inherit from concept
+> - Cannot constrain a concrete type using requires
+> - Cannot 'allocate' via new
+> - Cannot apply requires to virtual function
+
+overload set - using a different function. we can use concepts in constant expressions. 
+we can't inherit directly from a concept, we can inherit from a class that is constrained by one.
+we can't constrain a concrete type directly, but we can constrain it's usage.
+concepts have nothing to do with storage, so no allocations, and they are entirely incompatible with virtual functions.
+
+_/<consept_name> auto_ can be used as a type. either in templates or as placeholder for a type.
+
+```
+// Type T has print ( std::ostream& )const member function
+template<class T>
+concept printable = requires //...
+
+template<typename T>
+concept associative_container = //
+
+// take a parameter of type printable auto, a template that looks like regular code.
+void f(printable auto s)
+{
+//...
+}
+
+// constraining a template, classic example of concepts.
+template<associative_container T> 
+class MyType
+{
+	T map_;
+}
+
+int main()
+{
+	//these won't compile, we need a concrete type here, can't allocate storage for it
+	//printable auto s;
+	//associative_container auto myMap;
+	
+	//these will compile
+	printable auto s = init_some_thing();
+	associative_container auto myMap = MyType<std::map<int,int>>{{1,1}};
+}
+```
+
+we can also use concepts as function parameters or return value.
+
+[godbolt example](https://godbolt.org/z/r3dY3dsvd), both are the same, one is written in a traditional way, and one hides the template keyword. but both use deduced return type.
+
+```cpp
+template<printable T>
+printable auto print( const T& s )
+{
+	//...
+	return s;
+};
+
+printable auto print2( const printable auto& s )
+{
+	//...
+	return s;
+}
+```
+as always, we can write the same thing in many ways.
+
+overload resolution - constrain function parameter
+write different functions _print_line_, and choose the overloaded function based on the concept.
+[godbolt example](https://godbolt.org/z/GKq8ns). this will fail, because there isn't a way to print the type. this is an unconstrained template function.
+```cpp
+#include <iostream>
+
+//auto parameter -- this is a template function!
+// template<typename T_
+// void print_ln( T p )
+void print_ln( auto p )
+{
+	std::cout << p << "\n";
+}
+
+class my_type {};
+
+int main()
+{
+	print_ln("foo");
+	print_ln(100);
+
+	//compile error of course
+	//my_type m;
+	//print_ln ( m );
+}
+```
+the traditional way to do these was to overload the function for the concrete type, have a better match than the template function.
+```cpp
+//selected ahead of print_ln (auto) because better match
+void print_ln( my_type p )
+{
+	p.print( std::cout );
+	std::cout << "\n";
+}
+```
+but this is tedious, we want to use the printable concepts
+[godbolt example 1](https://godbolt.org/z/36cdsGzzo), [godbolt example 1](https://godbolt.org/z/dYdhW7). we use the requires clause, it behaves like a parameter list in this case.
+we decide that the expression `v.print(os)` must compile, in the _output_streamable_ case, we say that the expression must be a valid `os <<v` expression.
+the public access modifiers are important, we need be able to actually call the function.
+```cpp
+#include <iostream>
+#include <memory>
+
+// Type T has print ( std::ostream& ) member function
+template<typename T>
+concept printable = requires(std::ostream& os, T v)
+{
+	v.print( os ) ; //<--an expression that if compiles yields true
+};
+
+template<class T>
+concept output_streamable = requires (std::ostream& os, T v)
+{
+	os << v;
+};
+
+
+void print_ln( auto p )
+{
+	std::cout << p << "\n";
+}
+
+//auto parameter -- this is a template function!
+void print_ln( printable auto p ) //<-- constrained resolution
+{
+	p.print(std::cout);
+	std::cout << "\n";
+}
+
+int main()
+{
+	print_ln( "foo" );
+	print_ln( 100 );
+	my_type m;
+	print_ln ( m );
+}
+```
+
+we can use both concepts, have two overloaded functions, one for each concept.
+
+```cpp
+// example of overload resolution
+void print_ln( output_streamable auto p)
+{
+	std::cout << p << "\n";
+}
+
+void print_ln( printable auto p)
+{
+	p.print(std::cout);
+	std::cout << "\n";
+}
+
+class my_type2 {};
+
+int main()
+{
+	print_ln( "foo" );
+	my_type m;
+	print_ln ( m );
+	//compile error of course
+	//my_type2 m2;
+	//print_ln ( m2 );
+}
+```
+
+Pointers and concepts
+
+
+
+### Reading Concepts
+> - requires expressions
+### Writing Concepts
+> - concept details 102
+> - writing _sleep_for_ with concepts
+> - good concepts, bad concepts
+### Designing with Concepts
+> - what is design?
+> - review of some 'design principles'
+> - concepts and dependencies
+> - impact on multi-paradigm design in c++
+> - concept serialization
+
+
+</details>
