@@ -3,6 +3,8 @@ ignore these words in spell check for this file
 // cSpell:ignore Gábor Horváth Andrzej Krzemieński cassert Dargo invokable default_initializable Clonable
 -->
 
+[Main](README.md)
+
 ## Algorithms from a Compiler Developer's Toolbox - Gábor Horváth
 
 <details>
@@ -1362,12 +1364,12 @@ void encodeSomeStuff(BOWithEncodeableStuff_t iBusinessObject)
 
 ## Using Concepts: C++ Design in a Concept World - Jeff Garland
 
-<details>
+<!-- <details> -->
 <summary>
 //todo: add
 </summary>
 
-[Using Concepts: C++ Design in a Concept World - part1](https://youtu.be/Ffu9C1BZ4-c),[part2](),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/2021cppnow_learning_concepts.pdf)
+[Using Concepts: C++ Design in a Concept World - part1](https://youtu.be/Ffu9C1BZ4-c),[part2](https://youtu.be/IXbf5lxGtr0),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/2021cppnow_learning_concepts.pdf)
 
 A two parts session about concepts. we now have tools and first class language support for concepts.
 
@@ -1494,7 +1496,7 @@ concepts have nothing to do with storage, so no allocations, and they are entire
 
 _/<consept_name> auto_ can be used as a type. either in templates or as placeholder for a type.
 
-```
+```cpp
 // Type T has print ( std::ostream& )const member function
 template<class T>
 concept printable = requires //...
@@ -1655,10 +1657,336 @@ int main()
 
 Pointers and concepts
 
+this is usefull fo things like factory functions
+
+[godbolt](https://godbolt.org/z/d7bGhn) example with unique pointers.
+```cpp
+int main()
+{
+    const printable auto *m = new my_type();
+    m->print(std::cout);
+    const std::unique_ptr<printable auto> upm = std::make_unique<my_type>();
+    upm->print(std::cout);
+}
+```
+
+if we try to assign the address of something that doesn't satisfy the concept to a pointer to the concept, we can get a better error message.
+
+```cpp
+class whatever{}; //no print
+int main()
+{
+    printable auto * m = new whatever{}; //error!
+}
+```
+
+we can use concepts inside `if constexpr`, like in this [godbolt example](https://godbolt.org/z/nsojqK5e1). now we don't have an overload resolution, we use compile time decision making.
+
+```cpp
+template <class T>
+std::ostream & print_ln (std::ostream & os, const T& v)
+{
+    if constexpr (requires {printable<T>;})
+    // if constexpr (printable<T>) // short form
+    {
+        v.print(os);
+    }
+    else
+    {
+        os <<v;
+    }
+    os <<'\n';
+    return os;
+}
+
+int main()
+{
+    my_type m;
+    print_ln(std::cout,m);
+    int i =100;
+    print_ln(std::cout,i);
+}
+```
+
+we can also skip the concept entirely, simply use check if this compiles and then use it. this works for simple, trivial stuff, not for complex logic.
+
+```cpp
+template <class T>
+std::ostream & print_ln (std::ostream & os, const T& v)
+{
+    if constexpr (requires {v.print(os);})
+    {
+        v.print(os);
+    }
+    else
+    {
+        os <<v;
+    }
+    os <<'\n';
+    return os;
+}
+
+int main()
+{
+    my_type m;
+    print_ln(std::cout,m);
+    int i =100;
+    print_ln(std::cout,i);
+}
+```
+
+theres a wa to constrain a type based on an internal type, in this example we have a wrapper type that allows dereferencing operator only if the wrapped type is a pointer.
+```cpp
+template <class T>
+class wrapper
+{
+    T val_;
+    public:
+    wrapper (T val):val_(val){}
+    T operator *() requires is_pointer_v<T>
+    {
+        return val_;
+    }
+};
+
+int main()
+{
+    int i = 1;
+    wrapper<int *> wi{&i};
+    std::cout << *wi << '\n';
+    wrapper<int> wi2{i};
+    std::cout << *wi2 << '\n'; //error!
+}
+```
+now we want a vector of objects that belong to the same concept. we can get this by using template alias. we can't instansite the alias with a type that doesn't satisfy the concept.
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <string>
+
+//template alias using concepts
+template<printable T> 
+using vec_of_printable = std::vector<T>;
+
+int main()
+{
+    vec_of_printable<my_type> vp {{},{},{}};
+    for (const auto & e : vp)
+    {
+        e.print(std::cout);
+    }
+    vec_of_printable<int> vi; //won't compile
+}
+```
+
+
+the relevent headers are \<concepts>,\<type_traits>,\<iterator> and \<ranges>, the concepts are grouped into
+- Core language concepts
+- Comparison concepts
+- Object concepts
+- Callable concepts
+- Ranges concepts
+
+about type_traits: we already have some stuff that seems like concepts and does compile time stuff, such as *std::is_arithmetic*. some of them might be replaced by concepts, but more likely we will get much more.
+
+Concept | Description
+---|--------
+floating_point\<T>| float, double, long double
+integral\<T>| char, int, unsigned int, bool
+signed_integral\<T>| char, int,
+unsigned_integral\<T>| unsigned char, unsigned int
+equality_comparable\<T> |
+equality_comparable_with\<T,U> | `operator==` is an equivalence, between two types
+totally_ordered\<T> | `==`,`!=`,`<`,`>`,`<=`,`>=` are total ordering
+totally_ordered_with\<T,U> | ordering between two types
+same_as\<T,U>| types are same
+derived_from\<T,U>| T is subclass of U
+convertable_to\<T,U>| T converts to U
+assignable_from\<T,U> | T can assign from U
+default_initializable\<T> | T has a default ctor
+constructable_from\<T,...> | T can be constructed from variable pack
+move_constructable\<T> | T has move ctor
+copy_constructable\<T> | T has copy ctor
+semiregular\<T> | T has deafult, copy and move ctor, and stor
+regular\<T> | T is semiregular and equality comparable
+
+
+
+in this example we try to check if our type is regular, it fails because we don't have and equality operations defined
+```cpp
+class my_type
+{
+	std::string s = "foo\n";
+	public:
+	void print( std::ostream& os ) const
+	{
+		os << "s: " << s;
+	}
+};
+static_assert(std::regular<my_type> ); //fails
+```
+
+we simply add the deafult operator to fix this
+```cpp
+class my_type
+{
+	std::string s = "foo\n";
+	public:
+	void print( std::ostream& os ) const
+	{
+		os << "s: " << s;
+	}
+    bool operator==(const my_type & ) const = default;
+};
+static_assert(std::regular<my_type> ); //passes
+```
+
+now let's look at the range concepts. we have a concept for something that we can iterate over. a vector, an array, a span and other stuff.
+```cpp
+void print_integers(const std::ranges::range auto & R)
+{
+    for (auto i : R)
+    {
+        std::cout << i << '\n';
+    }
+}
+int main()
+{   
+    std::vector<int> vi = {1,2,3,4,5};
+    print_integers(vi);
+    
+    std::array<int,5> ai = {1,2,3,4,5};
+    print_integers(ai);
+
+    std::span<int> si2 (ai);
+    print_integers(si2);
+
+    int cai[] ={1,2,3,4,5};
+    std::span<int> si3 (cai);
+    print_integers(si3);
+
+    ranges::iota_view iv{1,6};
+    print_integers(iv);
+    
+}
+```
+
 
 
 ### Reading Concepts
+
 > - requires expressions
+> - clause: a boolean expression
+>   - used after template and method declarations
+>   - clauses can contain an expression
+> - expression: syntax for describing type constrains
+
+a requires expression has a sequence of requirements, it can have a parameter sequence, but it it's not necessary.
+
+heres a more realistic version of the printable concept, we declare required member functions and required free functions that must exists.
+
+```cpp
+template <typename T>
+concept printable = requires(std::ostream & os, T v)
+{
+    //all of these must be true, they must compile
+    v.print(os) ; //member function
+    format(v); // free function
+    std::movable<T>;
+    typename T::format; //declare a type called format
+};
+
+template <class T>
+concept output_streamable = requires(std::ostream & os, T v)
+{
+    //this compiles and gives the result we expect, trailing return type syntax.
+    {os << v} -> std::same_as<std::ostream&>;
+}
+```
+
+#### Constraint Composition
+
+- atomic constraints
+- conjunction constraints (and)
+- disjunction constraints (or)
+
+```cpp
+//disjunction with '||' operator
+template <typename T>
+concept printable_or_streamable = requires printable<T> || output_streamable<T>;
+
+//disjunction with 'or'
+template <typename T>
+concept printable_or_streamable = requires printable<T> or output_streamable<T>;
+
+//conjunction
+template <typename T>
+concept fully_outputable = requires printable<T> and output_streamable<T>;
+```
+
+we can reactor requirements around to make concepts more readable.
+```cpp
+template <typename T>
+concept printable = 
+    std::movable<T> and //bring this outside
+    requires(std::ostream & os, T v)
+    {
+        v.print(os) ; //member function
+        format(v); // free function
+    };
+```
+another concept example, *std::derived_from*.
+```cpp
+template <class Derived, class Base>
+concept derived_from = 
+    std::is_base_of_v<Base,Derived> and
+    std::is_convertible_v<const volatile Derived *, const volatile Base*>
+```
+the *std::os_arithmetic* is a concept that is a type trait that checks if the type has math operations (plus, minus,etc...), but unfortunately, also includes bool and char.
+
+ranges and concepts example. how does the following code work?
+```cpp
+std::vector<int> vi {0,1,2,3,4,5,6};
+
+auto is_even = [](int i){return 0 == i %2;};
+for (int i : ranges::filter_view(vi, is_even))
+{
+    std::cout << i  << " ";
+}
+```
+lets look at *std::ranges::filter_view*,it uses some other concepts as part of the defintion. it also has a requires clause it's derived from *view_interface* and follows the CRTP pattern. but what is that really? we can't inherit from a concept!
+```cpp
+template<input_range V, indirect_unary_predicate<Iterator_t<V>> Pred>
+    requires view<V> && is_object_v<Pred>
+    class filter_view: public view_interface<filter_view<v,Pred>>
+    {
+        //...
+    };
+```
+lets looks at it more. does it get better? we have way to bring out the derived class. there are functions that are specialized depending on the derived class.
+```cpp
+template <class D>
+    requires is_class_v<D> && same<D, remove_cv_t<D>>
+    class view_interface
+    {
+        constexpr const D& derived () const noexcept
+        {
+            return static_cast<const D&>(*this);
+        }
+
+        //concept based specialization of operator[]
+        //only applies if subclass is a random_access_range
+        template<random_access_range R = const D>
+        constexpr decltype(auto) operator[](range_difference_t<R> n) const
+        {
+            return ranges::begin(derived())[n];
+        }
+        //... more...
+    };
+```
+there are some cases when we can't use CRTP. like when the whole class must be known for some reason.
+
 ### Writing Concepts
 > - concept details 102
 > - writing _sleep_for_ with concepts
@@ -1670,5 +1998,6 @@ Pointers and concepts
 > - impact on multi-paradigm design in c++
 > - concept serialization
 
-
 </details>
+
+[Main](README.md)

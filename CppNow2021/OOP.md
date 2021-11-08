@@ -3,6 +3,8 @@ ignore these words in spell check for this file
 // cSpell:ignore ostringstream affordance O’Dwyer Stringize Eerd binarize iset Hyurum
  -->
 
+[Main](README.md)
+
 OOP
 
 ## Keynote: SOLID, Revisited - Tony Van Eerd
@@ -416,3 +418,5 @@ Protocol oriented programming in swift. abstractions, models, etc... (swift exam
 Also a Rust example with traits.
 
 </details>
+
+[Main](README.md)

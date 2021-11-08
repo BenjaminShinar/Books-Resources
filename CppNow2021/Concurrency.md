@@ -2,6 +2,8 @@
 // cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd
  -->
 
+[Main](README.md)
+
 ## Adventures in SIMD-Thinking - Bob Steagall
 
 <details>
@@ -373,3 +375,5 @@ using the _fused_multiply_add_ function from before. another sliding window algo
 benchmarking again, checking against [Intel MKL Math Kernel Library](https://en.wikipedia.org/wiki/Math_Kernel_Library). we get a nice speed up.
 
 </details>
+
+[Main](README.md)
