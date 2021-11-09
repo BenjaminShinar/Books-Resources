@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Gábor Horváth Andrzej Krzemieński cassert Dargo invokable default_initializable Clonable
+// cSpell:ignore Gábor Horváth Andrzej Krzemieński cassert Dargo rtime
 -->
 
 [Main](README.md)
@@ -1991,6 +1991,69 @@ there are some cases when we can't use CRTP. like when the whole class must be k
 > - concept details 102
 > - writing _sleep_for_ with concepts
 > - good concepts, bad concepts
+
+here's a nice quote:
+> "Everything Should be made as simple as possible, but not simpler" - Albert Einstein (maybe)
+
+how are constraints evaluated? set of steps, first normalizing,then subsumption,which is some ordering of the concepts,
+
+
+> - concepts subsume, arbitrary expression do not
+> - general principle is "'more constrained' is better match"
+
+[godbolt example](https://godbolt.org/z/z7bT1aas6), the *std::signed_integral* is "stronger" than *std::integral* in terms of specialization, because it contains the lesser concept (it's defined in terms of that).
+
+if we pull up the type_trait, things become ambiguous, because type traits don't subsume.
+```cpp
+template <class T>
+requires std::is_integral_v<T>
+struct wrapper<T>{};
+```
+
+we want concepts to be more than one operation, they should express **more** than just what an algorithm needs, and should be based on some domain. operations come in groups, numbers have mathematical operations (plus, minus, multiply, etc...), and containers have diffrent operatins (insert, erase, iteration, etc...).
+
+getting concepts right is hard to do, it's done in iterations, and requires a lot of compiling.
+
+we will try to make a concept for *std::chrono::sleep_for*, which takes either a *time_duration* or a *time_point*. maybe we want to use boost data types instead.
+
+```cpp
+// sleep for duration
+void sleep_for(time_duration d);
+
+// sleep until time
+void sleep_for(time_point t);
+```
+[godbolt example](https://godbolt.org/z/3vreqf)
+
+under the hood there are *sleep_for* and *sleep_until* with different signatures.
+so we go and try to reverse engineer the requirements for the function and see how the types are really used.
+
+
+requirements:
+> - a constant *zero* member function to return th zero value
+> - a comparison operator (less equal)
+> - ability to cast/retrive the seconds and milliseconds of the duration
+> - a constant *count* function that cast to *long* and *std::time_t*
+
+lets try to make a concept:
+[godbolt example](https://godbolt.org/z/1Tvefcasb)
+
+```cpp
+#include <concepts>
+#include <chrono>
+
+template <class T>
+concept time_duration = std::totally_ordered<T> and requires(const T& v) 
+{
+   v.count();
+   v.zero();
+};
+
+static_assert( time_duration<std::chrono::seconds> );
+```
+
+(26:30)
+
 ### Designing with Concepts
 > - what is design?
 > - review of some 'design principles'

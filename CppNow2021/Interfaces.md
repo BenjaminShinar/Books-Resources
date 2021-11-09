@@ -352,7 +352,7 @@ struct Connection
     std::optional<DataCache> dataCache_;
     void resetCache()
     {
-        if (dataCache_) //if optinal value exists
+        if (dataCache_) //if optional value exists
         {
             dataCache_.reset(); //oops! bug! not we don't have a cache at all.
             //dataCache_->reset(); //this is what we wanted!
@@ -675,7 +675,7 @@ template <class T2, std::size_t N>
 constexpr void swap(T2 (&a)[N], T2 (&b)[N]) noexcept;
 ```
 
-somtimes multiple overloads are legitmate, but one is preferable, so we can use _std::enable_if_ and SFINEA[^1].
+somtimes multiple overloads are legitmate, but one is preferable, so we can use _std::enable_if_ and SFINAE[^1].
 
 things that we will see this lecture
 
@@ -738,7 +738,7 @@ struct is_scalar : integral_constant<bool,
     >
 ```
 
-SFINEA[^1], void_t, the detection idiom a way, to use something like 'required' in pre c++20 standards (the new syntax makes things easier to read a and write). the default is false, but we specialize on the true types.
+SFINAE[^1], void_t, the detection idiom a way, to use something like 'required' in pre c++20 standards (the new syntax makes things easier to read a and write). the default is false, but we specialize on the true types.
 
 ```cpp
 template <typename T,typename =void>
