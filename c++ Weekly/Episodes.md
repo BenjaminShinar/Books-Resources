@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg pscii endl constexpr decltype mutex noexcept struct
+// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg pscii endl constexpr decltype mutex noexcept struct smallpt
  -->
 
 # C++ Weekly takeaways
@@ -867,3 +867,18 @@ int main()
     const not_pointer auto val2 = get_some_pointer(); // error!
 }
 ```
+</details>
+
+## C++ Weekly - Ep 297 - C++ Homework: `auto` All The Things
+
+<details>
+<summary>
+an home excerisice to make everything `auto` and see how it goes.
+</summary>
+
+not a best practice episode, rather an exercise for us to follow. we should find a project and make everything auto. the variables, the return type of function, and the parameters.
+
+the example given is a ray tracer [smallpt](https://www.kevinbeason.com/smallpt/), which is 99 lines of code. we should try and make everything auto, use concepts if it makes sense. and try to replace everything with auto. see where it works, where it doesn't, where it makes sense and why.
+
+[MyCode](ep297_smallpt.cpp)
+</details>
