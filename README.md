@@ -29,7 +29,7 @@ there're also **webRTC** for video/voice, and **webTransport** as a possible upg
 
 ### IBM Kubernetes Essentials
 
-<details>
+<!-- <details> -->
 <summary>
 IBM Kubernetes
 </summary>
@@ -37,7 +37,6 @@ IBM Kubernetes
 [Kubernetes Essentials](https://youtube.com/playlist?list=PLOspHqNVtKABAVX4azqPIu6UfsPzSu2YN)
 
 #### Kubernetes Explained
-[Sai Vennam - Kubernetes Explained](https://youtu.be/aSrqRSk43lY)
 
 Kubernetes is an orchastration tool to manage containerized applications
 
@@ -80,7 +79,6 @@ we have pods, deployments and services as resources of kubernetes.
 
 
 #### How does Kubernetes create a Pod?
-[Whitney Lee - How does Kubernetes create a Pod?](https://youtu.be/BgrQ16r84pM)
 
 how are pods created by kubernetes?
 
@@ -108,7 +106,6 @@ the last part of the Control node is the controller manager. it has the replicat
   - CRI - container runtime engine
 
 #### Kubernetes Ingress in 5 Minutes
-[Sai Vennam - Kubernetes Ingress in 5 Minutes](https://youtu.be/NPFbYpb0I7w)
 
 assume we have a service with three pods, 
 
@@ -118,8 +115,8 @@ NLB: node work balancer.
 
 ingress is resource, not a service type.\
 it's set of rules, like nginx reverse proxy, it uses a load balancer, has path based routing and more stuff.
+
 #### What Is Helm
-[David Okun - What is Helm?](https://youtu.be/fy8SHvNZGeE)
 
 Helm is a Kubernetes package manager that makes deployment easier.
 
@@ -170,4 +167,47 @@ helm rollback
 helm package
 ```
 
+#### Kubernetes vs. Docker: It's Not an Either/Or Question
+
+
+we still use all the knowledge we got when we used docker, we build on top-of it to get a better deployment.
+
+it helps us with scaling up,orchestration replaces scripts that we would have written otherwise. deployment is easier, development is easier, and montiroing is done for us built-in.
+
+a deployment is always alive, it's the desired state, no matter what happends, kubernetes will try to get back to that state.
+
+#### Kubernetes Deployments: Get Started Fast
+
+kubernetes resources.
+
+deployment -> replica set. rolling update.
+
+debugging
+- kubectl logs
+  - *--previous* - from a crushed container
+- kubectl describe pod
+- kube exec -it sample-pod -- /bin/bash
+
+#### Advantages of Managed Kubernetes
+
+#### Using IBM CloudLabs for Hands-on Kubernetes Training on IBM Cloud
+
+#### Kubernetes and OpenShift: What's the Difference?
+
+openshift by redhad (not open source), OKD - origin kubernetes deployment.
+
+kubernetes:source code, image registry, ci-cd cycle.
+
+openshift is opinionated, it has defaults, takes less time. doesn't run everything as root.
+
+#### Containerization Explained
+
+not only docker. vms vs containers. how much resources are used.
+
+#### Container Orchestration Explained
+
+applications, orchestrator.
+the development team cares about the applications, the operation teams cares about a whole lot more. deployment, scaling, networking (load balances, service discovery), insight, maintenance, plug-in configurations.
+
+service mesh.
 </details>

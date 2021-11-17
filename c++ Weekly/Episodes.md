@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg pscii endl constexpr decltype mutex noexcept struct smallpt
+// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg pscii endl constexpr decltype mutex noexcept struct smallpt abidiff nullptr rvalue IIFE Wconversion
  -->
 
 # C++ Weekly takeaways
@@ -882,3 +882,25 @@ the example given is a ray tracer [smallpt](https://www.kevinbeason.com/smallpt/
 
 [MyCode](ep297_smallpt.cpp)
 </details>
+
+
+## C++ Weekly - Ep 298 - Detecting ABI Changes With abidiff
+
+<details>
+<summary>
+A tool to detect ABI changes
+</summary>
+
+[Detecting ABI Changes With abidiff](https://youtu.be/GkB3TgkAN0M)
+
+
+ABI - application binary interface.
+
+abidiff is an debian tool, getting the source code and building it. we can create a header and a cpp file and create a ".o" files, then we the header and create a different file. running the tool shows us some changes in functions and symbols. this requires that the functions are used.
+
+has some other stuff
+
+</details>
+
+
+
