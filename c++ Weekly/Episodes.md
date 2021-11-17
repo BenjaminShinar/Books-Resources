@@ -898,7 +898,7 @@ ABI - application binary interface.
 
 abidiff is an debian tool, getting the source code and building it. we can create a header and a cpp file and create a ".o" files, then we the header and create a different file. running the tool shows us some changes in functions and symbols. this requires that the functions are used.
 
-has some other stuff
+has some other stuff.
 
 </details>
 
