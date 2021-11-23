@@ -35,7 +35,7 @@ This is bad. Use ‘\n’ instead.
 
 ## C++ Weekly - Ep 11 - std::future Part 2
 
-## C++ Weekly - Ep 12 - C++17's std::any
+## C++ Weekly - Ep 12 - C++17's _std::any_
 
 ## C++ Weekly - Ep 13 - Fibonacci You're Doing It Wrong
 
@@ -47,9 +47,9 @@ This is bad. Use ‘\n’ instead.
 
 ## C++ Weekly - Ep 17 - C++17's _std::invoke_
 
-## C++ Weekly - Ep 18 - C++17's constexpr if
+## C++ Weekly - Ep 18 - C++17's _constexpr if_
 
-## C++ Weekly Special Edition - Using C++17's constexpr if
+## C++ Weekly Special Edition - Using C++17's _constexpr if_
 
 ## C++ Weekly - Ep 19 - C++14 For The Commodore 64
 
@@ -69,13 +69,13 @@ This is bad. Use ‘\n’ instead.
 
 ## C++ Weekly - Ep 27 - C++17 Changes To Sequence Containers
 
-## C++ Weekly - Ep 28 - C++17's \[\[fallthrough]] Attribute
+## C++ Weekly - Ep 28 - C++17's _\[\[fallthrough]]_ Attribute
 
 [[fallthrough]]
 
 Tells the compiler we know we have a fallthrough in our switch case.
 
-## C++ Weekly - Ep 29 - C++17's \[\[maybe_unused]] Attribute
+## C++ Weekly - Ep 29 - C++17's _\[\[maybe_unused]]_ Attribute
 
 <details>
 <summary>
@@ -85,7 +85,7 @@ Means that this variable might not be used in all version (build vs debug), this
 
 </details>
 
-## C++ Weekly - Ep 30 - C++17's \[\[nodiscard]] Attribute
+## C++ Weekly - Ep 30 - C++17's _\[\[nodiscard]]_ Attribute
 
 ## C++ Weekly - Ep 31 - IncludeOS
 
@@ -221,7 +221,7 @@ Std::from_chars - takes a char\* (begin and end) and returns a numeric result.
 Std::shared_mutex, Std::shared_timed_mutex (for reader / writer)
 Math stuff: specialized stuff with overloads
 
-## C++ Weekly - Ep 73 - std::string_view
+## C++ Weekly - Ep 73 - _std::string_view_
 
 Use std::string_view instead of const std::string &s.
 If we don’t need any ‘std::string’ things and we just need to look at a string.
@@ -260,7 +260,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 85 - Fuzz Testing
 
-## C++ Weekly - Ep 87 - std::optional
+## C++ Weekly - Ep 87 - _std::optional_
 
 ## C++ Weekly - Ep 88 - Don't Forget About puts
 
@@ -298,7 +298,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 106 - Disabling Move From const
 
-## C++ Weekly - Ep 107 - The Power of =delete
+## C++ Weekly - Ep 107 - The Power of _'=delete'_
 
 ## C++ Weekly - Ep 108 - Understanding emplace_back
 
@@ -354,7 +354,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 134 - The Best Possible Way To Create A Visitor?
 
-## C++ Weekly - Ep 135 - {fmt} is Addictive! Using {fmt} and spdlog
+## C++ Weekly - Ep 135 - *{fmt}* is Addictive! Using *{fmt}* and spdlog
 
 ## C++ Weekly - Ep 137 - C++ Is Not An Object Oriented Language
 
@@ -374,7 +374,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 145 - Semi-Automatic _constexpr_ and _noexcept_
 
-## C++ Weekly - Ep 146 - C++20's std::to_pointer
+## C++ Weekly - Ep 146 - C++20's *std::to_pointer*
 
 ## C++ Weekly - Ep 147 - C++ And Python Tooling
 
@@ -444,7 +444,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 180 - Whitespace Is Meaningless
 
-## C++ Weekly - Ep 181 - Fixing Our bind_front with std::invoke
+## C++ Weekly - Ep 181 - Fixing Our *std::bind_front* with *std::invoke*
 
 ## C++ Weekly - Ep 182 - Overloading In C and C++
 
@@ -755,7 +755,7 @@ int main()
 
 </details>
 
-## C++ Weekly - Ep 292 - Safely Using 'goto' In C++
+## C++ Weekly - Ep 292 - Safely Using _'goto'_ In C++
 
 <details>
 <summary>
@@ -820,7 +820,7 @@ finally, thinking about the 'jump' functionality for random number generators (s
 
 </details>
 
-## C++ Weekly - Ep 296 - Constraining `auto` in C++20
+## C++ Weekly - Ep 296 - Constraining _'auto'_ in C++20
 
 <details>
 <summary>
@@ -869,7 +869,7 @@ int main()
 ```
 </details>
 
-## C++ Weekly - Ep 297 - C++ Homework: `auto` All The Things
+## C++ Weekly - Ep 297 - C++ Homework: _'auto'_ All The Things
 
 <details>
 <summary>
@@ -893,7 +893,6 @@ A tool to detect ABI changes
 
 [Detecting ABI Changes With abidiff](https://youtu.be/GkB3TgkAN0M)
 
-
 ABI - application binary interface.
 
 abidiff is an debian tool, getting the source code and building it. we can create a header and a cpp file and create a ".o" files, then we the header and create a different file. running the tool shows us some changes in functions and symbols. this requires that the functions are used.
@@ -902,5 +901,19 @@ has some other stuff.
 
 </details>
 
+## C++ Weekly - Ep 299 - C++ Homework: _'const'_ All The Things
 
+<details>
+<summary>
+an home excerisice to make everything `const` and see how it goe
+</summary>
 
+[Homework: const All The Things](https://youtu.be/ZYtVuVPOY4A)
+
+like episode 297, in addition to 'auto' everything, we also make everything 'const'. we go through everything in the code and make everything const.
+we will need to think about making everything const (except maybe member variables). we shouldn't const_cast, but we might need to re-organize code to make things const.
+
+we can do it together with the version that we made auto or a new version. 
+
+</details>
+ 
