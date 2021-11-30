@@ -5,6 +5,7 @@ ignore these words in spell check for this file
 
 [Main](README.md)
 
+
 ## Algorithms from a Compiler Developer's Toolbox - Gábor Horváth
 
 <details>
@@ -2060,6 +2061,30 @@ static_assert( time_duration<std::chrono::seconds> );
 > - concepts and dependencies
 > - impact on multi-paradigm design in c++
 > - concept serialization
+
+
+code readability and evolution
+```cpp
+auto result = some_function(); //return type unknown, flexible
+int result = some_function(); //return type known, not flexible at all
+time_duration auto result = some_function(); //return type unknown, but intent is clear, still flexible
+```
+this ties into the Liskov substition principle: concepts vs inheritance. however, concepts don't model pre and post conditions, so we can't prove substitutability in compile time (maybe contracts in the future could help).
+
+information hiding - and idea from the 70's that we kind of messed up on following through. concepts might bring us closer to this goal of abstraction.
+
+Multi-paradigm design:
+>"Most designs in fact have a nontrivial componenet that is not object-oriented"\
+> James O. Coplien
+
+variability - positive and negative variations
+
+concept serialization:\
+was once OO based, where each class knew how to serialize itself, using archive-types.
+but can we *conceptify* this? what would it give us?
+
+
+what about the future of concepts?
 
 </details>
 

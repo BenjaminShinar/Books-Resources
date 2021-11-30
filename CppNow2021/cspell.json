@@ -17,7 +17,8 @@
     "ignoreWords": [
         "CRTP",
         "SIMD",
-        "BRIL"
+        "BRIL",
+        "liskov"
     ],
     "import": []
 }

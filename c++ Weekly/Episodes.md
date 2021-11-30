@@ -917,3 +917,19 @@ we can do it together with the version that we made auto or a new version.
 
 </details>
  
+ ## C-- Weekly - Ep 300 - The Least Portable Programming Language?
+
+ <details>
+ <summary>
+sphinx C-- is a language that combines high and low level features, and it nearly impossible to port.
+ </summary>
+ 
+ [The Least Portable Programming Language?](https://youtu.be/V0z9PKFe4jY)
+
+[C--](https://en.wikipedia.org/wiki/C--) is a programming language that is used for compilers, but there is also [sphinx c--](http://c--sphinx.narod.ru/indexe.htm), which was maintained almost until 2001, it's a high-level language, but it's un-portable.
+
+it un-portable because it expects us to write instructions to registers directly and talk directly to hardware, but it also has structs and function. we have internal assembly commands which we can run from the code. it's very much tied to 32-bit computers.
+
+now we continue [episode 286](%C++-Episodes.md), he used a function to write frames to the 2nd screen.
+</details>
+ 
