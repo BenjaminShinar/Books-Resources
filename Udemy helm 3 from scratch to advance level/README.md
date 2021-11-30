@@ -382,7 +382,6 @@ kubectl edit service grafana
 #change to NodePort
 ```
 
-
 ## Extra TakeAways
 
 ### Helm cli
