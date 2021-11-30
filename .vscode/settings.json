@@ -22,7 +22,8 @@
     "rvalues",
     "struct",
     "t",
-    "unscoped"
+    "unscoped",
+    "Kubernetes"
   ],
   "cSpell.ignoreWords": [
     "Amortised",

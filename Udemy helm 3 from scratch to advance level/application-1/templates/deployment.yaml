@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }}
+  labels: {{- include "labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.deployment.replicaCount }}
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: "{{ .Values.deployment.image.app }}:{{ .Values.deployment.image.version }}"
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+        {{- if eq .Values.container1.enabled true -}}
+        {{ include "container1" . | nindent 8 }}
+        {{- else -}}
+        {{ include "container2" . | nindent 8 }}
+        {{- end -}}
