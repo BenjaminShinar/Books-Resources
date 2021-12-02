@@ -1,0 +1,21 @@
+{
+    "version": "0.2",
+    "ignorePaths": [],
+    "dictionaryDefinitions": [],
+    "dictionaries": [],
+    "words": [
+        "cloudguard",
+        "eksctl",
+        "Kube",
+        "kubeconfig",
+        "nodegroup",
+        "subchart"
+    ],
+    "ignoreWords": [
+        "IMDS",
+        "OIDC",
+        "configmap",
+        "xlarge"
+    ],
+    "import": []
+}

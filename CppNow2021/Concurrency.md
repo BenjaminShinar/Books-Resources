@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd
+// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq
  -->
 
 [Main](README.md)
@@ -49,12 +49,12 @@ getting started with some boiler plate code and functions
 #include <type_traits>
 #ifdef __OPTIMIZE__
     #include <immintrin.h>
-    #define KEWB_FORECE_INLINE inline __attribute__((__always_inline__))
+    #define KEWB_FORCE_INLINE inline __attribute__((__always_inline__))
 #else
     #define __OPTIMIZE__
     #include <immintrin.h>
     #undef __OPTIMIZE__
-    #define KEWB_FORECE_INLINE inline
+    #define KEWB_FORCE_INLINE inline
 #endif
 
 namespace simd {
@@ -100,76 +100,76 @@ functions have different implementations for float and intgers, but are function
 - _minimum_,_maximum_ - register with min/max values of the two register
 
 ```cpp
-KEWB_FORECE_INLINE rf_512 load_value(float v)
+KEWB_FORCE_INLINE rf_512 load_value(float v)
 {
     return _mm512_set1_ps(v);
 }
 
-KEWB_FORECE_INLINE ri_512 load_value(int32_t i)
+KEWB_FORCE_INLINE ri_512 load_value(int32_t i)
 {
     return _mm512_set1_epi32(i);
 }
 
-KEWB_FORECE_INLINE rf_512 load_from(float const * ptr_float)
+KEWB_FORCE_INLINE rf_512 load_from(float const * ptr_float)
 {
     return _mm512_loadu_ps(ptr_float);
 }
 
-KEWB_FORECE_INLINE ri_512 load_from(float const * ptr_int)
+KEWB_FORCE_INLINE ri_512 load_from(float const * ptr_int)
 {
     return _mm512_loadu_epi32i(ptr_int);
 }
 
-KEWB_FORECE_INLINE rf_512 masked_load_from(float const * ptr_float,rf_512 fill, msk_512 mask)
+KEWB_FORCE_INLINE rf_512 masked_load_from(float const * ptr_float,rf_512 fill, msk_512 mask)
 {
     return _mm512_mask_loadu_ps(fill,(__mmask16) mask,ptr_float);
 }
 
-KEWB_FORECE_INLINE rf_512 masked_load_from(float const * ptr_float,float fill, msk_512 mask)
+KEWB_FORCE_INLINE rf_512 masked_load_from(float const * ptr_float,float fill, msk_512 mask)
 {
     return _mm512_mask_loadu_ps(_mm512_set1_ps(fill),(__mmask16) mask,ptr_float);
 }
 
-KEWB_FORECE_INLINE void store_to(float * ptr_destination,rf_512 r)
+KEWB_FORCE_INLINE void store_to(float * ptr_destination,rf_512 r)
 {
     _mm512_storeu_ps(ptr_destination,r)
 }
 
-KEWB_FORECE_INLINE void store_to(float * ptr_destination,rf_512 r,msk_512 mask)
+KEWB_FORCE_INLINE void store_to(float * ptr_destination,rf_512 r,msk_512 mask)
 {
     _mm512_mask_storeu_ps(ptr_destination,(__mmask16)mask,r)
 }
 
 template <unsigned A = 0,....,unsigned P =0>
-KEWB_FORECE_INLINE constexpr uint32_t make_bit_mask()
+KEWB_FORCE_INLINE constexpr uint32_t make_bit_mask()
 {
     //.. to much code for me to write, maybe I could use a folding expression here...
 }
 
-KEWB_FORECE_INLINE rf_512 blend(rf_512 a,rf_512 b,msk_512 mask)
+KEWB_FORCE_INLINE rf_512 blend(rf_512 a,rf_512 b,msk_512 mask)
 {
     return _mm512_mask_blend_ps((__mmask16)mask,a,b);
 }
 
-KEWB_FORECE_INLINE rf_512 permute(rf_512 r,ri_512 perm)
+KEWB_FORCE_INLINE rf_512 permute(rf_512 r,ri_512 perm)
 {
     return _mm512_permutexvar_ps(perm,r);
 }
 
-KEWB_FORECE_INLINE rf_512 masked_permute(rf_512 a,rf_512 b,ri_512 perm,msk_512 mask)
+KEWB_FORCE_INLINE rf_512 masked_permute(rf_512 a,rf_512 b,ri_512 perm,msk_512 mask)
 {
     return _mm512_mask_permutexvar_ps(a,(__mmask16)mask,prem,b);
 }
 
 template <unsigned A,....,unsigned P>
-KEWB_FORECE_INLINE constexpr ri_512 make_perm_mask()
+KEWB_FORCE_INLINE constexpr ri_512 make_perm_mask()
 {
     //static assert
     retrun _mmsetr_epi32(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P)
 }
 
 template<int R>
-KEWB_FORECE_INLINE rf_512 rotate(rf_512 r)
+KEWB_FORCE_INLINE rf_512 rotate(rf_512 r)
 {
     if constexpr((R%16)==0)
     {
@@ -189,73 +189,73 @@ KEWB_FORECE_INLINE rf_512 rotate(rf_512 r)
 }
 
 template<int R>
-KEWB_FORECE_INLINE rf_512 rotate_down(rf_512 r)
+KEWB_FORCE_INLINE rf_512 rotate_down(rf_512 r)
 {
     static_assert(R >= 0)
     return rotate<-R>(r);
 }
 
 template<int R>
-KEWB_FORECE_INLINE rf_512 rotate_up(rf_512 r)
+KEWB_FORCE_INLINE rf_512 rotate_up(rf_512 r)
 {
     static_assert(R >= 0)
     return rotate<R>(r);
 }
 
 template<int S>
-KEWB_FORECE_INLINE rf_512 shift_down(rf_512 r)
+KEWB_FORCE_INLINE rf_512 shift_down(rf_512 r)
 {
     static_assert(S >= 0 && S<=16)
     return blend(rotate_down<S>(r),load_value(0.0f), shift_down_blend_mask<S>());
 }
 
 template<int S>
-KEWB_FORECE_INLINE rf_512 shift_up(rf_512 r)
+KEWB_FORCE_INLINE rf_512 shift_up(rf_512 r)
 {
     static_assert(S >= 0 && S<=16)
     return blend(rotate_up<S>(r),load_value(0.0f), shift_up_blend_mask<S>());
 }
 
 template<int S>
-KEWB_FORECE_INLINE rf_512 shift_down_with_carry(rf_512 a,ref_512 b)
+KEWB_FORCE_INLINE rf_512 shift_down_with_carry(rf_512 a,ref_512 b)
 {
     static_assert(S >= 0 && S<=16)
     return blend(rotate_down<S>(a),rotate_down<S>(b), shift_down_blend_mask<S>());
 }
 
 template<int S>
-KEWB_FORECE_INLINE rf_512 shift_up_with_carry(rf_512 a,ref_512 b)
+KEWB_FORCE_INLINE rf_512 shift_up_with_carry(rf_512 a,ref_512 b)
 {
     static_assert(S >= 0 && S<=16)
     return blend(rotate_up<S>(a),rotate_up<S>(b), shift_up_blend_mask<S>());
 }
 
 template<int S>
-KEWB_FORECE_INLINE void in_place_shift_down_with_carry(rf_512 &a,ref_512 &b)
+KEWB_FORCE_INLINE void in_place_shift_down_with_carry(rf_512 &a,ref_512 &b)
 {
     static_assert(S >= 0 && S<=16)
     constexpr msk_512 z_mask = (0xFFFFu >> (unsigned)S);
-    constexpr msk_512 b_mask = ~z_mask & 0xFFFFU;
+    constexpr msk_512 b_mask = ~z_mask & 0xFFFFu;
     ri_512 perm = make_shift_permutations<S,b_mask> ()
     a = _mm512_permutex2var_ps(a, perm,b);
     b = _mm512_maskz_permutex2var_ps((__mmask16)z_mask,b,perm,b)
 }
 
-KEWB_FORECE_INLINE rf_512 add(rf_512 a,ref_512 b)
+KEWB_FORCE_INLINE rf_512 add(rf_512 a,ref_512 b)
 {
     return _mm512_add_ps(a,b);
 }
 
-KEWB_FORECE_INLINE rf_512 sub(rf_512 a,ref_512 b)
+KEWB_FORCE_INLINE rf_512 sub(rf_512 a,ref_512 b)
 {
     return _mm512_sub_ps(a,b);
 }
 
-KEWB_FORECE_INLINE rf_512 minimum(rf_512 a,ref_512 b)
+KEWB_FORCE_INLINE rf_512 minimum(rf_512 a,ref_512 b)
 {
     return _mm512_min_ps(a,b);
 }
-KEWB_FORECE_INLINE rf_512 maximum(rf_512 a,ref_512 b)
+KEWB_FORCE_INLINE rf_512 maximum(rf_512 a,ref_512 b)
 {
     return _mm512_max_ps(a,b);
 }
@@ -268,7 +268,7 @@ now lets build some functions that use those building blocks
 - _compare_with_exchange_ - usefull for sorting, we can sort pairs of positions.
 
 ```cpp
-KEWB_FORECE_INLINE rf_512 compare_with_exchange(rf_512 vals, ri_512 perm, msk_512 mask)
+KEWB_FORCE_INLINE rf_512 compare_with_exchange(rf_512 vals, ri_512 perm, msk_512 mask)
 {
     rf_512 exch =permute(vals,perm); //create a permuted register.
     rf_512 v_min = minimum(vals,exch); // create register of minimums
@@ -299,7 +299,7 @@ we can use this sorting network to sort our registers efficiently.
 (this really reminds me of algorithms to get number of bits with set bit masks)
 
 ```cpp
-KEWB_FORECE_INLINE rf_512 sort_two_lanes_of_8(rf_512 vals)
+KEWB_FORCE_INLINE rf_512 sort_two_lanes_of_8(rf_512 vals)
 {
     const ri_512 perm_0 = make_perm_mam<1,0,3,2,5,4,7,6,9,8,11,10,13,12,15,14>();
     constexpr mask_512 mask_0 = make_bit_mast<0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1>();
@@ -375,5 +375,120 @@ using the _fused_multiply_add_ function from before. another sliding window algo
 benchmarking again, checking against [Intel MKL Math Kernel Library](https://en.wikipedia.org/wiki/Math_Kernel_Library). we get a nice speed up.
 
 </details>
+
+## Parallelism on Ranges: Should We? - Giannis Gonidelis
+
+<!-- <details> -->
+<summary>
+
+</summary>
+
+[Parallelism on Ranges: Should We?](https://youtu.be/gA4HaQOlmSY),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/Parallelism-on-Ranges.pptx)
+
+[HPX](https://github.com/STEllAR-GROUP/hpx) - concurrency and parrallism.
+
+### Algorithms and Ranges
+
+the stl came into life in 1998, with algorithms, containers and iterators. in c++17 parallelism algorithm were included in the stl, and the execution policies were introducted into the world. but we still didn't have:
+
+> - Composability: Coding multiple sequencies is still inconvenient.
+> - Performant Composability: immediate effect of lack of Composability.
+
+[range-v3](https://github.com/ericniebler/range-v3) is a library that provides Composability. this makes code more readable, and has the potential to make it much faster.
+
+> A range is: 
+> - an abstraction of "a sequence of items"
+> - something iterable
+>
+> A range is actually:
+> - a begin iterator & sentinel pair, where sentinel:
+>   - an end iterator of the same type as begin iterator
+>   - a value
+>   - a distance from the begin iterator
+
+in a `c_string` the begin iterator is the start of the chars, and the sentinel is the null-terminator. it can also be the address of the null terminator, or the distance from the start.
+
+
+we no longer need to pass around the begin and end iterator
+```c++
+std::vector<int> v{1,2,3,4};
+std::find(std::begin(v),std::end(v),3);
+// ranges
+ranges::find(v,3);
+ranges::find(begin(v), sentinel<int>{4},3);
+```
+
+for composability, in this example we want to filter squared values which are odd (keep only even squared elements). with stl algorithms, we need to pass around the iterators, and we have temporary values. ranges don't require all that.
+```cpp
+std::vector<int> vi {1,2,3,4,5};
+std::transform(std::begin(vi),std::end(vi),std::begin(vi),[](int i){return i*i;});
+auto res = std::remove_if(std::begin(vi),std::end(vi),[](int i){return i%2 ==1;});
+
+//ranges
+auto rng = vi |
+ranges::view::transform([](int i){return i*i;}) |
+ranges::view::remove_if([](int i){return i%2==1;});
+std::cout<< rng <<'\n';
+```
+
+views are lazy ranges algorithms that evaluate on demand, we only calculate it when we call it. range adaptors take a range and return a view. we employ the pipe operator, just like unix.
+
+in c++20, ranges v3 are partial standardized, but unfortunately, we don't have execution policies with them.
+
+### HPX
+
+HPX, a standard conforming library for concurrency and parallism. it follows the same api as the stanard library. but it does it better. is's also a general purpose library, works for local development and distributed systems.\
+provides parallelism and asynchrony, with stl parallel algorithms and "futures" that go past what other libraries provide.
+
+- Reallocate work on the fly, avoid static scheduling.
+- Always keep your threads busy, don't let them idle.
+- dynamic scheduling of tasks, removing barriers.
+
+
+uses the standard execution policies:
+- sequential execution (`seq`)
+- parallel execution (`par`)
+- vector execution (`unseq`)
+- parallel vector execution (`par_unseq`)
+- asynchronous executuion (`par(task)`)
+  - this is something we didn't have until now.
+
+more control to the user over the parallelization.
+
+we no longer block the execution, and the execution waits until we need the future.
+```cpp
+future<int> f1 =async(&fun);
+
+// or
+
+future<void> f2= for_each(par(task), std::begin(v),std::end(v), /* some lambda*/);
+
+
+f2.get();
+//or
+f2.then(
+    /* do next thing*/
+)
+```
+
+hpx algorithm support
+```cpp
+hpx::reduce(par,std::cbegin(v),std::cend(v),/*some lambda*/);
+//async
+hpx::reduce(par(task),std::cbegin(v),std::cend(v),/*some lambda*/);
+//ranges overloads
+hpx::ranges::reduce(v,/*some lambda*/);
+hpx::ranges::reduce(std::begin(v),sentinel,/*some lambda*/);
+```
+
+### Parallel Ranges
+(23:45)
+
+### Results
+
+### Future Work
+
+</details>
+
 
 [Main](README.md)

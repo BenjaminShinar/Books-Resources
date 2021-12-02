@@ -23,7 +23,9 @@
     "struct",
     "t",
     "unscoped",
-    "Kubernetes"
+    "Kubernetes",
+    "kubelet",
+    "kubectl"
   ],
   "cSpell.ignoreWords": [
     "Amortised",
