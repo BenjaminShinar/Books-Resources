@@ -378,9 +378,9 @@ benchmarking again, checking against [Intel MKL Math Kernel Library](https://en.
 
 ## Parallelism on Ranges: Should We? - Giannis Gonidelis
 
-<!-- <details> -->
+<details>
 <summary>
-
+Combining Parallel execution algorithms with ranges and views.
 </summary>
 
 [Parallelism on Ranges: Should We?](https://youtu.be/gA4HaQOlmSY),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/Parallelism-on-Ranges.pptx)
@@ -482,11 +482,93 @@ hpx::ranges::reduce(std::begin(v),sentinel,/*some lambda*/);
 ```
 
 ### Parallel Ranges
-(23:45)
+
+combining ranges and execution policies,
+
+base form
+```cpp
+hpx::for_each(par, v.begin(), v.end(),/*lambad*/)
+```
+
+range form
+```cpp
+namespace hpx {
+    namespace ranges{
+        result_type for_each(ExPolicy policy, Rng rng, F f)
+        {
+            return for_each(policy, hpx::util::begin(rng),hpx::util::end(rng),f);
+        }
+    }
+}
+```
+stage 1.5, iterator and sentinel
+```cpp
+namespace hpx {
+    namespace ranges{
+        result_type for_each(ExPolicy policy, Iter iter, Sentinel sent, F f)
+        {
+            auto new_end_iter = //do something with sentinel to get the end iterator with ranges::next, ranges::advance, ranges::distance... etc
+            return base_impl::for_each(policy, iter,new_end_iter,f);
+        }
+    }
+}
+```
+
+but the final goal is to use ranges and views,
+```cpp
+
+std::vector<int> vi {1,2,3,4,5};
+auto rng = vi |
+ranges::views::transfrom([](int i){return i*i;}) |
+ranges::views::remove_if([](int i){return i % 2 ==1;});
+```
+
+options
+> 1. provide combined implementations for each combination of operators (combinatorial explosion)
+> 2. use fork-join strategy (also rejected)
+> 3. fusion (this was chosen)
+
+views are lazily evaluated, so we fuse together the stages.
+
+some operation combinations are harder to parallelize like this than others:
+> hard:
+> - transform | remove_if
+> - adjacent_remove_if | reverse
+> 
+> easy:
+> - transform | reverse
+> - accumulate | transform
+
+this depends on how the iterator types is exposed, and when we have temporaries, container resizing and predcates about more then one element things are more difficult.
+
+
+```cpp
+std::vector<int> vi(10'000'000);
+std::iota(std::begin(vi),std::end(vi),1);
+
+auto rng = vi |
+ranges::views::transform([](int i){return i*i;}) |
+ranges::views::reverse;
+
+
+hpx::ranges::for_each(hpx::execution::par, rng,[](auto i){return i;});
+```
+hpx stages:
+> - c++20 conformance
+> - parallelize when single range argument input
+> - parallelize when iterator-sentinel input
+> - parallelize when input is composed from a chain of views
+
 
 ### Results
 
+some things don't get performance boost from parallelization, and some do.
+
+
 ### Future Work
+
+should we parallelize ranges?\
+sometimes, yes. there are good and bad cases, we should take advantage of inherent fusion.
 
 </details>
 

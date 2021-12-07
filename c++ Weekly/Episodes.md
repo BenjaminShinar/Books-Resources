@@ -905,7 +905,7 @@ has some other stuff.
 
 <details>
 <summary>
-an home excerisice to make everything `const` and see how it goe
+an home excerisice to make everything `const` and see how it goes
 </summary>
 
 [Homework: const All The Things](https://youtu.be/ZYtVuVPOY4A)
@@ -931,5 +931,18 @@ sphinx C-- is a language that combines high and low level features, and it nearl
 it un-portable because it expects us to write instructions to registers directly and talk directly to hardware, but it also has structs and function. we have internal assembly commands which we can run from the code. it's very much tied to 32-bit computers.
 
 now we continue [episode 286](%C++-Episodes.md), he used a function to write frames to the 2nd screen.
+</details>
+ 
+## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
+<details>
+<summary>
+an home excerisice to make everything `constexpr` and see how it goes
+</summary>
+
+[C++ Homework: `constexpr` All The Things](https://youtu.be/cpdjQiRxEJ8)
+
+another c++ homework assignment,after "auto everything" and "const everything". continuing with the smallpt file. now we try making everything *constexpr*. this includes member functions.
+
+if we use compiler explorer, we can will see how the binary changes and more stuff becomes pre-calculated. it's theoretically possible to make everything at compile time, but it will require work (hint: the sqrt function). then only writing the file is at runtime.
 </details>
  
