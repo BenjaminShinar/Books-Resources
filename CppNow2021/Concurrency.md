@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq
+// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq Nikunj Exascale
  -->
 
 [Main](README.md)
@@ -570,6 +570,99 @@ some things don't get performance boost from parallelization, and some do.
 should we parallelize ranges?\
 sometimes, yes. there are good and bad cases, we should take advantage of inherent fusion.
 
+</details>
+
+## Executors: The Art of Generating Composable APIs - Nikunj Gupta
+
+<!-- <details> -->
+<summary>
+
+</summary>
+
+[Executors: The Art of Generating Composable APIs](https://youtu.be/8rRTKWdfAOU),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/CNow-2021.pptx)
+
+HPX - task based parallelism model, standard confirming with similar syntax. supports parallel, distributed and heterogenous applications, has light-weight threads. similar syntax for local and remote operations.
+
+### Resilience
+
+Exascale computing - 10^18 operations.\
+SDC - silent data corruptions, not detected. usually have low probability for happening in a single processor, but will happen for thousends of them. do we even care about them?
+
+### HPX Implementation
+
+> assumptions:
+> - No global variables for state changes.
+>  - use built-in constructs (channels)
+> - Task do not change the input data parameters.
+> Task boundary is an ideal position to add resilience
+
+example: task 1 computes a result and feeds it to task 2. but if there was a silent error, we can check the value (add resiliency, credability) before passing on the data. we use *Task Replay* and *Task Replicate*.
+
+async replay: do task A, if there is an exception, replay the task, if not, continue. this is done recursively.
+
+async replicate: do task A some times. 
+
+```cpp
+template <typename F, typename... Ts>
+auto async_replay(std::size_t n, F&& f,TS&&... ts)
+{
+    using result_t = typename std::invoke_result<F,Ts..>::type;
+    return detail::async_replay_helper<result_t>(n, std::forward<F>(f),std::forward<Ts>(ts)...);
+}
+
+template <typename Result, typename F, typename ... Ts>
+hpx::future<Result> async_replay_helper(std::size_t n, F&& f,TS&&... ts)
+{
+    hpx::future<Result> f_ = hpx::async(f,ts...);
+    return f_.then(hpx::launch::sync,
+    [n, f=std::forward<F>(f),...ts = std::forward<Ts>(ts)](hpx::future<Result>&& f_)
+        {
+            if (f_.has_exception())
+            {
+                //get handle to exception
+                auto ex = rethrow_on_abort_replay(f_);
+                if (n!=0)
+                {
+                    return async_replay_helper(n-1,std::forward<F>(f),std:forward<Ts>(ts)...);
+                }
+                std::rethrow_exception(ex);
+            }
+            return hpx::make_ready_future(f_.get());
+        }
+    );
+}
+template <typename F, typename... Ts>
+auto async_replicate(std::size_t n, F&& f,TS&&... ts)
+{
+    using result_t = typename std::invoke_result<F,Ts..>::type;
+
+    std::vector<hpx::future<result_t>> results;
+    results.reserve(n);
+
+    for (std::size_t i =0; i!=n; ++i)
+    {
+        results.emplace_back(hpx::async(f,ts...));
+    }
+    return hpx::dataflow(
+        hpx::launch::sync,
+        [n](std::vector<hpx::future<result_t>>&& results) mutable {
+            std::exception_ptr ex;
+            for (auto && f: std::move(results))
+            {
+                if (!f.has_exception())
+                {
+                    return hpx::make_ready_future(f.get());
+                }
+                else
+                {
+                    ex =rethrow_on_abort_replicate();
+                }
+            }
+               std::rethrow_exception(ex);
+        },std::move(results));
+}
+```
+### Implementation Variations
 </details>
 
 
