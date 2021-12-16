@@ -934,6 +934,7 @@ now we continue [episode 286](%C++-Episodes.md), he used a function to write fra
 </details>
  
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
+
 <details>
 <summary>
 an home excerisice to make everything `constexpr` and see how it goes
@@ -945,4 +946,23 @@ another c++ homework assignment,after "auto everything" and "const everything". 
 
 if we use compiler explorer, we can will see how the binary changes and more stuff becomes pre-calculated. it's theoretically possible to make everything at compile time, but it will require work (hint: the sqrt function). then only writing the file is at runtime.
 </details>
+ 
+ ## C++ Weekly - Ep 302 - It's Not Complicated, It's *std::complex*
+
+ <details>
+ <summary>
+ a numeric type for complex number, with all the operators.
+ </summary>
+ 
+ [It's Not Complicated, It's std::complex](https://youtu.be/s_1SymtU0BI)
+
+inside the "complex" header of the standard library. been here since foreaver, but still being worked on. the equality operator was removed and replace with the spaceship operator.\
+there's also a user defined literals, constexpr support for getting the parts and for operators.
+
+```cpp
+std::complex<double> z =1.0 +2i;
+```
+
+a side note: some math functions still don't have constexpr support, as those depend on the cmath header. this will probably change in future standards of C++.
+ </details>
  
