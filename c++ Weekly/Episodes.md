@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg pscii endl constexpr decltype mutex noexcept struct smallpt abidiff nullptr rvalue IIFE Wconversion
+// cSpell:ignore goto gotos fmin lefticus xoroshiro structs nodiscard cerr rotr lippincott spdlog gdbgui kcov tandy jongg pscii endl constexpr decltype mutex noexcept struct smallpt abidiff nullptr rvalue IIFE Wconversion cmath
  -->
 
 # C++ Weekly takeaways
@@ -354,7 +354,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 134 - The Best Possible Way To Create A Visitor?
 
-## C++ Weekly - Ep 135 - *{fmt}* is Addictive! Using *{fmt}* and spdlog
+## C++ Weekly - Ep 135 - _{fmt}_ is Addictive! Using _{fmt}_ and spdlog
 
 ## C++ Weekly - Ep 137 - C++ Is Not An Object Oriented Language
 
@@ -374,7 +374,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 145 - Semi-Automatic _constexpr_ and _noexcept_
 
-## C++ Weekly - Ep 146 - C++20's *std::to_pointer*
+## C++ Weekly - Ep 146 - C++20's _std::to_pointer_
 
 ## C++ Weekly - Ep 147 - C++ And Python Tooling
 
@@ -444,7 +444,7 @@ it might silently use a constructor rather than a move if the try to move from c
 
 ## C++ Weekly - Ep 180 - Whitespace Is Meaningless
 
-## C++ Weekly - Ep 181 - Fixing Our *std::bind_front* with *std::invoke*
+## C++ Weekly - Ep 181 - Fixing Our _std::bind_front_ with _std::invoke_
 
 ## C++ Weekly - Ep 182 - Overloading In C and C++
 
@@ -829,7 +829,6 @@ constraining the deduction of *auto* by using concepts.
 
 [Constraining `auto` in C++20](https://youtu.be/A8nNjpaiP5M)
 
-
 ```cpp
 std::integral auto some_function()
 {
@@ -839,12 +838,14 @@ std::integral auto some_function()
 int main()
 {
     const auto p1 = some_function();
-    const std::integral auto p2 = some_function(); 
-    
+    const std::integral auto p2 = some_function();
+
     //const std::floating_point auto p3 = some_function(); // this will fail
 }
 ```
+
 some confusion about pointers: the auto can hide the ptr type, we should be clear with the names and the types.
+
 ```cpp
 
 int * get_object_ptr();
@@ -855,7 +856,9 @@ const auto obj_ptr1 = get_object_ptr(); //obj_ptr_1 is a pointer
 const auto * obj_ptr2 = get_object(); //obj_ptr_2 wants to be a pointer, but receives a value, so we will get an error
 }
 ```
+
 we can define our own concept that "is not a pointer" so we can require the variable to fit our expectations. this all happens in compile time.
+
 ```cpp
 template <typename T>
 concept not_pointer = !std::is_pointer_v<T>;
@@ -867,6 +870,7 @@ int main()
     const not_pointer auto val2 = get_some_pointer(); // error!
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 297 - C++ Homework: _'auto'_ All The Things
@@ -881,8 +885,8 @@ not a best practice episode, rather an exercise for us to follow. we should find
 the example given is a ray tracer [smallpt](https://www.kevinbeason.com/smallpt/), which is 99 lines of code. we should try and make everything auto, use concepts if it makes sense. and try to replace everything with auto. see where it works, where it doesn't, where it makes sense and why.
 
 [MyCode](ep297_smallpt.cpp)
-</details>
 
+</details>
 
 ## C++ Weekly - Ep 298 - Detecting ABI Changes With abidiff
 
@@ -913,7 +917,7 @@ an home excerisice to make everything `const` and see how it goes
 like episode 297, in addition to 'auto' everything, we also make everything 'const'. we go through everything in the code and make everything const.
 we will need to think about making everything const (except maybe member variables). we shouldn't const_cast, but we might need to re-organize code to make things const.
 
-we can do it together with the version that we made auto or a new version. 
+we can do it together with the version that we made auto or a new version.
 
 </details>
  
@@ -931,6 +935,7 @@ sphinx C-- is a language that combines high and low level features, and it nearl
 it un-portable because it expects us to write instructions to registers directly and talk directly to hardware, but it also has structs and function. we have internal assembly commands which we can run from the code. it's very much tied to 32-bit computers.
 
 now we continue [episode 286](%C++-Episodes.md), he used a function to write frames to the 2nd screen.
+
 </details>
  
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -942,9 +947,10 @@ an home excerisice to make everything `constexpr` and see how it goes
 
 [C++ Homework: `constexpr` All The Things](https://youtu.be/cpdjQiRxEJ8)
 
-another c++ homework assignment,after "auto everything" and "const everything". continuing with the smallpt file. now we try making everything *constexpr*. this includes member functions.
+another c++ homework assignment,after "auto everything" and "const everything". continuing with the smallpt file. now we try making everything _constexpr_. this includes member functions.
 
 if we use compiler explorer, we can will see how the binary changes and more stuff becomes pre-calculated. it's theoretically possible to make everything at compile time, but it will require work (hint: the sqrt function). then only writing the file is at runtime.
+
 </details>
  
  ## C++ Weekly - Ep 302 - It's Not Complicated, It's *std::complex*
@@ -964,6 +970,7 @@ std::complex<double> z =1.0 +2i;
 ```
 
 a side note: some math functions still don't have constexpr support, as those depend on the cmath header. this will probably change in future standards of C++.
+
  </details>
   
   ## C++ Weekly - Ep 303 - C++ Homework: Lambda All The Things
@@ -981,5 +988,5 @@ Lambdas are by default const (unless stated to be mutable), and are implictly co
 is it possible to go too far with lambdas?
 
 note: don't forget to have warnings on, use -std=c++20, and clear up the formatting.
+
 </details>
- 

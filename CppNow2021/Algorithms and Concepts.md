@@ -1,10 +1,9 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Gábor Horváth Andrzej Krzemieński cassert Dargo rtime
+// cSpell:ignore rtime conceptify Parnas
 -->
 
 [Main](README.md)
-
 
 ## Algorithms from a Compiler Developer's Toolbox - Gábor Horváth
 
@@ -1365,26 +1364,18 @@ void encodeSomeStuff(BOWithEncodeableStuff_t iBusinessObject)
 
 ## Using Concepts: C++ Design in a Concept World - Jeff Garland
 
-<!-- <details> -->
+<details>
 <summary>
-//todo: add
+A two parts session about concepts. we now have tools and first class language support for concepts.
 </summary>
 
 [Using Concepts: C++ Design in a Concept World - part1](https://youtu.be/Ffu9C1BZ4-c),[part2](https://youtu.be/IXbf5lxGtr0),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/2021cppnow_learning_concepts.pdf)
 
-A two parts session about concepts. we now have tools and first class language support for concepts.
-
 goals:
-> climb up the concept ladder
-> 	- What's a concept
-> 	- Using concepts in code
->	- Reading concepts: `requires` expressions and clauses
->	- Writing concepts: its hard
->	- Designing with concepts
 
+> climb up the concept ladder - What's a concept - Using concepts in code - Reading concepts: `requires` expressions and clauses - Writing concepts: its hard - Designing with concepts
 
 we want to get the community to use concepts, even people who don't write concepts will still see them in the documentation.
-
 
 ### Concept Basics
 
@@ -1400,44 +1391,47 @@ we can see the history of concepts starting in the 80's, but the modern idea beg
 Boost had a library called "concept check", which was mostly macro based, in 2011 concepts were supposed to become part of the language, but the committee decided it wasn't ready.
 eventually, in c++20 we got a language definition of concepts, and even some libraries (ranges library) are specified in terms of concepts. but there are still mistakes that were made.
 
-in the last minute, it was decided that concepts use snake\_case (not PascalCase), and the _concept bool_ was replaced with _concept_.
+in the last minute, it was decided that concepts use snake*case (not PascalCase), and the \_concept bool* was replaced with _concept_.
 
 > Concepts
+>
 > - boolean predicate on types and values
 > - type requirement examples
-> 	- required methods
-> 	- required semantics*
-> 	- required subtypes or base types
+>   - required methods
+>   - required semantics\*
+>   - required subtypes or base types
 > - c++ realization includes
-> 	- new keywords `concept` and `requires`
-> 	- `\<concept_name> auto` for describing a set of types
-> 	- new rules for function overloading
+>   - new keywords `concept` and `requires`
+>   - `\<concept_name> auto` for describing a set of types
+>   - new rules for function overloading
 
-Concepts are __predicates__ that can check against types and against values. we mostly focus on types, but the size can also help with stuff. like running SIMD on small objects if possible.
+Concepts are **predicates** that can check against types and against values. we mostly focus on types, but the size can also help with stuff. like running SIMD on small objects if possible.
 we can use concepts to require a type to have specif methods, we can also require certain semantics (but this might not be feasible in terms of what the compiler can do) or require them to have some subtypes or base types (like inheritance).
 
 > boolean predicate composition
+>
 > - support complex compile time logic composition
 > - conjunction and disjunction (and/or) logic
 > - used to classify types
-> 	- in or out of a set
-> 	- that share syntax/semantic
-> 	- (although semantics is the desire only syntax is checked)
+>   - in or out of a set
+>   - that share syntax/semantic
+>   - (although semantics is the desire only syntax is checked)
 
 we can have complex logical composition, based on compile time logic,
-	
+
 > types versus concepts
+>
 > - type
-> 	- describes a set of operation that can perform
-> 	- relationships with other types
-> 		- example: base class
-> 		- example: declared dependent type
-> 	- describes a memory layout
-> 	- for built in types this can be implicit
+>   - describes a set of operation that can perform
+>   - relationships with other types
+>     - example: base class
+>     - example: declared dependent type
+>   - describes a memory layout
+>   - for built in types this can be implicit
 > - concept
-> 	- describes how a type can be used
-> 	- operations it can perform
-> 	- relationships with other types	
+>   - describes how a type can be used
+>   - operations it can perform
+>   - relationships with other types
 
 a type (primitive, built-in or something that we built),has operations, relationship with other types, dependencies. types have memory layout, with members and inner variables.
 the concepts has similar functionalities, but it doesn't describe a memory layout. concepts are more abstracted than types.
@@ -1447,7 +1441,7 @@ concepts should go into a namespace, we don't want naming conflicts.
 because templates aren't evaluated until they are called, we need to check manually, so a static asset is a good idea.
 
 ```cpp
-namespace io 
+namespace io
 {
 	// Type T has print ( std::ostream& )const member function
 	template<class T>
@@ -1468,7 +1462,6 @@ static_assert(io::printable<my_type> ); //good
 concepts are entirely compile time, no runtime footprint. the dependency on a concept means that if we change it, then we probably need to recompile everything.
 the core use of concept is to constrain the usage of templates.
 
-
 ### Using Concepts in Code
 
 > - overloading, variables, pointers
@@ -1477,6 +1470,7 @@ the core use of concept is to constrain the usage of templates.
 what we use concepts for:
 
 > concepts can:
+>
 > - Constrain an overload set
 > - Initialize a variable with _\<concept_name> auto_
 > - Conditional compilation with constexpr if
@@ -1485,12 +1479,13 @@ what we use concepts for:
 > - Make template code into 'regular code'
 >
 > concepts cannot:
+>
 > - Cannot inherit from concept
 > - Cannot constrain a concrete type using requires
 > - Cannot 'allocate' via new
 > - Cannot apply requires to virtual function
 
-overload set - using a different function. we can use concepts in constant expressions. 
+overload set - using a different function. we can use concepts in constant expressions.
 we can't inherit directly from a concept, we can inherit from a class that is constrained by one.
 we can't constrain a concrete type directly, but we can constrain it's usage.
 concepts have nothing to do with storage, so no allocations, and they are entirely incompatible with virtual functions.
@@ -1512,7 +1507,7 @@ void f(printable auto s)
 }
 
 // constraining a template, classic example of concepts.
-template<associative_container T> 
+template<associative_container T>
 class MyType
 {
 	T map_;
@@ -1523,7 +1518,7 @@ int main()
 	//these won't compile, we need a concrete type here, can't allocate storage for it
 	//printable auto s;
 	//associative_container auto myMap;
-	
+
 	//these will compile
 	printable auto s = init_some_thing();
 	associative_container auto myMap = MyType<std::map<int,int>>{{1,1}};
@@ -1548,11 +1543,13 @@ printable auto print2( const printable auto& s )
 	return s;
 }
 ```
+
 as always, we can write the same thing in many ways.
 
 overload resolution - constrain function parameter
 write different functions _print_line_, and choose the overloaded function based on the concept.
 [godbolt example](https://godbolt.org/z/GKq8ns). this will fail, because there isn't a way to print the type. this is an unconstrained template function.
+
 ```cpp
 #include <iostream>
 
@@ -1576,7 +1573,9 @@ int main()
 	//print_ln ( m );
 }
 ```
+
 the traditional way to do these was to overload the function for the concrete type, have a better match than the template function.
+
 ```cpp
 //selected ahead of print_ln (auto) because better match
 void print_ln( my_type p )
@@ -1585,10 +1584,12 @@ void print_ln( my_type p )
 	std::cout << "\n";
 }
 ```
+
 but this is tedious, we want to use the printable concepts
 [godbolt example 1](https://godbolt.org/z/36cdsGzzo), [godbolt example 1](https://godbolt.org/z/dYdhW7). we use the requires clause, it behaves like a parameter list in this case.
 we decide that the expression `v.print(os)` must compile, in the _output_streamable_ case, we say that the expression must be a valid `os <<v` expression.
 the public access modifiers are important, we need be able to actually call the function.
+
 ```cpp
 #include <iostream>
 #include <memory>
@@ -1661,6 +1662,7 @@ Pointers and concepts
 this is usefull fo things like factory functions
 
 [godbolt](https://godbolt.org/z/d7bGhn) example with unique pointers.
+
 ```cpp
 int main()
 {
@@ -1737,6 +1739,7 @@ int main()
 ```
 
 theres a wa to constrain a type based on an internal type, in this example we have a wrapper type that allows dereferencing operator only if the wrapped type is a pointer.
+
 ```cpp
 template <class T>
 class wrapper
@@ -1759,6 +1762,7 @@ int main()
     std::cout << *wi2 << '\n'; //error!
 }
 ```
+
 now we want a vector of objects that belong to the same concept. we can get this by using template alias. we can't instansite the alias with a type that doesn't satisfy the concept.
 
 ```cpp
@@ -1767,7 +1771,7 @@ now we want a vector of objects that belong to the same concept. we can get this
 #include <string>
 
 //template alias using concepts
-template<printable T> 
+template<printable T>
 using vec_of_printable = std::vector<T>;
 
 int main()
@@ -1781,40 +1785,39 @@ int main()
 }
 ```
 
-
 the relevent headers are \<concepts>,\<type_traits>,\<iterator> and \<ranges>, the concepts are grouped into
+
 - Core language concepts
 - Comparison concepts
 - Object concepts
 - Callable concepts
 - Ranges concepts
 
-about type_traits: we already have some stuff that seems like concepts and does compile time stuff, such as *std::is_arithmetic*. some of them might be replaced by concepts, but more likely we will get much more.
+about type*traits: we already have some stuff that seems like concepts and does compile time stuff, such as \_std::is_arithmetic*. some of them might be replaced by concepts, but more likely we will get much more.
 
-Concept | Description
----|--------
-floating_point\<T>| float, double, long double
-integral\<T>| char, int, unsigned int, bool
-signed_integral\<T>| char, int,
-unsigned_integral\<T>| unsigned char, unsigned int
-equality_comparable\<T> |
-equality_comparable_with\<T,U> | `operator==` is an equivalence, between two types
-totally_ordered\<T> | `==`,`!=`,`<`,`>`,`<=`,`>=` are total ordering
-totally_ordered_with\<T,U> | ordering between two types
-same_as\<T,U>| types are same
-derived_from\<T,U>| T is subclass of U
-convertable_to\<T,U>| T converts to U
-assignable_from\<T,U> | T can assign from U
-default_initializable\<T> | T has a default ctor
-constructable_from\<T,...> | T can be constructed from variable pack
-move_constructable\<T> | T has move ctor
-copy_constructable\<T> | T has copy ctor
-semiregular\<T> | T has deafult, copy and move ctor, and stor
-regular\<T> | T is semiregular and equality comparable
-
-
+| Concept                        | Description                                       |
+| ------------------------------ | ------------------------------------------------- |
+| floating_point\<T>             | float, double, long double                        |
+| integral\<T>                   | char, int, unsigned int, bool                     |
+| signed_integral\<T>            | char, int,                                        |
+| unsigned_integral\<T>          | unsigned char, unsigned int                       |
+| equality_comparable\<T>        |
+| equality_comparable_with\<T,U> | `operator==` is an equivalence, between two types |
+| totally_ordered\<T>            | `==`,`!=`,`<`,`>`,`<=`,`>=` are total ordering    |
+| totally_ordered_with\<T,U>     | ordering between two types                        |
+| same_as\<T,U>                  | types are same                                    |
+| derived_from\<T,U>             | T is subclass of U                                |
+| convertable_to\<T,U>           | T converts to U                                   |
+| assignable_from\<T,U>          | T can assign from U                               |
+| default_initializable\<T>      | T has a default ctor                              |
+| constructable_from\<T,...>     | T can be constructed from variable pack           |
+| move_constructable\<T>         | T has move ctor                                   |
+| copy_constructable\<T>         | T has copy ctor                                   |
+| semiregular\<T>                | T has deafult, copy and move ctor, and stor       |
+| regular\<T>                    | T is semiregular and equality comparable          |
 
 in this example we try to check if our type is regular, it fails because we don't have and equality operations defined
+
 ```cpp
 class my_type
 {
@@ -1829,6 +1832,7 @@ static_assert(std::regular<my_type> ); //fails
 ```
 
 we simply add the deafult operator to fix this
+
 ```cpp
 class my_type
 {
@@ -1844,6 +1848,7 @@ static_assert(std::regular<my_type> ); //passes
 ```
 
 now let's look at the range concepts. we have a concept for something that we can iterate over. a vector, an array, a span and other stuff.
+
 ```cpp
 void print_integers(const std::ranges::range auto & R)
 {
@@ -1853,10 +1858,10 @@ void print_integers(const std::ranges::range auto & R)
     }
 }
 int main()
-{   
+{
     std::vector<int> vi = {1,2,3,4,5};
     print_integers(vi);
-    
+
     std::array<int,5> ai = {1,2,3,4,5};
     print_integers(ai);
 
@@ -1869,11 +1874,9 @@ int main()
 
     ranges::iota_view iv{1,6};
     print_integers(iv);
-    
+
 }
 ```
-
-
 
 ### Reading Concepts
 
@@ -1927,9 +1930,10 @@ concept fully_outputable = requires printable<T> and output_streamable<T>;
 ```
 
 we can reactor requirements around to make concepts more readable.
+
 ```cpp
 template <typename T>
-concept printable = 
+concept printable =
     std::movable<T> and //bring this outside
     requires(std::ostream & os, T v)
     {
@@ -1937,16 +1941,20 @@ concept printable =
         format(v); // free function
     };
 ```
-another concept example, *std::derived_from*.
+
+another concept example, _std::derived_from_.
+
 ```cpp
 template <class Derived, class Base>
-concept derived_from = 
+concept derived_from =
     std::is_base_of_v<Base,Derived> and
     std::is_convertible_v<const volatile Derived *, const volatile Base*>
 ```
-the *std::os_arithmetic* is a concept that is a type trait that checks if the type has math operations (plus, minus,etc...), but unfortunately, also includes bool and char.
+
+the _std::os_arithmetic_ is a concept that is a type trait that checks if the type has math operations (plus, minus,etc...), but unfortunately, also includes bool and char.
 
 ranges and concepts example. how does the following code work?
+
 ```cpp
 std::vector<int> vi {0,1,2,3,4,5,6};
 
@@ -1956,7 +1964,9 @@ for (int i : ranges::filter_view(vi, is_even))
     std::cout << i  << " ";
 }
 ```
-lets look at *std::ranges::filter_view*,it uses some other concepts as part of the defintion. it also has a requires clause it's derived from *view_interface* and follows the CRTP pattern. but what is that really? we can't inherit from a concept!
+
+lets look at _std::ranges::filter_view_,it uses some other concepts as part of the defintion. it also has a requires clause it's derived from _view_interface_ and follows the CRTP pattern. but what is that really? we can't inherit from a concept!
+
 ```cpp
 template<input_range V, indirect_unary_predicate<Iterator_t<V>> Pred>
     requires view<V> && is_object_v<Pred>
@@ -1965,7 +1975,9 @@ template<input_range V, indirect_unary_predicate<Iterator_t<V>> Pred>
         //...
     };
 ```
+
 lets looks at it more. does it get better? we have way to bring out the derived class. there are functions that are specialized depending on the derived class.
+
 ```cpp
 template <class D>
     requires is_class_v<D> && same<D, remove_cv_t<D>>
@@ -1986,25 +1998,28 @@ template <class D>
         //... more...
     };
 ```
+
 there are some cases when we can't use CRTP. like when the whole class must be known for some reason.
 
 ### Writing Concepts
+
 > - concept details 102
 > - writing _sleep_for_ with concepts
 > - good concepts, bad concepts
 
 here's a nice quote:
+
 > "Everything Should be made as simple as possible, but not simpler" - Albert Einstein (maybe)
 
 how are constraints evaluated? set of steps, first normalizing,then subsumption,which is some ordering of the concepts,
 
-
 > - concepts subsume, arbitrary expression do not
 > - general principle is "'more constrained' is better match"
 
-[godbolt example](https://godbolt.org/z/z7bT1aas6), the *std::signed_integral* is "stronger" than *std::integral* in terms of specialization, because it contains the lesser concept (it's defined in terms of that).
+[godbolt example](https://godbolt.org/z/z7bT1aas6), the _std::signed_integral_ is "stronger" than _std::integral_ in terms of specialization, because it contains the lesser concept (it's defined in terms of that).
 
 if we pull up the type_trait, things become ambiguous, because type traits don't subsume.
+
 ```cpp
 template <class T>
 requires std::is_integral_v<T>
@@ -2015,7 +2030,7 @@ we want concepts to be more than one operation, they should express **more** tha
 
 getting concepts right is hard to do, it's done in iterations, and requires a lot of compiling.
 
-we will try to make a concept for *std::chrono::sleep_for*, which takes either a *time_duration* or a *time_point*. maybe we want to use boost data types instead.
+we will try to make a concept for _std::chrono::sleep_for_, which takes either a _time_duration_ or a _time_point_. maybe we want to use boost data types instead.
 
 ```cpp
 // sleep for duration
@@ -2024,17 +2039,18 @@ void sleep_for(time_duration d);
 // sleep until time
 void sleep_for(time_point t);
 ```
+
 [godbolt example](https://godbolt.org/z/3vreqf)
 
-under the hood there are *sleep_for* and *sleep_until* with different signatures.
+under the hood there are _sleep_for_ and _sleep_until_ with different signatures.
 so we go and try to reverse engineer the requirements for the function and see how the types are really used.
 
-
 requirements:
-> - a constant *zero* member function to return th zero value
+
+> - a constant _zero_ member function to return th zero value
 > - a comparison operator (less equal)
 > - ability to cast/retrive the seconds and milliseconds of the duration
-> - a constant *count* function that cast to *long* and *std::time_t*
+> - a constant _count_ function that cast to _long_ and _std::time_t_
 
 lets try to make a concept:
 [godbolt example](https://godbolt.org/z/1Tvefcasb)
@@ -2044,7 +2060,7 @@ lets try to make a concept:
 #include <chrono>
 
 template <class T>
-concept time_duration = std::totally_ordered<T> and requires(const T& v) 
+concept time_duration = std::totally_ordered<T> and requires(const T& v)
 {
    v.count();
    v.zero();
@@ -2053,38 +2069,268 @@ concept time_duration = std::totally_ordered<T> and requires(const T& v)
 static_assert( time_duration<std::chrono::seconds> );
 ```
 
-(26:30)
+we get some problems with floating point.
+
+another draft [godbolt example](https://godbolt.org/z/W5odTv)
+
+a draft with boost [godbolt example](https://godbolt.org/z/W53PGP) - this doesn't work.
+
+should we refactor the concept? boost library? we can create a converter between boost and chrono so it satisfies our concept.
+
+we choose to split appart the concepts into different parts: a time duration access and the time duration.
+[godbolt example](https://godbolt.org/z/WW1dGM)
+
+```cpp
+template<class T>
+concept time_duration_access = requires(const T& v)
+{
+   v.count();
+   v.zero();
+};
+
+template <class T>
+concept time_duration =
+    std::totally_ordered<T> && time_duration_access<T>;
+
+static_assert( time_duration<std::chrono::seconds> );
+```
+
+the next step is to further split it apart and have different duration accesses concepts (one for the standard library, one for boosts) and to use `if constexpr` to decide between them and either use them directly or use built in constructor of the standard chrono library [godbolt example](https://godbolt.org/z/7eqexh).
+
+so we have a parital concepts, a concept that maps for some stuff, but not for all.
+
+```cpp
+#include <iostream>
+#include <chrono>
+#include <thread>
+#include <concepts>
+#include <boost/date_time.hpp>
+
+template<class T>
+concept std_time_duration_access = requires(const T& v)
+{
+   v.count();
+   v.zero();
+};
+
+template<class T>
+concept boost_time_duration_access = requires(const T& v)
+{
+   v.total_milliseconds();
+};
+
+
+template <class T>
+concept time_duration =
+    std::totally_ordered<T> &&
+    (std_time_duration_access<T> || boost_time_duration_access<T>);
+
+static_assert( time_duration<std::chrono::seconds> );
+
+void sleep_for( time_duration auto td)
+{
+  std::cout << "hello ";
+  if constexpr (std_time_duration_access<decltype(td)>) {
+    std::this_thread::sleep_for( td );
+  }
+  if constexpr (boost_time_duration_access<decltype(td)>) {
+    auto d = std::chrono::milliseconds(td.total_milliseconds());
+    std::this_thread::sleep_for( d );
+  }
+  std::cout << "there\n";
+}
+
+namespace bpt = boost::posix_time;
+
+int main()
+{
+  sleep_for( std::chrono::seconds(2) );
+  sleep_for( bpt::seconds(2) );
+}
+```
+
+there are still problems, if we want to add other 'cases', we need to modify the code again. but we didn't have to modify any library.
 
 ### Designing with Concepts
-> - what is design?
-> - review of some 'design principles'
-> - concepts and dependencies
-> - impact on multi-paradigm design in c++
-> - concept serialization
 
+[timestamp](https://youtu.be/IXbf5lxGtr0?t=2580)
 
-code readability and evolution
+> - What is design?
+> - Review of some 'design principles'
+>   - Dry, Wet "don't repeat yourself" and "write everything twice"
+>   - Solid
+>     - single responsibility
+>     - open-closed
+>     - Liskov substitution
+>     - interface segregation
+>     - dependency inversion
+>   - KISS "keep it simple stupid" (aka Occam's razor)
+> - Concepts and dependencies
+> - Impact on multi-paradigm design in c++
+>   - structures
+>   - functional
+>   - generic
+>   - object oriented
+> - Concept serialization
+
+we have design principles for divide and conquer, we want decomposition to make code manageable
+
+- break programs into manageable parts
+- parts that can be tested
+- parts that can be reasoned about
+- seprate concerns
+
+functions with too many lines won't be changed once they're written, people will be afraid to touch them.
+
+but once we decompose programs, the parts become dependant on one another, so we need to de-couple them somehow. so maybe the dependency is the point?
+
+#### concepts and dependencies
+
+> - move dependency to an abstraction from a type
+> - simple to test a type that modesl a concept
+> - however, problems are just shifted:
+>   - type may evolve to longer model concepts, working code might fail.
+>   - concept may evolve so the type no longer models it, working code might fail.
+
+the standard library warns that the concepts might change in the c++23 standard.
+
+which is more likely to evolve? the concept or the type? probably the type.
+
+#### code readability and evolution
+
 ```cpp
 auto result = some_function(); //return type unknown, flexible
-int result = some_function(); //return type known, not flexible at all
+int result = some_function(); //return type known, not flexible at all. silent conversions might cause a bug.
 time_duration auto result = some_function(); //return type unknown, but intent is clear, still flexible
 ```
-this ties into the Liskov substition principle: concepts vs inheritance. however, concepts don't model pre and post conditions, so we can't prove substitutability in compile time (maybe contracts in the future could help).
 
-information hiding - and idea from the 70's that we kind of messed up on following through. concepts might bring us closer to this goal of abstraction.
+this ties into the Liskov substition principle: concepts vs inheritance. however, concepts don't model pre and post conditions, so we can't prove substitutability in compile time (maybe _contracts_ in the future could help).
+
+Information Hiding:\
+An idea from the 70's that we kind of messed up on following through. concepts might bring us closer to this goal of abstraction.
+
+> "The sequence of instructions necessary to call a given routine and the routine itself are part of the same module"
+> Parnas - information hiding (1972)
 
 Multi-paradigm design:
->"Most designs in fact have a nontrivial componenet that is not object-oriented"\
-> James O. Coplien
 
-variability - positive and negative variations
+> "Most designs in fact have a nontrivial componenet that is not object-oriented"\
+> James O. Coplien - Multi-paradigm design (1999)
 
-concept serialization:\
-was once OO based, where each class knew how to serialize itself, using archive-types.
-but can we *conceptify* this? what would it give us?
+how do we discover patterns (or concepts today)? we look at how things work (functionality) and their domain. naming and behavior commonality.
 
+> - "abstractions that will remain stable over time"
+> - a name often defines a common behavior.
+> - behavior vs meaning:
+>   - each overloaded or specialized function _should_ have different behavior.
+>   - but the meaning should remain the same from the calling client POV.
 
-what about the future of concepts?
+implemting commonality and vairability:
+
+> Commonality Techniques:
+>
+> - factor commonalities into a base class
+> - factor policy into trains (policy based design)
+> - value oriented programming - vocabulary types
+> - factor commonalites to **concepts**
+>
+> Variation Tools:
+>
+> - pre-processor (build time)
+> - inheritance (build or run time)
+> - templates (build time)
+> - overloading (build time)
+> - **concepts** (build time)
+
+positive variability - adding behavior.\
+negative variations - removing behavior,hiding away. the `requires` clause, removing non supported class member based on type.
+
+#### concept serialization
+
+the serialization patterns was once OO based, where each class knew how to serialize itself, using archive-types. today boost it templated, but still very similar.
+
+an archive-type is json, xml, etc.
+we use some double dispatch and stuff.
+
+- separation of concerns
+- type data is nicely encapsulated - method to serialize is in the type.
+- archive type is nicely encapsulated - only knows about fundamental types.
+
+```cpp
+class myType{
+    int foo;
+    std::string bar;
+    std::vector<int> baz;
+
+    //one method for both input and output
+    template<class Archive>
+    serialize(Archive& archive)
+    {
+        ar("foo",foo);
+        ar("bar",bar);
+        ar("baz",baz);
+    }
+};
+
+//archive type example
+class OutputArchive
+{
+    put(std::string name, const std::string s);
+    put(std::string name, int i);
+    put(std::string name, double d);
+    /*
+    and so one
+    */
+};
+```
+
+the problem is that we do don't have basetypes, so we can't get directions to write new ones, it creates ugly compile errors, and we still need external extentsions for collection types (vectors, maps, etc...)
+
+but can we _conceptify_ this? what would it give us?
+
+it would look something like this
+
+```cpp
+template<class T, class A>
+concept serializable = requires(T val, a archive)
+{
+    val.archive<A>(); //this must compile
+}
+template<class A>
+concept Archive = // some code
+
+template<class A>
+concept OutputArchive = Archive<A> and requires(A archive)
+{
+    put(string,int);
+    put(string,double);
+    put(string,string);
+    /*
+    and others
+    */
+}
+```
+
+> Advantages:
+>
+> - looks quite doable
+> - fixes the docs/compile issues
+>   - static assert your archive type
+> - Allows refactoring of other subtle policies:
+>   - archvie ordering
+>   - devices like files or database also become policies
+> - template aliases can help with collections
+
+#### conclustion and resources
+
+concepts still aren't the end-all solution
+
+modern generic designs depend on customization point objects and tagged invokes, both of which express the desired variabilities, but aren't as clear as virtual methods.
+
+P2279R0 paper:\
+in rust there are traits, which are a language mechanism for customization points. we had some good ideas in the c++0x rejected concepts.
+
+question from the chat:
 
 </details>
 

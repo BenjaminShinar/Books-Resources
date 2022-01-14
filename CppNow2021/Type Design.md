@@ -2,6 +2,7 @@
 ignore these words in spell check for this file
 // cSpell:ignore ostringstream ptrdiff_t Filipp Downey Inlines fmodules Andrzej Krzemieński nodiscard Richárd Szalay Levehnstein Loew varargs Dimov arity Alloc cvref deducer
  -->
+
 [Main](README.md)
 
 Type Design
@@ -3173,4 +3174,5 @@ some statistics about the library, about ~2000 lines of code.
 what's missing.
 
 </details>
+
 [Main](README.md)
