@@ -965,4 +965,21 @@ std::complex<double> z =1.0 +2i;
 
 a side note: some math functions still don't have constexpr support, as those depend on the cmath header. this will probably change in future standards of C++.
  </details>
+  
+  ## C++ Weekly - Ep 303 - C++ Homework: Lambda All The Things
+
+ <details>
+ <summary>
+ an home excerisice to make everything with lambdas.
+ </summary>
+ 
+ [C++ Homework: Lambda All The Things](https://youtu.be/_xvAmEbK1vE)
+
+continuing the homework series. now we want to make everything a lambda expression.\
+Lambdas are by default const (unless stated to be mutable), and are implictly constexpr. we use the same code sample. we need to decide what should and what shouldn't be a lambda expression. probably not the member functions. lambdas allow us to make code const. we can make free functions lambda.
+
+is it possible to go too far with lambdas?
+
+note: don't forget to have warnings on, use -std=c++20, and clear up the formatting.
+</details>
  
