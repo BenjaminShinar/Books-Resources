@@ -966,7 +966,7 @@ std::complex<double> z =1.0 +2i;
 a side note: some math functions still don't have constexpr support, as those depend on the cmath header. this will probably change in future standards of C++.
  </details>
   
-  ## C++ Weekly - Ep 303 - C++ Homework: Lambda All The Things
+## C++ Weekly - Ep 303 - C++ Homework: Lambda All The Things
 
  <details>
  <summary>
@@ -982,4 +982,232 @@ is it possible to go too far with lambdas?
 
 note: don't forget to have warnings on, use -std=c++20, and clear up the formatting.
 </details>
+ 
+
+## C++ Weekly - Ep 304 - C++23's `if consteval`
+
+ <details>
+ <summary>
+ differnt ways and forms of checkin a conditon during compile time.
+ </summary>
+ 
+ [C++23's `if consteval`](https://youtu.be/AtdlMB_n2pI)
+
+- C++17: `if constexpr`
+- C++23: `is_constant_evaluated`
+- C++23: `if consteval`
+  
+`if constexpr`, or `constexpr if`, was added in c++17, it's an conditional expressionthat must be evaluated in compile time,  it must be part of  a template.
+
+  for example, this will fail becuase of the two differnt return types:
+```cpp
+template<typename Param>
+auto do_work(Param p)
+{
+ if (std::is_integral_v<Param>)
+ {
+  return 42+p;
+ }
+ else
+ {
+  return 4.2+p;
+ }
+}
+```
+ but once we add the `if constexpr` to it, then it will be known at compile time and it will behave properly.
+  ```cpp
+  template<typename Param>
+consexpr auto do_work(Param p)
+{
+ if constexpr (std::is_integral_v<Param>)
+ {
+  return 42+p;
+ }
+ else
+ {
+  return 4.2+p;
+ }
+}
+```
+later, in c++20, we got `is_constant_evaluated`, this is differnt. this allows us to behave differnly depending on whether the function was called in compile time or not.
+  
+ only `if constexpr` allows to change types.
+  
+ ```cpp
+ constexpr int do_work_is_constant_evaluted()
+ {
+  if (std::is_constant_evaluted())
+  {
+  //use compile time stuff, 
+  return 42;
+  }
+  else
+  {
+   return 43;
+  }
+ }
+ ```
+  
+  example
+  ```cpp
+  int main()
+ {
+  [[maybe_unused]] constexpr auto a =do_work_is_constant_evaluated(); //42
+  [[maybe_unused]] const auto b =do_work_is_constant_evaluated(); //42
+  [[maybe_unused]] auto c =do_work_is_constant_evaluated(); //43 - not evaluated at compile time
+  
+  
+  return a;
+ }
+ ```
+  we cannot combine the two, it's allways true
+  
+  ```cpp
+  if constexpr(std::is_constant_evaluated()) //allways true
+  ```
+  
+ In c++23, we will get `if constevl`. note that **we don't have parenthses after the `if consteval`**. we can also negate the value. of.
+  it's behaves the same as `std::is_contant_evalualted`, but clearer. there are still some uses for earlier version.
+ ```cpp
+  constexpr int do_work_23()
+  {
+   if consteval 
+   {
+    return 22;
+   }
+   else
+   {
+    return 11;
+   }
+  }
+ ```
+</details>
+  
+## C++ Weekly - Ep 305 - Stop Using `using namespace`
+
+<details>
+<summary>
+the case against `using namespace`.
+</summary>
+
+[Stop Using `using namespace`](https://youtu.be/MZqjl9HEPZ8E)
+
+we all know we shouldn't write `using namespace std;` in header files, but what about inside implementaion files?
+ 
+ ```cpp
+ #include <iostream>
+ 
+ int main()
+ {
+  std::string name="beny";
+  std::cout <<"hello " << name << '\n';
+ }
+ ```
+ 
+the ISO website says that we shouldn't have **using directives**, the most we can do is have a **using declration**, which is taking only the things we really care about.
+ ```cpp
+ //using namespace std; //bad
+ using namespace std::cout; //ok
+ ```
+ 
+ here is some bad code, which we don't have warnings for. we have differnt function overloads that we are unaware of, and changes to the namespaces can determine which version is being called.
+ 
+ ```cpp
+ #include<fmt/format.h>
+ 
+namespace emptycrate
+{
+ double calculate(double value)
+ {
+  return 4.23 * value;
+ {
+}
+ 
+namespace company2
+{
+ int calculate(int value)
+ {
+  return 4*value;
+ }
+}
+ 
+using namespace emptycraye; //using directive
+using namespace company2; //using directive
+
+ }
+ int main()
+ {
+ fmt::print("{}", emptycrate::calculate(2));
+ }
+ ```
+ 
+ it's ok to use namespace directives inside function, but in that case, we should use namespace declerations. we can also pull in string literals suffixes, or chrono literals.
+ 
+ ```cp
+ using namespace std::literals;
+ 
+ auto mystring= "Hello World"sv; //string view
+ ```
+ 
+</details>
+ 
+ ## C++ Weekly - Ep 306 - What Are Local Functions, and Do They Exist in C++?
+
+<details>
+<summary>
+//todo
+</summary>
+
+[What Are Local Functions, and Do They Exist in C++?](https://youtu.be/-EDx6fC6mkQ)
+
+local functions aren't normally possible in c++. we can declare functions inside other function, but we can't define it.
+ 
+ //this doesn't work
+ ```cpp
+ int main()
+ {
+  int get_value()
+ {
+ return 42;
+ };
+ }
+ ```
+we can create a local class with a function in it
+ 
+ ```cpp
+ int main()
+ {
+  struct myStruct{
+ static int get_value()
+ {
+ return 42;
+ }
+ }
+ 
+ auto x= myStrcut::get_value();
+ // using myStruct::get_value; //not allowed!
+ // auto y= get_value(); //not allowed
+ 
+ }
+ ```
+ 
+ we might try to name the class the name of the function and then  define the `()` operator. then we get weird syntax like this:
+ 
+ ```cpp
+ int main()
+ {
+ struct get_value{
+ int operator()()
+ {
+ return 55;
+ }
+ }
+ auto x = get_value()();
+ }
+ ```
+ but since c++11, we have lambdas. which is a struct behined the scenes, but one that the compiler creates for us.
+</details>
+ 
+ 
+ 
  
