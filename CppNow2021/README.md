@@ -8,7 +8,7 @@ all sorts of lectures, divided by field.
   - [x] Algorithms from a Compiler Developer's Toolbox - Gábor Horváth
   - [x] So You Think You Know How to Work With Concepts? - Andrzej Krzemieński
   - [x] The Concepts of concepts - Sandor Dargo
-  - [x] Using Concepts: C++ Design in a Concept World (part 1 of 2) - Jeff Garland
+  - [x] Using Concepts: C++ Design in a Concept World - Jeff Garland
 - [Concurrency](Concurrency.md)
   - [x] Adventures in SIMD-Thinking - Bob Steagall
   - [x] Parallelism on Ranges: Should We? - Giannis Gonidelis
