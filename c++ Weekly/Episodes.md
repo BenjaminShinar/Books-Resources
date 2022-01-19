@@ -1166,7 +1166,7 @@ auto mystring= "Hello World"sv; //string view
 
 </details>
  
- ## C++ Weekly - Ep 306 - What Are Local Functions, and Do They Exist in C++?
+## C++ Weekly - Ep 306 - What Are Local Functions, and Do They Exist in C++?
 
 <details>
 <summary>
@@ -1226,5 +1226,18 @@ int main()
 ```
 
 but since c++11, we have lambdas. which is a struct behind the scenes, but one that the compiler creates for us.
+
+</details>
+
+## C++ Weekly - Ep 307 - Making C++ Fun and Accessible
+
+<details>
+<summary>
+showing off the book of lifetime puzzles.
+</summary>
+
+[Making C++ Fun and Accessible](https://youtu.be/3RskKe7I6T4)
+
+he made a nice book with puzzles about lifetime.
 
 </details>
