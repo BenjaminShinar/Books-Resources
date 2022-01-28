@@ -1,0 +1,8 @@
+version: "2"
+services:
+  go:
+    image: golang:1.17
+    volumes:
+      - ./app:/go/src:rw
+
+    command: ["go", "run", "src/main.go"]
