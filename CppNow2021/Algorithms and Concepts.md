@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore rtime conceptify Parnas
+// cSpell:ignore rtime conceptify Parnas Permutatic Distributic regtr
 -->
 
 [Main](README.md)
@@ -2335,3 +2335,532 @@ question from the chat:
 </details>
 
 [Main](README.md)
+
+## Practical TMP: A C++17 Compile Time Register Machine - Daniel Nikpayuk
+
+<details>
+<summary>
+Trying to make a Register machine at runtime using template meta programming.
+</summary>
+
+[Practical TMP: A C++17 Compile Time Register Machine](https://youtu.be/HLFz7rWRlyk)
+
+**TMP - template meta programming**
+
+there will be demonstration at the end.
+
+TMP is Turing Complete. it can do loop unrolling, it has paradigms such as CRTP and SFINAE,and even compile time Regular expression, this lecture says that a TMP Turing machine can be practical, it argues that there are seven bottlenecks that prevent this, the first two bottlenecks are theoretical roadblocks, while the others are practical roadblocks.
+
+> 1. A Stack Machine
+> 2. Continuation Passing
+> 3. The Nesting Depth Problem
+> 4. Interoperability
+> 5. Organization Design
+> 6. Debugging
+> 7. Performance
+
+### Stack Machine
+
+There different ways to make a function or machine to be turing complete, Daniel uses variadic packs. the relation between the two concepts (stack, variadic packs) is the template parameter resolution have the ability to pattern match from the front of a variadic pack.
+
+> "This means we can interpret a pack as a stack, and push and pop from the front:"
+>
+> ```cpp
+> template<auto v0,auto... Vs>
+> constexpr auto function()
+> {
+>   //...
+> }
+> ```
+>
+> when we call the above function, we can pass some parameter pack `Ws` which will match `function<Ws...>()`
+
+however, template scope allows for only a single direct parameter pack, while we need at least two.
+
+we need at least two two stacks for a turing machine because having tow stacks allows for random access for reading a writing or their memory states (similar two a "tape machine")
+the solution is something like this:
+
+```cpp
+template <auto.... Stack1, auto... Stack2>
+constexpr auto function(auto_pack<Stack2...>)
+{
+    //...
+}
+```
+
+which can look like this eventually? if we take the first element from stack1 and put it on top of stack2, we can look at stack1 all the way down, which means that we have a random access into it. we can later just push the same data back from stack2 onto stack1.
+
+```cpp
+template <auto.... Stack1_Rest,auto.... Stack1_Front, auto... Stack2>
+constexpr auto machine(auto_pack<Stack1_Front...,Stack2...>)
+{
+    //...
+}
+```
+
+we've solved the memory issue, but we now require our constexpr function to be a finite state machine. in automata theory this is called a "transaction function". in terms of Register Machine Theory this is called a controller, we will add to the templated function at the top.
+
+```cpp
+template<MACHINE_CONTROLLER, auto... Stack1, auto... Stack2>
+constexpr auto machine(auto_pack<Stack2...>)
+{
+    //...
+}
+```
+
+> - A Register machine is made from labels, which in turn are made from instructions, this is the basis of real world assembly languages.
+> - therefore, our stack machine also required a _controller language_
+> - Daniel decided to model his language on a language from the book "Structure and Interpretation of Computer Programs" chapter 5.
+>
+> ```
+> (assign <register-name> (reg <register-name>))
+> (assign <register-name> (const <constant-value>))
+> (assign <register-name> (op <operation-name>) <input_1>...<input_n>)
+> (perform (op <operation-name>) <input_1>...<input_n>)
+> (test (op <operation-name>) <input_1>...<input_n>)
+> (branch (label <label-name>))
+> (goto (label <label-name>))
+> (assign <register-name> (label <label-name>))
+> (goto (reg <register-name>))
+> (save (reg <register-name>))
+> (restore (reg <register-name>))
+> ```
+
+### Continuation Passing
+
+going from one state to the next. according to Category Therory we need Monads.
+
+we will use composition to achieve this.
+
+```
+f(x,cl(y)) compose g(y,c2(z)) := f(x, \y.g(y)(c2(z)))
+```
+
+each controller instruction behave the regular way, but rather than return the result, the pass it forward to next machine.
+
+```cpp
+template<MACHINE_CONTROLLER, auto... Stack1, auto... Stack2>
+constexpr auto machine(auto_pack<Stack2...> Heap)
+{
+    return next_machine<MACHINE_CONTROLLER,Stack1>(Heap);
+}
+```
+
+and now with a struct, we only need the name parameter, but the note parameter makes things easier to handle
+
+```cpp
+template<>
+struct machine<MN::(((name)),(((note))))>
+{
+    template<MACHINE_CONTROLLER, auto... Stack1, auto... Stack2>
+    static constexpr auto result(auto_pack<Stack2...>)
+    {
+        //...
+    }
+};
+```
+
+the information about the next machine is held in the controller. so we need an index telling us where we currently are within the controller, and some way to know what is the next instruction from the current index.
+
+```cpp
+template<>
+struct machine<MN::(((name)),(((note))))>
+{
+    template<auto contoller, auto index, auto... Stack1, auto... Stack2>
+    static constexpr auto result(auto_pack<Stack2...> Heap)
+    {
+        return machine<
+            next_name(controller, index),
+            next_note(controller, index)
+            >::template result<
+                controller, next_index(controller, index),
+                Stack1...>
+            (Heap);
+    }
+};
+```
+
+for continuation passing, we need a dispatch and an index, so in theory, we are done. in practice, it's better to have several dispatches and two indices.
+
+```cpp
+template<typename dispatches, auto controller, auto index1 auto index2, auto... Stack1, auto... Stack2>
+static constexpr auto result(auto_pack<Stack2...>)
+{
+    //...
+}
+```
+
+so the whole things ends up looking like this:
+
+```cpp
+template<>
+struct machine<MN::(((name)),(((note))))>
+{
+    template<typename dispatches, auto controller, auto index1 auto index2, auto... Stack1, auto... Stack2>
+    static constexpr auto result(auto_pack<Stack2...> Heap)
+    {
+        return machine<
+            dispatches::next_name(controller, index1,index2),
+            dispatches::next_note(controller, index1,index2)
+            >::template result<
+                dispatches, controller,
+                dispatches::next_index1(controller, index1,index2),
+                dispatches::next_index2(controller, index1,index2),
+                Stack1...>
+            (Heap);
+    }
+};
+```
+
+before adding more things, we simplify the namings
+
+- dispatches - `n`
+- controller - `c`
+- index1 - `i`
+- index2 - `j`
+
+and now more to the practical parts
+
+### Nesting Depth Problem
+
+with continuation passing,each machine calls the next machine, and we quickly run out, this is enforced by compilers which set a 'total allowable depth'.
+
+this mitgated by using something called _Trampolining_, which is returning from the continuation passing with an intermediate result. in effect, we reset our depth again and again so we never reach the maximum nesting depth. we get this by adding another index.
+
+this index "Depth" controlles the execution. normally, we simply move to the next machine, but when we reach a certian depth, we return an intermediate results and go back to the topmost machine.
+
+```cpp
+template<>
+struct machine<MN::(((name)),(((note))))>
+{
+    template<typename n, auto c, auto depth, auto i,auto j, auto... Stack1, auto... Stack2>
+    static constexpr auto result(auto_pack<Stack2...> Heap)
+    {
+        return machine<
+            n::next_name(c, depth, i, j),
+            n::next_note(c, depth, i, j)
+            >::template result<
+                n, c,
+                n::next_depth(depth),
+                n::next_index1(c, depth, i, j),
+                n::next_index2(c, depth, i, j),
+                Stack1...>
+            (Heap);
+    }
+};
+```
+
+for some reason this trampolining decrease the depth each time, so this is still a finite number of possbile depth. however, it pretty east to create an additional trampolling index that resets the first one, and so one.
+
+### Interoperability
+
+we need some way to perfrom the current instructions. but if we calls a non-machine function as a helper, we might run out of the allowed depth, so we must contstrait the types of functions we can call to only those with a known depth. the proposed solution is to extend the Heap into it's own stack.
+
+```cpp
+template<>
+struct machine<MN::(((name)),(((note))))>
+{
+    template<typename n, auto c, auto depth, auto i,auto j, auto... Stack, typename... Heaps>
+    static constexpr auto result(Heaps... Hs)
+    {
+        return machine<
+            n::next_name(c, depth, i, j),
+            n::next_note(c, depth, i, j)
+            >::template result<
+                n, c,
+                n::next_depth(depth),
+                n::next_index1(c, depth, i, j),
+                n::next_index2(c, depth, i, j),
+                Stack...>
+            (Hs...);
+    }
+};
+```
+
+we effectively allow only fixed depth helper functions and other machines to be called, and when we call a machine, we cache the current controller as a heap and pass the current depth to the next machine.
+
+there is another problem for interoperability, which is the probel of _typename vs auto_.
+
+```cpp
+template<MACHINE_CONTROLLER,typename... Stack, typename... Heaps>
+static constexpr auto results(Heaps... Hs)
+{
+    //...
+}
+```
+
+luckily for us, we don't have to decide betwen the two. we can do both!
+we hide the typename as the inputput type of a void function, which is later retrived via pattern matching. this means we only auto packs for out machine.
+
+```cpp
+template<auto value>
+struct value_cached_as_type{};
+using x = value_cached_as_type<int(5)>;
+
+template<typename type>
+constexpr void type_cached_as_value(TYPE){};
+constexpr y = type_cached_as_value<int>;
+```
+
+### Organization Desgin
+
+we actually have the final form of our machine.
+
+```cpp
+template<>
+struct machine<MN::(((name)),(((note))))>
+{
+    template<typename n, auto c, auto d, auto i,auto j, auto... Stack, typename... Heaps>
+    static constexpr auto result(Heaps... Hs)
+    {
+        return machine<
+            n::next_name(c, d, i, j),
+            n::next_note(c, d, i, j)
+            >::template result<
+                n, c,
+                n::next_depth(d),
+                n::next_index1(c, d, i, j),
+                n::next_index2(c, d, i, j),
+                Stack...>
+            (Hs...);
+    }
+};
+```
+
+- where do we go from here?
+- how to build a register machine library?
+- which specific machine fo we choose to make?
+- how do we organize our machines in this library?
+
+this becomes a bottleneck because of how it affect performance, maintenance and debugging.
+
+> the suggested hierarchy is:
+>
+> 1. Block machines: (atomics 1: pop, push, fold, etc). patterns of two.
+> 2. Variadic machines: (atomics 2: pop, push, fold, etc). generalized forms of blocks.
+> 3. Permutatic machines: (linear 1: stack/heap operators). linear controllers.
+> 4. Distributic machines: (linear 2: erase, insert, replace)
+> 5. Near linear machines: (1-cycle loops: lift, stem, cycle). aren't strictly needed, but are helpful
+> 6. Register machines (branch, goto, save,restore).
+
+### Debugging
+
+a bottleneck for any TMP project. the error messages are usually horrible, no matter the compiler used.
+
+for now, we use basic tools like `static_assert`, and in c++20 we can use concepts. at the controller level things are actually more managable,
+
+in this example, we have a filter controller, it has three labels.
+
+```cpp
+constexpr auto r_filer_contr=r_controller
+<
+    r_label // is loop end:
+    <
+    test < eq,,c_0>,
+    branch<return_pack>,
+    apply<n,sub,n,c_1>,
+    check<condition, val>,
+    branch<pop_value>,
+    rotate_sn<val>,
+    goto_contr<is_loop_end>
+    >,
+    r_label // pop value:
+    <
+        erase<val>,
+        goto_contr<is_loop_end>
+    >,
+    r_label // return pack:
+    <
+        pop<six>,
+        pack<>
+    >
+>;
+```
+
+at this state, we can use old time tested debugging techniques, like adding a print statement, which doesn't really print, but it is a way to mark where the function got to, so we simply compile it again and again with moving the position of the statement.
+
+```cpp
+//...
+    r_label // is loop end:
+    <
+    test < eq,,c_0>,
+    branch<return_pack>,
+    apply<n,sub,n,c_1>,
+    stop <val>, //halts, returns val instead.
+    check<condition, val>,
+    branch<pop_value>,
+    rotate_sn<val>,
+    goto_contr<is_loop_end>
+    >,
+//...
+```
+
+if we don't like the naive approach, compile time debuggers are possbile, altought the don't currently exists.
+
+### Performance
+
+the final bottleneck, how good is this the design? there are currently no benchmarks.
+
+**Block optimization** paradigm. _fast tracking_, performing calculations on variadic packs in powers of two (blocks) rather than one at a time. we match on more than just one element of the pattern.\
+this turns a linera algorithm into a logarithmetic one, the savings aren't from the blocking itself, it's because we copy less information, which also reduced depth.
+
+```cpp
+//variadic form
+auto foo(V0, Vs...);
+//adding block forms
+auto foo(v0,V1,Vs...);
+auto foo(v0,V1,V2,V3,Vs...);
+```
+
+**Mutator optimization**. some instructions are more common than others (erase, insert, replace), so we create both the general purpose versions of them and optimized versions for the first eight registers.
+
+**Machine Call optimization**. finding the next machine to call is done by using overloaded functions (for registers), class specializations (for names and notes) and combinning them together.
+
+**Dispatch optimization**. not only used for moving from one machine to the next, but also optimize, therefore having less stack copying, and less depth issues.
+
+### Demonstartion
+
+- Factorial function
+- Fibonacci function
+- Filter and function compostion
+
+Naive factorial example, only goes up to factorial(20) before overflowing.
+
+```cpp
+template<
+    // registers:
+    index_type val = 0,
+    index_type n = 1,
+    index_type eq = 2,
+    index_type sub = 3,
+    index_type multi = 4,
+    index_type c_1= 5,
+    index_type cont = 6
+    // labels:
+    index_type fact_loop = 1,
+    index_type after_fact = 2,
+    index_type base_case = 3,
+    index_type fact_done = 4,
+>
+constexpr auto fact_contr = r_controller
+<
+    r_label // fact loop:
+    <
+        test<eq,n,c_1>,
+        branch<base_case>,
+        save<cont>
+        save<n>,
+        apply<n,sub,n_c_1>,
+        assign<cont,after_fact>,
+        goto_contr<fact_loop>
+    >,
+    r_label // after fact:
+    <
+        restore<n>,
+        restore<cont>,
+        apply<val, multi, n, val>,
+        goto_regtr<cont>
+
+    >,
+    r_label // base case:
+    <
+        replace<val,c_1>,
+        goto_regtr<cont>
+    >,
+    r_label // fact done:
+    <
+        stop<val>,
+        reg_size<seven>
+    >
+>;
+```
+
+naive fibonacci, this one goes up to 13 before reaching the maximum nested depth.
+
+```cpp
+template<
+    // registers:
+    index_type val = 0,
+    index_type n = 1,
+    index_type less_than = 2,
+    index_type add = 3,
+    index_type sub = 4,
+    index_type c_1= 5,
+    index_type c_2= 6,
+    index_type cont = 7
+    // labels:
+    index_type fib_loop = 1,
+    index_type after_fib_n_1 = 2,
+    index_type after_fib_n_2 = 3,
+    index_type immediate_answer = 4,
+    index_type fib_done = 5,
+>
+constexpr auto fact_contr = r_controller
+<
+    r_label // fib_loop:
+    <
+        test<less_than,n,c_2>,
+        branch<immediate_answer>,
+        save<cont>
+        assgin<cont,after_fib_n_1>,
+        save<n>,
+        apply<b,sub, n,c_1>,
+        goto_contr<fib_loop>
+    >,
+    r_label // after_fib_n_1:
+    <
+        restore<n>,
+        restore<cont>,
+        apply<n,sub, n,c_2>,
+        save<n>,
+        assign<cont, after_fib_n_2>,
+        save<val>,
+        goto_contr<cont>
+    >,
+    r_label // after_fib_n_2:
+    <
+        replace<n,val>,
+        restor<val>
+        restore<cont>,
+        apply<val,add,val,n>,
+        goto_regtr<cont>
+    >,
+    r_label // immediate_answer:
+    <
+        replace<val,c_1n>,
+        goto_regtr<cont>
+    >,
+    r_label // fib_done:
+    <
+        stop<val>,
+        reg_size<eight>
+    >
+>;
+```
+
+compose functions - still runtime?
+
+```cpp
+template<typename T>
+constexpr T square(T x){return x*x;}
+
+constexpr void _id_();// defined elsewhere
+//2x^4+1
+constexpr auto func_1 = do_compose
+<
+    square<int>,
+    square<int>,
+    multiply_by<int,2>,
+    add_by<int,1>
+>;
+//(3(x+1))^2
+constexpr auto func_2 = safe_do_compose
+<
+    add_by<int,1>
+    multiply_by<int,3>,
+    _id_,
+    square<int>
+>;
+```
+
+</details>

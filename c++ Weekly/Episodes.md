@@ -1242,69 +1242,72 @@ he made a nice book with puzzles about lifetime.
 
 </details>
 
- 
- ## C++ Weekly - Ep 308 - 'if consteval' - There's More To This Story
- 
+## C++ Weekly - Ep 308 - 'if consteval' - There's More To This Story
+
 <details>
 <summary>
 Some extra information about C++23 `if consteval`
 </summary>
 
-['if consteval' - There's More To This Storye](https://youtu.be/y3r9l3LZiJ8)
+['if consteval' - There's More To This Story](https://youtu.be/y3r9l3LZiJ8)
 
- some parts that were left out.
- 
- - `if constexpr (conditional) {}`
- - `if (std::is_constant_evaluated()){}`
- - `if consteval {}`
- 
- 
- ```cpp
+some parts that were left out.
+
+- `if constexpr (conditional) {}`
+- `if (std::is_constant_evaluated()){}`
+- `if consteval {}`
+
+```cpp
 #include <type_traits>
- 
+
 constexpr int func()
 {
-    if (std::is_constant_evaluated())
-    {
-        return 42;
-    }
-    else
-    {
-        return 24;
-    }
+   if (std::is_constant_evaluated())
+   {
+       return 42;
+   }
+   else
+   {
+       return 24;
+   }
 }
- int main()
- {
- auto value1 =func(); //24
- constexpr auto value2 = func(); 42
- return value1;
- }
+int main()
+{
+    auto value1 =func(); //24
+    constexpr auto value2 = func(); 42
+    return value1;
+}
 ```
- lets add a function
 
- ```cpp
- //immediate function, must be called in compile-time
- consteval int get_eval_value(int i)
- {
- return 42+i;
- }
- ```
- even though it seems like this is a compile time thing, it's not. \
+lets add a function
+
+```cpp
+//immediate function, must be called in compile-time
+consteval int get_eval_value(int i)
+{
+return 42+i;
+}
+```
+
+even though it seems like this is a compile time thing, it's not. \
  this doesn't work
- ```cpp
-  if (std::is_constant_evaluated())
- {
- return get_eval_value(5);
- }
- ```
- but this does:
- ```cpp
- if consteval
- {
- return get_eval_value(5);
- }
- ```
- this has something to do with the differnce between something that is truely compile time construct and things which are simply optimized away by the compiler.
- 
 
-</details>
+```cpp
+if (std::is_constant_evaluated())
+{
+    return get_eval_value(5);
+}
+```
+
+but this does:
+
+```cpp
+if consteval
+{
+    return get_eval_value(5);
+}
+```
+
+this has something to do with the difference between something that is truly compile time construct and things which are simply optimized away by the compiler.
+
+ </details>

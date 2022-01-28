@@ -9,9 +9,11 @@ all sorts of lectures, divided by field.
   - [x] So You Think You Know How to Work With Concepts? - Andrzej Krzemieński
   - [x] The Concepts of concepts - Sandor Dargo
   - [x] Using Concepts: C++ Design in a Concept World - Jeff Garland
+  - [x] Practical TMP: A C++17 Compile Time Register Machine - Daniel Nikpayuk
 - [Concurrency](Concurrency.md)
   - [x] Adventures in SIMD-Thinking - Bob Steagall
   - [x] Parallelism on Ranges: Should We? - Giannis Gonidelis
+  - [x] Executors: The Art of Generating Composable APIs - Nikunj Gupta
 - [Interfaces](Interfaces.md)
   - [x] When Should You Give Two Things the Same Name? - Arthur O'Dwyer
   - [x] Windows, MacOS and Web: Lessons from Cross-platform Development @ think-cell - Sebastian Theophil
@@ -50,8 +52,6 @@ all sorts of lectures, divided by field.
 
 currently working on:
 
-- [ ] Executors: The Art of Generating Composable APIs - Nikunj Gupta
-
 - [ ] A Few Gentle Rules (\*) but One in Particular - Chris Uzdavinis
 - [ ] A Simple GUI Programming Setup for Beginners - Jussi Pakkanen
 - [ ] Answering a Question From My Talk… - Jens Weller
@@ -71,7 +71,7 @@ currently working on:
 - [ ] Library Approaches for Strong Type Aliases - Anthony Williams
 - [ ] Numerical Differentiation ++ - Ian Bell
 - [ ] One Friend Ain't Enough - Jody Hagins
-- [ ] Practical TMP: A C++17 Compile Time Register Machine - Daniel Nikpayuk
+
 - [ ] Simplest Safe Integers - Peter Sommerlad
 - [ ] Stdfwd - Forward Declarations for C++ Standard Library - Oleh Fedorenko
 - [ ] STL Algorithms as Expressions - Oleksandr Bacherikov

@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq Nikunj Exascale
+// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq Nikunj Exascale randomizer kokkos hpx lcos
  -->
 
 [Main](README.md)
@@ -396,11 +396,13 @@ the stl came into life in 1998, with algorithms, containers and iterators. in c+
 
 [range-v3](https://github.com/ericniebler/range-v3) is a library that provides Composability. this makes code more readable, and has the potential to make it much faster.
 
-> A range is: 
+> A range is:
+>
 > - an abstraction of "a sequence of items"
 > - something iterable
 >
 > A range is actually:
+>
 > - a begin iterator & sentinel pair, where sentinel:
 >   - an end iterator of the same type as begin iterator
 >   - a value
@@ -408,8 +410,8 @@ the stl came into life in 1998, with algorithms, containers and iterators. in c+
 
 in a `c_string` the begin iterator is the start of the chars, and the sentinel is the null-terminator. it can also be the address of the null terminator, or the distance from the start.
 
-
 we no longer need to pass around the begin and end iterator
+
 ```c++
 std::vector<int> v{1,2,3,4};
 std::find(std::begin(v),std::end(v),3);
@@ -419,6 +421,7 @@ ranges::find(begin(v), sentinel<int>{4},3);
 ```
 
 for composability, in this example we want to filter squared values which are odd (keep only even squared elements). with stl algorithms, we need to pass around the iterators, and we have temporary values. ranges don't require all that.
+
 ```cpp
 std::vector<int> vi {1,2,3,4,5};
 std::transform(std::begin(vi),std::end(vi),std::begin(vi),[](int i){return i*i;});
@@ -444,8 +447,8 @@ provides parallelism and asynchrony, with stl parallel algorithms and "futures" 
 - Always keep your threads busy, don't let them idle.
 - dynamic scheduling of tasks, removing barriers.
 
-
 uses the standard execution policies:
+
 - sequential execution (`seq`)
 - parallel execution (`par`)
 - vector execution (`unseq`)
@@ -456,6 +459,7 @@ uses the standard execution policies:
 more control to the user over the parallelization.
 
 we no longer block the execution, and the execution waits until we need the future.
+
 ```cpp
 future<int> f1 =async(&fun);
 
@@ -472,6 +476,7 @@ f2.then(
 ```
 
 hpx algorithm support
+
 ```cpp
 hpx::reduce(par,std::cbegin(v),std::cend(v),/*some lambda*/);
 //async
@@ -486,11 +491,13 @@ hpx::ranges::reduce(std::begin(v),sentinel,/*some lambda*/);
 combining ranges and execution policies,
 
 base form
+
 ```cpp
 hpx::for_each(par, v.begin(), v.end(),/*lambad*/)
 ```
 
 range form
+
 ```cpp
 namespace hpx {
     namespace ranges{
@@ -501,7 +508,9 @@ namespace hpx {
     }
 }
 ```
+
 stage 1.5, iterator and sentinel
+
 ```cpp
 namespace hpx {
     namespace ranges{
@@ -515,6 +524,7 @@ namespace hpx {
 ```
 
 but the final goal is to use ranges and views,
+
 ```cpp
 
 std::vector<int> vi {1,2,3,4,5};
@@ -524,6 +534,7 @@ ranges::views::remove_if([](int i){return i % 2 ==1;});
 ```
 
 options
+
 > 1. provide combined implementations for each combination of operators (combinatorial explosion)
 > 2. use fork-join strategy (also rejected)
 > 3. fusion (this was chosen)
@@ -531,16 +542,18 @@ options
 views are lazily evaluated, so we fuse together the stages.
 
 some operation combinations are harder to parallelize like this than others:
+
 > hard:
+>
 > - transform | remove_if
 > - adjacent_remove_if | reverse
-> 
+>
 > easy:
+>
 > - transform | reverse
 > - accumulate | transform
 
 this depends on how the iterator types is exposed, and when we have temporaries, container resizing and predcates about more then one element things are more difficult.
-
 
 ```cpp
 std::vector<int> vi(10'000'000);
@@ -553,17 +566,17 @@ ranges::views::reverse;
 
 hpx::ranges::for_each(hpx::execution::par, rng,[](auto i){return i;});
 ```
+
 hpx stages:
+
 > - c++20 conformance
 > - parallelize when single range argument input
 > - parallelize when iterator-sentinel input
 > - parallelize when input is composed from a chain of views
 
-
 ### Results
 
 some things don't get performance boost from parallelization, and some do.
-
 
 ### Future Work
 
@@ -574,9 +587,9 @@ sometimes, yes. there are good and bad cases, we should take advantage of inhere
 
 ## Executors: The Art of Generating Composable APIs - Nikunj Gupta
 
-<!-- <details> -->
+<details>
 <summary>
-
+Executors, and composable operations
 </summary>
 
 [Executors: The Art of Generating Composable APIs](https://youtu.be/8rRTKWdfAOU),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/CNow-2021.pptx)
@@ -591,16 +604,17 @@ SDC - silent data corruptions, not detected. usually have low probability for ha
 ### HPX Implementation
 
 > assumptions:
+>
 > - No global variables for state changes.
->  - use built-in constructs (channels)
+> - use built-in constructs (channels)
 > - Task do not change the input data parameters.
-> Task boundary is an ideal position to add resilience
+>   Task boundary is an ideal position to add resilience
 
-example: task 1 computes a result and feeds it to task 2. but if there was a silent error, we can check the value (add resiliency, credability) before passing on the data. we use *Task Replay* and *Task Replicate*.
+example: task 1 computes a result and feeds it to task 2. but if there was a silent error, we can check the value (add resiliency, credability) before passing on the data. we use _Task Replay_ and _Task Replicate_.
 
 async replay: do task A, if there is an exception, replay the task, if not, continue. this is done recursively.
 
-async replicate: do task A some times. 
+async replicate: do task A some times.
 
 ```cpp
 template <typename F, typename... Ts>
@@ -662,260 +676,262 @@ auto async_replicate(std::size_t n, F&& f,TS&&... ts)
         },std::move(results));
 }
 ```
+
 ### Implementation Variations
- 
-Algorithem based fault tolerance, based on validation function.
- 
- we can use the async replicate funtion to validate, as we have more than one valid result:
- - intoduce consensus through vote functions
- - introduce results validation through predicatse
- - introduce consensus on valid results from predicares.
- 
- **disributed software resilience**:\
- we need entites that are serializble, we can't send function pointers over network becuase of how the address randomizer works.
- 
- ```cpp
- template <typename Rsult, typename Pred, typename F, typename...Ts>
- auto async_replay_helper(std::size_t n, Pred&& pred, F&& f, Ts&&... ts)
- {
- //..
- //.. within lambda after `if(f.has_exception())`
- 
- auto && res = f.get();
- if (!HPX_INVOKE(pred, res)&& n != 0)
- {
- // validation failed
- // try again, with n-1;
- 
- return async_replay_helper(n-1, std::forward<Pred>(pred), std::forward<F>(f), std::forward<TS>(ts)...);
- }
- return hpx::make_ready_future(std::move(res));
- }
- ```
- 
- now we have some results, and we want to reach a consensus
-  ```cpp
- template <typename Rsult, typename Vote, typename F, typename...Ts>
- auto async_replicate_vote(std::size_t n, Vote&& vote, F&& f, Ts&&... ts)
- {
- //..
- //.. within gpx::dataflow (vote is foward captured in the lambda
- 
- std::vector<hpx::future<Result>> exceptionless_results;
- exceptionless_results.reserve(n);
- 
- std::exception_ptr ex;
- 
- for (auto&& f:std::move(results))
- {
- if (!f.has_exception())
- {
- exceptionless_results.emplace_back(f.get());
- }
- else
- {
- ex= rethrow_on_abort_replicate();
- }
- }
- 
- if (exceptionless_results.empty()
- {
- std::rethrow_exception(ex);
- }
- 
- // where did valid results come from?
- return hpx::make_ready_future(HPX_INVOKE(std::forward<Vote>(vote), std::move(valid_results));
- }
- ```
- 
- the same scenario, but on differnt machine (distributed), we send the command over the network and then other machine does the action.
- 
- 
-  ```cpp
- template <typename Rseult, typename Vote, typename Action, typename...Ts>
- auto async_replicate_vote(std::vector<hpx::id_type> ids, Vote&& vote, Action&& action, Ts&&... ts)
- {
- using result_t = typename std::invoke_result<Action, hpx::id_type, Ts..>::type;
- std::vector<hpx::future<result_t>> results;
- results.reserve(ids.size());
- //why not use an range algorithem?
- for (std::size_t i = 0; i != ids.size(); ++i)
- {
- results.emplace_bacl(gpx::astnc(action,ids.at(i),ts..));
- }
- //..
- }
- ```
- 
- the performace cost is based on how many futures are accsseed, so there a small performance cost for replay+validate, but a high cost for replicate+validate.
- 
- some benchmarking.
- ### The Need For Executors
- 
- > if overheads are low, why not use it everywhere?
- 
- ```cpp
- auto f1 = hpx::async(my_func, args...);
- //can be converted into
- auto f2 = hpx::async_replay(n,my_func, args...);
- 
- auto f3= my_algorithm(args...);
- //can be converted into
- auto f4 = hpx::async_replay(n, my_algorithm, args);;
- 
- hpx::for_each(hpx::execution::par, my_range.begin(), my_range.end(), my_func);
- //doesn't convery nicely
- ```
- 
- > "Executors are modular components for creating exectuion"\
- > (P0443,2016)
 
- executros work on an exectuing resource and provide abstraction over it.
- 
- ```cpp
- template<InputRange Ir, OutputRange Or>
- auto some_algorithm(Ir&& ir, Or&& or)
- {
- //some work
- }
- 
- //executor unaawre algorithm
- template<Executor Ex,InputRange Ir, OutputRange Or>
- auto some_algorithm(Ex ex,Ir&& ir, Or&& or)
- {
- ex.execute(/* some work*/);
- }
- 
- //executor aware algorithm
- template<Executor Ex,InputRange Ir, OutputRange Or>
- auto executor_aware_algorithm(Ex ex,Ir&& ir, Or&& or)
- {
- return algorithm(ex, std::forward<Ir>(ir), std::forward<Or>(or));
- }
- ```
- 
- (Resilecny executros)
- 
- now we can have clean and composable API
- 
-  ```cpp
- auto f1 = hpx::async(my_func, args...);
- //can be converted into executor
- auto f2 = hpx::async(ex,my_func, args...);
- 
- auto f3= my_algorithm(args...);
- //can be converted into executor
- auto f4 = my_algorithm(ex,args...);
- 
- hpx::for_each(hpx::execution::par, my_range.begin(), my_range.end(), my_func);
- //can be converted into executor!
- hpx::for_each(hpx::execution::par.on(ex), my_range.begin(), my_range.end(), my_func);
- ```
- 
- hpx executors (based on P0443R4):
- 
- member function:
- - post - fire and forget
- - sync_excute -   blocking , likse std::invoke
- - async_excute - non blocking, like std::asnyc(func, args...)
- - bulk_async_excute - async_excute, but in bulk
- - then_execute - support `.then()`
- - bulk_then_execute - bulk version `.then()`
- 
-an executor can have one or more of those function. we want compile time performance, so we create customization points objects. we have execturo categroeis
- 
- - is_one_way_executor - no channels to return results
- - is_two_way_executor - has return results
- - is_bulk_two_way_executor - for bulk operations.
- 
- ### example
- 
- ```cpp
- hpx::async(ex, func, args...);
- // calls
- template<typename Executor>
- struct async_dispatch<Executor, typename std::enable_if<traits::is_one_way_executor<Executor>>::value || traits::is_two_wat_executor<Executor>::value>::type>;
- 
- async_execute(std::forward<Executor(exec), std::forward<F>(f), std::forward<Ts>(ts)...);
- 
- exec.async_execute(std::forward<F>(f), std::forward<Ts>(ts)...);
- ```
- now we go back to the resilience replay executor and add a way to handle two way execution
- 
- ```cpp
- template<typename BaseExecutor, typename Validate>
- class replay_executor
- {
- private:
- BaseExecutor & exec_;
- std::size_t replay_count_;
- Validate validator_;
- 
- public:
- 
- template<typename F>
- explicit replay_executor(BaseExecutor& exec, std::size_t n, F&& f)
- : exec_(exec), replay_count_(n), validator_(std::forwatd<F>(f))
- {}
- 
- template<typename F, typename...Ts>
- auto async_execute(F&& f, Ts&&... ts)const
- {
- return async_replay_validate(exec_, replat_count_, validator_, std::forward<F>(f), std::forward<Ts>(ts)...);
- }
- //...
- };
- ```
- 
- and for the bulk two way executor, we add to the above cllass
- 
- 
- ```cpp
+Algorithm based fault tolerance, based on validation function.
+
+we can use the async replicate function to validate, as we have more than one valid result:
+
+- intoduce consensus through vote functions
+- introduce results validation through predicates
+- introduce consensus on valid results from predicates.
+
+**distributed software resilience**:\
+ we need entities that are serializable, we can't send function pointers over network because of how the address randomizer works.
+
+```cpp
+template <typename Result, typename Pred, typename F, typename...Ts>
+auto async_replay_helper(std::size_t n, Pred&& pred, F&& f, Ts&&... ts)
+{
+//..
+//.. within lambda after `if(f.has_exception())`
+
+auto && res = f.get();
+if (!HPX_INVOKE(pred, res)&& n != 0)
+{
+// validation failed
+// try again, with n-1;
+
+return async_replay_helper(n-1, std::forward<Pred>(pred), std::forward<F>(f), std::forward<TS>(ts)...);
+}
+return hpx::make_ready_future(std::move(res));
+}
+```
+
+now we have some results, and we want to reach a consensus
+
+```cpp
+template <typename Result, typename Vote, typename F, typename...Ts>
+auto async_replicate_vote(std::size_t n, Vote&& vote, F&& f, Ts&&... ts)
+{
+//..
+//.. within gpx::dataflow (vote is forward captured in the lambda
+
+std::vector<hpx::future<Result>> exceptionless_results;
+exceptionless_results.reserve(n);
+
+std::exception_ptr ex;
+
+for (auto&& f:std::move(results))
+{
+if (!f.has_exception())
+{
+exceptionless_results.emplace_back(f.get());
+}
+else
+{
+ex= rethrow_on_abort_replicate();
+}
+}
+
+if (exceptionless_results.empty()
+{
+std::rethrow_exception(ex);
+}
+
+// where did valid results come from?
+return hpx::make_ready_future(HPX_INVOKE(std::forward<Vote>(vote), std::move(valid_results));
+}
+```
+
+the same scenario, but on different machine (distributed), we send the command over the network and then other machine does the action.
+
+```cpp
+template <typename Result, typename Vote, typename Action, typename...Ts>
+auto async_replicate_vote(std::vector<hpx::id_type> ids, Vote&& vote, Action&& action, Ts&&... ts)
+{
+using result_t = typename std::invoke_result<Action, hpx::id_type, Ts..>::type;
+std::vector<hpx::future<result_t>> results;
+results.reserve(ids.size());
+
+for (std::size_t i = 0; i != ids.size(); ++i)
+{
+    results.emplace_back(gpx::async(action,ids.at(i),ts..));
+}
+//..
+}
+```
+
+the performace cost is based on how many futures are accessed, so there a small performance cost for replay+validate, but a high cost for replicate+validate.
+
+some benchmarking.
+
+### The Need For Executors
+
+> if overheads are low, why not use it everywhere?
+
+```cpp
+auto f1 = hpx::async(my_func, args...);
+//can be converted into
+auto f2 = hpx::async_replay(n,my_func, args...);
+
+auto f3= my_algorithm(args...);
+//can be converted into
+auto f4 = hpx::async_replay(n, my_algorithm, args);;
+
+hpx::for_each(hpx::execution::par, my_range.begin(), my_range.end(), my_func);
+//doesn't convery nicely
+```
+
+> "Executors are modular components for creating execution"\
+> (P0443,2016)
+
+executors work on an executing resource and provide abstraction over it.
+
+```cpp
+template<InputRange Ir, OutputRange Or>
+auto some_algorithm(Ir&& ir, Or&& or)
+{
+//some work
+}
+
+//executor unaware algorithm
+template<Executor Ex,InputRange Ir, OutputRange Or>
+auto some_algorithm(Ex ex,Ir&& ir, Or&& or)
+{
+ex.execute(/* some work*/);
+}
+
+//executor aware algorithm
+template<Executor Ex,InputRange Ir, OutputRange Or>
+auto executor_aware_algorithm(Ex ex,Ir&& ir, Or&& or)
+{
+return algorithm(ex, std::forward<Ir>(ir), std::forward<Or>(or));
+}
+```
+
+now we can have clean and composable API
+
+```cpp
+auto f1 = hpx::async(my_func, args...);
+//can be converted into executor
+auto f2 = hpx::async(ex,my_func, args...);
+
+auto f3= my_algorithm(args...);
+//can be converted into executor
+auto f4 = my_algorithm(ex,args...);
+
+hpx::for_each(hpx::execution::par, my_range.begin(), my_range.end(), my_func);
+//can be converted into executor!
+hpx::for_each(hpx::execution::par.on(ex), my_range.begin(), my_range.end(), my_func);
+```
+
+hpx executors (based on P0443R4):
+
+member function:
+
+- post - fire and forget
+- sync_excute - blocking , like std::invoke
+- async_excute - non blocking, like std::async(func, args...)
+- bulk_async_excute - async_excute, but in bulk
+- then_execute - support `.then()`
+- bulk_then_execute - bulk version `.then()`
+
+an executor can have one or more of those function. we want compile time performance, so we create customization points objects. we have executor categories
+
+- is_one_way_executor - no channels to return results
+- is_two_way_executor - has return results
+- is_bulk_two_way_executor - for bulk operations.
+
+### example
+
+```cpp
+hpx::async(ex, func, args...);
+// calls
+template<typename Executor>
+struct async_dispatch<Executor, typename std::enable_if<traits::is_one_way_executor<Executor>>::value || traits::is_two_wat_executor<Executor>::value>::type>;
+
+async_execute(std::forward<Executor(exec), std::forward<F>(f), std::forward<Ts>(ts)...);
+
+exec.async_execute(std::forward<F>(f), std::forward<Ts>(ts)...);
+```
+
+now we go back to the resilience replay executor and add a way to handle two way execution
+
+```cpp
+template<typename BaseExecutor, typename Validate>
+class replay_executor
+{
+private:
+BaseExecutor & exec_;
+std::size_t replay_count_;
+Validate validator_;
+
+public:
+
+template<typename F>
+explicit replay_executor(BaseExecutor& exec, std::size_t n, F&& f)
+: exec_(exec), replay_count_(n), validator_(std::forward<F>(f))
+{}
+
+template<typename F, typename...Ts>
+auto async_execute(F&& f, Ts&&... ts)const
+{
+return async_replay_validate(exec_, replat_count_, validator_, std::forward<F>(f), std::forward<Ts>(ts)...);
+}
+//...
+};
+```
+
+and for the bulk two way executor, we add to the above class
+
+```cpp
 template <typename F, typename S, typename..Ts>
- auto bulk_async_execute(F&& f, S const& shape, Ts&&... ts) const
- {
- using namespace hpx::parallel::execution;
- std::size_t size = hpxx::util::size(shape);
- using result_type= typename detail::bulk_function_result<F,S,Ts...>::type;
- using future_type= typename executor_future<BaseExecutor, result_type>::type;
- 
- std::vector<future_type> results;
- results.resize(size);
- 
- hpx::lcos::local::latch l(size+1);
- 
- spawn_hierachical(results,l, 0,size, num_task, f, hpx::util::begin(shape), ts...);
- l.count_down_and_wait();
- return results;
- }
- // this should be somewhere in teh spawn_hierachical function
- results[base+i] = async_execute(func, *it, ts...);
- ```
- 
- and the driver code itself
- ```cpp
- 
- hpx::execution::parallerl_executor base_exec;
- auto exec = hpx::resillency::experminetal::make_replay_executor(base_exec,3);
- 
- auto f= hpx::async(exec, fuc, args...);
- some_algotithm(exec, args...);
- hpx::for_each(hpx::executrion::par.on(exec), my_range.begin(), my_range.end(), my_func);
- ```
- 
- virtually no effort for the user, easy to add. it also produces clean and readble code as compared to replicate and replay, the executors are composbile!
+auto bulk_async_execute(F&& f, S const& shape, Ts&&... ts) const
+{
+using namespace hpx::parallel::execution;
+std::size_t size = hpx::util::size(shape);
+using result_type= typename detail::bulk_function_result<F,S,Ts...>::type;
+using future_type= typename executor_future<BaseExecutor, result_type>::type;
 
- > - Resilince executors are base-executor unaware.
- > - Resilince executors are algotirhm unaware.
- > - Resilince executors are runtime unaware.
- 
- ```cpp
- hpx::kokkos::default_host_executor exec_;
- auto exec = hpx::kokkos::reslliency::make_replay_executor(exec_, n, validate);
- auto f = hpx::async(exec, fucnc, args...);
- ```
- 
+std::vector<future_type> results;
+results.resize(size);
+
+hpx::lcos::local::latch l(size+1);
+
+spawn_hierarchical(results,l, 0,size, num_task, f, hpx::util::begin(shape), ts...);
+l.count_down_and_wait();
+return results;
+}
+// this should be somewhere in teh spawn_hierarchical function
+results[base+i] = async_execute(func, *it, ts...);
+```
+
+and the driver code itself
+
+```cpp
+
+hpx::execution::parallel_executor base_exec;
+auto exec = hpx::resillency::experimental::make_replay_executor(base_exec,3);
+
+auto f= hpx::async(exec, fuc, args...);
+some_algorithm(exec, args...);
+hpx::for_each(hpx::execution::par.on(exec), my_range.begin(), my_range.end(), my_func);
+```
+
+virtually no effort for the user, easy to add. it also produces clean and readable code as compared to replicate and replay, the executors are composbile!
+
+> - Resilience executors are base-executor unaware.
+> - Resilience executors are algorithm unaware.
+> - Resilience executors are runtime unaware.
+
+```cpp
+hpx::kokkos::default_host_executor exec_;
+auto exec = hpx::kokkos::resiliency::make_replay_executor(exec_, n, validate);
+auto f = hpx::async(exec, func, args...);
+```
+
 </details>
-
 
 [Main](README.md)
