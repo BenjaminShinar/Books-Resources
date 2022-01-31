@@ -1311,3 +1311,17 @@ if consteval
 this has something to do with the difference between something that is truly compile time construct and things which are simply optimized away by the compiler.
 
  </details>
+
+## C++ Weekly - Ep 309 - Are Code Comments a Code Smell?
+
+<details>
+<summary>
+Discussion episode.
+</summary>
+
+[Are Code Comments a Code Smell?](https://youtu.be/8V6Ry5eTTcc)
+
+the defintion of code smells.\
+are all comments simply signs that we didn't try hard enough to make the code clear?
+
+</details>
