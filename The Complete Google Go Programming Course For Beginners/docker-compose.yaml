@@ -4,5 +4,6 @@ services:
     image: golang:1.17
     volumes:
       - ./app:/go/src:rw
+    working_dir: "/go/src"
 
-    command: ["go", "run", "src/main.go"]
+    command: ["go", "run", "main.go"]
