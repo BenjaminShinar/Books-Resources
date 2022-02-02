@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Doxsey IntelliJ cmplx Expresso
+// cSpell:ignore Doxsey IntelliJ cmplx Expresso Elven
 -->
 
 # The Complete Google Go Programming Course For Beginners
@@ -195,10 +195,247 @@ comparison operator, logical boolean operators.
 
 ## Intermediate Beginers Google Go
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Really basic stuff
 </summary>
+
+### Loops
+
+```go
+package main
+
+import "fmt"
+import "time"
+
+func main(){
+
+    var i:=10
+    for i>0{
+        fmt.Println(i)
+        time.Sleep(time.Second)
+        i=i-1
+    }
+    fmt.Println("Happy new year!")
+}
+```
+
+for loops have an initialization stage, the conditional expression, and the post statement, and of course, the repeated code itself.
+
+types of loops:
+
+```go
+for {
+    //infinite loop
+}
+
+for a>b {
+    //while loop
+}
+
+for i:=0;i<10;i++{
+    //for loop
+}
+```
+
+`break`,`continue` are also parts of loops.
+
+```go
+package main
+
+import "fmt"
+import "time"
+
+func main(){
+
+    for var i:=10;i>0;--i{
+        fmt.Println(i)
+        time.Sleep(time.Second)
+    }
+    fmt.Println("Happy new year!")
+}
+```
+
+the code block between the curly braces defines a scope.
+
+```go
+package main
+
+import "fmt"
+
+func main(){
+
+    for var i:=0;i<10;++i{
+        j:=15
+        j++
+    }
+    fmt.Println(j) //error!
+}
+```
+
+### Control Flow
+
+do something based on a condition
+
+```go
+package main
+
+import "fmt"
+func main(){
+    age:=10
+    if age <12 {
+        fmt.Println("you are a child!")
+    }
+    if age <20 && age >=12 {
+        fmt.Println("you are a teen!")
+    }
+}
+```
+
+we also have `if - else if - else`. the curly braces location matters!
+
+```go
+package main
+
+import "fmt"
+func main(){
+    age:=10
+    if age < 12 {
+        fmt.Println("you are a child!")
+    } else if age < 20  {
+        fmt.Println("you are a teen!")
+    } else {
+        fmt.Println("you are an adult!")
+    }
+}
+```
+
+### Switch Statement
+
+lets take this if-else program
+
+```go
+package main
+
+import "fmt"
+func main(){
+
+    for d:=1; d<=12;++d{
+        fmt.Println("On the %d day of Christmax, my true love sent to me",d)
+        if day == 12 {
+            fmt.Println("Twelve curly braces")
+        } else if day == 11 {
+            fmt.Println("Eleven Elven wenches")
+        }
+
+
+    }
+}
+```
+
+and make it into a switch statement, there is no fall through behavior.
+
+```go
+package main
+
+import "fmt"
+func main(){
+
+    for d:=1; d<=12;++d{
+        fmt.Println("On the %d day of Christmax, my true love sent to me",d)
+
+        switch d{
+            case 12:
+                fmt.Println("Twelve curly braces")
+            case 11:
+                fmt.Println("Eleven Elven wenches")
+            default:
+        }
+    }
+}
+```
+
+```go
+package main
+
+import "fmt"
+func main(){
+
+    for d:=1; d<=12;++d{
+        fmt.Println("On the %d day of Christmax, my true love sent to me",d)
+
+        switch d{
+            case 12:
+                fmt.Println("Twelve curly braces")
+                fallthrough
+            case 11:
+                fmt.Println("Eleven Elven wenches")
+                fallthrough
+            default:
+        }
+    }
+}
+```
+
+actually, the default case doesn't have to the last one, if we decide for some reason that we want to fall through it.
+
+### Functions
+
+passing by value (on the stack), reusable code.
+
+```go
+func name(value1 type1,value2 type2) return_type{
+    //code
+}
+```
+
+there is something called named return.
+
+references and pointers.
+
+```go
+func max(i int, j int)int{
+    if i>j{
+        fmt.Println(i)
+        return i
+    }else{
+        fmt.Println(j)
+        return j
+    }
+}
+```
+
+modifying data in function
+
+```go
+func doubleNumber(number *int){
+    *number = *number*2
+}
+
+func main(){
+    c:= 25
+    doubleNumber(&c)
+    fmt.Println(c)
+}
+```
+
+### Understanding Scope
+
+where variables are accessable. go is lexically scoped using blocks.
+
+global scope, go doesn't raise an error about global unused variables.
+
+```go
+package main
+import "fmt"
+var exit bool=false
+
+func testexit(){
+    exit=true
+}
+```
+
+we can't use the implicit assignment operator in global scope `:=`
 
 </details>
 
@@ -208,6 +445,20 @@ comparison operator, logical boolean operators.
 <summary>
 //TODO: add Summary
 </summary>
+
+### Arrays and Slices - Part 1 - Arrays... and seeing multiple!
+
+### Arrays and Slices - Part 2 - Hands on Arrays
+
+### Arrays and Slices - Part 3 - Slices - A slice of nice!
+
+### Arrays and Slices - Part 4 - Hands on slices..... and the power within!
+
+### Advanced Topics - Simple Statements (that aren't quite so simple....)
+
+### For Range Loops - Processing forloops in a blink of an eye...
+
+### Variadic Functions - No function ever sounded "so cool". Variadic...functions.
 
 </details>
 
