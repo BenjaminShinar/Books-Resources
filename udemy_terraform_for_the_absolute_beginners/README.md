@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore udemy HashiCorp
+// cSpell:ignore HashiCorp
  -->
 
 # Terraform For The Absolute Beginners
@@ -8,7 +8,10 @@ udemy course [Terraform for the absolute beginners](https://www.udemy.com/course
 
 ## Infrastructure as Code
 
+<details>
+<summary>
 Iac - Infrastructure as Code
+</summary>
 
 ### Challenges with Traditional IT Infrastructure
 
@@ -57,7 +60,7 @@ echo Instance $INSTANCE was created successfully!
 ```
 can be written as a terraform configuration file, which is easier to read.
 
-```terraform
+```hcl
 resource "aws_instance" "webserver"{
 	ami = "ami-0edab43b6fa892279"
 	instance_type = "t2.micro"
@@ -127,7 +130,7 @@ it uses HCL - hashicorp configuration language
 
 this sample code declares an instance on the cloud.
 
-```terraform
+```hcl
 resource "aws_instance" "webserver"{
     ami= "ami-0edab43b6fa892279"
     instance_type="t2.micro"
@@ -158,8 +161,97 @@ any object managed by terraform is called a "resource", it can be a cloud resour
 
 terraform can also take care of resources that were created from other sources.
 
+</details>
 
 ## Getting Started
+
+
+### Installing Terraform
+
+installing terraform from cli
+```sh
+wget https://releases.hashicorp.com/terraform/<ver>/<release>.zip
+unzip <release>.zip
+mv terraform /usr/local/bin
+terraform version
+```
+
+lets start with a simple file "aws.tf"
+
+```hcl
+resource "aws_instance" "webserver"{
+    ami= "ami-0c22f25c1f66a1ff4d"
+    instance_type ="t2.micro"
+}
+```
+a resource is something that terrafrom manages, such databases, roles, cloud resources and others. we will begin with a simple resource type: a local file and a resource called "pet".
+
+
+### HashiCorp Configuration Language (HCL) Basics
+
+the hcl syntax consistent of block and arguments.
+
+```hcl
+<block> <parameters> {
+    key1 = value1
+    key2 = value2
+}
+```
+a block contains information about the infrastructure and resources inside the platfrom.
+to create a file,
+
+```sh
+mkdir /root/terraform-local-file
+cd /root/terraform-local-file
+touch local.tf
+```
+and lets edit the new file
+
+```hcl
+resource "local_file" "pet" {
+    filename = "/root/pets.txt"
+    content = "We love pets!"
+}
+```
+the type of the block is "resource", and we then provide the type of the resource, "local_file",this is actually a combination of the provider "local", underscore, and the resource type "file". then is the resource name, "pet". inside the block we start providing values (argument and parameters).\
+These fields are specific to the resource type. each type expects different fields.
+
+other resources can be, block type, resource type (provider+type), name, and then the needed arguments.
+
+```hcl
+resource "aws_instance" "webserver"{
+    ami= "ami-0c22f25c1f66a1ff4d"
+    instance_type ="t2.micro"
+}
+
+resource "aws_s3_bucket" "data"{
+    bucket = "webserver-bucket-org-2207"
+    acl = "private"
+}
+```
+
+a terraform workflow has four steps:
+- writing the configuration file
+- run `init` to install plugins and create the plan
+- review the exectuition plan
+- execute the plan
+
+```sh
+terraform init
+terraform plan
+terraform apply
+<confirm>
+terraform show
+cat /root/pets.txt
+```
+
+terraform supports many providers, the local providers is one of them. each provider has resources, and each resource can accept any number of arguments.
+
+### Update and Destroy Infrastructure
+### Lab Intro
+### Demo: Accessing Labs
+### Accessing the Labs
+### Lab: HCL Basics
 
 ## Terraform Basic
 
@@ -179,3 +271,10 @@ terraform can also take care of resources that were created from other sources.
 
 
 
+## Cli Commands
+
+- `terraform version`
+- `terraform init`
+- `terraform plan`
+- `terraform apply`
+- `terraform show`

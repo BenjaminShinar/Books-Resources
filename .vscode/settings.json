@@ -25,7 +25,9 @@
     "unscoped",
     "Kubernetes",
     "kubelet",
-    "kubectl"
+    "kubectl",
+    "mkdir",
+    "udemy"
   ],
   "cSpell.ignoreWords": [
     "Amortised",
