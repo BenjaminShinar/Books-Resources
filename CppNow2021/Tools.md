@@ -1,7 +1,8 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Bjarne Strostrup Mateusz Pusz Bazel libcxx libstdc libc cppstd soname ccmake spack Andreas Fertig cstdio
+// cSpell:ignore Bjarne Strostrup  Bazel libcxx libstdc libc cppstd soname ccmake spack cstdio ipython cppm fimplicit fmodules fmodule clangmi pybind numpy pyplot asarray
  -->
+
 [Main](README.md)
 
 Tools
@@ -1502,5 +1503,292 @@ summary: how can c++ insights help us?
 > - Like Integrated Development Environments (IDEs), C++ Insights visualizes template instantiations. Seeing them often helps, but seeing the absence of a specific instantiation may lead you to the issue you’re looking for.
 
 </details>
+
+## Interactive C++ in a Jupyter Notebook Using Modules for Incremental Compilation - Steven R. Brandt
+
+<details>
+<summary>
+Writing and executing C++ code in a jupyter notebook
+</summary>
+
+[Interactive C++ in a Jupyter Notebook Using Modules for Incremental Compilation](https://youtu.be/9XWCm9iV-wk)
+
+tools to make teaching c++ easier:
+
+- Cling (an interpreted version of Clang)
+- Jupyter
+- Docker
+
+which led to the creation of [CXX Explorer](https://github.com/stevenrbrandt/CxxExplorer) but that's an aside.
+
+> notebooks are a tool for experimenting with code:
+>
+> - each cell is a distinct evaluation with distinct results that build on each other
+> - they persist the output of each cell action.
+> - cells can contain markdown, not just code.
+> - usually based on python, but not necessarily.
+> - we can use `%%` cells to execute non-python code.
+> - this makes them great as teaching tools.
+
+notebooks contain documentation, code and the output of that code in one executable!
+
+python cell
+
+```py
+from IPython.core.magic import register_cell_magic
+@register_cell_magic
+def bash(line, cell):get_ipython().system(cell)
+```
+
+bash magic cell
+
+```sh
+%%bash
+echo Hello, world!
+```
+
+Docker is a lightweight container that uses the linux kernel. it encapsulates the build/installation process.
+[docker hub image](https://hub.docker.com/r/stevenrbrandt/clangmi), [repository with compose files](https://github.com/stevenrbrandt/module-interactive).
+
+Cling is based on Clang, it's an interpreted version of clang. there are some problems, when encountering a bug, it crashes entirely, which makes teaching harder.
+
+Modules can help us overcome those problems if we use them in notebooks. modules provide incremental compilation and chainning. we have defintion cells and run code cells.
+
+jupyter notebook cell to create a cpp module
+
+```cpp
+//ipython magic
+%%writefile aloha.cppm
+
+export module aloha;
+#include <iostream>
+export {
+    void aloha_world()
+    {
+        std::cout<<"Aloha, world!\n";
+    }
+}
+```
+
+jupyter notebook cell to compile the module, we need to compile it twice
+
+```sh
+%%bash
+rm -f aloha.pcm aloha.o
+clang++ -std=c++20 -fmodules-ts \
+--precompile -x c++-module -c aloha.cppm \ -fimplicit-modules -fimplicit-modules-maps \
+-stdlib=libc++ # create .pcm file
+
+clang++ -std=c++20 -fmodules-ts \
+-c aloha.cppm \
+-fimplicit-modules -fimplicit-modules-maps \
+-stdlib=libc++ # create .o file
+```
+
+another cell to write the driver code
+
+```cpp
+//ipython magic
+&&writefile aloha.cpp
+
+import aloha;
+int main(){
+    aloha_world();
+}
+```
+
+and a cell to execute code
+
+```sh
+%%bash
+clang++ -std=c++20 -fmodules-ts -o aloha aloha.cpp \
+aloha.o -fimplicit-modules -fimplicit-module-maps \
+-stdlib=lib++ -fmodule-file=aloha.pcm
+
+./aloha
+```
+
+this is a lot of typing for each file, so there's a python package that hides it away. this is where the **def_code** and **run_code** stuff comes into
+
+this simple cell
+
+```cpp
+%%def_code
+std::string hello= "Hello";
+```
+
+is evaluated into a complete c++ module
+
+```cpp
+export module tmp1;
+export import clangmi; //initial loads
+export {
+    std::string hello = "Hello";
+}
+```
+
+including the compilation step (as a module and a .o file) and archiving into a library.
+
+the cells that run the code are actually importing the module and create a simple program that is compiled and uses the code from the cell.
+
+```cpp
+%%run_code
+std::cout<< hello << '\n';
+```
+
+now we have cells that can build objects and cells that can run simple programs. with each cell we can change the verbosity level to display more or less details about the cell.
+
+however, in this version, each time we run a cell, we do all the computations again and again. this is a problem.
+
+we would want to use constexpr functions, so that the value will be computed once.
+
+```cpp
+%%def_code
+constexpr int fib(int n)
+{
+    if (n<2)
+    {
+        return n;
+    }
+    else
+    {
+        return fib(n-1)+fib(n-2);
+    }
+}
+```
+
+but this doesn't work, it pushes the the data into the _.o_ file, but not the _module_.
+
+there are some hacks with using external variables and storing the results in a library. maybe in the future it'll be easier. the problem still remains that we store those objects in a library, we will constantly use disk space.
+
+the other way is to use shared memory, lets create a counter class.
+
+```cpp
+%%def_code
+
+struct Counter{
+    int n;
+    Counter():n(0){}
+    ~Counter(){std::cout<<"reset Counter\n";}
+    void count(){
+        std::cout << "n="<<(n++)<<'\n';
+    }
+};
+```
+
+creating the shared memory, if we run the code again and again the Counter persists and changes the value!
+
+```cpp
+%%run_code
+Seg seg("mem");
+Counter *c = seg.allocate<Counter>("counter");
+c->count();
+if (c->n ==5)
+{
+    seg.remove(c);
+}
+```
+
+with some special code for arrays
+
+```cpp
+%%run_code
+Seg seg("mem");
+Array<double>& arr = *seg.allocate_array<double>("date",100);
+f (arr.init())
+{
+    //if first invocation
+    std::cout<<"init\n";
+}
+//remove array
+seg.remove(&arr);
+
+```
+
+and now lets use this array in a semi-real example, a sinusoidal wave
+
+```cpp
+%%run_code
+#include <math.h>
+
+Seg seg("mem");
+const int N=100;
+Array<double>& a = *seg.allocate_array<double>("date1",N);
+Array<double>& b = *seg.allocate_array<double>("date2",N);
+
+double dx = 15.0/a.size();
+for (int i = 0; i<a.size();i++)
+{
+    double x =i *dx;
+    a[i]=x;
+    b[i]=sin(x);
+}
+```
+
+it would be nice to use the cpp data directly in python code, so we use the python library of **pybind11** to intgrate python and cpp code.
+
+```py
+import clangmi
+import numpy as np
+import matplotlib.pyplot as plt
+
+a_buf = clangami.allocate_array("mem","data1",100)
+a = np.asarray(a_buf)
+b_buf = clangami.allocate_array("mem","data2",100)
+b = np.asarray(b_buf)
+
+plt.plot(a,b)
+
+```
+
+theres also parallel processing, even if clang actually has a bug!
+
+```cpp
+%%run_code
+import <future>
+
+auto a= std::async(std::launch::async,[](){return 42;});
+std::cout<< "a="<<a.get() <<'\n';
+```
+
+bringing in the hpx package requires some ugly work in python. \
+using the hpx code takes much longer to compile.
+
+```cpp
+%%run_code
+
+#include <hpx/hpx.main>
+#include <hpx/hpx_main.hpp>
+
+auto a = hpx::async([](){return 42});
+std::cout << a.get() <<'\n;
+```
+
+we can use hpx to actually run on multiply threads
+
+```
+runcode.flags=["-t","4"]
+```
+
+and then run the code, even if the output get jumbled.
+
+```cpp
+%%run_code
+#include <hpx/hpx_main.hpp>
+#include <hpx/algorithm.hpp>
+#include <hpx/execution.hpp>
+
+std::vector<std::size_t> v{1,2,3,4,5,6};
+hpx::for_loop(hpx::execution::par,0 v.size(),
+[](std::size_t n){std::cout<< "n = " << n << '\n';});
+```
+
+theres also the `.then()` to avoid blocking and make composable code.
+
+in conclusion, the c++ jupyter notebook is a a prototype, with some hurdles to overcome.
+
+</details>
+
+##
 
 [Main](README.md)

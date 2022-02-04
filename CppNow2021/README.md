@@ -36,6 +36,7 @@ all sorts of lectures, divided by field.
   - [x] Code Analysis++ - Anastasia Kazakova
   - [x] CMake + Conan: 3 Years Later - Mateusz Pusz
   - [x] C++ Insights: How Stuff Works, Lambdas and More! - Andreas Fertig
+  - [x] Interactive C++ in a Jupyter Notebook Using Modules for Incremental Compilation - Steven R. Brandt
 - [Type Design](Type%20Design.md)
   - [x] How to: Colony - Matthew Bentley
   - [x] Variations on variants - Roi Barkan
@@ -67,7 +68,6 @@ currently working on:
 - [ ] FourCCs Done Right - Ben Deane
 - [ ] Frictionless Allocators - Alisdair Meredith
 - [ ] Homogenous Variadic Functions - A Lightning-Library Approach in ~11.54 sec/LOC - Tobias Loew
-- [ ] Interactive C++ in a Jupyter Notebook Using Modules for Incremental Compilation - Steven R. Brandt
 - [ ] Library Approaches for Strong Type Aliases - Anthony Williams
 - [ ] Numerical Differentiation ++ - Ian Bell
 - [ ] One Friend Ain't Enough - Jody Hagins

@@ -2334,8 +2334,6 @@ question from the chat:
 
 </details>
 
-[Main](README.md)
-
 ## Practical TMP: A C++17 Compile Time Register Machine - Daniel Nikpayuk
 
 <details>
@@ -2864,3 +2862,7 @@ constexpr auto func_2 = safe_do_compose
 ```
 
 </details>
+
+##
+
+[Main](README.md)
