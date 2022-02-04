@@ -7,9 +7,9 @@ ignore these words in spell check for this file
 
 for the Udemy course [The Complete Google Go Programming Course For Beginners](https://www.udemy.com/course/draft/1020950/learn/lecture/6134450)
 
-[golang](https://go.dev/learn/)
-
-[dockerhub go image](https://hub.docker.com/_/golang)
+- [golang](https://go.dev/learn/)
+- [dockerhub go image](https://hub.docker.com/_/golang)
+- [Joe Prays academy](https://www.joeparys.com/)
 
 ## Introduction
 
@@ -265,7 +265,7 @@ import "fmt"
 
 func main(){
 
-    for var i:=0;i<10;++i{
+    for var i:=0;i<10;i++{
         j:=15
         j++
     }
@@ -320,7 +320,7 @@ package main
 import "fmt"
 func main(){
 
-    for d:=1; d<=12;++d{
+    for d:=1; d<=12;d++{
         fmt.Println("On the %d day of Christmax, my true love sent to me",d)
         if day == 12 {
             fmt.Println("Twelve curly braces")
@@ -341,7 +341,7 @@ package main
 import "fmt"
 func main(){
 
-    for d:=1; d<=12;++d{
+    for d:=1; d<=12;d++{
         fmt.Println("On the %d day of Christmax, my true love sent to me",d)
 
         switch d{
@@ -361,7 +361,7 @@ package main
 import "fmt"
 func main(){
 
-    for d:=1; d<=12;++d{
+    for d:=1; d<=12;d++{
         fmt.Println("On the %d day of Christmax, my true love sent to me",d)
 
         switch d{
@@ -441,32 +441,245 @@ we can't use the implicit assignment operator in global scope `:=`
 
 ## Advanced Beginers
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Some Go stuff.
 </summary>
 
-### Arrays and Slices - Part 1 - Arrays... and seeing multiple!
+### Arrays
 
-### Arrays and Slices - Part 2 - Hands on Arrays
+a container for data of the same type, arrays are index (starting at zero) and have a fixed length.
 
-### Arrays and Slices - Part 3 - Slices - A slice of nice!
+```go
+var a[5] int; //array of size 5
 
-### Arrays and Slices - Part 4 - Hands on slices..... and the power within!
+a[0]=5;
+b :=[5]int{0,3,6,9,12}
 
-### Advanced Topics - Simple Statements (that aren't quite so simple....)
+fmt.Println(b[0])
+fmt.Println(b) //go prints all the elements of the array.
+```
 
-### For Range Loops - Processing forloops in a blink of an eye...
+now an example of a grocery list
+
+```go
+package main
+
+import "fmt"
+
+const g_cap int = 5 //capacity of grocery list
+var g_groceries[g_cap] string;
+var g_len int=0 //items already in list
+func add_grocery(item string){
+    if g_len < g_cap{
+        g_groceries[g_len]=item
+        g_len++
+    } else{
+        fmt.Println("Array full!")
+    }
+}
+
+func list_groceries(){
+    fmt.Println("item in grocery list:");
+    for i:=0;i<g_len;i++{
+        fmt.Println(g_groceries[i])
+    }
+}
+
+func main(){
+    list_groceries()
+    add_grocery("bread")
+    list_groceries()
+}
+```
+
+but actually, we almost never use raw arrays, we use slices instead.
+
+### Slices
+
+a slice is a segment of an array, or a window to array, it can be represented as a [low : high] slice of indexes, the low value is included, but not the high, so it's actually **[low:high)**. we can omit either the start or the end of the slice, which would default into the first (zero) element or the last. we can use `[:]` to choose all the elements of the array. Slices can't be outside the bounds of the array.
+
+we can use the `make` command to create an array:\
+`x:=make([]datatype, length, capacity)`
+
+```go
+var a[8] int // array of 8 integers
+x:= a[2:4] // slice of the array,
+fmt.Println(len(x))// legnth is 2(a[2],a[3]),
+fmt.Println(cap(x))//but capacity is 6(a[2],a[3],a[4],a[5],a[6],a[7])
+
+x[0]=7
+fmt.Println(a[2]) //7
+```
+
+slices are references to arrays, and they are passed as references themselves. Golang simply does all the work behind the scenes.
+
+```go
+package main
+
+import "fmt"
+
+var g_groceries[] string;
+
+func add_grocery(item string){
+    fmt.Println("Capacity is %d",cap(g_groceries))
+    g_groceries.append(g_groceries,a)
+}
+
+func list_groceries(){
+    fmt.Println("item in grocery list:");
+    for i:=0;i<len(g_groceries);i++{
+        fmt.Println(g_groceries[i])
+    }
+}
+
+func main(){
+    list_groceries()
+    add_grocery("bread")
+    list_groceries()
+}
+```
+
+the `append` function returns a new slice and the value must be assigned.
+
+### Simple Statements
+
+[Simple Statement in go](https://medium.com/golangspec/simple-statement-notion-in-go-b8afddfc7916)
+
+Simple statements can be placed in some key places to belong to the coming block, such as for loops, if and switch blocks.
+this is like initilazig a variable only for the current scope.
+
+only a subset of go expressions are simple statements.
+
+- Empty statement
+- increments/decrement statements
+- Assignment
+- Short variable decleration
+- Expression statements
+- Send statements (through a channel)
+
+we can use simple statements to extend the if statement. creating a variable the only exists for the scope of the if block.
+
+```go
+if <simple statement>; <boolean expression> {
+    <code block>
+}
+```
+
+from the documentation
+
+```go
+if err:=file.Chmod(0664); err !=nil{
+    log.Print(err)
+    return err
+}
+```
+
+we can also use simple statements as part of switch statement.
+
+```go
+switch <simple statement>;<expression>{
+    case <expression>:
+        <code>
+    case <expression>:
+        <code>
+    default:
+        <code>
+}
+```
+
+### For Range Loops
+
+advanced for loops
+
+```go
+//basic loop
+for i:=0; i<len(a);i++{
+    fmt.Println("element at index ",i, "is value ",a[i])
+}
+//For Range Loop
+for index, data:=range a{
+    fmt.Println("element at index ",index, "is value ",data)
+}
+```
+
+we can use `_` for the variable name if we aren't planning to use use
 
 ### Variadic Functions - No function ever sounded "so cool". Variadic...functions.
 
+having functions that take any number of variables, rather than a separate function for each number.
+
+this is tha basic way of writing non-variadic functions:
+
+```go
+func MaxOne(a1 int)int{
+    return a1
+}
+func MaxTwo(a1 int,a2 int)int{
+    if a1>a2 {
+        return a1
+    }
+    return a2
+}
+func MaxThree(a1 int,a2 int,a3 int)int{
+    //do something
+}
+```
+
+but that is cumbersome, we can get all the elements as a slice by using a variadic function instead.
+
+```go
+func MaxMany(numbers ...int)int{
+    //numbers is a slice!
+}
+```
+
+lets modify our earlier function
+
+```go
+func add_grocery(items ...string){
+    fmt.Println("Capacity",cap(g_groceries))
+    for _,item:=range items{
+        g_groceries.append(item)
+    }
+}
+```
+
+### Modifying the IDEA plugin
+
+updating the golang plugin for IntellJ IDEA, the work around is changing the _plugin.xml_ file. we find the idea-version elements and modify the _until-build_ attribute.
+
+```xml
+<idea-plugin version="2">
+<idea-version since-build="171.1834" until-build="172.*"/>
+</idea-plugin>
+```
+
+### Next steps
+
+- [Effective Go](https://golang.org/doc/effective_go.html) - writing good Go code.
+- [Going Go Programming](https://www.goinggo.net/)
+- [Awesome Go](http://awesome-go.com/) - examples of good GO frameworks, libraries, etc..
+- [Writing Web Applications](https://golang.org/doc/articles/wiki/) - using the `net/http` package
+
 </details>
 
-## Bonus Lecture
+## Takeaways
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+things to remember
 </summary>
+
+There is no prefix increment operators! `++i` doesn't exist!
+
+slices:
+
+- `make([]datatype,length, capacity)` - create a slice
+- `len(slice_name)` - length of slice.
+- `cap(slice_name)` - capcity (depends on underlying array) from the start of the slice to the end of the array.
+- `append(slice_name, item)` - add to slices, modify and reallocate array if needed. returns the new slice.
+
+- `range <slice_name>` - no parentheses, enumerates over data with index,data.
 
 </details>
