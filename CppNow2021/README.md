@@ -26,6 +26,7 @@ all sorts of lectures, divided by field.
   - [x] The Performance Price of Dynamic Memory in C++ - Ivica Bogosavljevic
   - [x] The Complete Guide to `return x;` - Arthur O'Dwyer
   - [x] The Worst Best Practices - Jason Turner
+  - [x] Surveying the C++ Community - Jens Weller
 - [OOP](OOP.md)
   - [x] Keynote: SOLID, Revisited - Tony Van Eerd
   - [x] Polymorphism À La Carte - Eduardo Madrid & Phil Nash
@@ -53,34 +54,44 @@ all sorts of lectures, divided by field.
 
 currently working on:
 
-- [ ] A Few Gentle Rules (\*) but One in Particular - Chris Uzdavinis
-- [ ] A Simple GUI Programming Setup for Beginners - Jussi Pakkanen
-- [ ] Answering a Question From My Talk… - Jens Weller
-- [ ] Better C++ Ranges - Arno Schödl
-- [ ] Classes With Many Fields - Stanisław J. Dobrowolski
-- [ ] Converting a State Machine to a C++ 20 Coroutine - Steve Downey
-- [ ] Cyclomatic Complexity pmccabe as a Refactor Aid - Michael Wells
-- [ ] Designated Initializers: Remembering Every Struct Member in Declaration Order Is Hard - Brian Ruth
-- [ ] Designing Concurrent C++ Applications - Lucian Radu Teodorescu
 - [ ] Don't constexpr All the Things - David Sankel
-- [ ] Exhuming "Castlequest" - Arthur O'Dwyer
-- [ ] Finding Nemo, or Evolution of a for Loop - Arseniy Zaostrovnykh
-- [ ] FourCCs Done Right - Ben Deane
-- [ ] Frictionless Allocators - Alisdair Meredith
-- [ ] Homogenous Variadic Functions - A Lightning-Library Approach in ~11.54 sec/LOC - Tobias Loew
-- [ ] Library Approaches for Strong Type Aliases - Anthony Williams
-- [ ] Numerical Differentiation ++ - Ian Bell
-- [ ] One Friend Ain't Enough - Jody Hagins
 
-- [ ] Simplest Safe Integers - Peter Sommerlad
-- [ ] Stdfwd - Forward Declarations for C++ Standard Library - Oleh Fedorenko
+### real talks:
+
+- [ ] Better C++ Ranges - Arno Schödl
+- [ ] Converting a State Machine to a C++ 20 Coroutine - Steve Downey
+- [ ] Designing Concurrent C++ Applications - Lucian Radu Teodorescu
+- [ ] Library Approaches for Strong Type Aliases - Anthony Williams
 - [ ] STL Algorithms as Expressions - Oleksandr Bacherikov
-- [ ] Surveying the C++ Community - Jens Weller
-- [ ] Surveying the Community – What Could Possibly Go Wrong - Anastasia Kazakova
+- [ ] Frictionless Allocators - Alisdair Meredith
+- [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
+- [ ] Simplest Safe Integers - Peter Sommerlad
+- [ ] What Neighborhoods Owe Each Other: Rights, Duties, Immunities & Disabilities of Functions & Objects
 - [ ] Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy
 - [ ] Taskflow: A Heterogeneous Task Graph Programming System with Control Flow: Tsung-Wei Huang
 - [ ] The Quest For A Better Crash - Victor Ciura
-- [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
 - [ ] What Belongs In The C++ Standard Library? - Bryce Adelstein Lelbach
-- [ ] What Neighborhoods Owe Each Other: Rights, Duties, Immunities & Disabilities of Functions & Objects
+- [ ]
+
+### lighting talks:
+
+- [ ] A Few Gentle Rules (\*) but One in Particular - Chris Uzdavinis
+- [ ] A Simple GUI Programming Setup for Beginners - Jussi Pakkanen
+- [ ] Answering a Question From My Talk… - Jens Weller
+- [ ] Classes With Many Fields - Stanisław J. Dobrowolski
+- [ ] Cyclomatic Complexity pmccabe as a Refactor Aid - Michael Wells
+- [ ] Designated Initializers: Remembering Every Struct Member in Declaration Order Is Hard - Brian Ruth
+
+- [ ] Exhuming "Castlequest" - Arthur O'Dwyer
+- [ ] Finding Nemo, or Evolution of a for Loop - Arseniy Zaostrovnykh
+- [ ] FourCCs Done Right - Ben Deane
+
+- [ ] Homogenous Variadic Functions - A Lightning-Library Approach in ~11.54 sec/LOC - Tobias Loew
+
+- [ ] Numerical Differentiation ++ - Ian Bell
+- [ ] One Friend Ain't Enough - Jody Hagins
+- [ ] Stdfwd - Forward Declarations for C++ Standard Library - Oleh Fedorenko
+
+- [ ] Surveying the Community – What Could Possibly Go Wrong - Anastasia Kazakova
+
 - [ ] When Paradigms Collide - Ben Deane

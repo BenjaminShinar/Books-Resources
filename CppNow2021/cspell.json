@@ -2,19 +2,8 @@
   "version": "0.2",
   "ignorePaths": [],
   "dictionaryDefinitions": [],
-  "dictionaries": [],
-  "words": [
-    "Clonable",
-    "initializable",
-    "invokable",
-    "mutex",
-    "Nemo",
-    "nullptr",
-    "Posix",
-    "rvalue",
-    "SFINAE",
-    "Vtable"
-  ],
+  "dictionaries": ["cpp"],
+  "words": ["Clonable", "initializable", "invokable", "Nemo"],
   "ignoreWords": [
     "Adelstein",
     "Alisdair",
@@ -24,7 +13,6 @@
     "Bilger",
     "Bogosavljevic",
     "Ciura",
-    "Clonable",
     "Clow",
     "Dargo",
     "Dobrowolski",
@@ -70,14 +58,7 @@
     "Uzdavinis",
     "Vittorio",
     "Zaostrovnykh",
-    "Bacherikov",
-    "CRTP",
-    "SIMD",
-    "BRIL",
-    "liskov",
-    "cmath",
-    "cref",
-    "cassert"
+    "Bacherikov"
   ],
   "import": []
 }

@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Schödl Lakos Vittorio Ivica Bogosavljevic mmap strided Emde Dwyer prvalue
+// cSpell:ignore Emde prvalue Hana Tyrtyshny mauto
 -->
 
 [Main](README.md)
@@ -924,7 +924,7 @@ Data structures with short life cycles don't benefit much from optimizations, as
 
 </details>
 
-## The Complete Guide to 'return x;' - Arthur O'Dwyer
+## The Complete Guide to `return x;` - Arthur O'Dwyer
 
 <details>
 <summary>
@@ -1220,6 +1220,368 @@ critisms he got for the book, what people disagreed with in the book.
 
 </details>
 
+## Surveying the C++ Community - Jens Weller
+
+<details>
+<summary>
+Annual survies concering cpp usage
+</summary>
+
+[Surveying the C++ Community](https://youtu.be/nbaGUxAZ3AM),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/cppcommunitysurveys_and_boost.pdf)\
+[take the survey](https://meetingcpp.com/mcpp/survey/)
+
+> "did you notice the lack of statistics and facts from the real world in talks at C++ conferences?"
+
+what do we really know about the community? there are things which are known for tools providers, but the knowledge isn't publicly available.
+
+the data can be used for teaching, training, communication, supporting an argument ("everybody else uses tool X!").
+
+there are 2 annual survers, ISOCPP and Jetbrains. some other survies are conducted on twitter, and some are run on a dedicated website. there are all sorts of features, and he plans to make this better overtime.
+
+**C++ Versions**
+question like:
+
+- _Which C++ standards do you regularly use?_
+- _Which Version of C++ are you allowed to use on your current project (work or school)_
+- _Which C++ standards do you currently use in your projects?_
+- _Which C++ standards do you have experience in?_
+
+c++11 is still the largest, but each year the newer versions gain more traction. C++17 is also very big. depending on the question phrasing.
+
+-_do you use boost?_
+
+corelation with other questions, boost users tend to use newer versions of c++ as opposed to non users of boost, which use earlier versions. it shows up in many other questions, where boost users tend to be more up-to-date and use the standards features.
+
+-_which STL containers do you use_ - obviously vector, map, array.
+
+_which build systems do you use?_ - Cmake and make are very popular.
+
+_Which Json Libary do you use?_
+
+_language and library features in c++11/17_ - what kind of features are being adopted.
+
+**Tooling questions**
+
+- _which compiler do you use?_ - gcc, clang and v++ are popular
+- _which sanitizers do you use in your builds?_ - still not being widely adopted
+- _which package manager do you use?_ - also not widely adopted
+
+questions about open source licenses, conference attendance, other progamming languages usage.
+
+bias in the data, most respondents are from europe.
+
+</details>
+
+## Don't constexpr All the Things - David Sankel
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Don't constexpr All the Things](https://youtu.be/NNU6cbG96M4)
+
+Prior to c++11, we used template meta programming to skip all the boiler code. it was essentially a differnet language. in c++11 we got the **Boost.Hana** library to create code that was similar in syntax to normal code, but was still complex.
+
+we also got constexpr, which allowed for actual normal code to run in compile time, which started a trend towards making everything metaprogramming as much as possible. all using constexpr.
+
+constexpr and metaprogramming features feed and support one another, so many features which created and modified to also run at compile time.
+
+- dynamic allocation
+- virtual functions
+- try blocks
+- nontrivial destructors
+- `std::is_constant_evaluated()`
+- consteval functions
+- consteval variables
+
+the goal of this movement is to make metaprogramming just like runtime programming, which would be more accessible.
+
+we should ask ourselves: are we really getting there?
+
+we have three constexpr functions. is it ok to mark them as such?
+
+```cpp
+constexpr int plus(int a, int b){
+    return a+b;
+}
+
+constexpr void fast_zero2(std::vector<int>& vec){
+    std::memeset(vec.data(),0, vec.size()*sizeof(int))
+}
+constexpr void fast_zero(std::vector<int>& vec){
+    if (vec.size()){
+        std::memeset(vec.data(),0, vec.size()*sizeof(int))
+    }
+}
+
+```
+
+the first case is ok to mark as constexpr, but the fast_zero2 is likely to cause an error, because memset belongs to another function, but fast_zero (with the condition) will compile fine.\
+theres a difference between function that can be marked constexpr, and those which appropiate to be marked as such.
+
+> - Doesn't include goto
+> - Doesn't include static variable declerations
+> - Doesn't include calls to non constexpr function
+> - No naked new
+> - Doesn't throw
+> - Doesn't include _asm_
+> - and many more...
+
+are there types which cause problems? yes, and there a
+constexpr friendly types, which are defined as such:
+
+> - Built-in types
+> - Array of constexpr friendlies
+> - Reference to constexpr friendly
+> - Aggregate of constexpr friendlies
+> - Class or Struct with constexpr friendlies, including constructors and destructors and all the functions.
+
+this points to a key point- constexpr metaprogramming is still a different language than runtime c++. it has specific requirements.\
+In addition, constexpr code is **viral**, changing one thing can cascade into changing many other things, this means that a lot of existing code can't be used in constexpr functions.
+
+```cpp
+//we said that this is not safe
+constexpr void fast_zero(std::vector<int> &vec){
+    if (vec.size()){
+        std::memset(vec.date(), 0, vec.size() * sizeof(int));
+    }
+}
+
+// this function runs in compile time, but is inefficent in runtime
+constexpr void fast_zero3(std::vector<int> &vec){
+    for (std::ptrdiff_t i =0; i <vec.size(); ++i)
+    {
+        vec[i]=0;
+    }
+}
+```
+
+so now we add a check to see if we are at compile time, so we should get the better performance, right?
+
+```cpp
+constexpr void fast_zero4(std::vector<int>&vec){
+    if (Std::is_constant_evaluated()
+    {
+        for (std::ptrdiff_t i =0; i <vec.size(); ++i){
+                vec[i]=0;
+            }
+    }
+    else
+    {
+        std::memset(vec.date(), 0, vec.size() * sizeof(int));
+    }
+}
+```
+
+but what about the criteria for being a subexpression of a different constexpr function? does it fit the mark?
+
+```cpp
+void f(){
+    const int i = g();
+}
+```
+
+something called **posteriori evaluation**.
+
+> attempts to evaluate `g()` assuming `std::is_consant_evaluated()` is true, and if it encounters something illegal, it will instead use a run time execution, with `std::is_constant_evaluated()` set to false.
+
+another example, these two features don't play nice with one another
+
+```cpp
+constexpr int f(){
+    if constexpr (std::is_constant_evaluated()){
+        //slow version
+    } else {
+        //fast version
+    }
+}
+```
+
+and also this gem
+
+```cpp
+constexpr int f(){
+    const int n = is_constant_evaluated() ? 13 : 17;
+    int m = is_constant_evaluated() ? 13 : 17;
+    char arr[n]={};
+    return m + sizeof(arr);
+}
+int p = f(); //26 (13+13)
+int q =p +f(); //56 = 26 + 30 (13+17)
+```
+
+the complexity gets out of control, it's confusing, error prone.
+
+and what about allocation?
+
+```cpp
+constexpr vector<int> f(){
+    return vector<int>{1,2,3};
+}
+
+constexpr vector<int> v = f(); //error
+```
+
+we need a solution, which is something called **Circle Metaprogarrming**
+
+### Circle Metaprogarrming
+
+compatible with c++17 and includes some featues from c++20 and propsed features from c++23 and c++26 (like pattern matching).
+
+it's described (by it's creator) as
+
+> "It's like C++ that went away to train with teh league of shadows and came back 15 years later and became batman"\
+> ~ Sean Baxter(the creator of _circle_)
+>
+> "Circle is doing to C++ what C++ did to C"\
+> ~ Maksim Tyrtyshny
+
+lets look at some code
+
+```cpp
+//test.cpp
+#include <iostream>
+@meta std::cout<< "Hello at compile time!\n";
+int main()
+{
+    std::cout<< "Hello at run time!\n";
+}
+```
+
+we can see the compile time message when we compile it, and a different text at runtime. and we used the same standard library!
+
+```sh
+circle test.cpp
+# Hello at compile time!
+./test
+# Hello at run time!
+```
+
+and under the hood, we didn't change anything, we use the same, boring, basic linux library as always!
+
+another example, this time we use the cmath library, and we don't mark anything constexpr!
+
+```cpp
+#include <cmath>
+#include <iostream>
+double f(){
+    return sin(3) + sin(5);
+    }
+@meta std::cout<< f()<<"n";
+```
+
+when we compile this file, it will show the message at compile time.
+
+circle is simply "Execute normal C++ code at compile time". but want to use that executed code in our runtime behavior.
+
+```cpp
+#include <cmath>
+#include <iostream>
+double f(){
+    return sin(3) + sin(5);
+}
+
+int main()
+{
+    constexpr double val = @meta f();
+    std::cout << val << '\n';
+    //prints the value at runtime.
+}
+```
+
+or this example, which executes a loop at compile time!
+
+```cpp
+#include <iostream>
+
+int main()
+{
+    @meta for (int i=0;i<5;++i){
+    std::cout <<"unrolled loop iteration" << i << '\n';
+    }
+    //compile time
+}
+```
+
+we can't modify runtime code at compile time, we need to mark it as compile time.
+
+this example uses a non-literal type. so we need something else
+
+```cpp
+#include <algorithm>
+#include <vector>
+
+@meta std::vector<int> myVec {3,6,2,1};
+@meta std::sort(myVec,begin(), myVec.end());
+int main()
+{
+    std::vector<int> v = myVec; //ERROR only "literal" types can be ported
+    std::vector<int> v2 {@pack_notype(myVec)...}; //this works
+}
+```
+
+we can use other things as well, like using a cpp expression
+
+```cpp
+#include <iostream>
+
+int main()
+{
+    int i = @expression("10+12");
+    std::cout << "i is "<< i <<'\n'; //output 12
+}
+```
+
+and something more complex
+
+```cpp
+@meta int j=0;
+@mauto f(int i){
+    @meta ++j;
+    return i*i*j;
+}
+void g()
+{
+    int x =f(100); //100*100*0
+    int y =f(100); //100*100*1
+}
+```
+
+@mauto specifies something like a return type, lets run with it. a print function that displays the computation and the results at runtime.
+
+```cpp
+#include <iostream>
+
+@mauto print(std::string s){
+    std::cout << @string(s) <<"=" <<@@expression(s) <<'\n';
+}
+int main()
+{
+    int x=12;
+    print("x"); //output: x=12
+    print("x*x"); //output:  x*x=144
+}
+```
+
+this is similar to python's f-strings
+
+```py
+value=80
+f'The Value is{value}.'
+# 'The value is 80'
+```
+
+### The Circle Metaprogramming Model
+
+(25:45)
+
+</details>
+
 ##
 
 [Main](README.md)
+
+```
+
+```
