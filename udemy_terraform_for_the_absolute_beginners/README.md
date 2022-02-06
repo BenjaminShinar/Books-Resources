@@ -1,10 +1,12 @@
 <!--
-// cSpell:ignore HashiCorp
+// cSpell:ignore HashiCorp KodeKloud FIFA
  -->
 
 # Terraform For The Absolute Beginners
 
 udemy course [Terraform for the absolute beginners](https://www.udemy.com/course/terraform-for-the-absolute-beginners/).
+
+[KodeKloud Lab](https://kodekloud.com/courses/udemy-labs-terraform-for-beginners/)
 
 ## Infrastructure as Code
 
@@ -165,6 +167,10 @@ terraform can also take care of resources that were created from other sources.
 
 ## Getting Started
 
+<details>
+<summary>
+First Steps.
+</summary>
 
 ### Installing Terraform
 
@@ -248,12 +254,47 @@ cat /root/pets.txt
 terraform supports many providers, the local providers is one of them. each provider has resources, and each resource can accept any number of arguments.
 
 ### Update and Destroy Infrastructure
+
+we also need to update and sometimes destroy infrastructure that we created.
+
+to update, we first modify the terraform file. like changing the file permissions.
+
+```hcl
+resource "local_file" "pet" {
+    filename = "/root/pets.txt"
+    content = "We love pets!"
+    file_permission = "0700"
+}
+```
+we then run `terraform plan`, which informs us that the file needs to be replaced (not updated in place). this file as an **immutable infrastructure**. to move along with change, we run the `terraform apply` command.
+
+if we wish to delete the infrastructure, we can run `terraform destroy`, which also requires confirmation. this will delete all the resources in the current directory.
+
 ### Lab Intro
-### Demo: Accessing Labs
-### Accessing the Labs
+
+each lab has some exercises for us to train with. there is a terminal, a vscode editor, and half a screen is dedicated to the question. we might need to perform queries in the terminal to inspect the configuration and the infrastrcure. there are also questions that require us to run some terraform command. in the aws sections there is a aws-test-account.
+
+the vscode editor has some nice plug-ins installed, which makes writing easier. we can use code completion to see resource types.
+
+Using the coupon to access the kodeKloud labs.
+
 ### Lab: HCL Basics
 
-## Terraform Basic
+main.tf example
+
+```hcl
+resource "local_file" "games" {
+  filename     = "/root/favorite-games"
+  content  = "FIFA 21"
+}
+```
+`terraform plan` - won't work without `terraform init` (which create a hidden *.terrafrom* folder). 
+
+*sensitive_content* - hides the content from being printed on the screen! this is for *local_file* resource, not a general thing.
+</details>
+
+
+## Terraform Basics
 
 ## Terraform State
 
@@ -278,3 +319,4 @@ terraform supports many providers, the local providers is one of them. each prov
 - `terraform plan`
 - `terraform apply`
 - `terraform show`
+- `terraform destroy`
