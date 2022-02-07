@@ -278,7 +278,7 @@ the vscode editor has some nice plug-ins installed, which makes writing easier. 
 
 Using the coupon to access the kodeKloud labs.
 
-### Lab: HCL Basics
+#### Lab: HCL Basics
 
 main.tf example
 
@@ -296,6 +296,131 @@ resource "local_file" "games" {
 
 ## Terraform Basics
 
+<!-- <details> -->
+<summary>
+
+</summary>
+
+### Using Terraform Providers
+
+a deeper look at providers.
+
+the `terraform init` command downloads and installs plug-ins for the providers specified in the terrafrom files. these  can be plugins for cloud vendors, databases, or even the local file provider. 
+
+all plugins are hosted by hashicorp at [terraform registry](registry.terraform.io).
+
+there are three tiers of providers:
+1. official providers - owned and maintained by hashicorp. this includes the big cloud providers such as AWS.
+2. verified providers - owned and maintained by third party entities which are verified by hashicorp, services such as as bigip or heroku are verified providers.
+3. community providers - plugins with no formal relationship to hashicorp.
+
+the `init` command shows the version of the plugin installed, this command is safe to run, as many times as required. running the commnad creates a hidden folder.
+
+> * hashicorp/local: version = "~>2.0.0"
+
+[Organization Namespace]/[Type]
+
+there can also a hostname, the name of the register where the plugin is contained. by default it uses the hashicorp registry. the newest version is used by default. we can choose to lock down a specific version, if we wish to.
+
+### Configuration Directory
+
+so far we used a single file,
+
+local.tf
+```hcl
+resource "local_file" "pet" {
+    filename ="/root/pets.txt"
+    content = "We love pets!"
+} 
+```
+
+we can create more configuration file
+cat.tf
+```hcl
+resource "local_file" "cat" {
+    filename ="/root/cat.txt"
+    content = "my cat name is danny!"
+} 
+```
+
+we can also put several configuration blocks inside a single file, which is commonly called "main.tf".
+
+```hcl
+resource "local_file" "pet" {
+    filename ="/root/pets.txt"
+    content = "We love pets!"
+} 
+
+resource "local_file" "cat" {
+    filename ="/root/cat.txt"
+    content = "my cat name is danny!"
+} 
+```
+other common files are "variables.tf", "outputs.tf","provider.tf".
+
+
+#### Lab: Terraform Providers
+
+we can see the providers in the hidden folder.
+
+`terraform init`\
+`terraform apply`
+
+```hcl
+resource "local_file" "xbox" {
+  filename     = "/root/xbox.txt"
+  content  = "Wouldn't mind an XBox either!"
+}
+```
+### Multiple Providers
+
+using multiple providers and resources.
+
+from the "random" provider, we use the "pet" resource with the name "my-pet".
+```hcl
+resource "local_file" "pet" {
+    filename ="/root/pets.txt"
+    content = "We love pets!"
+} 
+
+resource "random_pet" "my-pet {
+    prefix = "Mrs"
+    seperator= "."
+    length = "1"
+}
+```
+
+when we run the `terraform init` command, we will install the required addition plugin for the random_pet resource.
+we we apply the change, the output for of the random pet resource is displayed on the screen. 
+
+#### Lab: Multiple Providers
+
+### Using Input Variables
+
+### Understanding the Variable Block
+
+#### Lab: Variables
+
+### Using Variables in Terraform
+
+#### Lab: Using Variables in terraform
+
+### Resource Attributes
+
+#### Lab: Resource Attributes
+
+### Resource Dependencies
+
+#### Lab: Resource Dependencies
+
+### Output Variables
+
+#### Lab: Output Variables
+
+
+</details>
+
+
 ## Terraform State
 
 ## Working With Terraform
@@ -311,8 +436,9 @@ resource "local_file" "games" {
 ## Terraform Functions and Conditional Expressions
 
 
+## Takeaways
 
-## Cli Commands
+### Cli Commands
 
 - `terraform version`
 - `terraform init`
@@ -320,3 +446,12 @@ resource "local_file" "games" {
 - `terraform apply`
 - `terraform show`
 - `terraform destroy`
+
+### Common File Structure
+
+File Name | Purpose
+----|----
+main.tf | Main configuration files containing resource definitions
+variables.tf | variables decelerations
+outputs.tf | Outputs from resources
+provider.tv | Providers defintions
