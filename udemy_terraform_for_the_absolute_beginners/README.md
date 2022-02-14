@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore HashiCorp KodeKloud FIFA
+// cSpell:ignore HashiCorp KodeKloud FIFA tfvars tfstate falshpoint Tsvg Flexit
  -->
 
 # Terraform For The Absolute Beginners
@@ -296,9 +296,9 @@ resource "local_file" "games" {
 
 ## Terraform Basics
 
-<!-- <details> -->
+<details>
 <summary>
-
+Playing around with Terraform
 </summary>
 
 ### Using Terraform Providers
@@ -358,7 +358,6 @@ resource "local_file" "cat" {
 ```
 other common files are "variables.tf", "outputs.tf","provider.tf".
 
-
 #### Lab: Terraform Providers
 
 we can see the providers in the hidden folder.
@@ -372,6 +371,7 @@ resource "local_file" "xbox" {
   content  = "Wouldn't mind an XBox either!"
 }
 ```
+
 ### Multiple Providers
 
 using multiple providers and resources.
@@ -395,35 +395,633 @@ we we apply the change, the output for of the random pet resource is displayed o
 
 #### Lab: Multiple Providers
 
+```hcl
+resource "local_file" "my-pet" {
+	    content = "My pet is called finnegan!!"
+	    filename = "/root/pet-name"
+}
+
+
+resource "random_pet" "other-pet" {
+	      prefix = "Mr"
+	      separator = "."
+	      length = "1"
+}
+```
+
 ### Using Input Variables
+
+```hcl
+resource "local_file" "my-pet" {
+	    content = "My pet is called finnegan!!"
+	    filename = "/root/pet-name"
+}
+
+
+resource "random_pet" "other-pet" {
+	      prefix = "Mr"
+	      separator = "."
+	      length = "1"
+}
+```
+
+the arguments and the values are hardcoded. we want a way to provide them during execution.
+
+we do this with a new file. *variables.tf*
+
+```hcl
+variable "filename" {
+    default = "/root/pets/txt"
+}
+variable "content" {
+    default = "We love pets!"
+}
+variable "prefix" {
+    default = "Mrs"
+}
+variable "separator" {
+    default = "."
+}
+variable "length" {
+    default = "1"
+}
+```
+just as always, there are blocks, where the block type is **variable**, then the name, and a default value.
+
+to use the variables. we simply reference them in the defintion block with the **var** preceding them.
+
+```hcl
+resource "local_file" "my-pet" {
+	    content = var.content
+	    filename = var.filename
+}
+
+
+resource "random_pet" "other-pet" {
+	      prefix = var.prefix
+	      separator = var.separator
+	      length = var.length
+}
+```
+now we can update the variables file, rather than the resource files.
+
+heres an example:
+
+*main.tf*
+```hcl
+resource "aws_instance" "webserver"{
+    ami = var.ami
+    instance_type = var.instance_type
+}
+```
+*variables.tf*
+```hcl
+variable "ami" {
+    default = "ami-0edab43b6fa892279"
+}
+variable "instance_type" {
+    default = "t2.micro"
+}
+```
 
 ### Understanding the Variable Block
 
+the variable block has three parts
+- default value
+- type (optional)
+- description (optional)
+  
+```hcl
+variable "filename" {
+    default = "/root/pets/txt"
+    type = string
+    description = "the path of local file"
+}
+```
+
+type | example|notes
+---|--- |---
+string | "/root/pets/txt"
+number | 1
+bool | true / false
+list | ["cat","dog"] | numbered, index zero
+set | ["cat","dog"] | numbered, index zero, no duplications
+map| {pet1=cat pet2=dog} | key-value pairs
+tuple | complex data structure | list, but not the same type of values
+object | complex data structure
+any | default value
+
+lets start using them
+
+*variable.tf*
+```hcl
+variable "prefix" {
+    default = ["Mr","Mrs","Sir"]
+    type = list
+}
+variable "file-contents"{
+    type= map
+    default = {
+        "statement1" = "We love pets!"
+        "statement2" = "We love animals!"
+    }
+}
+```
+*main.tf*
+```hcl
+resource "random_pet" "my-pet" {
+	      prefix = var.prefix[0]
+}
+
+resource "local_file" "my-pet" {
+	    content = var.file-contents["statement2"]
+	    
+}
+```
+we can also combine type constaints
+```hcl
+variable "prefix" {
+    default = ["Mr","Mrs","Sir"]
+    type = list(string)
+}
+```
+for maps, they key is always string, but the value can be constrained. if we have duplications in the set, things will fail. when the default elements and the type don't match, `terraform plan` will fail.
+
+objects allow us to define complex strcuteres;
+```hcl
+variable "bella" {
+    type = object({
+        name = string
+        color = string
+        age = number
+        food = list(string)
+        favorite_pet = bool
+    })
+    default = {
+        name = "bella"
+        color = "brown"
+        age = 7
+        food =["fish","chicken", "turkey"]
+        favorite_pet = true
+    }
+}
+```
+tuple looks like a list, but it requires a fixed amount of elements with a defined type for each.
+
+```hcl
+variable "kitty" {
+    type = tuple([string, number, bool])
+    default = ["cat",7,true]
+}
+```
+
+
 #### Lab: Variables
+
+*main.tg*
+```hcl
+resource "local_file" "jedi" {
+     filename = var.jedi["filename"]
+     content = var.jedi["content"]
+}
+```
 
 ### Using Variables in Terraform
 
+different ways of using the input variables.
+
+we aren't required to have a default value for each variable. if we run the `apply` command without them, then we will prompted to enter them.\
+a diffrent way of using them is to pass the values in the command line with the `-var` flag. alternatively, we can set them as part of the terrafrom environment by exporting them with the **TF_VAR_** prefix. then they will picked up by the apply command. 
+
+```sh
+export TF_VAR_prefix="Mrs"
+export TF_VAR_length="2"
+terraform apply -var "filename=/root/pets.txt" -var "content=We Love Pets!"
+```
+
+another way to pass variables is with a specific file, with the *.tfvars* or *.tfvars.json*  extension
+
+```
+filename = "/root/pets.txt"
+content = "We love pets!"
+prefix = "Mrs"
+separator = "."
+length = "2"
+```
+we then pass them with the `-var-file` flag.
+```sh
+terrafrom apply -var-file variables.tfvars
+```
+if we name the files as one the following options, it will be loaded without us needing to specify it in the command line.
+- terraform.tfvars
+- terraform.tfvars.json
+- *.auto.tfvars
+- *.auto.tfvars.json
+
+to understand the way in which terraform decides which value to use, let's have an example:
+
+*main.tf*
+```hcl
+resource local_file pet{
+    filename = var.filename
+}
+```
+*variables.tf*
+```hcl
+variable filename{
+    type=string
+    description= "file path"
+    //no default
+}
+```
+we have files that should load automatically:\
+*terraform.tfvars*
+```hcl
+filename = "/root/pets.txt"
+```
+
+*variable.auto.tfvars*
+```hcl
+filename = "/root/pets.txt"
+```
+and we export a variable
+```sh
+export TF_VAR_filename="/root/cats.txt"
+```
+
+and we use the `-var` flag in the command line
+
+```sh
+terraform apply -var "filename=/root/best-pet.txt"
+```
+
+the order, from weakest to strongest:
+
+0. (default variables)
+1. environment variables (`export TF_VAR_`)
+2. automatically loaded files (*\*.auto.tfvars*), by lexical order
+3. command line flags `-var` and `-var-file` at the same strength
+
+
 #### Lab: Using Variables in terraform
+
+don't forget! we must first declare the variable in a variable block!
+```hcl
+variable filename{
+    type="string"
+}
+```
 
 ### Resource Attributes
 
+linking resource together. so far we used separate variables for each resource, but in most real world scenarios, resources are dependent on one another, we would want to use the data from one resource as the value for another.
+
+in our example, we would like to use the random pet name inside the contents of the file
+
+this can be done with **attributes**. if we look at the documentation for the random pet resource, we will see that it has one attribute, *id* of type string. so lets use it.
+
+
+we use the `${}` string interpolation for this, with the resource type, resource name and the attribute.
+
+```hcl
+resource "local_file" "my-pet" {
+	    content = "My pet is called ${random_pet.other-pet.id}!"
+	    filename = "/root/pet-name"
+}
+
+
+resource "random_pet" "other-pet" {
+	      prefix = "Mr"
+	      separator = "."
+	      length = "1"
+}
+```
+
 #### Lab: Resource Attributes
+
+[time_static](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/static)
+```hcl
+resource "time_static" "time_update"{
+
+} 
+
+resource local_file time {
+  filename="/root/time.txt"
+  content="Time stamp of this file is ${time_static.time_update.id}"
+}
+
+```
 
 ### Resource Dependencies
 
+different types of resource dependencies. output from one resource to another. the order is set by terraform based on dependencies, and the resources are destroyed in the reverse order. this dependency is **implicit**.
+
+we can also use **explicit dependency** and force a specific order, this is done with the `depends_on` argument. this argument takes a list of dependencies. we should use it when one resource uses another, but not in a direct way.
+
+```hcl
+resource "local_file" "my-pet" {
+	    content = "My pet is called Rex!"
+	    filename = "/root/pet-name"
+        depends_on = [
+            random_pet.other-pet
+        ]
+}
+
+
+resource "random_pet" "other-pet" {
+	      prefix = "Mr"
+	      separator = "."
+	      length = "1"
+}
+```
+
 #### Lab: Resource Dependencies
+
+[tls_private_ket](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key)
+
+
+this key lives in the terraform state.
+```hcl
+resource "tls_private_key" "pvtkey" {
+    algorithm = "RSA"
+    rsa_bits=4096
+}
+
+resource "local_file" "key_details" {
+  filename="/root/key.txt"
+  content = "${tls_private_key.pvtkey.private_key_pem}"
+}
+```
+
+explicit dependency
+```hcl
+resource "local_file" "whale" {
+    filename="/root/whale"
+  depends_on=[
+      local_file.krill
+  ]
+}
+
+resource "local_file" "krill" {
+    filename="/root/krill"
+  
+}
+```
 
 ### Output Variables
 
+terraform also suppots output variables.
+
+```hcl
+resource "local_file" "my-pet" {
+	    content = "My pet is called ${random_pet.other-pet.id}!"
+	    filename = "/root/pet-name"
+}
+
+
+resource "random_pet" "other-pet" {
+	      prefix = "Mr"
+	      separator = "."
+	      length = "1"
+}
+
+output pet-name
+{
+    value = random_pet.other-pet.id
+    description = "Record the value of pet ID"
+}
+```
+when we apply the change,the value of the output will be printed to the screen. we will also be able to use `terraform output` to display all the output variable, or `terraform output pet-name` to show a specific variable. 
+
 #### Lab: Output Variables
 
+```hcl
+resource "random_uuid" "uid" {
+
+}
+
+resource "random_integer" "number" {
+    min = 1
+    max = 15
+}
+```
+```sh
+terraform output id2
+terraform output order1
+```
 
 </details>
 
 
 ## Terraform State
 
+<details>
+<summary>
+Terraform state - single source of truth
+</summary>
+
+### Introduction to Terraform State
+
+terraform state - what happens under the hood when we run commands.
+
+when we run `terraform init`, we download the plugins. the `terraform plan` command tried to update the state, and if there is no state, it knows that it should create the resources. the same thing happens when we run `terraform apply`. the internal state is checked compared to the requested state.
+
+we can see this in the *terraform.tfstate* file. this file is created by the apply comand. the file itself is a json file, it has every detail about the infrastructure, and it is the single source of truth. every `apply` command is checked against the state file and because of that, we know if there are changes to the resources or not.
+
+### Purpose of State
+
+the terraform state tracks the dependencies between the resources. therefore, it also controls the order of creating resources. this also allows it to destroy resources, and the correct order of doing so. having a local file allows us to avoid requesting the state from external objects each time.
+
+state is refreshed when we `plan` a deployment, but we can suppress this behavior.
+`terraform plan --refresh=false`
+
+the state file is usually located in the end-user folder, but it is also possible to store it remotely so that every member of the team has the same state. this is called remote state, and will be covered later0
+
+
+#### Lab: Terraform State
+
+```sh
+terraform show
+terraform apply
+
+```
+### Terraform State Consideration
+
+the state file contains sensitive information, ips, memory, OS, even the SSH key. for databases, the state might store the initial passwords. when it's stored locally, the state file is plain text.
+
+the configuration files can be stored in version control, and the state file should be stored in a dedicated location. we shouldn't manually edit the file, but in some cases, we would modify it using `terraform state` commands.
+
+
+</details>
+
 ## Working With Terraform
+
+<!-- <details> -->
+<summary>
+Additional commands to work with terraform.
+</summary>
+
+### Terraform Commands
+lets get aquatinted with some other commands
+
+`terraform validate` - determine if the configuration file is valid, and will try to help us fix errors if the are any.
+
+`terraform fmt` - format the configuration files
+
+`terraform show` - displays the terrafrom state
+
+`terraform providers` - will show us the providers used in our configuration files. we can use `terraform providers mirror <path>` to copy the plugins to a different folder.
+
+`terraform refresh` - sync with the state at the external world, this is done automatically when we run `plan` and `apply` commands.
+
+`terraform graph` - will show us dependencies between our resources, this can be run even before running `init`, the default format (*dot*) is confusing. but we can pass it to a graphing software.
+
+```sh
+apt update
+apt install graphviz -y
+terraform graph | dot -Tsvg > graph.svg
+```
+
+#### Lab: Terraform Commands
+
+```sh
+terraform validate
+terraform plan
+terraform apply
+terraform fmt
+terraform show
+terraform providers
+```
+
+
+### Mutable vs Immutable Infrastructure
+
+infrastructure can be mutable or immutable. when updating an immutable infrastructure, the resource must first be destroyed and the re-created.
+
+in-place update, mutable infrastructure, like updating software.
+
+configuration drift - when infrastrcutes (servers) which began as identical slowly become different over time across changes and updates.
+
+terraform uses the replacement approach, by default, it first deletes an existing resource before spinning up a new one, but this can changed by using lifecycle rules.
+
+### LifeCycle Rules
+
+if we have a local_file resource and we change the file permssions, running `apply` will first remove the old file, but we might want to change this behavior. this is done with inner **lifecycle blocks**.
+
+```hcl
+resource "local_file" pet{
+    filename = ".root/pets.txt"
+    content = "We love pets"
+    file_permission="0700"
+
+    lifecycle{
+        create_before_destroy = true
+    }
+}
+```
+
+if we don't want the resource to be destroyed at all, we can control that. this might be relevent for databases and so on.
+
+```hcl
+resource "local_file" pet{
+    filename = ".root/pets.txt"
+    content = "We love pets"
+    file_permission="0700"
+
+    lifecycle{
+        prevent_destroy = true
+    }
+}
+```
+we can also decide to ignroe changes, maybe we want to allow changes to the tags, even if they aren't coming from terraform. 
+
+```hcl
+
+resource "aws_instance" "webserver" {
+    ami = "ami-0edab43b6fa892279"
+    instance_type = "t2.micro"
+    tags = {
+        Name = "ProjectA-Webserver"
+    }
+    lifecycle {
+        ignore_changes = [
+            tags
+        ]
+    }
+}
+```
+
+* create_before_destroy. true / false
+* prevent_destroy. true / false
+* ignore_changes. list / all
+
+
+#### Lab: Lifecycle Rules
+
+```sh
+terraform init
+terraform plan
+terraform apply
+terraform state show local_file.file
+```
+
+```hcl
+resource "random_string" "string" {
+    length = var.length
+    keepers = {
+        length = var.length
+    }  
+    lifecycle{
+        create_before_destroy=true
+    }
+    
+}
+```
+
+**issue with creating files before destroying**\
+a file is a file is a file. it's an actual unique resource, we don't have instances of it. we can't create a file with the same name before destroying the previous one, so our new file overwrites the old one, and is then destroyed!
+
+### Datasources
+
+terraform is the only way to provision infrastructure, there are other IoC tools, and the GUI console from the provider itself. terraform can also interact with those resources, even if it didn't create them.
+
+this is done with **data** source blocks.
+```hcl
+data "local_file" "dog"{
+    filename = "/root/dog.txt"
+}
+
+resource "local_file" "pet"{
+    filename = "/root/pets.txt"
+    content = data.local_file.dog.content
+}
+```
+
+data blocks are similar to resource blocks, the exposed attributes are different
+
+\ | Resource | Data source
+---|---|---
+keyword | *resource* | *data*|
+usage| **create, update, destroy** infrastructure | only **read** infrastrcuter
+alternate name|  Managed resources| Data resources
+
+#### Lab: Datasources
+
+### Meta-Arguments
+
+### Count
+
+### for-each
+
+#### Lab: Count and for each
+
+### Version Constraints
+
+#### Lab: Version Constraints
+
+
+</details>
+
 
 ## Remote State
 
@@ -438,14 +1036,26 @@ we we apply the change, the output for of the random pet resource is displayed o
 
 ## Takeaways
 
+<details>
+<summary>
+Things to remember
+</summary>
+
 ### Cli Commands
 
 - `terraform version`
 - `terraform init`
-- `terraform plan`
-- `terraform apply`
-- `terraform show`
+- `terraform plan`. `--refresh=false`
+- `terraform apply`. `-var`, `-var-file`
+- `terraform show`. `-json`
 - `terraform destroy`
+- `terraform output`
+- `terraform validate`
+- `terraform fmt`
+- `terraform providers`
+  - `terraform providers mirror <path>`
+- `terraform refresh`
+- `terraform graph`
 
 ### Common File Structure
 
@@ -454,4 +1064,93 @@ File Name | Purpose
 main.tf | Main configuration files containing resource definitions
 variables.tf | variables decelerations
 outputs.tf | Outputs from resources
-provider.tv | Providers defintions
+provider.tf | Providers defintions
+variables.tfvars | environment variables
+terraform.tfstate | state, single source of truth
+
+
+### Block Types
+
+block type | purpose
+---|---
+resource |
+variable | define variables to use in `var.$`
+output | displaying on screen, or to pass it forwad to other shell commands. `terraform output <variable_name>`
+data | using resources that weren't created by Terraform.
+
+</details>
+
+## Resources samples
+
+<details>
+<summary>
+Samples of Resource blocks
+</summary>
+
+
+### Local
+
+```hcl
+resource "local_file" "my-pet" {
+	    content = "My pet is called ${random_pet.other-pet.id}!"
+        #sensitive_content
+	    filename = "/root/pet-name"
+        file_permission = "0700"
+
+}
+```
+### Time
+
+```hcl
+resource "time_static" "time_update"{
+
+} 
+```
+
+### Random 
+
+> All the resources for the random provider can be recreated by using a map type argument called **keepers**. A change in the value will force the resource to be recreated.
+
+```hcl
+resource "random_pet" "pet" {
+    prefix = "Mr"
+    separator = "."
+    length = "2"
+}
+
+resource "random_uuid" "uid" {
+
+}
+
+resource "random_integer" "number" {
+    min = 1
+    max = 15
+}
+
+resource "random_string" "string" {
+    length = var.length
+    keepers = {
+        length = var.length
+    }     
+}
+```
+
+
+### AWS
+
+resource "aws_instance" "dev-server" {
+    instance_type = "t2.micro"
+    ami         = "ami-02cff456777cd"
+}
+resource "aws_s3_bucket" "falshpoint"  {
+    bucket = "project-flashpoint-paradox"
+}
+
+### TLS
+
+resource "tls_private_key" "private_key" {
+  algorithm   = "RSA"
+  rsa_bits  = 4096
+}
+
+</details>

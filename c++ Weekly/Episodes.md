@@ -1325,3 +1325,70 @@ the defintion of code smells.\
 are all comments simply signs that we didn't try hard enough to make the code clear?
 
 </details>
+
+## C++ Weekly - Ep 310 - Your Small Integer Operations Are Broken!
+
+<details>
+<summary>
+types that are promoted to integers are prone to weird conversion errors.
+</summary>
+
+
+[Your Small Integer Operations Are Broken!](https://youtu.be/R6_PFqOSa_c)
+
+this code return zero, not -1. but also not some weird overflow max uint8_t thing. why?
+
+```cpp
+#include <cstdint>
+
+int main()
+{
+    std::uint8_t value1 = 0;
+    std::uint8_t value2 = 1;
+
+    std::uint8_t result = value1-value2; //255 underflow
+    auto result2 = value1-value2; //-1
+    return value1 - value2; //why zero and not 
+}
+```
+
+the result of substracting the two uint8_t variables is an int.
+
+
+```cpp
+#include <cstdint>
+#include <typeinfo>
+#include <type_traits>
+#include <iostream>
+int main()
+{
+    std::uint8_t value1 = 0;
+    std::uint8_t value2 = 1;
+
+    std::uint8_t result = value1-value2; //255 underflow
+    auto result2 = value1-value2; //-1
+    std::cout<<typeid(result).name() <<'\n'; //h for uint8_t
+    std::cout<<typeid(result2).name() <<'\n'; //i for int
+    return 0;
+}
+```
+shifting is also a huge mess, arithmetic shift right does sign extentsion.
+```cpp
+std::uint8_t result1 = (value1-value2) >>1 ; //still 255
+std::uint8_t result2 = (value1-value2) >>3 ; //still 255
+std::uint8_t result3 = static_cast<std::uint8_t>(value1-value2)) >>3 ; // now its 31
+```
+
+shifting logic.
+```
+//signed
+// 11000000 >> 1
+// 11100000
+
+//unsigned
+// 11000000 >> 1
+// 01100000
+```
+at other cases we might need casting over casting. we might decide to create a non_promoting type.
+
+</details>
