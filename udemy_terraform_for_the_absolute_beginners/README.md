@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore HashiCorp KodeKloud FIFA tfvars tfstate falshpoint Tsvg Flexit
+// cSpell:ignore HashiCorp KodeKloud FIFA tfvars tfstate falshpoint Tsvg Flexit toset aone
  -->
 
 # Terraform For The Absolute Beginners
@@ -856,9 +856,9 @@ the configuration files can be stored in version control, and the state file sho
 
 ## Working With Terraform
 
-<!-- <details> -->
+<details>
 <summary>
-Additional commands to work with terraform.
+Additional ways to work with terraform.
 </summary>
 
 ### Terraform Commands
@@ -985,7 +985,8 @@ a file is a file is a file. it's an actual unique resource, we don't have instan
 
 terraform is the only way to provision infrastructure, there are other IoC tools, and the GUI console from the provider itself. terraform can also interact with those resources, even if it didn't create them.
 
-this is done with **data** source blocks.
+this is done with **data** source blocks. in this example,we read a local file which we didn't create, and use it as a source for another local file resource.
+
 ```hcl
 data "local_file" "dog"{
     filename = "/root/dog.txt"
@@ -997,6 +998,8 @@ resource "local_file" "pet"{
 }
 ```
 
+
+
 data blocks are similar to resource blocks, the exposed attributes are different
 
 \ | Resource | Data source
@@ -1007,17 +1010,207 @@ alternate name|  Managed resources| Data resources
 
 #### Lab: Datasources
 
+```hcl
+output "os-version" {
+  value = data.local_file.os.content
+}
+data "local_file" "os" {
+  filename = "/etc/os-release"
+}
+```
+
 ### Meta-Arguments
 
-### Count
+so far we used single resource, but we might want multiple instaces of the same resource.
 
-### for-each
+in a shell script, a for loop would look like this.
+```sh
+#!/bin/bash
+
+for i in {1..3}
+    do
+        touch /root/pet${i}
+    done
+```
+
+in Terraform, we can achieve a similar result, by using a **meta-argument**.
+we already used two meta-arguments:
+
+- depends_on
+- lifecycle
+
+
+#### Count
+
+a meta argument to create multiple instances:
+
+```hcl
+resource "local_file" "pet"{
+    filename = var.filename
+    count = 3
+}
+```
+now the resource is a list of elements, but because this is a file, the file created three times, so it doesn't work.
+
+but we can work around it by working with a list variable. now the created resource itself is a list.
+```hcl
+variable "filename" {
+    default = [
+        "/root/pets.txt",
+        "/root/dogs.txt",
+        "/root/cats.txt"
+    ]
+}
+
+resource "local_file" "pet" {
+    filename = var.filename[count.index]
+    count = 3
+}
+```
+
+how there will be three files, but now we have the count as a static variable. we can make use of the `length` function to get the correct amount of instances
+
+```hcl
+variable "filename" {
+    default = [
+        "/root/pets.txt",
+        "/root/dogs.txt",
+        "/root/cats.txt",
+        "/root/cows.txt"
+        "/root/ducks.txt"
+    ]
+}
+
+resource "local_file" "pet" {
+    filename = var.filename[count.index]
+    count = length(var.filename)
+}
+```
+
+there is another drawback: if we remove the first value from the list, then all the values after it will be modified. in our example, we replace two resources and delete the third, even though we actually just wish to delete one. 
+
+#### for-each
+
+`for-each` is another meta-argument, however, it only works with maps (or sets), and not with lists.
+
+```hcl
+variable "filename" {
+    type=set(string)
+    default = [
+        "/root/pets.txt",
+        "/root/dogs.txt",
+        "/root/cats.txt",
+        "/root/cows.txt"
+        "/root/ducks.txt"
+    ]
+}
+
+resource "local_file" "pet" {
+    filename = each.value
+    for_each = var.filename
+}
+```
+
+we can keep the variables as a list, but use the `toset` function. this might 
+
+```hcl
+variable "filename" {
+    type=list(string)
+    default = [
+        "/root/pets.txt",
+        "/root/dogs.txt",
+        "/root/cats.txt",
+        "/root/cows.txt"
+        "/root/ducks.txt"
+    ]
+}
+
+resource "local_file" "pet" {
+    filename = each.value
+    for_each = toset(var.filename)
+}
+```
+lets take a look using output variables.
+```hcl
+output "pets"{
+    value = local_file.pet
+}
+```
+
+`terraform output.pets`
+
+now the resource is stored a map/set, rather than a list.
 
 #### Lab: Count and for each
 
+```hcl
+variable "users" {
+    type = list(string)
+    default = [ 
+        "/root/user10",
+        "/root/user11",
+        "/root/user12",
+        "/root/user10"
+    ]
+}
+
+variable "content" {
+    default = "password: S3cr3tP@ssw0rd"
+}
+
+resource "local_file" "name" {
+    filename = each.value
+    sensitive_content = var.content
+
+    for_each = toset(var.users)
+}
+```
+
 ### Version Constraints
 
+provider use plug-ins, the `init` command takes by default the latest version. if we want to use a specific version, we need to specify it.
+
+for each provider, the default and latest version is shown in the doumentation.
+
+now we introduce the *terraform* block, which can control which version is used.
+
+in this example, we set the source and version of the plugin for terraform to download.
+```hcl
+terraform {
+    required_providers{
+        local ={
+            source = "hashicorp/local"
+            version = "1.4.0"
+        }
+    }
+}
+```
+
+there are also version constraints,
+```hcl
+terraform {
+    required_providers{
+        local ={
+            source = "hashicorp/local"
+            version = "!= 2.0.0"
+        }
+    }
+}
+```
+we can also use multiple contrains, such as `version = "> 1.2.0, <2.0.0, !=1.4.0"`, the "~>1.2" allows us to take incrmental versions, so we can download any "1.x" version, but not "2.0"
+
 #### Lab: Version Constraints
+
+```hcl
+terraform {
+  required_providers {
+    local = {
+      source  = "hashicorp/local"
+      version = "1.2.2"
+    }
+  }
+}
+```
 
 
 </details>
@@ -1077,6 +1270,7 @@ resource |
 variable | define variables to use in `var.$`
 output | displaying on screen, or to pass it forwad to other shell commands. `terraform output <variable_name>`
 data | using resources that weren't created by Terraform.
+terraform | controling versions and provider source
 
 </details>
 
@@ -1138,6 +1332,9 @@ resource "random_string" "string" {
 
 ### AWS
 
+provisioning resources:
+
+```hcl
 resource "aws_instance" "dev-server" {
     instance_type = "t2.micro"
     ami         = "ami-02cff456777cd"
@@ -1145,12 +1342,43 @@ resource "aws_instance" "dev-server" {
 resource "aws_s3_bucket" "falshpoint"  {
     bucket = "project-flashpoint-paradox"
 }
+```
+
+data sources:
+
+```hcl
+data "aws_ebs_volume" "gp2_volume" {
+  most_recent = true
+
+  filter {
+    name   = "volume-type"
+    values = ["gp2"]
+  }
+}
+
+data "aws_s3_bucket" "selected" {
+  bucket_name = "bucket.test.com"
+}
+```
 
 ### TLS
 
+```hcl
 resource "tls_private_key" "private_key" {
   algorithm   = "RSA"
   rsa_bits  = 4096
 }
+```
+
+### Google
+
+```hcl
+resource "google_compute_instance" "special" {
+  name         = "aone"
+  machine_type = "e2-micro"
+  zone         = "us-west1-c"
+
+}
+```
 
 </details>
