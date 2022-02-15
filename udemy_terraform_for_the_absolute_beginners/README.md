@@ -499,17 +499,17 @@ variable "filename" {
 }
 ```
 
-type | example|notes
----|--- |---
-string | "/root/pets/txt"
-number | 1
-bool | true / false
-list | ["cat","dog"] | numbered, index zero
-set | ["cat","dog"] | numbered, index zero, no duplications
-map| {pet1=cat pet2=dog} | key-value pairs
-tuple | complex data structure | list, but not the same type of values
-object | complex data structure
-any | default value
+| type   | example                | notes                                 |
+| ------ | ---------------------- | ------------------------------------- |
+| string | "/root/pets/txt"       |
+| number | 1                      |
+| bool   | true / false           |
+| list   | ["cat","dog"]          | numbered, index zero                  |
+| set    | ["cat","dog"]          | numbered, index zero, no duplications |
+| map    | {pet1=cat pet2=dog}    | key-value pairs                       |
+| tuple  | complex data structure | list, but not the same type of values |
+| object | complex data structure |
+| any    | default value          |
 
 lets start using them
 
@@ -1002,11 +1002,11 @@ resource "local_file" "pet"{
 
 data blocks are similar to resource blocks, the exposed attributes are different
 
-\ | Resource | Data source
----|---|---
-keyword | *resource* | *data*|
-usage| **create, update, destroy** infrastructure | only **read** infrastrcuter
-alternate name|  Managed resources| Data resources
+| \              | Resource                                   | Data source                 |
+| -------------- | ------------------------------------------ | --------------------------- |
+| keyword        | *resource*                                 | *data*                      |
+| usage          | **create, update, destroy** infrastructure | only **read** infrastrcuter |
+| alternate name | Managed resources                          | Data resources              |
 
 #### Lab: Datasources
 
@@ -1216,6 +1216,133 @@ terraform {
 </details>
 
 
+## Terraform with AWS
+
+<!-- <details> -->
+<summary>
+Focusing on AWS Cloud Vendor.
+</summary>
+
+### Getting Started with AWS
+AWS is the leading cloud vendor, with hundereds of services, both general and specific. aws has infrastructure in many regions across the world.
+
+AWS is a first tier terraform plugin, so it's managed by hashicorp itself.
+
+### Demo Setup an AWS Account
+learning how to set an aws account.
+
+[aws homepage](www.aws.amazon.com)
+
+creating an account, payment information (even for the free tier). multi factor authentication.
+
+- Compute
+- Storage
+- Database
+- Security, Identity & Compliance
+
+### Introduction to IAM
+
+**IAM - Identity Access management**
+
+the root account can do anything, so it's not adviced to use it. the best practice is to create other users with the appropriate premissions.
+
+there are two types of access methods: access to the management console with a user name and password, and programatic permissions, which use access Key Id and Secret Access Key.
+
+permissions are described in aws Policies.
+
+there are some default policies which are managed by aws. the policy is defined in a json file.
+
+
+this policy is the administrator policy, it can do anything.
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+some common managed AWS polices:
+
+| Job function           | Policy                |
+| ---------------------- | --------------------- |
+| Administrator          | AdministratorAccess   |
+| Billing                | Billing               |
+| Database Administrator | DatabaseAdministrator |
+| Network Administrator  | NetworkAdministrator  |
+| View Only User         | ViewOnlyAccess        |
+
+there are also **IAM Groups**, which can help us manage policies across a group of users, instead of managing them individually.
+
+Services also have permissions, we need to configure access between aws resources. this is done with **IAM Roles**.
+
+IAM roles can also be used to provide access to user from other aws accounts, to software and other user management services.
+
+
+here is another policy, which allows to create and delete tags from any ec2 resource.
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateTags",
+                "ec2:DeleteTags"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+### Demo IAM
+
+
+### Programmatic Access
+
+
+### Lab: AWS CLI and IAM
+
+
+### AWS IAM with Terraform
+
+
+### IAM Policies with Terraform
+
+
+### Lab: IAM with Terraform
+
+
+### Introduction to AWS S3
+
+
+### S3 with Terraform
+
+
+### Lab: S3
+
+
+### Introduction to DynamoDB
+
+
+### Demo Dynamodb
+
+
+### DynamoDB with Terraform
+
+
+### Lab: DynamoDB
+
+
+</details>
+
+
 ## Remote State
 
 ## Terraform Provisioners
@@ -1233,6 +1360,8 @@ terraform {
 <summary>
 Things to remember
 </summary>
+
+AWS human users have **Policies**, aws services have **Roles**.
 
 ### Cli Commands
 
@@ -1252,25 +1381,25 @@ Things to remember
 
 ### Common File Structure
 
-File Name | Purpose
-----|----
-main.tf | Main configuration files containing resource definitions
-variables.tf | variables decelerations
-outputs.tf | Outputs from resources
-provider.tf | Providers defintions
-variables.tfvars | environment variables
-terraform.tfstate | state, single source of truth
+| File Name         | Purpose                                                  |
+| ----------------- | -------------------------------------------------------- |
+| main.tf           | Main configuration files containing resource definitions |
+| variables.tf      | variables decelerations                                  |
+| outputs.tf        | Outputs from resources                                   |
+| provider.tf       | Providers defintions                                     |
+| variables.tfvars  | environment variables                                    |
+| terraform.tfstate | state, single source of truth                            |
 
 
 ### Block Types
 
-block type | purpose
----|---
-resource |
-variable | define variables to use in `var.$`
-output | displaying on screen, or to pass it forwad to other shell commands. `terraform output <variable_name>`
-data | using resources that weren't created by Terraform.
-terraform | controling versions and provider source
+| block type | purpose                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------ |
+| resource   |
+| variable   | define variables to use in `var.$`                                                                     |
+| output     | displaying on screen, or to pass it forwad to other shell commands. `terraform output <variable_name>` |
+| data       | using resources that weren't created by Terraform.                                                     |
+| terraform  | controling versions and provider source                                                                |
 
 </details>
 
