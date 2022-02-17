@@ -8,6 +8,8 @@ udemy course [Terraform for the absolute beginners](https://www.udemy.com/course
 
 [KodeKloud Lab](https://kodekloud.com/courses/udemy-labs-terraform-for-beginners/)
 
+if copying from the lab doesn't work, try <kbd>shift + insert</kbd>
+
 ## Infrastructure as Code
 
 <details>
@@ -1303,22 +1305,218 @@ here is another policy, which allows to create and delete tags from any ec2 reso
 
 ### Demo IAM
 
+introduction the IAM with the console: groups, users, roles, policies.
+
+the IAM region is always Global. in the dashboard:
+
+**Create User**\
+adding user, choosing access types (programatic access, aws management console acceses), passwords. skipping permissions and tags for now. at the final page we can download the access key. if we look at the user policies, we can see that it got the *IAMUserChangePassword* policy. and we can attach other permissions for it.
+
+**Create Group**\
+a group of permissions, what can members of the group do, instead of manually setting each user permissions.
+
+**Polices**\
+the awsManagedPolicies are default, sensible policies that are available for use without configuration. we can also create a policy for some resources and for specific actions on those resources. Policies are described as json documents
+
+**Roles**
+- one aws service to another
+- users from another aws account
+- web Identity
+- other user management systems.
+
+lets create a role, we choose the trusted service, and give it a policy. 
 
 ### Programmatic Access
 
+interacting with the aws services using the aws CLI (command line interface)
 
-### Lab: AWS CLI and IAM
+```sh
+aws --version
+aws s3api create-bucket -bucket my-bucket -region us-east-1
+aws configure
+#type the access key, secret access key, default region, default output format
+cat ./aws/config/config
+```
 
+the base syntax is:\
+`aws <command> <subcommand> [option and parameters]`
+
+the top level command is usually the service we want to use.
+```sh
+aws iam create-user --user-name lucy
+```
+
+we can also get help for specific commands
+```sh
+aws help
+aws iam help
+aws iam create-user-help
+```
+
+#### Lab: AWS CLI and IAM
+
+the lab uses an aws mocking service, so there is always a `--endpoint http://aws:4566` parameter added.
+
+
+```sh
+aws --version
+aws iam help
+aws iam list-users --endpoint http://aws:4566 #option 1
+aws --endpoint http://aws:4566 iam list-users  #option2
+aws iam create-user help
+aws --endpoint http://aws:4566 iam create-user --user-name mary
+aws configure list
+cat ~/.aws/config
+cat ~/.aws/credentials
+aws iam attach-user-policy help
+aws --endpoint http://aws:4566 iam attach-user-policy --user-name mary --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+aws iam create-group help
+aws --endpoint http://aws:4566 iam create-group --group-name project-sapphire-developers
+aws iam add-user-to-group help
+aws iam list-groups-for-user --user-name jack
+
+aws --endpoint http://aws:4566 iam list-attached-user-policies --user-name jack
+aws --endpoint http://aws:4566 iam list-attached-group-policies --group-name project-sapphire-developers
+aws --endpoint http://aws:4566 iam attach-group-policy --group-name project-sapphire-developers --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
+```
 
 ### AWS IAM with Terraform
 
+the third way to work with IAM is through [terraform aws provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+
+```hcl
+resource "aws_iam_user" "admin-user"{
+    name = "lucy"
+    tags = {
+        Description = "Technical Team Leader"
+    }
+}
+```
+the provider is aws, the resource type is iam_user, the resource name is "admin-user", and we provide the *name* required argument, and the optional tags map. we could also provide a *path* argument, a *permissions_boundary* arn and an *force_destroy* option.
+
+now when we run terrafrom init, we download the plugins as usual, but when we run `terraform plan`, we will get an error because we don't have valid permissions.
+
+we need to decide on a region, and to either pass the access key and secret.
+```hcl
+provider "aws" {
+    region = "us-west-2"
+    access_key=<>
+    secret_key=<>
+}
+```
+now running `terraform plan` doesn't fail and we can see the execution plan.
+
+we could also get the credentials from a shared credentials file or from the environment variables **AWS_ACCESS_KEY_ID** and **AWS_SECRET_ACCESS_KEY**
+
+to configure the profile we can run `aws configure` with a profile.
+
+```sh
+export AWS_ACCESS_KEY_ID=<>
+export AWS_SECRET_ACCESS_KEY=<>
+```
 
 ### IAM Policies with Terraform
 
+now we want to give our user permissions.
 
-### Lab: IAM with Terraform
+argument| required | notes
+---|---|---
+policy| required|a json object
+description|optional | forces new resource
+name|optional| forces new resource
+name_prefix|optional - clashes with "name"|forces new resource
+path|optional
+tags| optional
 
+the problem is how to pass the policy document. we can use something called <kbd>heredoc Syntax</kbd>.
 
+```hcl
+resource aws_iam_policy "adminUser" {
+    name = "AdminUsers"
+    policy= <<EOF
+    {
+        "Version":"2012-10-17",
+        "Statement":[
+            {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+            }
+        ]
+    }
+    EOF
+}
+```
+now that we have a policy,we can attach it to our user. we can see how this resource block uses that reference syntax.
+```hcl
+resource "aws_iam_user_policy_attachment" "lucy-admin-access"{
+    user = aws_iam_user.admin-user.name
+    policy_arn = aws_iam_policy.adminUser.arn
+}
+```
+
+rather than write the policy in the terraform file, we can grab it from an existing file in the folder.
+
+admin-policy.json
+```json
+{
+    "Version":"2012-10-17",
+    "Statement":[
+        {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+        }
+    ]
+}
+```
+and we get it in the resource block by using the `file` function.
+```hcl
+resource aws_iam_policy "adminUser" {
+    name = "AdminUsers"
+    policy = file("admin-policy.json")
+}
+```
+
+#### Lab: IAM with Terraform
+
+the lab uses an aws mocking service, so there is always a `--endpoint http://aws:4566` parameter added.
+
+```hcl
+resource "aws_iam_user" "users" {
+    name = "mary"
+}
+```
+```sh
+terraform init
+terraform validate
+# region is not set
+```
+
+```hcl
+provider "aws" {
+  region= "ca-central-1"
+  
+    # skip_credentials_validation = true
+    # skip_requesting_account_id  = true
+    #
+    #  endpoints {
+    #    iam = "http://aws:4566"
+    #  }
+}
+```
+```hcl
+variable "project-sapphire-users" {
+     type = list(string)
+     default = [ "mary", "jack", "jill", "mack", "buzz", "mater"]
+}
+
+resource "aws_iam_user" "users" {
+    name = var.project-sapphire-users[count.index]
+    count = length(var.project-sapphire-users)
+
+}
+```
 ### Introduction to AWS S3
 
 
@@ -1361,7 +1559,11 @@ here is another policy, which allows to create and delete tags from any ec2 reso
 Things to remember
 </summary>
 
-AWS human users have **Policies**, aws services have **Roles**.
+AWS human users have **Policies**, aws services have **Roles**. **ARN** - Amazon Resource Name.
+
+`file("file-path")` - read file function.
+
+
 
 ### Cli Commands
 
@@ -1422,6 +1624,7 @@ resource "local_file" "my-pet" {
 
 }
 ```
+
 ### Time
 
 ```hcl
@@ -1464,10 +1667,35 @@ resource "random_string" "string" {
 provisioning resources:
 
 ```hcl
+
+provider "aws" {
+    region = "us-west-2"
+    access_key=<>
+    secret_key=<>
+}
+
+resource "aws_iam_user" "admin-user"{
+    name = "lucy"
+    tags = {
+        Description = "Technical Team Leader"
+    }
+}
+
+resource "aws_iam_user_policy_attachment" "lucy-admin-access"{
+    user = aws_iam_user.admin-user.name
+    policy_arn = aws_iam_policy.adminUser.arn
+}
+
+resource aws_iam_policy "adminUser" {
+    name = "AdminUsers"
+    policy = file("admin-policy.json")
+}
+
 resource "aws_instance" "dev-server" {
     instance_type = "t2.micro"
     ami         = "ami-02cff456777cd"
 }
+
 resource "aws_s3_bucket" "falshpoint"  {
     bucket = "project-flashpoint-paradox"
 }

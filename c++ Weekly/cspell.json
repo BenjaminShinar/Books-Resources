@@ -1,0 +1,9 @@
+{
+    "version": "0.2",
+    "ignorePaths": [],
+    "dictionaryDefinitions": [],
+    "dictionaries": ["cpp"],
+    "words": ["Wconversion"],
+    "ignoreWords": ["smallpt","IIFE"],
+    "import": []
+}
