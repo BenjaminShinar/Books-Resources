@@ -1276,10 +1276,10 @@ bias in the data, most respondents are from europe.
 
 <!-- <details> -->
 <summary>
-//TODO: add Summary
+Circle metaprogramming as an alternative to constexpr
 </summary>
 
-[Don't constexpr All the Things](https://youtu.be/NNU6cbG96M4)
+[Don't constexpr All the Things](https://youtu.be/NNU6cbG96M4),[circle-metaprogramming](https://www.circle-lang.org), [work-paper](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2043r0.pdf)
 
 Prior to c++11, we used template meta programming to skip all the boiler code. it was essentially a differnet language. in c++11 we got the **Boost.Hana** library to create code that was similar in syntax to normal code, but was still complex.
 
@@ -1574,14 +1574,96 @@ f'The Value is{value}.'
 
 ### The Circle Metaprogramming Model
 
-(25:45)
+in this example, we again see that there is compile time execution and a runtime execution. the variable i has different values between the two context.
+
+```cpp
+#include <iostream>
+int i =0;
+int f() {return ++i;}
+
+int main()
+{
+    std::cout<< (@meta ()) << std::endl; // outputs 1
+    std::cout<< (@meta ()) << std::endl; // outputs 2
+    std::cout<< i << std::endl; // outputs 0
+}
+```
+
+another example. in the compile time execution we only instansiate what is used.
+
+```cpp
+struct C{
+    c(){std::cout << "Hello World" <<std::endl;}
+} c; // instantiate a struct
+
+void f() {c;}
+@meta f();
+
+int main()
+{
+    f();
+}
+```
+
+three levels of circle metaprogramming.
+
+1. run code within the TU at compile time.
+2. run standard library code at compile time.
+3. run any code at compile time.
+
+**JSON at compile time** with circle meta programming. this is far easier than using constexpr.
+
+```cpp
+#include <rapidjson/document.h>
+
+@meta rapidjson::Document d;
+@meta d.Parse("{\"project\":\"circle\",\"stars\":10}");
+```
+
+**File injection at compile time**. we read the file in compile time, and store the values in a variable which is available for us to use in run time.
+
+```cpp
+#include <fstream>
+#include <iterator>
+#include <string>
+
+@meta std::ifstream f("file.txt");
+@meta std::string str(std::istreambuf_iterator<char>(f),std::istreambuf_iterator<char>());
+
+const char file_contents[]= @string(str);
+```
+
+`constexpr_report` and `constexpr_assert` are no longer required, we can use standards language features instead. circle metaprogramming allows us to use all the code we already wrote without changing it.
+
+> constexpr metaprogramming drawbacks:
+>
+> - requires learning a new language
+> - constexpr code is viral
+> - requires understanding core constant expression evaluation
+> - one function implemented in two dialects of the same language
+> - types with mixed compile- and run-time capabilites
+> - `std::vector` questions
+> - `std::is_constant_evaluated`
+
+circle metaprograming is like runtime programming, it's accessible, **so maybe we shouldn't constexpr all the things?**
+
+what the cpp committee said (acted out by kids):
+
+- cross compilation issues?
+- arbitrary code execution and security concerns
+- build systems
+- static analysis
+- non deterministic
+- PHP, Flash
+
+but all those concerns can be addressed.
+
+### Q&A
+
+- the scope of variables.
 
 </details>
 
 ##
 
 [Main](README.md)
-
-```
-
-```

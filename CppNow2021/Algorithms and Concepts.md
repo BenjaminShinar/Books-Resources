@@ -2863,6 +2863,265 @@ constexpr auto func_2 = safe_do_compose
 
 </details>
 
+## Better C++ Ranges - Arno Schödl
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Better C++ Ranges](https://youtu.be/P8VdPsLLcaE),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/04/Arno-Scho%CC%88dl-Better-C-Ranges.pdf)
+
+another ranges library implementation, this time by **think-cell**, with the _tc_ namespace.
+
+vector is probably the most used data struture, and until c++20, it wsa used with iterators.
+
+this example show how to remove duplicates from a vector using the erase-remove idiom. **actually, theres a possible bug here!**
+
+```cpp
+std::vector<T> vec= ...;
+std::sort(vec.begin(), vec.end());
+vec.erase(std::unique(vec.begin(), vec.end()),vec.end());
+```
+
+a simpler way would look like this: it still uses the end iterator, but it also knows how to get them from the object itself.
+
+```cpp
+std::vector<T> vec= ...;
+std::sort(vec);
+vec.erase(std::unique(vec),vec.end());
+```
+
+the bug is between the implementations of `std::sort` (uses the less than operator) and `std::unique` (uses the equality operator), this might cause a problem if our type is not using the same behavior for the two operators.
+
+a wrapper function:
+
+```cpp
+tc::sort_unique_inplace(vec);
+tc::sort_unique_inplace(vec, less); //use the less than operator as predicate
+```
+
+ranges can be containers, they own the elements, copying them is deep copying (O(n)) and they have deep constness, if the range is const, than so are it's elements.
+
+views are built on top of ranges, it references elements, doesn't copy elements and it's constness is indepent of the elements.
+
+```cpp
+template<typename It>
+struct subrange {
+    It m_itBegin;
+    It m_itEnd;
+    It begin() const
+    {
+        return m_itBegin;
+    }
+    It end() const
+    {
+        return m_itEnd;
+    }
+};
+```
+
+two different ways to get the same results:
+
+```cpp
+std::vector<int> v {1,2,4};
+auto it = ranges::find(v,4); //first element of value 4
+```
+
+but if we want to use a predicate.
+
+```cpp
+std::vector<int> v {1,2,4};
+struct A{
+    int id;
+    double data;
+};
+auto it = ranges::find_if(v,[](A const& a){return a.id==4;}); // first element of value 4 in id
+```
+
+we can use a transform adaptor from the ranges module. we use the piping operator _|_ which does the work lazily.
+
+```cpp
+std::vector<A> v {1,2,4};
+struct A{
+    int id;
+    double data;
+};
+auto element = ranges::find(
+    v| views::transform(std::mem_fn(&A::id)),
+    4
+); // first element of value 4 in id
+
+auto it = ranges::find(
+    v| views::transform(std::mem_fn(&A::id)),
+    4
+).base(); // iterator pointing to an element of type A
+```
+
+an example of implementing a Transform Adapater. do we really need to carry around the function in each iterator?
+
+```cpp
+template<typename Base, typename Func>
+struct transform_view {
+    struct iterator {
+        private:
+        Func m_func; // in every iterator, hmmm...
+        decltype(ranges::begin(std::declval<Base&>())) m_it;
+        public:
+        decltype(auto) operator*() const {
+            return m_func(*m_it);
+        }
+        decltype(auto) base() const {
+            return (m_it);
+        }
+        ///...
+    };
+}
+```
+
+another adaptor is the filter adaptor, this is also a lazy evaluator, it only acts when it's being iterated on.
+
+```cpp
+std::vector<A> v{/*... */};
+auto rng = v |views::filter([](A const& a){return a.id ==4;});
+```
+
+an implementation can look like this, which again carries the function in each function. the static cast to bool protects us from an overloaded version of the not operator.
+
+```cpp
+template<typename Base, typename Func>
+struct filter_view {
+    struct iterator {
+        private:
+        Func m_func; // functor and TWO iterators!
+        decltype( ranges::begin(std::declval<Base&>())) m_it;
+        decltype( ranges::begin(std::declval<Base&>())) m_itEnd;
+
+        public:
+        iterator& operator++() {
+            ++m_it;
+            while (m_it!=m_itEnd && !static_cast<bool>(m_func(*m_it)) )
+            {
+                ++m_it;
+            }
+            // why static_cast<bool> ?
+            return *this;
+        }
+    //...
+    };
+};
+```
+
+we can stack filter on top of one another
+
+```cpp
+views::filter(m_func3)(views::filter(m_func2)(views::filter(m_func1, ...)))
+```
+
+this might cause an expositional expolision, each iterator contains a function, and it might carry other iterators, which also contain their own functions...\
+so the more efficient way is to have the adaptor objects itself carry everything that is common for all iterators, which is usually the function and the end iterator. this is how c++20 ranges operate. and iterator cannot outlive their range (unless they are declared to be `std::ranges::borrowed_range`)
+
+this doesn't compile, the range is an R-value, and it might go out of scope. there is no actual problem, because we use `.base()`, but the compiler still won't allow it.
+
+```cpp
+auto it = ranges::find(
+    v | views::transform(std::mem_fn(&A::id)),4).base(); //doesn't compile
+```
+
+a fix would be to transform the value into an lvalue.
+
+```cpp
+auto it = ranges::find(
+    tc::as_lvalue(v | views::transform(std::mem_fn(&A::id)))
+    ,4).base(); //now it compiles
+```
+
+### Index Concept
+
+this is something that they (think cell) created, an index is like an iterator, but it keeps the iterator size small by always using the range object. and also a way to use indexers like iterator.
+
+```cpp
+template<typename Base, typename Func>
+struct index_range {
+    //...
+    using Index=...;
+    Index begin_index() const;
+    Index end_index() const;
+    void increment_index( Index& idx ) const;
+    void decrement_index( Index& idx ) const;
+    reference dereference( Index const& idx ) const;
+    //...
+};
+
+template<typename IndexRng>
+struct iterator_for_index {
+    IndexRng* m_rng
+    typename IndexRng::Index m_idx;
+    iterator& operator++() {
+        m_rng.increment_index(m_idx);
+        return *this;
+    }
+//...
+};
+```
+
+a filter view based on index. either iterate over everything or until a match.
+
+```cpp
+template<typename Base, typename Func>
+struct filter_view {
+    Func m_func;
+    Base& m_base;
+    using Index=typename Base::Index;
+    void increment_index( Index& idx ) const {
+        do {
+            m_base.increment_index(idx);
+        }
+        while (idx!=m_base.end_index() && !static_cast<bool>(m_func(m_base.dereference_index(idx))));
+    }
+};
+```
+
+views use references, and are shallow. it works fine for lvalue ranges, but not for rvalues. and we can't always overcome this.
+
+```cpp
+auto v = create_vector();
+auto rng = v | views::filter(pred1); //this works
+
+auto rng2 = create_vector | views::filter(pred1); //this doesn't work
+
+auto foo(){
+    auto vec = create_vector();
+    return std::make_tuple(vec, views::filter(pred)(vec)); // DANGELING REFERNCE!
+}
+```
+
+their range implementation tries to solve this.
+
+this also an issue with algorithm, if we don't find a match, we return the end iterator, and we have to check against it. the lecture uses a customization point. so we can choose the returning element as part of the template which we provide, so we can create a default, a nullable iterator, or fail the program when there is no match.
+
+generator ranges, traversing. currently the standard only supports external. top of stack and bottom of stack behavior for consumer and producer. it is theocratically possible to use co-routines to get both to the bottom of the stack, but it's a mess.
+
+(stackfull and stackless co-routines)
+
+internal iteration is often good enough, even if it's on the top of the stack. adaptors can also help with this.
+
+| Algorithm     | Internal Iteration           |
+| ------------- | ---------------------------- |
+| find          | no (single pass iterators)   |
+| binary search | no (random access iterators) |
+| for_each      | yes                          |
+| accumulate    | yes                          |
+| all_of        | yes                          |
+| any_of        | yes                          |
+| none_of       | yes                          |
+| tc::filter    | yes                          |
+| tc::transform | yes                          |
+
+(39:30)
+
+</details>
+
 ##
 
 [Main](README.md)

@@ -2,7 +2,7 @@
 
 Udemy course [AWS Certified Solutions Architect - Associate 2020](https://www.udemy.com/course/draft/362328/). by _Ryan Kroonenburg_
 
-## Introduction
+## Section 1 - Introduction
 
 <details>
 <summary>
@@ -52,7 +52,7 @@ Ryan says some are easier than others, but it depends on the person. the aws pla
 
 </details>
 
-## AWS - 10,000 Foot Overview
+## Section 2 - AWS - 10,000 Foot Overview
 
 <details>
 <summary>
@@ -126,113 +126,29 @@ use a personnel account, we need to provide credit information, even if we use a
 
 </details>
 
-## Identity Access Management & S3
+## Section 4 - EC2
 
-<!-- <details> -->
-<summary>
-//TODO: add Summary
-</summary>
+## Section 5 - Databases on AWS
 
-IAM - Identity Access Managemet
+## Section 6 - Advanced IAM
 
-### IAM 101
+## Section 7 - Route 53
 
-> IAM allows you to manage users and their level of access to AWS Console
+## Section 8 - VPCs
 
-users, groups, permissions, roles.
+## Section 9 - HA Architecture
 
-- Centeralized control of the AWS account
-- Shared Access to the account
-- Granular permissions
-- Identity Federation (Active Directory, Facebook, linkedin, etc)
-- Multifactor authentication
-- Temporary access for users/devices when necessary
-- Password rotation policy
-- Integrates with many AWS services
-- Support PCI DSS Compliance (a compliance framework)
+## Section 10 - Applications
 
-key terms:
+## Section 11 - Security
 
-- Users - end users
-- Groups - collection of users, each user inherits groups permissions
-- Policies - json documents that describe permissions
-- Roles - allowing one aws service to work with other resource.
-
-### IAM Lab
-
-### Create A Billing Alarm
-
-### S3 101
-
-### Let's Create An S3 Bucket
-
-### S3 Pricing Tiers [SAA-C02]
-
-### S3 Security And Encryption
-
-### S3 Version Control
-
-### S3 Lifecycle Management and Glacier
-
-### S3 Lock Policies & Glacier Vault Lock [SAA-C02]
-
-### S3 Performance [SAA-C02]
-
-### S3 Select & Glacier Select [SAA-C02]
-
-### AWS Organizations [SAA-C02]
-
-### Sharing S3 Buckets Between Accounts [SAA-C02]
-
-### Cross Region Replication
-
-### Transfer Acceleration
-
-### DataSync Overview [SAA-C02]
-
-### CloudFront Overview
-
-### CloudFront Lab
-
-### CloudFront Signed URL's and Cookies [SAA-C02]
-
-### Snowball Overview
-
-### Snowball Lab
-
-### Storage Gateway
-
-### Athena vs Macie [SAA-C02]
-
-### Identity Access Management & S3 Summary
-
-### 2: Identity Access Management & S3 Quiz
-
-</details>
-
-## EC2
-
-## Databases on AWS
-
-## Advanced IAM
-
-## Route 53
-
-## VPCs
-
-## HA Architecture
-
-## Applications
-
-## Security
-
-## Serverless
+## Section 12 - Serverless
 
 ## Takeaways
 
 <!-- <details> -->
 <summary>
-//TODO: add Summary
+Notes to Self
 </summary>
 
 key concepts:
@@ -243,25 +159,38 @@ key concepts:
 - Serverless
 - Route53 - amazon's DNS
 
+humans who need to interact with the aws services are **users**, they can be part of a **user group**. services that interact with other services have **roles**. Roles, users, and user groups have **policies** attached to them.
+
 Aws services:
 
-- EC2
+- IAM
+- Cloud Watch: for billing alarms
+- SNS: send emails
+- S3: Object Storage
+- EC2:
 - SQS
 
-| Shorthand | Long name                  | Usage                       | notes       |
-| --------- | -------------------------- | --------------------------- | ----------- |
-| AWS       | Amazon Web Service         | the amazon cloud eco-system |
-| IAM       | Identity Access Management |
-| S3        |                            |                             | storage     |
+| Shorthand | Long name                   | Usage                          | notes                     |
+| --------- | --------------------------- | ------------------------------ | ------------------------- |
+| AWS       | Amazon Web Service          | the amazon cloud eco-system    |
+| IAM       | Identity Access Management  | users, roles, policies, access | always global             |
+| S3        | Simple Storage Service      | storage                        |
 | EC2       |
-| ECS       | Elastic Container Services |
-| VPC       | Virtual Private Cloud      |
-| KMS       | Key Management Service     |
+| ECS       | Elastic Container Services  |
+| VPC       | Virtual Private Cloud       |
+| KMS       | Key Management Service      |
 | SNS       |
 | SWF       |
-| EFS       | Elastic File System        |
+| EFS       | Elastic File System         |
 | SQS       |
-| SNS       |                            | Push notification services  |
-| CDN       | Content Delivery Network   |                             | Cloud Front |
+| KMS       | Key Management Service      |                                | SSE-KMS                   |
+| SNS       | Simple Notification Service | Push notification services     | used in the billing alarm |
+| CDN       | Content Delivery Network    |                                | Cloud Front               |
+| ARN       | Amazon Resource Name        | amazon identifier              |
+| MFA       | Multi Factor Authentication |
+| IA        | Infrequent Access           |                                | S3 IA tiers               |
+| SLA       | Service Level Agreement     |
+| SSE       | Server Side Encryption      |                                | SSE-S3                    |
+| WORM      | Write Once,Read Many        |
 
 </details>
