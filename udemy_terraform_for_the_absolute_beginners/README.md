@@ -1244,7 +1244,10 @@ creating an account, payment information (even for the free tier). multi factor 
 
 ### Introduction to IAM
 
-**IAM - Identity Access management**
+<details>
+<summary>
+IAM - Identity Access management
+</summary>
 
 the root account can do anything, so it's not adviced to use it. the best practice is to create other users with the appropriate premissions.
 
@@ -1303,7 +1306,7 @@ here is another policy, which allows to create and delete tags from any ec2 reso
 }
 ```
 
-### Demo IAM
+#### Demo IAM
 
 introduction the IAM with the console: groups, users, roles, policies.
 
@@ -1326,7 +1329,7 @@ the awsManagedPolicies are default, sensible policies that are available for use
 
 lets create a role, we choose the trusted service, and give it a policy. 
 
-### Programmatic Access
+#### Programmatic Access
 
 interacting with the aws services using the aws CLI (command line interface)
 
@@ -1380,7 +1383,7 @@ aws --endpoint http://aws:4566 iam list-attached-group-policies --group-name pro
 aws --endpoint http://aws:4566 iam attach-group-policy --group-name project-sapphire-developers --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
 ```
 
-### AWS IAM with Terraform
+#### AWS IAM with Terraform
 
 the third way to work with IAM is through [terraform aws provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 
@@ -1415,7 +1418,7 @@ export AWS_ACCESS_KEY_ID=<>
 export AWS_SECRET_ACCESS_KEY=<>
 ```
 
-### IAM Policies with Terraform
+#### IAM Policies with Terraform
 
 now we want to give our user permissions.
 
@@ -1517,26 +1520,122 @@ resource "aws_iam_user" "users" {
 
 }
 ```
+</details>
+
 ### Introduction to AWS S3
+<details>
+<summary>
+S3 - Simple Storage Service
+</summary>
+
+Object based (flat file), with no hard limits. not suitable for operating systems or databases. data is stored inside bucket. a bucket is like a directory, but there can also be nested folders.
+
+the management console provides a simple interface to create buckets, the name of the bucket must be unique (across the world), must be DNS compliant (lowercase, doesn't end with dash). the bucket will get a unique address and is (theoretically) globally accessable.
+
+each object in S3 has data and metadata, the data includes the key (file name) and the value (actual data), the metadata contains information about the file. like other aws services, access to buckets is controlled through permissions, and also *access control lists*. permissions can be defined in bucket level or even at a file level.
+
+this is an example to a bucket policy.
+```json
+{
+    "Version":"2012-10-17",
+    "Statement": [
+        {
+            "Action":[
+                "s3:GetObject"
+            ],
+            "Effect":"Allow",
+            "Resource": "arn:aws:s3:::all-pets/*",
+            "Principal":{
+                "AWS":[
+                    "arn:aws:iam:::123456123457:user/Lucy"
+                ]
+            }
+        }
+    ]
+}
+```
+
+we can even write a bucket policy to grant access to users from other aws accounts.
+
+#### S3 with Terraform
+
+if we don't provide a name, it will be randomly generated.
+```hcl
+resource "aws_s3_bucket" "finance"{
+    bucket = "finance-21092020"
+    tags = {
+        Description= "Finance and Payroll"
+    }
+}
+```
 
 
-### S3 with Terraform
+now we wish to add a file to that bucket. we must provide the bucket onto which we want to upload the file, the key (the path in the bucket), and the file itself.
 
+in this example we use the reference syntax.
 
-### Lab: S3
+```hcl
+resource "aws_s3_bucket_object" "finance-2020"{
+    content = "/root/finance/finance-2020.doc"
+    key = "finance-2020.doc"
+    bucket = aws_s3_bucket_finance.id
+}
+```
 
+now we assume there is an existing users group, which wasn't created by Terraform, but we wish to give those users access to the bucket. we will use a data block. afterwards, we will also create a bucket policy resource.
+
+```hcl
+data "aws_iam_group" "finance-data"{
+    group_name = "finance-analysts"
+
+}
+
+resource "aws_s3_bucket_policy" "finance-policy"{
+    bucket = aws_s3_bucket_finance.id
+    policy= << EOF
+    {
+        "Version":"2012-10-17",
+        "Statement": [
+            {
+                "Action":"*"
+                "Effect":"Allow",
+                "Resource": "arn:aws:s3:::${aws_s3_bucket.finance.id}/*",
+                "Principal":{
+                    "AWS":[
+                        "${data.aws_iam_group.finance-data.arn}"
+                    ]
+                }
+            }
+        ]
+    } 
+    EOF
+}
+```
+
+#### Lab: S3
+
+[aws_s3_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket)
+
+playing with buckets, getting an error about incorrect DNS format, trying to use *acl = "public-read-write"*  and failing.
+
+</details>
 
 ### Introduction to DynamoDB
+<details>
+<summary>
+
+</summary>
 
 
-### Demo Dynamodb
+
+#### Demo Dynamodb
 
 
-### DynamoDB with Terraform
+#### DynamoDB with Terraform
 
 
-### Lab: DynamoDB
-
+#### Lab: DynamoDB
+</details>
 
 </details>
 
@@ -1559,7 +1658,7 @@ resource "aws_iam_user" "users" {
 Things to remember
 </summary>
 
-AWS human users have **Policies**, aws services have **Roles**. **ARN** - Amazon Resource Name.
+AWS human users have **Users**, aws services have **Roles**, and they both use **Policies**. **ARN** - Amazon Resource Name.
 
 `file("file-path")` - read file function.
 
@@ -1696,8 +1795,21 @@ resource "aws_instance" "dev-server" {
     ami         = "ami-02cff456777cd"
 }
 
-resource "aws_s3_bucket" "falshpoint"  {
-    bucket = "project-flashpoint-paradox"
+resource "aws_s3_bucket" "finance"{
+    bucket = "finance-21092020"
+    tags = {
+        Description= "Finance and Payroll"
+    }
+}
+
+resource "aws_s3_bucket_object" "finance-2020"{
+    content = "/root/finance/finance-2020.doc"
+    key = "finance-2020.doc"
+    bucket = aws_s3_bucket_finance.id
+}
+resource "aws_s3_bucket_policy" "finance-policy"{
+    bucket = aws_s3_bucket_finance.id
+    policy = file("finance-policy.json")
 }
 ```
 
@@ -1715,6 +1827,11 @@ data "aws_ebs_volume" "gp2_volume" {
 
 data "aws_s3_bucket" "selected" {
   bucket_name = "bucket.test.com"
+}
+
+data "aws_iam_group" "finance-data"{
+    group_name = "finance-analysts"
+
 }
 ```
 
