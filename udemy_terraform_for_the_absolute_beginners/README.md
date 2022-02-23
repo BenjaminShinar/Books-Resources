@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore HashiCorp KodeKloud FIFA tfvars tfstate falshpoint Tsvg Flexit toset aone
+// cSpell:ignore HashiCorp KodeKloud FIFA tfvars tfstate falshpoint Tsvg Flexit toset aone xlarge
  -->
 
 # Terraform For The Absolute Beginners
@@ -1730,13 +1730,218 @@ resource "aws_dynamodb_table_item" "upload" {
 
 ## Remote State
 
+<details>
+<summary>
+Storing the State file in a remote location.
+</summary>
+
+### What is Remote State and State Locking?
+we already saw the TF uses the state file to map resources. this file is created when we `terraform apply` for the first time.
+> - Mapping configuration to real world
+> - Tracking metadata
+> - Performance
+> - Colabaration
+
+we also discussed the we shouldn't store this file in a version control tool as it contains passwords and other sensitive information.
+
+imagine that we have a terraform state file that we manually store on github, each time we changed the configuration, we upload the file again. this creates merge conflicts, especially if there are many users.\
+when using terraform locally, we can't change the state file once ome operation started. this is called **state locking**. we can see tis in action by running `terraform apply` from two terminals.
+
+to overcome these problems, we can use a **remote state backend**. now the state file is moved to a shared storage. this will also enable state locking for the state file, so there won't be conflicts and always maintains the updated configuration without having to manually upload it.
+
+
+### Remote Backends with S3
+
+using S3 bucket and a dynamo db table as a remote State backend.
+
+Object | Value
+---|---
+Bucket | kodekloud-terraform-state-bucket01
+Key| finance/terraform.tfstate
+Region| us-west-1
+DynamoDB Table | State-locking
+
+
+```hcl
+resource "local_file" "pet"{
+    filename = "/root/pets.txt"
+    content = "We love pets!"
+}
+```
+
+if we run `terraform apply`, then a local state file will be created. if we want you use a remote state file, we need to configure the terraform block. the dynamodb_table is used to control state locking.
+
+this block should be in the **terraform.tf** file.
+```hcl
+terraform{
+    backend "s3"{
+        bucket = "kodekloud-terraform-state-bucket01"
+        key = "finance/terraform.tfstate"
+        region = "us-west-1"
+        dynamodb_table = "state-locking"
+    }
+}
+```
+
+before being able to use the remote backend, we should run the `terrafrom init` command again. we can then copy our local file into the S3 bucket. we should now delete the local file `rm -rf terraform.tfstate`.
+
+#### Lab: Remote State
+
+```sh
+terraform apply
+terraform show
+```
+
+### Terraform State Commands
+
+the `terraform state` commands. the state is stored in a json format, which we should directly edit. instead, we can use some cli commands:
+
+`terraform state <sub commands> [options] [args]`
+
+sub comands:
+- `terrform state list` - list all the resources. we can pass a resource name to get a subset of results.
+- `terraform state show` - prints the attributes of an resource
+- `terraform state mv [options] [SOURCE] [DESTINATION]` - either rename a resource or move it to another state file.
+    ```sh
+    terraform state mv aws_dynamodb_table.state-locking aws_dynamodb_table.state-locking-db
+    ```
+    (we should then rename the resource in the configuration file)
+- `terraform state pull [options] [SOURCE] [DESTINATION]` - get the remote state
+    ```sh
+    terraform state pull | jq '.resource[] | select (.name =="state-locing-dbb").instances[].attributes.hash_key'`
+    ```
+- `terraform state rm <ADDRESS>` - remove an address and not longer manage it, it isn't destroyed, simple stops being managed.
+
+#### Lab: Terraform State Commands
+
+```sh
+terraform state list
+terraform state show local_file.classics
+terraform state show local_file.top10
+terrafrom state rm local_file.hall_of_fame
+terraform state mv random_pet.super_pet_1 random_pet.ultra_pet
+```
+
+</details>
+
 ## Terraform Provisioners
+
+<!-- <details> -->
+<summary>
+
+</summary>
+
+### Introduction to AWS EC2 (optional)
+
+EC2 (Elastic Compute Cloud) instances in AWS, virtual machines in the cloud, based on a OS (unix or windows).
+
+> AMI: Amazon Machine Image - templates for virtual machine configurations.
+
+the templates contain the the OS and additional software, each AMI has an id, which is different per region. there also different configurations for machine cpu and hardware, which are identified as *Instance Types*.
+
+general purpose instance type, compute optimized, memory optimized.
+
+the general purpose are divided into categories:
+
+here are some configuration for the T2 type, but there are also T3, M5, etc...
+InstanceType | vCPU | Memory (GB)
+---|---|---
+t2.nano|1|0.5
+t2.micro|1|1
+t2.small|1|2
+t2.medium|2|4
+t2.large|2|8
+t2.xlarge|4|16
+t2.x2large|8|32
+
+> EBS - Elastic Block Storage - the storage attached to the EC2
+
+Name | Type | Description
+---|---|---
+io1 | SSD | for business-critical Apps 
+io2 | SSD | for latency sensitive transactional workloads
+gp2 | SSD | general purpose
+st1 |HDD | low cost HDD frequently accessed, throughput-intensive workloads
+sc1 |HDD | lowest cost HDD  volume designed for less frequently accessed workloads
+
+we can also pass User Data to the Ec2, so that commands will be run as soon as the machine starts.
+
+```sh
+#!/bin/bash
+sudo apt update
+sudo apt install nginx
+systemctl enable nginx
+systemctl start nginx
+```
+
+for windows machines we can pass batch files or power shell. access to EC2 machine is done with a SSH key-pair.
+
+### Demo: Deploying an EC2 Instance (optional)
+
+in the management console, select <kbd>EC2</kbd> from the services (under the **compute** group).
+- <kbd>Launch Instance</kbd>
+- choose an *ami* and an *instance type*, such as ubuntu and t2.micro.
+- configure the instance, using the default vpc for the network, using the default value of the subnet.
+- in the *user data* block (advanced), we pass in the shell script
+    ```sh
+    #!/bin/bash
+    sudo apt update
+    sudo apt install nginx
+    systemctl enable nginx
+    systemctl start nginx
+    ```
+- in the storage section, we can use the default value.
+- we can add tags to the instances
+- configure security group, and allow it SSH access (inbound rule). when the source is "0.0.0.0/0", it means that all access is allowed.
+- we also create a key-pair and download them.
+- <kbd>View instaces</kbd> to see the details of the virtual machine.
+
+to access it from the terminal, we copy the public ip address (3.94.9.249). we might run into a problem and have to change the private key file permissions.
+
+```sh
+chmod 400 ~/Downloads/web.pem
+ssh -i ~/Downloads/web.pem ubuntu@3.97.9.249
+```
+if we did it correctly, our shell is now configured to the machine
+
+```sh
+systemctl status nginx   
+```
+
+
+### AWS EC2 with Terraform
+### Terraform Provisioners
+### Provisioner Behavior
+#### Lab: AWS EC2 and Provisioners
+### Considerations with Provisioners
+
+
+</details>
+
 
 ## Terraform Import, Tainting Resources and Debugging
 
+<!-- <details> -->
+<summary>
+
+</summary>
+</details>
+
 ## Terraform Modules
+<!-- <details> -->
+<summary>
+
+</summary>
+</details>
+
 
 ## Terraform Functions and Conditional Expressions
+
+<!-- <details> -->
+<summary>
+
+</summary>
+</details>
 
 
 ## Takeaways
@@ -1777,7 +1982,8 @@ AWS human users have **Users**, aws services have **Roles**, and they both use *
 | outputs.tf        | Outputs from resources                                   |
 | provider.tf       | Providers defintions                                     |
 | variables.tfvars  | environment variables                                    |
-| terraform.tfstate | state, single source of truth                            |
+| terraform.tfstate | state, single source of truth          |
+terraform.tf                  | terraform block, for plugin configuration and remote state
 
 
 ### Block Types
@@ -1799,6 +2005,26 @@ AWS human users have **Users**, aws services have **Roles**, and they both use *
 Samples of Resource blocks
 </summary>
 
+### Terraform
+
+```hcl
+terraform {
+  backend "s3" {
+    key = "terraform.tfstate"
+    region = "us-east-1"
+    bucket = "remote-state"
+    endpoint = "http://172.16.238.105:9000"
+    force_path_style = true
+
+
+    skip_credentials_validation = true
+
+    skip_metadata_api_check = true
+    skip_region_validation = true
+  }
+}
+
+```
 
 ### Local
 
