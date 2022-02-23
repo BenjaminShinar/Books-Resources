@@ -1220,7 +1220,7 @@ terraform {
 
 ## Terraform with AWS
 
-<!-- <details> -->
+<details>
 <summary>
 Focusing on AWS Cloud Vendor.
 </summary>
@@ -1623,18 +1623,106 @@ playing with buckets, getting an error about incorrect DNS format, trying to use
 ### Introduction to DynamoDB
 <details>
 <summary>
-
+NoSQL database.
 </summary>
 
+highly scalable, fully managed, no server for the the user to manage. low latency data access. data is replicated across region, so it's highly available.
 
+DynamoDB is a key-value and document database, unlike a relational database. each entry in the collection is an item, Dynamo db uses a primary key to uniquely identify elements. we aren't required to fill in attributes which aren't the primary key, they can be duplicated, empty or null.
 
 #### Demo Dynamodb
 
+in the management console. we go to the dynamoDB service and create a table, we give it a name, and choose the primary key and it's type. we can manually add item by clicking <kbd>Create item</kbd>. we can now start filling in values. we can search for items using the console and filters.
 
 #### DynamoDB with Terraform
 
+lets define a dynamoDB resource block. we provide the table name and the hash_key to definf the primary key, we must define an *attribute* for the primary key, but we can also provide attributes for other fields.
+
+```hcl
+resource "aws_dynamodb_table" "cars"{
+    name = "cars"
+    hash_key = "VIN"
+    billing_mode = "PAY_PER_REQUEST"
+    attribute {
+        name = "VIN"
+        type ="S"
+    }
+}
+```
+
+to add items, we use another resource type, and the *heradoc* syntax, but we need to define each element as a json with the type 
+```hcl
+resource "aws_dynamodb_table_item" "car-items"{
+    table_name = aws_dynamodb_table.cars.name
+    hash_key = aws_dynamodb_table.cars.hash_key
+    item = <<EOF
+    {
+        "Manufacturer": {"S": "Toyota"},
+        "Make": {"S": "Corrolla"},
+        "Year": {"N": 2004},
+        "VIN": {"S": "4Y1SL65848Z411439"}
+    }
+    EOF
+}
+```
+
+this is just an example of adding an item to the table, this isn't how it should be done in large scale database.
 
 #### Lab: DynamoDB
+resource "aws_dynamodb_table" "project_sapphire_inventory" {
+  name           = "inventory"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "AssetID"
+
+  attribute {
+    name = "AssetID"
+    type = "N"
+  }
+  attribute {
+    name = "AssetName"
+    type = "S"
+  }
+  attribute {
+    name = "age"
+    type = "N"
+  }
+  attribute {
+    name = "Hardware"
+    type = "B"
+  }
+  global_secondary_index {
+    name             = "AssetName"
+    hash_key         = "AssetName"
+    projection_type    = "ALL"
+    
+  }
+  global_secondary_index {
+    name             = "age"
+    hash_key         = "age"
+    projection_type    = "ALL"
+    
+  }
+  global_secondary_index {
+    name             = "Hardware"
+    hash_key         = "Hardware"
+    projection_type    = "ALL"
+    
+  }
+}
+
+resource "aws_dynamodb_table_item" "upload" {
+  table_name = aws_dynamodb_table.project_sapphire_inventory.name
+  hash_key = aws_dynamodb_table.project_sapphire_inventory.hash_key
+  item = <<EOF
+  {
+  "AssetID": {"N": "1"},
+  "AssetName": {"S": "printer"},
+  "age": {"N": "5"},
+  "Hardware": {"B": "true" }
+  }
+
+  EOF
+}
 </details>
 
 </details>
@@ -1696,7 +1784,7 @@ AWS human users have **Users**, aws services have **Roles**, and they both use *
 
 | block type | purpose                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------ |
-| resource   |
+| resource   | provision a resource
 | variable   | define variables to use in `var.$`                                                                     |
 | output     | displaying on screen, or to pass it forwad to other shell commands. `terraform output <variable_name>` |
 | data       | using resources that weren't created by Terraform.                                                     |
