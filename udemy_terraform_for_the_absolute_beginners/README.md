@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore HashiCorp KodeKloud FIFA tfvars tfstate falshpoint Tsvg Flexit toset aone xlarge
+// cSpell:ignore HashiCorp KodeKloud FIFA tfvars tfstate falshpoint Tsvg Flexit toset aone xlarge azurrerm untaint
  -->
 
 # Terraform For The Absolute Beginners
@@ -1826,9 +1826,9 @@ terraform state mv random_pet.super_pet_1 random_pet.ultra_pet
 
 ## Terraform Provisioners
 
-<!-- <details> -->
+<details>
 <summary>
-
+Understanding EC2 (Elastic Compute Cloud) instances and running commands on them.
 </summary>
 
 ### Introduction to AWS EC2 (optional)
@@ -1910,11 +1910,276 @@ systemctl status nginx
 
 
 ### AWS EC2 with Terraform
+
+at "main.tf" file,
+the instance resource supports:
+- ami (required)
+- instance_type (required)
+- tags (optional)
+- user_date (optional)
+- key_name (optional) 
+- vpc_security_groups_ids (optional)
+
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43bdfa892279"
+    instance_type= "t2.micro"
+    tags = {
+        Name = "webserver"
+        Description = "An Nginx Web Server on Ubuntu"
+    }
+    user_date = <<EOF
+        #!/bin/bash
+        sudo apt update
+        sudo apt install nginx -y
+        systemctl enable nginx
+        systemctl start nginx
+        EOF
+}
+```
+
+at the "provider.tf" file
+```hcl
+provider "aws"{
+    region = "ws-west-1"
+}
+```
+
+but now we need the ip of the machine, and keys to access it via ssh. we use another resource for that.
+
+```hcl
+resource "aws_key_pair" "web"{
+    public_key=file("/root/.ssh/web/pub")
+}
+```
+and now we update the instance configuration to tell it to make use of the the key resource.
+
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43bdfa892279"
+    instance_type= "t2.micro"
+    # tags, shell
+
+    key_name = aws_key_pair.web.id
+}
+```
+the next issue is the networking, in the demo, we used the default vpc and used a new security group with inbound access rules.
+
+```hcl
+resource "aws_security_group" "ssh-access"{
+    name = "ssh-access"
+    description = "Allow SSH access from the internet"
+    ingress = {
+        from_port = 22
+        to_port = 22
+        protocol ="tcp"
+        cider_blocks = ["0.0.0.0/0"]
+    }
+}
+```
+and we connect our instance to this security group.
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43bdfa892279"
+    instance_type= "t2.micro"
+    # tags, shell
+
+    key_name = aws_key_pair.web.id
+    vpc_security_groups_ids = [aws_security_group.ssh-access.id]
+}
+```
+
+lets also have an output variable to display the public ip address
+
+```hcl
+output public-ip {
+    value = aws_instance.webserver.public_ip
+}
+```
+
+and to test everything
+```sh
+terraform apply
+terraform output public-ip #get ip
+ssh -i /root/.ssh/web ubuntu@3.96.203.171 #the ip
+systemctl status nginx #from inside the instance
+```
+
 ### Terraform Provisioners
+
+- remote-exec
+- local-exec
+
+Provisioners allows us to run scripts or commands on resources. we can specify the script in a provisioner block.
+
+
+this requires a network connectivity
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43bdfa892279"
+    instance_type= "t2.micro"
+    # tags
+
+    key_name = aws_key_pair.web.id
+    vpc_security_groups_ids = [aws_security_group.ssh-access.id]
+
+    provisioner "remote-exec" {
+        inline = ["sudo apt update",
+        "sudo apt install nginx -y",
+        "systemctl enable nginx",
+        "systemctl start nginx"
+        ]
+    }
+    provisioner "local-exec" {
+        command = "echo {aws_instance.webserver.public_ip} >> /tmp/ips.txt"
+    }
+    connection {
+        type = "ssh"
+        host = self.public_ip
+        user = "ubuntu"
+        private_key = file ("/root/.ssh/web")
+    }
+}
+```
+the provisioners are run once the resource is created. we can also specify provisioners to run when the resource is destroyed by specifing the *when* argument.
+
+```hcl
+resource "aws_instance" "webserver"{
+
+    # ...
+
+provisioner "local-exec" {
+        command = "echo {aws_instance.webserver.public_ip} Created! > /tmp/ips.txt"
+    }}
+    provisioner "local-exec" {
+        when = destroy
+        command = "echo {aws_instance.webserver.public_ip} Destroyed! > /tmp/ips.txt"
+    }
+}
+```
+
+if the provisioner command fails, then the `terraform apply` command fails. but we can control this behavior with the *on_failure* argument in the provisioner block.
+```hcl
+provisioner "local-exec" {
+    on_failure = continue
+    command = "echo {aws_instance.webserver.public_ip} Created! > /temp/ips.txt"
+    }}
+```
+the best practice is to avoid using provisioners if possible, and to use the options from the provider instead
+
+Provider | Resource | Option
+---|---|---
+AWS | aws_instance | user_data
+Azure | azurrerm_virtual_machine | custom_data
+GCP | google_compute_instance | meta_data
+Vmware vSphere | vsphere_virtual_machine | user_data.txt
+
 ### Provisioner Behavior
+
+as before the default behavior of provisioners is to run when the resource is created and to fail the apply command if there was as problem.
+
+```hcl
+provisioner "local-exec" {
+    when = destroy
+    on_failure = continue
+    command = "echo Instance ${aws_instance.webserver.public_ip} Destroyed! > /tmp/instance_state.txt"
+}
+```
+
+if we provisioner command fails, then the resource is considered to be **tainted**.
+
 #### Lab: AWS EC2 and Provisioners
+
+[aws_key_pair](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/key_pair), [aws_eip](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip)
+
+creating an instance
+```hcl
+resource "aws_instance" "cerberus" {
+  ami = var.ami
+  instance_type = var.instance_type
+}
+variable "region" {
+    default = "eu-west-2"
+    type = string
+}
+variable "instance_type" {
+    default = "m5.large"
+    type = string
+}
+variable "ami" {
+  default = "ami-06178cf087598769c"
+}
+```
+
+```sh
+terraform init
+terraform validate
+terraform plan
+terraform apply
+terraform show
+```
+creating a key_pair
+```hcl
+resource "aws_key_pair" "cerberus-key" {
+    key_name = "cerberus"
+    public_key = file("/root/terraform-projects/project-cerberus/.ssh/cerberus.pub")
+}
+```
+using the key_pair on the instance
+```hcl
+resource "aws_instance" "cerberus" {
+  ami = var.ami
+  instance_type = var.instance_type
+  key_name = aws_key_pair.cerberus-key.id
+}
+```
+adding the scripts
+```hcl
+resource "aws_instance" "cerberus" {
+  ami = var.ami
+  instance_type = var.instance_type
+  key_name = aws_key_pair.cerberus-key.id
+  user_data = file("install-nginx.sh")
+}
+```
+
+`terraform state show aws_instance.cerberus`
+
+elastic ip resource for a consistent ip address
+```hcl
+resource "aws_eip" "eip" {
+    vpc = true
+    instance = aws_instance.cerberus.id
+    provisioner "local-exec" {
+        command = "echo ${self.public_dns} > /root/cerberus_public_dns.txt"
+    }
+}
+```
+`terraform state show aws_eip.eip`
+
 ### Considerations with Provisioners
 
+Provisioners aren't best practice for TF, they are powerful tools, but carry some issues.
+
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43b6fa892279"
+    instance_type = "t2.micro"
+    tags = {
+        Name = "webserver"
+        Description = "An NGINX WebServer on Ubuntu"
+    }
+    provisioner "remote-exec" {
+        inline = ["echo $(hostname -i) >> tmp/ips.txt"]
+    }
+}
+```
+
+**No Provisioner Information in Plan**: we can run anything on the resource, so we don't have any way to parse it in the `terraform plan` stage.
+
+**Network Connectivity and Authentication**: some provisioners require a connection block, which isn't alway possible. it's better to avoid provisioners which are native to the resource, like *user_date*
+
+it's better to keep the provisioners work to the minimum, it's better to use an image (ami) which has what we want already installed. we can create custom ami with tools like *Packer*
 
 </details>
 
@@ -1925,6 +2190,67 @@ systemctl status nginx
 <summary>
 
 </summary>
+
+### Terraform Taint
+
+sometimes a resource creation can fail.
+
+here, we try to write to an invalid path.
+```hcl
+resource "aws_instance" "webserver-3"{
+    ami = "ami-0edab43b6fa892279"
+    instance_type = "t2.micro"
+    key_name = "ws"
+
+    provisioner "local-exec" {
+        command = "echo ${aws_instance.webserver-3.public_ip} > /temp/pub_ip.txt"
+    }
+}
+```
+`terraform apply`
+
+now the resource is marked as tainted, and when we run `terraform plan`, we will see the resource marked as tainted. and at the next time we run `terraform apply`, it will be re-created.
+
+if, for some reason, our resource was changed manually (and not by terraform), we need to recreate the resource. we could remove and re-apply the configuration block to force the creation, but it's easier to mark the resource as tainted, and then it'll happen in the next `terraform apply` run.
+
+`terraform taint aws_instance.webserver`
+
+if we want the resource to remain as it is, we can remove the this mark.
+
+`terraform untaint aws_instance.webserver`
+
+
+### Debugging
+
+sometimes, looking at the output from the apply command isn't enough to understand the problem. in those cases, we might wish to increase the verbosity of the logs, this is done by changing the log_level.
+
+`export TF_LOG=TRACE`
+
+- INFO
+- WARNING
+- ERROR
+- DEBUG
+- TRACE - the most verbose
+
+now when we run commands, we will see much more logs text, we can also store them in a file (if we want to send a bug report)
+
+
+`export TF_LOG_PATH=/tmp/terraform.log`
+
+to disable logging, we can unset the environment variable.
+
+`unset TF_LOG_PATH`
+
+#### Lab: Taint and Debugging
+
+```sh
+export TF_LOG=ERROR
+export TF_LOG_PATH=/tmp/ProjectA.log
+```
+### Terraform Import
+#### Lab: Terraform Import
+
+
 </details>
 
 ## Terraform Modules
@@ -1972,6 +2298,8 @@ AWS human users have **Users**, aws services have **Roles**, and they both use *
   - `terraform providers mirror <path>`
 - `terraform refresh`
 - `terraform graph`
+- `terraform taint`
+- `terraform untaint`
 
 ### Common File Structure
 
@@ -1995,6 +2323,13 @@ terraform.tf                  | terraform block, for plugin configuration and re
 | output     | displaying on screen, or to pass it forwad to other shell commands. `terraform output <variable_name>` |
 | data       | using resources that weren't created by Terraform.                                                     |
 | terraform  | controling versions and provider source                                                                |
+### Environment variables
+
+variable | usage | possible values
+---|---|---
+TF_VAR_\<variable name> | provide variable name | any
+TF_LOG_PATH | where to store logs | location of file
+TF_LOG | log verbosity | INFO, ERROR, WARNING, DEBUG, TRACE 
 
 </details>
 
@@ -2125,6 +2460,18 @@ resource "aws_s3_bucket_policy" "finance-policy"{
     bucket = aws_s3_bucket_finance.id
     policy = file("finance-policy.json")
 }
+
+resource "aws_security_group" "ssh-access"{
+    name = "ssh-access"
+    description = "Allow SSH access from the internet"
+    ingress = {
+        from_port = 22
+        to_port = 22
+        protocol ="tcp"
+        cider_blocks = ["0.0.0.0/0"]
+    }
+}
+
 ```
 
 data sources:
