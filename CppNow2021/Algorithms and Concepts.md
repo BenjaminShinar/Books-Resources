@@ -2865,12 +2865,12 @@ constexpr auto func_2 = safe_do_compose
 
 ## Better C++ Ranges - Arno Schödl
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Trying for more efficient ranges.
 </summary>
 
-[Better C++ Ranges](https://youtu.be/P8VdPsLLcaE),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/04/Arno-Scho%CC%88dl-Better-C-Ranges.pdf)
+[Better C++ Ranges](https://youtu.be/P8VdPsLLcaE),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/04/Arno-Scho%CC%88dl-Better-C-Ranges.pdf), [ranges on github](https://github.com/think-cell/range)
 
 another ranges library implementation, this time by **think-cell**, with the _tc_ namespace.
 
@@ -3118,7 +3118,343 @@ internal iteration is often good enough, even if it's on the top of the stack. a
 | tc::filter    | yes                          |
 | tc::transform | yes                          |
 
-(39:30)
+using an enum in `any_of` implementation.
+
+```cpp
+template <typename Rng1, typename Rng2>
+struct concat_range{
+    private:
+        using Index1= typename_range_index<rng1>::type;
+        using Index2= typename_range_index<rng2>::type;
+
+        Rng1& m_rng1;
+        Rng2& m_rng2;
+        using index::std::variant<Index1,Index2>;
+    public:
+    //..
+
+```
+
+index iterators branches out for each increment in the implementation of concat (merging two ranges)
+
+```cpp
+void increment_index(index& idx){
+    std::visit(tc::make_overload(
+        [&](Index1& idx1){
+            m_rng1.increment_index(idx1);
+            if (m_rng1.at_end_index(idx1)) {
+                idx = m_rng2.begin_index();
+            }
+        }, [&](Index2& idx2)){
+            m_rng2.increment_index(idx2);
+        }
+    ),idx);
+}
+```
+
+also branching out in the derefence of the index.
+
+```cpp
+auto derefence_index(Index const& idx) const{
+    std::visit(tc::make_overload(
+        [&](Index1 const& idx1){
+            return m_rng1.derefence(idx1);
+            }
+        },
+        [&](Index2 const& idx2)){
+            return m_rng2.derefence(idx2);
+        }
+    ),idx);
+}
+```
+
+if if turn this into a generator, things are a bit better.
+
+```cpp
+template <typename Rng1, typename Rng2>
+struct concat_range{
+    private:
+        Rng1& m_rng1;
+        Rng2& m_rng2;
+    public:
+    //..
+
+    // version for non-breaking func, without the break/continue enum
+    template <typename Func>
+    void operator()(Func func){
+        tc::for_each(m_rng1,func);
+        tc::for_each(m_rng2,func);
+    }
+}
+```
+
+### Formatting
+
+we can use ranges instead of `std::format`, a single unifying concept.
+
+```cpp
+double f=3.14;
+tc::concat("You won ", tc::as_dec(f,2), " dollars.");
+```
+
+it's easy to extend this and create custom formatters. which are all lazily evaluated as ranges.
+
+```cpp
+auto dollars(double f){
+    return tc::concat("$",tc::as_dec(f,2));
+}
+double f=3.14;
+tc::concat("You won ", dollars(f), " dollars.");
+
+tc::concat(
+    "<body>",
+    html_escape(tc::placeholders("You won {0} dollars.", tc::as_dec_f,2)),
+    "</body>"
+);
+```
+
+even support for names (rather than location)
+
+```cpp
+double f= 3.14;
+tc::concat(
+    "<body>",
+    html_escape(tc::placeholders("You won {amount} dollars on {date}.",
+    tc::named_arg("amount",tc::as_dec(f,2)),
+    tc::named_arg("date",tc::as_ISO8601(std::chrono::system_clock::now()))),
+    "</body>"
+);
+```
+
+> - Formatting parameters (#decimal digits, etc) not part of format string.
+>   - Internationalization: translator can rearrange placeholders, but not change parameters.
+
+formatting into containrs:
+
+with `std::string` we have many constructors (actually, an absurd amount), so they suggest adding range constructors
+
+```cpp
+//existing:
+std::string s1; // empty construction
+std::string s2("Hello"); // construction from a string literal
+std::string s3(s2);// copy constructor
+//suggested:
+std::string s4(tc::as_dec(3.14,2)); //one range
+std::string s5(tc::concat("You Won ",tc::as_dec(3.14,2)," dollars.")); // concatenated range
+std::string s6("Hello", " World"); // 2 Ranges
+std::string s7("You Won ",tc::as_dec(3.14,2)," dollars."); // N Ranges
+```
+
+because of std::string has so many constructors, these might run into conflicts.
+
+_the favorite game: guess the string constructor output!_
+
+```cpp
+std::string sc1("A",3); //UB , tries to take the substring of size 3 from the string "A",
+std::string sc2('A',3); // probably a bug 65 times Ctrl-c, 65 times of the char 3
+std::string sc3(3,'A'); // probably what we wanted, 3 times the char 'A', "AAA"
+```
+
+maybe it's better to deprcatee them and be unambiguous? or if that's impossible(because of backward compatibility), to use pseudo constructor (explicit casting).
+
+```cpp
+//suggested
+std::string s(tc::repeat_n('A',3));
+
+// in the tc library
+auto stc1 = tc::explicit_cast<std::string>("Hello", " World");
+auto stc2 = tc::explicit_cast<std::string>("You won ", tc::as_dec(f,2), " dollars.");
+```
+
+also a wrapper for `emplace_back` and `push_back`: `tc::cont_emplace_back`. this uses the explicit casting as needed. rather than the usual bracket initialization syntax. also append
+
+```cpp
+std::vector<std::string> vec;
+tc::cont_emplace_back(vec, tc::as_dec(3.14,2));
+
+std::string s;
+tc::append(s, tc::concat("You won", tc::as_dec(3.14,2), " dollars."));
+tc::append(s, "You won", tc::as_dec(3.14,2), " dollars.");
+```
+
+### Fast Ranges Append
+
+how to do this fast?
+
+- determine string length
+- allocate memory for whole string at once
+- fill in characters
+
+simple implementation for casting into a container. the problem is that for non-random-access ranges, the string constructor runs twice over the range, once to determine the size, and once to copy the characters. this is fine when iterators are cheap to copy and iterate over, but for adaptors it isn't.
+
+```cpp
+template <typename Container, typename Rng>
+auto explicit_cast(Rng const& rng){
+    return Container(ranges::begin(rng),ranges::end(rng));
+}
+```
+
+lets try this differently, _rng_ implements a `size()` member, and we use an explicit loop taking advantage of `std::size`.
+
+```cpp
+template <typename Container, typename Rng, std::enable_if
+</*Rng has size member and is not random-access */>>
+auto explicit_cast(Rng const& rng){
+    Container cont;
+    cont.reserve(std::size(rng));
+    for (auto it = ranges::begin(rng); it != ranges::end(rng),++it){
+        tc::cont_emplace_back(cont, *it);
+    }
+    return cont;
+}
+
+template <typename Container, typename Rng, std::enable_if
+</*Rng has size member and is not random-access */>>
+void append(Container& cont,Rng const& rng){
+    cont.reserve(cont.size() + std::size(rng));
+    for (auto it = ranges::begin(rng); it != ranges::end(rng),++it){
+        tc::cont_emplace_back(cont, *it);
+    }
+}
+```
+
+**oops! there is a problem. `.reserve` has issues!**\
+reserve takes the exact neccesary size, so multiple calls will generate multiple allocations, even if it's byte by byte.
+
+a better thing it to create an alternative `reserve` function, one that that
+
+> "When adding N elements, guarantee **O(N)** moves and **O(log(N))** memory allocations!"
+
+this is already what most containers do anyways, they increase in size in a logarithetc scale.
+
+```cpp
+template <typename Container>
+void cont_reserve(Container & cont, typename Container::size_type n)
+{
+    if (cont.capacity() < n){
+        cont.reserve(max(n, cont.capacity()*(8/5)));
+    }
+}
+
+template <typename Container, typename Rng, std::enable_if
+</*Rng has size member and is not random-access */>>
+void append(Container& cont,Rng const& rng){
+    tc::cont_reserve(cont, cont.size() + std::size(rng)); //use the better reserve
+    for (auto it = ranges::begin(rng); it != ranges::end(rng),++it){
+        tc::cont_emplace_back(cont, *it);
+    }
+}
+```
+
+but what happen when we don't have random access? how do we get the size? what about generator ranges (not iterator based ranges)?
+
+for this, we introduce an appender, sink for `explicit_cast` and `append` to use.
+
+```cpp
+template <typename Container, typename Rng>
+void append(Container & cont, Rng && rng)
+{
+    tc::for_each(std::forward<Rng>(rng), tc::appender(cont));
+}
+```
+
+> - appender customization point
+>   - returned by `container::appender()` member function.
+>   - default for std containers.
+
+```cpp
+template <typename Container>
+struct appender{
+    Container & m_cont;
+
+    template <typename T>
+    void operator()(T&& t)
+    {
+        tc::cont_emplace_back(m_cont,std::forward<T>(t));
+    }
+}
+```
+
+in the basic case, this is the same as `std::back_inserter`.
+
+**Chunk customization point**
+we can pass in elements piece by piece or by chunks,
+
+```cpp
+template <typename Container, enable_if</*Container has reserve()*/>
+struct reserving_appender:appender<Container>{
+    template <typename Rng, enable_if</*Rng has size()*/>
+    void chunk(Rng && rng) const
+    {
+        tc::cont_reserve(m_cont, m_cont.size() + std::size(rng));
+        tc::for_each(std::forward<Rng>(rng), static_cast<appender<Cont> const&>(*this));
+    }
+}
+```
+
+file sink advertises interst in contiguous memory chunks, using chunks and not memory buffer. uniform treatment of string and files.
+
+```cpp
+struct file_appender
+{
+    void chunk(std::span<unsigned char const> rng) const
+    {
+        std::fwrite(rng.begin(),1, rng.size(),m_file);
+    }
+    void operator()(unsigned char ch) const
+    {
+        chunk(tc:single(ch));
+    }
+};
+```
+
+### Performance
+
+trivial formatting task: writing 'A' 10 times, then 'B' 10 times and 'C' 10 times.
+
+```cpp
+struct Buffer
+{
+    char achBuffer[1024];
+    char* pchEnd = &achBuffer[0];
+} buffer;
+
+void repeat_handwritten(char chA, int cchA,char chB, int cchB,char chC, int cchC)
+{
+    for (auto i = cchA; 0 < i; --i)
+    {
+        *buffer.pchEnd=chA; //write to buffer
+        ++buffer.pchEnd; // move ptr in buffer
+    }
+    // repeat loop for chB and cchB
+    // repeat loop for chC and cchC
+}
+
+
+struct AppenderBuffer
+{
+    //...
+    auto appender() & {
+        struct appender_t{
+            AppenderBuffer* m_buffer;
+            void operator()(char ch) noexcept{
+                *m_buffer->pchEnd=ch;
+                ++m_buffer->pchEnd;
+            }
+        };
+        return appender_t{this};
+    }
+} appender_buffer;
+
+void repeat_with ranges(char chA, int cchA,char chB, int cchB,char chC, int cchC)
+{
+    tc::append(appender_buffer, tc::repeat_n(chA,cchA), tc::repeat_n(chB,cchB), tc::repeat_n(chC,cchC));
+}
+```
+
+the results show that the overhead cost is minimal, about 50% when `repeat_n`is iterator based, and about 15% when it supports internal iteraton. the overhead gets even smaller when the task isn't trivial, like when we need to convert numbers to strings.
+
+and example of re-implemanting the basic string using ranges, getting some improvements over the standard. there are some other stuff to work on.
 
 </details>
 

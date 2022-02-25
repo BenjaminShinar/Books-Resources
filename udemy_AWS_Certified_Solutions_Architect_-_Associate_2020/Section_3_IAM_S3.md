@@ -6,7 +6,7 @@
 
 ## Section 3 - Identity Access Management & S3
 
-<!-- <details> -->
+<details>
 <summary>
 The IAM service controls permissions and access. The S3 service provides object (files) storage.
 </summary>
@@ -78,7 +78,7 @@ Roles are a way for one AWS service to access another service (also, allow acces
 - the "**root account**" is the account created when first setup for your AWS account. it has complete admin Access.
 - New Users **have no permission** when first created.
 - New Users are assigned \*Access Key Id & Secret Access Keys\*\* when First created
-- **These are not the same as a password**. You cannot use the Access Key Id & Secret Access Key to log0in to the the console. you can usee this to access aws via the APIs and the command line.
+- **These are not the same as a password**. You cannot use the Access Key Id & Secret Access Key to login to the the console. you can usee this to access aws via the APIs and the command line.
 - **You only get to view these once**. if you lose them, you have to regenerate them, So save them in a secure location.
 - \*_Always setup Multifacto authentication on your account_.
 - **You can create and customize your own password rotation policies**.
@@ -94,7 +94,7 @@ this requires us to create an SNS topic, we create a new topic and enter our ema
 
 ### S3 - Simple Storage Service
 
-<!-- <details> -->
+<details>
 <summary>
 S3 is an Object based Storage (files) which is durable, available, and comes with different tiers.
 </summary>
@@ -382,39 +382,415 @@ rather than download the entire file and parse it, we can get only what we want 
 
 we get better speed and save money on data transfer.
 
-### AWS Organizations [SAA-C02]
+#### AWS Organizations [SAA-C02]
 
-### Sharing S3 Buckets Between Accounts [SAA-C02]
+AWS organization and consoladated billing.
 
-### Cross Region Replication
+> "AWS Organizations is an accout managemend service that enables you to consolidate multiple AWS account in an organization that you create and centerally manage."
 
-### Transfer Acceleration
+OU - Organization Unit
 
-### DataSync Overview [SAA-C02]
+we can apply policies to organization units, just like user groups.
 
-### CloudFront Overview
+consolidated billing takes the aggregate usage of all the linked accounts in the organization, so the total price gets the advantages of volume pricing, and is easier to track charges.
 
-### CloudFront Lab
+demo, in the aws console (website).\
+services: <kbd>Aws Organization</kbd>, click <kbd>Create Organization</kbd>, and now our account is the root user of this organization. we can now invite other aws accounts into this organization.
 
-### CloudFront Signed URL's and Cookies [SAA-C02]
+in the other account, we will see the invitation to join the organization.
 
-### Snowball Overview
+back in the root account, we can create organizational units and apply service control policies and even enforce rules on how tags.
 
-### Snowball Lab
+Some Best Practices with AWS Organizations
 
-### Storage Gateway
+- Always enable multi-factor authentication on root account.
+- Always use a strong and complex password on root account
+- Paying account should be used for billing purposes only. Do not Deploy resources into the paying account.
+- Enable/Disable AWS services using Service Control Policies either on the Organizational unit or on individual accounts.
 
-### Athena vs Macie [SAA-C02]
+#### Sharing S3 Buckets Between Accounts [SAA-C02]
+
+Roles allow us to give access (temporary or not) to an aws service or other aws accounts.
+
+in our account:\
+services, IAM,<kbd>Create Role</kbd>, and we choose _"Another AWS account"_ as the trusted service.\
+we paster the account id, and then move to <kbd>Permissions</kbd>. we attach a policy of **AmazonS3FullAccess**. we add tags as wanted, and name the role we want.
+
+when we view this role summary, there is a field called "Give this Link to users who can switch roles in the console". we should copy it, and sign into the other account.
+
+services, AIM, Users, and we add a user <kbd>Create User</kbd>, <kbd>Create Group</kbd>, give permissions. log out. we have to do this with the non-root user.
+
+log in using the new user, and click on the user name in the top level frame, and then click <kbd>Switch Role</kbd>. we either fill in the details or use the link from before. and now we are using the other role, and we can go to the S3 buckets from the other User. if we try any other action we will see that we don't have permissions:
+
+> Three different ways to share S3 buckets across accounts:
+>
+> 1. Using Bucket Policies and IAM (applies across the entire bucket). programmatic access only.
+> 2. Using Bucket Access Control Lists and IAM (individual objects in the bucket). programmatic access only.
+> 3. Cross accout IAM roles. programtic and console access.
+
+#### Cross Region Replication
+
+we want to replicate a bucket into a differnet region.
+
+login the cosole. services, storage, S3. we create a new bucket <kbd>Create Bucket</kbd>, give it a unique name, and choose a region for it. we then un-tick the checkbox "block _all_ public access" and confirm this. we continue with the default settings for the bucket. this will be our replicated bucket (destination).
+
+we go to a diffrent bucket, the <kbd>Management</kbd> and click <kbd>Create replication rule</kbd>. we give it a name, provide a role, and choose if we apply the replication to all objects in the bucket or individual objects. we choose a destination bucket (in our account or in a different account), and we get the warning that replication requires versioning to be enabled for the destination bucket.\
+we can change the storage class for replicated objects (like S3 Standard-IA), add replication metrics and request Replication Time Control, which ensures speedy replication of objects (99.99% in 15 minutes time frame) but has additional costs. we can add encryption using KMS and decide if we wish to replicate deletion markers.
+
+replicaion works only for new objects, not for existing objects. so we will only see the destination bucket filling up when we upload objects to the source bucket.
+
+the replication doesn't replicate earlier versions and doesn't copy over the permssions to an object, so if the object was public in the source bucket, it won't be carried over to the destination object.
+
+> - Versioning must be enabled on **both** the source and destination buckets.
+> - Existing files in bucket are not replicated automatically.
+> - All subsequent updated files wil be replicated automatically.
+> - Delete markers are not replicated.
+> - Deleting individual versions or delete markers will not be replicated.
+> - Understand wat Cross Region Replication is at a high level.
+
+#### Transfer Acceleration
+
+> "S3 Transfer Acceleration utilizes the CloudFront Edge Network to accelerate your uploads to S3. Instead of uploading directly to your S3 bucket, you can use a distinct URL to upload directly to an edge location which will then transfer that file to S3. You will get a distinct URL to upload to".
+
+a bucket sits in a region, the users will upload to then edge location.
+
+[S3 Transfer acceleration speed test](http://s3-accelerate-speedtest.s3-accelerate.amazonaws.com/en/accelerate-speed-comparsion.html?) we can see how much we speed gain there is for each region.
 
 </details>
 
+### DataSync Overview [SAA-C02]
+
+Datasync allows us to move large amounts of data to and from AWS, it has encryption, data check, etc...\
+its a way of syncing data from an on premise location to the cloud.
+
+- Used to move **large amounts** of data from on-premises to AWS.
+- Used with **NFS** and **SMB** compatible file systems.
+- **Replication** can be done hourly, daily or weekly.
+- Install the **DataSync agent** to start the replication.
+- Can be Used to Replicate **EFS** to **EFS** (elastic file system, from EC2 machine).
+
+### CloudFront
+
+<details>
+<summary>
+CloudFront is Amazon's Content Delivery System service.
+</summary>
+
+> "A content delivery system (CDN) is a system of distributed servers (a network) that deliever webpages and other web content to a user based on the geographical locations of the user, the origin of the webpage, and a content delivery server."
+
+imagine if we don't have a CDN, all of the users in the world need to access the main server, which might be in a differnet continent.
+
+if we have a CloudFront enabled, then the users will first access the edge location with the request, and at the first time, the edge location will access the origin and store the result. at the next request, this data will be served from the local location, and will be much faster.
+
+> "Amazon CloudFront can be used to deliver your entire website, including dynamic, static, streaming and interactive content using a global network of edge locations. Request for your content are automatically routed to the nearest edge location, so content is delivered with the best possible performance."
+
+distribution types:
+
+> - Edge Loocation - this is the location where content will be cached. this is separate to an AWS Region/AZ.
+>   - not READ only, we can write to edge locations also (like S3 transfer accelration).
+> - Origin - this is the origin of all the files that the CDN will distribute, it can be an S3 bucket, an EC2 instance, an Elastic Load Balancer or Route53.
+> - Distribution - this is the name given the CDN which consists of a collection of Edge Locations.
+>   - Web Distribution - Typically used for Websites.
+>   - RTMP - Used for Media Streaming.
+> - Objects are cached for the life of the TTL (**Time To Live**).
+> - it's possible to clear cached objects (invalidate it), but there is a cost.
+
+#### CloudFront Lab
+
+at our aws management console. we will use a bucket as an origin.
+
+services, networking, <kbd>CloudFront</kbd>. this is a global service.
+
+we click <kbd>Create Distribution</kbd> and choose a web distribution. we fill in the origin domain with S3 Cloud, we can specify a path inside the bucket. we can restrict bucket access, and leave the rest as default. here we can also set the TTL, and we can restrict access using signed URL (cookies, etc). Here we can also put up a WAF (web Application Firewall) to increase security.
+
+creation and deletion take time, once done, we can copy the domain name, and use it as a web address (add the file path).
+
+in the <kbd>settings</kbd> tab, we can see <kbd>invalidation</kbd> and that way we can invalidate objects on the cache. we must disable the distribution before deleting it.
+
+#### CloudFront Signed URL's and Cookies [SAA-C02]
+
+difference between CloudFront Signed Url and cookies and S3 signed URLs
+
+how do we restrict access to a website?
+
+- A signed url is used for individual files. 1 file = 1 url
+- A signed cookie is for multiple files. 1 cookie= N files.
+
+signed URLs and cookies are created with an attached policy. this policy can include:
+
+- URL expiration
+- IP ranges
+- Trusted Signers (which AWS account can created signed URLs)
+
+OAI - Origin Access Identification authentication
+
+users log in to the application, and the application generates a signed URL fot the user to visit.
+
+Cloud front signed URLs:
+
+> - Can have different origins, EC2, S3, etc..
+> - Can utilize **caching** features
+> - Key-pair Account is wide and managed by the root user
+> - Can filter by data, path, IP address, expiration, etc..
+
+on the other hand, S3 signed URLs:
+
+> - Issues are request as the **IAM user** who creates the presigned URL
+> - limited **lifetime**
+
+> Summary:
+>
+> - use signed **URLs/cookies** when you want to secure content so that only the people you authorize are able to access it.
+> - a signed URL is for individual files. 1 file = 1 URL.
+> - a signed cookie is for multiple files. 1 cookie = multiple files.
+> - if you origin is EC2, then use CloudFront.
+> - if the origin is S3 and we want a single file, then we use S3 signed URL.
+
+ </details>
+
+### Snowball
+
+<details>
+<summary>
+Physical Data Transport Solutions.
+</summary>
+
+> "Snowball is a petabyte-scale data transport solution that uses secure applications to transfer large amounts of data into and out of AWS. Using Snowball addresses common challenges with large-scale data transfers,including high network costs, long transfer times and security concerns. Transferring data with Snowball is simple, fast, secure, and can be as little as one-fifth of the cost of high-speed internet."
+
+it's big disk on key in a briefcase.
+
+there are 50TB and 80TB disks, has multiple laters of security, TPM (trusted platform module). once used, AWS performs software wipe to prevent the possibility of recovering the data afterwards.
+
+There's also Snowball Edge, which has 100TB data, which also has storage and compute capabilities, so it can be used not only for storing, but also for actual work. it's like having an aws cloud on premises.
+
+AWS Snowmobile is a exabyte scale data-transfer solution.uses 100PB per snowmobile. its a shipping container, pulled by a semi-trailer, which makes transporting data secure, fast, and cost effective.
+
+table of when to use a snowball
+
+| available internet connection | theoretical time to transfer 100TB | when to consider AWS Snowball |
+| ----------------------------- | ---------------------------------- | ----------------------------- |
+| T3 (44.736 Mbps)              | 269 days                           | 2TB or more                   |
+| 100 Mbps                      | 120 days                           | 5TB or more                   |
+| 1000 Mbps                     | 12 days                            | 60TB or more                  |
+
+my comparisons
+| type | storage | physical size | notes |
+| ------------- | ----------- | ------------------ | ---------------------- |
+| Snowball | 50 or 80 TB | mini fridge |
+| Snowball Edge | 100TB | mini fridge | also has compute power |
+| Snowmobile | 100PB | shipping container on a truck |
+
+> Snowball can import and export from S3.
+
+#### Snowball Lab
+
+in services, under "services and migrations", we can see the **Snowball** stuff. we request Amazon to send us a package.
+
+to interact with it, we need to download the snowball client. we connect it to our local network, we get credentials from AWS (client unlock code, and the manifest fold file)
+
+```sh
+./snowball start -i 192.168.1.116 -m maifest.bin -u <unlock-code>
+
+#copy files into S3 bucket
+/.snowball cp source.file s3:://cloud-guru-snowball
+
+/.snowball stop
+```
+
+</details>
+
+### Storage Gateway
+
+> Storage gateway is a service that connects an on-premises software appliance with cloud-based storage to provide seamless and secure integration between an organization's on-premises IT environment and AWS's storage infrastructure. The service enables you to securely store data to the AWS cloud for scalable and cost effective storage.
+
+either a physical device or a virtual machine
+
+- File gatways(FNS, SMB)
+- Volume Gateways (iSCSI)
+  - stored volumes
+  - cached volumes
+- Tapes Gateway
+
+file gateways allow us to store our local files on in a amazon S3 bucket. the upload is done asynchronously
+
+volume gateway means storing images (virtual harddisk), and store OS snapshots. Cached volume is for the frequently accessed data, so it's not everything. Tape gateway is a way to store tape gateway and move the data to cloud.
+
+> - File Gateway: for flat files, stored directly on S3
+> - Volume Gateway:
+>   - Stored volumes: entire dataset is stored on site and is asynchronously backed up to S3
+>   - Cached Volumes: entire data set is stored on S3 and the most frequently accessed data is cached on site.
+> - Gateway Virtual Tape Library
+
+### Athena vs Macie [SAA-C02]
+
+other services that interact with S3.
+
+**Athena**:\
+Interactive query service which enables you analyse and query data located in S3 using standard SQL.
+
+- Serverless. nothing to provision. pay per query / per TB scanned.
+- No need to set up complex Extract/ Transfrom/ Load (ETL) process
+- Works directly with data stored in S3
+
+can be used to query log files stored in S3, generate business reports on data stored in S3, analyse AWS costs and usage
+
+**Macie**:\
+
+> PII - Personally Identifiable Information
+
+data that can be used to establish a person identity. name, email, credit card number, social security number, address.
+
+Macie is a security service which uses Machine Learning and NLP (natural language processing) to discover, classify and protect sensitive data stored in S3.
+
+- Uses AI to recognize if your S3 objects contain sensitive data such as PII.
+- Dashboards, reporting and alerts
+- Works directly with data stored in S3.
+- Can also analyze CloudTrail logs
+- Great for PCI-DSS and preventing identity theft.
+
 ### Identity Access Management & S3 Summary
 
+**IAM**
+
+- User
+- Group
+- Roles
+- Policies
+  - how Policies look as Json documents
+- Globally - across all regions
+- The root account
+- Least Privilege
+- AccessKey Id and Secret Access Key
+- Console password
+- Multi factor authentication
+- Password rotation policy
+
+**S3**
+
+- Object based
+- Files are stored in buckets
+- Global namespace, buckets must be uniquely named
+- Buckets have policies
+- Objects can have Access Control lists
+- Can be configured to create access logs
+- Private by default
+- Objects are
+  - key
+  - value
+  - version Id
+  - metadata
+  - sub resources
+    - access control lists
+    - torrents
+- Consistency models
+  - Read after write consistency for new objects
+  - Eventual consistency for update and deletion
+- Storage tiers:
+  - S3 standard
+  - S3 Infrequently Access
+  - S3 one Zone IA
+  - S3 intelligent tiering
+  - S3 glacier
+  - S3 glacier deep archive
+- How to het the best value of S3. by cost:
+  - S3 standard
+  - S3 Infrequently Access
+  - S3 intelligent tiering
+  - S3 one Zone IA
+  - S3 glacier
+  - S3 glacier deep archive
+- Encryption
+  - In transit: SSL/TLS
+  - At rest:
+    - Server Side:
+      - S3 managed Keys - SSE-S3
+      - AWS key management service,SSE-KMS
+      - Customer provided Keys - SSE-C
+    - Client Side - enctyped before upload
+- S3 Object Lock
+  - Write Once, Read many Model
+  - Applied across the bucket or per object
+  - Governance mode: requires special permssion
+  - Compliance mode: can't be modifed, even by root user
+- S3 glacier Vault Lock
+- S3 prefixes for performance gains.
+- SSE-KMS limits
+- Multipart uploads and downloads (byte range fetch) for performance gains
+- S3 Select
+- AWS organizations
+  - Service Control Policies
+- Accessing buckets across accounts
+- Sharing buckets across accounts
+  - Bucket Policies
+  - Bucket Access control lists
+  - Cross account Roles
+- Replicating S3 buckets across regions
+  - must enable versioning
+  - only new files
+  - delete markers aren't replicated
+- lifecycle policies
+  - moving objects across storage tiers
+  - can work with versioning
+- Transfer Acceleration
+
+**CloudFront**
+
+- Edge Location
+- Origin
+- Distribution
+  - Web distribution
+  - RTMP - media
+- Time To live (TTL) caching
+- invalidating cached object
+- Signed Url, 1 per file
+- Signed Cookie, multiple files
+- if origin is EC2, use cloud front
+- Signed S3 urls
+
+**AWS datasync**
+
+- data sync replication and synchronization
+
+**Snowball**
+
+- physical data transfer
+- import and export to S3
+
+**Storage Gateway**
+
+- File Gateway
+- Volume Gateway
+  - Stored volume
+  - Cached volume
+- Tape Gateway
+
+- Athena: query S3 using SQL
+- Macie: analyze data in S3 to discover personal data.
+
+it's worth reading the S3 FAQ before the exam.
+
 ### Quiz 2: Identity Access Management & S3 Quiz
+
+> - Power User Access allows **Access to all AWS service except the management of groups and users within IAM**.
+> - You have been asked to advise on a scaling concern. The client has an elegant solution that works well. As the information base grows they use CloudFormation to spin up another stack made up of an S3 bucket and supporting compute instances. The trigger for creating a new stack is when the PUT rate approaches 100 PUTs per second. The problem is that as the business grows that number of buckets is growing into the hundreds and will soon be in the thousands. You have been asked what can be done to reduce the number of buckets without changing the basic architecture.
+>   - _ANSWER: Until 2018 there was a hard limit on S3 puts of 100 PUTs per second. To achieve this care needed to be taken with the structure of the name Key to ensure parallel processing. As of July 2018 the limit was raised to 3500 and the need for the Key design was basically eliminated. Disk IOPS is not the issue with the problem. The account limit is not the issue with the problem._
+> - What is the availability of S3 – OneZone-IA?
+>
+>   - 99.5%
+>   - _ANSWER: OneZone-IA is only stored in one Zone. While it has the same Durability, it may be less Available than normal S3 or S3-IA._
+>
+> - AWS S3 has four different URLs styles that it can be used to access content in S3. The Virtual Hosted Style URL, the Path-Style Access URL, the Static web site URL, and the Legacy Global Endpoint URL. Which of these represents a correct formatting of the Virtual Hosted Style URL style
+>   - https://my-bucket.s3.us-west-2.amazonaws.com/fastpuppy.csv
+>   - _ANSWER: Virtual style puts your bucket name 1st, s3 2nd, and the region 3rd. Path style puts s3 1st and your bucket as a sub domain. Legacy Global endpoint has no region. S3 static hosting can be your own domain or your bucket name 1st, s3-website 2nd, followed by the region. AWS are in the process of phasing out Path style, and support for Legacy Global Endpoint format is limited and discouraged. However it is still useful to be able to recognize them should they show up in logs. https://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html_
+> - How many S3 buckets can I have per account by default?
+>   - 100 buckets
+> - You work for a busy digital marketing company who currently store their data on-premise. They are looking to migrate to AWS S3 and to store their data in buckets. Each bucket will be named after their individual customers, followed by a random series of letters and numbers. Once written to S3 the data is rarely changed, as it has already been sent to the end customer for them to use as they see fit. However, on some occasions, customers may need certain files updated quickly, and this may be for work that has been done months or even years ago. You would need to be able to access this data immediately to make changes in that case, but you must also keep your storage costs extremely low. The data is not easily reproducible if lost. Which S3 storage class should you choose to minimize costs and to maximize retrieval times?
+>   - S3 IA
+>   - _ANSWER: The need to immediate access is an important requirement along with cost. Glacier has a long recovery time at a low cost or a shorter recovery time at a high cost, and 1Zone-IA has a lower Availability level which means that it may not be available when needed._
 
 </details>
 
 ##
 
-[next]()
+[next](section_4_EC2.md)\
 [main](README.md)

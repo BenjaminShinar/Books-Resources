@@ -126,8 +126,6 @@ use a personnel account, we need to provide credit information, even if we use a
 
 </details>
 
-## Section 4 - EC2
-
 ## Section 5 - Databases on AWS
 
 ## Section 6 - Advanced IAM
@@ -169,28 +167,40 @@ Aws services:
 - S3: Object Storage
 - EC2:
 - SQS
+- DataSync: Synchronize data between AWS and on-premises.
+- Snowball: physical data transfer
 
-| Shorthand | Long name                   | Usage                          | notes                     |
-| --------- | --------------------------- | ------------------------------ | ------------------------- |
-| AWS       | Amazon Web Service          | the amazon cloud eco-system    |
-| IAM       | Identity Access Management  | users, roles, policies, access | always global             |
-| S3        | Simple Storage Service      | storage                        |
+| Shorthand | Long name                           | Usage                                             | notes                     |
+| --------- | ----------------------------------- | ------------------------------------------------- | ------------------------- |
+| ACL       | Access Control List                 | S3 buckets                                        |
+| ARN       | Amazon Resource Name                | amazon identifier                                 |
+| AWS       | Amazon Web Service                  | the amazon cloud eco-system                       |
+| CDN       | Content Delivery Network            |                                                   | Cloud Front               |
 | EC2       |
-| ECS       | Elastic Container Services  |
-| VPC       | Virtual Private Cloud       |
-| KMS       | Key Management Service      |
+| ECS       | Elastic Container Services          |
+| EFS       | Elastic File System                 |
+| IA        | Infrequent Access                   |                                                   | S3 IA tiers               |
+| IAM       | Identity Access Management          | users, roles, policies, access                    | always global             |
+| KMS       | Key Management Service              |
+| KMS       | Key Management Service              |                                                   | SSE-KMS                   |
+| MFA       | Multi Factor Authentication         |
+| OU        | Organizational Unit                 |
+| S3        | Simple Storage Service              | storage                                           |
+| SCP       | Service Control Policies            | Manage access on accounts within AWS organization |
+| SLA       | Service Level Agreement             | What AWS promises (rather than advertises)        |
 | SNS       |
-| SWF       |
-| EFS       | Elastic File System         |
+| SNS       | Simple Notification Service         | Push notification services                        | used in the billing alarm |
 | SQS       |
-| KMS       | Key Management Service      |                                | SSE-KMS                   |
-| SNS       | Simple Notification Service | Push notification services     | used in the billing alarm |
-| CDN       | Content Delivery Network    |                                | Cloud Front               |
-| ARN       | Amazon Resource Name        | amazon identifier              |
-| MFA       | Multi Factor Authentication |
-| IA        | Infrequent Access           |                                | S3 IA tiers               |
-| SLA       | Service Level Agreement     |
-| SSE       | Server Side Encryption      |                                | SSE-S3                    |
-| WORM      | Write Once,Read Many        |
+| SSE       | Server Side Encryption              |                                                   | SSE-S3                    |
+| SWF       |
+| VPC       | Virtual Private Cloud               |
+| WORM      | Write Once, Read Many               |
+| RTC       | Replication Time Control            |                                                   | S3 buckets replication    |
+| TTL       | Time to Live                        | Objects at cached location life time              | CDN, CloudFront           |
+| WAF       | Web Application Firewall            |
+| OAI       | Origin Access Identification        | authentication                                    |
+| SAN       | Storage Area Network                |
+| EBS       | Elastic Block Store                 |
+| PII       | Personally Identifiable Information |
 
 </details>

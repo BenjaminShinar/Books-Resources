@@ -10,6 +10,7 @@ all sorts of lectures, divided by field.
   - [x] The Concepts of concepts - Sandor Dargo
   - [x] Using Concepts: C++ Design in a Concept World - Jeff Garland
   - [x] Practical TMP: A C++17 Compile Time Register Machine - Daniel Nikpayuk
+  - [x] Better C++ Ranges - Arno Schödl
 - [Concurrency](Concurrency.md)
   - [x] [Adventures in SIMD-Thinking - Bob Steagall](Concurrency.md#adventures-in-simd-thinking---bob-steagall)
   - [x] [Parallelism on Ranges: Should We? - Giannis Gonidelis](Concurrency.mdd#parallelism-on-ranges-should-we---giannis-gonidelis)
@@ -55,11 +56,10 @@ all sorts of lectures, divided by field.
 
 currently working on:
 
-- [ ] Better C++ Ranges - Arno Schödl - algorithms
+- [ ] Converting a State Machine to a C++ 20 Coroutine - Steve Downey concurrency
 
 ### real talks:
 
-- [ ] Converting a State Machine to a C++ 20 Coroutine - Steve Downey
 - [ ] Designing Concurrent C++ Applications - Lucian Radu Teodorescu
 - [ ] Library Approaches for Strong Type Aliases - Anthony Williams
 - [ ] STL Algorithms as Expressions - Oleksandr Bacherikov

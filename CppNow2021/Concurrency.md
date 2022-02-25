@@ -934,6 +934,139 @@ auto f = hpx::async(exec, func, args...);
 
 </details>
 
+## Converting a State Machine to a C++ 20 Coroutine - Steve Downey
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Converting a State Machine to a C++ 20 Coroutine](https://youtu.be/Z8jHi9Cs6Ug), [slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/04/convert-state-machine-coroutine-slides-1.pdf)
+
+> C++ 20 coroutines can naturally express in linear code components that are today written as state machines that wait on async operations.\
+> This talk walks through using the low-level machinery and customization points in c++20 to convert a state machien, which waits at the end of steps for async service operations to complete, into a single coroutine that `co_awaits` those operations.
+
+### Basics
+
+C++20 Co Routines: Inaccurate summary
+
+like a lambda, excepts:
+
+> - the lambda is the return type
+> - they control when they suspend
+> - no stacks, threads or fibers
+
+Stackfull vs stackless?
+
+> stackless
+>
+> - they execute on the regular stack
+> - the architectural model is very different from from fibers or threads.
+> - Coroutine == Resumable Statefull Function
+
+if it has `co_await`, it's a coroutine. there are some versions of a co_awaits:
+
+- co_await
+- co_yield
+- co_return
+
+a coroutine body.
+
+```cpp
+{
+   promise-type promise {promise-constructor-arguments};
+   try{
+       co_await promise.initial_suspend();
+       // function-body
+   } catch(...){
+       if (!initial-await-resume-called)
+       {
+            throw;
+       }
+       promise.unhandled_exception();
+
+   }
+   final-suspend:
+    co_await promise.final_suspend();
+}
+```
+
+> **terms defined:**
+>
+> - promise-type: determined by coroutine_traits<>, but usually a typedef in the return type.
+> - promise-constructor-arguments: there parameters if there's a valid overload from promise-type that takes them, otherwise empty.
+> - function-body: the body of the coroutine function
+> - initial-await-resume-called: was the await_resume of the initial suspend called? did we start?
+> - final-suspend: target for `co_return` which calls either `return_value` or `return_void` first then executes `goto final-suspend`.
+>
+> **awaitables**
+>
+> - bool await_read(): proceed or suspend, false is suspend.
+> - await_suspend: callied if `await_read` is (contextually) false
+>   - `void await_suspend(coroutine_handle<> h):` call `await_suspend` and suspend.
+>   - `bool await_suspend(coroutine_handle<> h)`: call `await_suspend` and resume if false.
+>   - `std::coroutine_handle<Z> await_suspend(coroutine_handle<> h)`: call `resume` on return.
+> - T await*resume(): call when resume, T is the results of co_await. \_Awaitable* interface is programmer facing.
+
+minimal example
+
+```cpp
+template <typename T>
+struct awaitable: public std::suspend_always{
+    //constexpr bool await_read() const noexcept{return false;} //from std::suspend always
+    costexpr void await_suspend(coroutine_handle<> H) const noexcept {h.resume();}
+    costexpr T await_resume() const noexcept {return T{};}
+}
+```
+
+> **promises**
+>
+> - ReturnType::promise_type: typedef for the promise.
+> - get_return_object(): the return type of the coroutine.
+>   - `return_value()` : return value or...
+>   - `return_void()`
+>   - `return_`
+> - initial_suspend(): initial suspend before body
+> - final_suspend(): final suspend after body
+> - unhandled_exception(): called if an exception escapes Promises and coroutine return types are library writer facing.
+>
+> GCC's Implementation is almost exactly a lambda\
+> Theres an insane of an unnameable type that is tied to the particular coroutine frame, the type has a bit of astate that indicates where the `jmp` to upon entry goes to. The coroutine function allocates one of these, and ties it to the return type via the promise.
+
+minimal example:
+
+```cpp
+#include <coroutine>
+
+struct MinimalCoRo{
+    struct promise_type{
+        MinimalCoRo get_return_object(){
+            return {.h_: std::coroutine_handle<promise_type>::from_promise(*this)};
+        }
+        std::suspend_always inital_suspend() noexcept{return {};}
+        std::suspend_always final_suspend() noexcept{return {};}
+        void unhandled_exception(){}
+    };
+std::coroutine_handle<promise_type> h_;
+};
+
+void before();
+void after();
+
+MinimalCoRo func()
+{
+    before();
+    co_await std::suspend_always{};
+    after();
+}
+```
+
+### A bit of therory
+
+(19:00)
+
+</details>
+
 ##
 
 [Main](README.md)
