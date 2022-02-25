@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore 
+// cSpell:ignore fsanitize
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -524,4 +524,111 @@ void sum_values(std::map<int,int>::const_iterator begin,std::map<int,int>::const
 ```
 
 if we remove optimization, we can see the difference in the assembly code output. the difference is small because iterators are genrally cheap to create. 
+</details>
+
+## C++ Weekly - Ep 312 - Stop Using `constexpr` (And Use This Instead!)
+<details>
+<summary>
+Using `static constexpr` variables and not `constexpr`.
+</summary>
+
+[Stop Using `constexpr` (And Use This Instead!)](https://youtu.be/4pKtPWcl1Go)
+
+`constexpr` isn't what we (probably) think.
+
+```cpp
+// constrexpr -probably doesn't do what you think it does
+
+constexpr int get_value (int value)
+{
+    return value *2;
+}
+
+int main()
+{
+    int value = get_value(6); // when is this calculated? complie time or run time?
+    return value;
+}
+```
+
+is the value usable in constant expression? we check this with a static_assert. this has to do with **core constant expressions**.
+
+```cpp
+int value = get_value(6);
+static_assert(value == 12); // fails
+const int value2 = get_value(6);
+static_assert(value2 == 12); // passess
+constexpr int value3 = get_value(6);
+static_assert(value3 == 12); // passess
+```
+
+even with const, the value can still be calculated at compile time or at runtime, it's up to the the compiler.
+
+but even if we declare it `constexpr`, it still isn't necessary calculated at compile time, as long as we don't use it in a compile time expression, then it's up to the compiler.
+
+```cpp
+constexpr std::array<int, 1000> get_values()
+{
+    std::array<int,1000> retval{};
+    int count = 0;
+    for (auto & val: retval){
+        val = count*3;
+        ++count;
+    }
+    return ret_val;
+}
+
+int main()
+{
+    constexpr auto values = get_values();
+    return values[879];
+}
+```
+
+this calculation can happen at compile time or at runtime, if we play with the optimization, things can behave differently.
+
+**`constexpr` values are stack values**
+
+in this example, what is going to be returned?
+
+```cpp
+int main()
+{
+    const int p* = nullptr;
+    {
+        constexpr auto values = get_values();
+        p = &values[985];
+    }
+    return *p;
+}
+```
+
+in clang O3 the value is what we expect (985*3), in gcc, we get an error for using an uninitialized value, if we add address sanitizer flag `--fsanitize=address` we see a warning about "stack-use-after-scope".
+
+
+1. must run all test with address sanitizer enabed
+2. must run both release and debug builds with address sanitizer
+
+we actually only rarely want constexpr variables, we should use `static constexpr` instead. we want to force a static storage and initialization of those variables.
+
+```cpp
+int main()
+{
+    const int p* = nullptr;
+    {
+        static constexpr auto values = get_values();
+        p = &values[985];
+    }
+    return *p;
+}
+```
+
+this is part of the object life time puzzlers book!
+
+the storage duration types are:
+- static
+- thread
+- automatic
+- dynamic
+
 </details>

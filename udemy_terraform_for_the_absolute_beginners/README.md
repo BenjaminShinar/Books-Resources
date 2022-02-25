@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore HashiCorp KodeKloud FIFA tfvars tfstate falshpoint Tsvg Flexit toset aone
+// cSpell:ignore HashiCorp KodeKloud FIFA tfvars tfstate falshpoint Tsvg Flexit toset aone xlarge azurrerm untaint
  -->
 
 # Terraform For The Absolute Beginners
@@ -1220,7 +1220,7 @@ terraform {
 
 ## Terraform with AWS
 
-<!-- <details> -->
+<details>
 <summary>
 Focusing on AWS Cloud Vendor.
 </summary>
@@ -1244,7 +1244,10 @@ creating an account, payment information (even for the free tier). multi factor 
 
 ### Introduction to IAM
 
-**IAM - Identity Access management**
+<details>
+<summary>
+IAM - Identity Access management
+</summary>
 
 the root account can do anything, so it's not adviced to use it. the best practice is to create other users with the appropriate premissions.
 
@@ -1303,7 +1306,7 @@ here is another policy, which allows to create and delete tags from any ec2 reso
 }
 ```
 
-### Demo IAM
+#### Demo IAM
 
 introduction the IAM with the console: groups, users, roles, policies.
 
@@ -1326,7 +1329,7 @@ the awsManagedPolicies are default, sensible policies that are available for use
 
 lets create a role, we choose the trusted service, and give it a policy. 
 
-### Programmatic Access
+#### Programmatic Access
 
 interacting with the aws services using the aws CLI (command line interface)
 
@@ -1380,7 +1383,7 @@ aws --endpoint http://aws:4566 iam list-attached-group-policies --group-name pro
 aws --endpoint http://aws:4566 iam attach-group-policy --group-name project-sapphire-developers --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
 ```
 
-### AWS IAM with Terraform
+#### AWS IAM with Terraform
 
 the third way to work with IAM is through [terraform aws provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 
@@ -1415,7 +1418,7 @@ export AWS_ACCESS_KEY_ID=<>
 export AWS_SECRET_ACCESS_KEY=<>
 ```
 
-### IAM Policies with Terraform
+#### IAM Policies with Terraform
 
 now we want to give our user permissions.
 
@@ -1517,39 +1520,754 @@ resource "aws_iam_user" "users" {
 
 }
 ```
+</details>
+
 ### Introduction to AWS S3
+<details>
+<summary>
+S3 - Simple Storage Service
+</summary>
+
+Object based (flat file), with no hard limits. not suitable for operating systems or databases. data is stored inside bucket. a bucket is like a directory, but there can also be nested folders.
+
+the management console provides a simple interface to create buckets, the name of the bucket must be unique (across the world), must be DNS compliant (lowercase, doesn't end with dash). the bucket will get a unique address and is (theoretically) globally accessable.
+
+each object in S3 has data and metadata, the data includes the key (file name) and the value (actual data), the metadata contains information about the file. like other aws services, access to buckets is controlled through permissions, and also *access control lists*. permissions can be defined in bucket level or even at a file level.
+
+this is an example to a bucket policy.
+```json
+{
+    "Version":"2012-10-17",
+    "Statement": [
+        {
+            "Action":[
+                "s3:GetObject"
+            ],
+            "Effect":"Allow",
+            "Resource": "arn:aws:s3:::all-pets/*",
+            "Principal":{
+                "AWS":[
+                    "arn:aws:iam:::123456123457:user/Lucy"
+                ]
+            }
+        }
+    ]
+}
+```
+
+we can even write a bucket policy to grant access to users from other aws accounts.
+
+#### S3 with Terraform
+
+if we don't provide a name, it will be randomly generated.
+```hcl
+resource "aws_s3_bucket" "finance"{
+    bucket = "finance-21092020"
+    tags = {
+        Description= "Finance and Payroll"
+    }
+}
+```
 
 
-### S3 with Terraform
+now we wish to add a file to that bucket. we must provide the bucket onto which we want to upload the file, the key (the path in the bucket), and the file itself.
 
+in this example we use the reference syntax.
 
-### Lab: S3
+```hcl
+resource "aws_s3_bucket_object" "finance-2020"{
+    content = "/root/finance/finance-2020.doc"
+    key = "finance-2020.doc"
+    bucket = aws_s3_bucket_finance.id
+}
+```
 
+now we assume there is an existing users group, which wasn't created by Terraform, but we wish to give those users access to the bucket. we will use a data block. afterwards, we will also create a bucket policy resource.
+
+```hcl
+data "aws_iam_group" "finance-data"{
+    group_name = "finance-analysts"
+
+}
+
+resource "aws_s3_bucket_policy" "finance-policy"{
+    bucket = aws_s3_bucket_finance.id
+    policy= << EOF
+    {
+        "Version":"2012-10-17",
+        "Statement": [
+            {
+                "Action":"*"
+                "Effect":"Allow",
+                "Resource": "arn:aws:s3:::${aws_s3_bucket.finance.id}/*",
+                "Principal":{
+                    "AWS":[
+                        "${data.aws_iam_group.finance-data.arn}"
+                    ]
+                }
+            }
+        ]
+    } 
+    EOF
+}
+```
+
+#### Lab: S3
+
+[aws_s3_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket)
+
+playing with buckets, getting an error about incorrect DNS format, trying to use *acl = "public-read-write"*  and failing.
+
+</details>
 
 ### Introduction to DynamoDB
+<details>
+<summary>
+NoSQL database.
+</summary>
 
+highly scalable, fully managed, no server for the the user to manage. low latency data access. data is replicated across region, so it's highly available.
 
-### Demo Dynamodb
+DynamoDB is a key-value and document database, unlike a relational database. each entry in the collection is an item, Dynamo db uses a primary key to uniquely identify elements. we aren't required to fill in attributes which aren't the primary key, they can be duplicated, empty or null.
 
+#### Demo Dynamodb
 
-### DynamoDB with Terraform
+in the management console. we go to the dynamoDB service and create a table, we give it a name, and choose the primary key and it's type. we can manually add item by clicking <kbd>Create item</kbd>. we can now start filling in values. we can search for items using the console and filters.
 
+#### DynamoDB with Terraform
 
-### Lab: DynamoDB
+lets define a dynamoDB resource block. we provide the table name and the hash_key to definf the primary key, we must define an *attribute* for the primary key, but we can also provide attributes for other fields.
 
+```hcl
+resource "aws_dynamodb_table" "cars"{
+    name = "cars"
+    hash_key = "VIN"
+    billing_mode = "PAY_PER_REQUEST"
+    attribute {
+        name = "VIN"
+        type ="S"
+    }
+}
+```
+
+to add items, we use another resource type, and the *heradoc* syntax, but we need to define each element as a json with the type 
+```hcl
+resource "aws_dynamodb_table_item" "car-items"{
+    table_name = aws_dynamodb_table.cars.name
+    hash_key = aws_dynamodb_table.cars.hash_key
+    item = <<EOF
+    {
+        "Manufacturer": {"S": "Toyota"},
+        "Make": {"S": "Corrolla"},
+        "Year": {"N": 2004},
+        "VIN": {"S": "4Y1SL65848Z411439"}
+    }
+    EOF
+}
+```
+
+this is just an example of adding an item to the table, this isn't how it should be done in large scale database.
+
+#### Lab: DynamoDB
+resource "aws_dynamodb_table" "project_sapphire_inventory" {
+  name           = "inventory"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "AssetID"
+
+  attribute {
+    name = "AssetID"
+    type = "N"
+  }
+  attribute {
+    name = "AssetName"
+    type = "S"
+  }
+  attribute {
+    name = "age"
+    type = "N"
+  }
+  attribute {
+    name = "Hardware"
+    type = "B"
+  }
+  global_secondary_index {
+    name             = "AssetName"
+    hash_key         = "AssetName"
+    projection_type    = "ALL"
+    
+  }
+  global_secondary_index {
+    name             = "age"
+    hash_key         = "age"
+    projection_type    = "ALL"
+    
+  }
+  global_secondary_index {
+    name             = "Hardware"
+    hash_key         = "Hardware"
+    projection_type    = "ALL"
+    
+  }
+}
+
+resource "aws_dynamodb_table_item" "upload" {
+  table_name = aws_dynamodb_table.project_sapphire_inventory.name
+  hash_key = aws_dynamodb_table.project_sapphire_inventory.hash_key
+  item = <<EOF
+  {
+  "AssetID": {"N": "1"},
+  "AssetName": {"S": "printer"},
+  "age": {"N": "5"},
+  "Hardware": {"B": "true" }
+  }
+
+  EOF
+}
+</details>
 
 </details>
 
 
 ## Remote State
 
+<details>
+<summary>
+Storing the State file in a remote location.
+</summary>
+
+### What is Remote State and State Locking?
+we already saw the TF uses the state file to map resources. this file is created when we `terraform apply` for the first time.
+> - Mapping configuration to real world
+> - Tracking metadata
+> - Performance
+> - Colabaration
+
+we also discussed the we shouldn't store this file in a version control tool as it contains passwords and other sensitive information.
+
+imagine that we have a terraform state file that we manually store on github, each time we changed the configuration, we upload the file again. this creates merge conflicts, especially if there are many users.\
+when using terraform locally, we can't change the state file once ome operation started. this is called **state locking**. we can see tis in action by running `terraform apply` from two terminals.
+
+to overcome these problems, we can use a **remote state backend**. now the state file is moved to a shared storage. this will also enable state locking for the state file, so there won't be conflicts and always maintains the updated configuration without having to manually upload it.
+
+
+### Remote Backends with S3
+
+using S3 bucket and a dynamo db table as a remote State backend.
+
+Object | Value
+---|---
+Bucket | kodekloud-terraform-state-bucket01
+Key| finance/terraform.tfstate
+Region| us-west-1
+DynamoDB Table | State-locking
+
+
+```hcl
+resource "local_file" "pet"{
+    filename = "/root/pets.txt"
+    content = "We love pets!"
+}
+```
+
+if we run `terraform apply`, then a local state file will be created. if we want you use a remote state file, we need to configure the terraform block. the dynamodb_table is used to control state locking.
+
+this block should be in the **terraform.tf** file.
+```hcl
+terraform{
+    backend "s3"{
+        bucket = "kodekloud-terraform-state-bucket01"
+        key = "finance/terraform.tfstate"
+        region = "us-west-1"
+        dynamodb_table = "state-locking"
+    }
+}
+```
+
+before being able to use the remote backend, we should run the `terrafrom init` command again. we can then copy our local file into the S3 bucket. we should now delete the local file `rm -rf terraform.tfstate`.
+
+#### Lab: Remote State
+
+```sh
+terraform apply
+terraform show
+```
+
+### Terraform State Commands
+
+the `terraform state` commands. the state is stored in a json format, which we should directly edit. instead, we can use some cli commands:
+
+`terraform state <sub commands> [options] [args]`
+
+sub comands:
+- `terrform state list` - list all the resources. we can pass a resource name to get a subset of results.
+- `terraform state show` - prints the attributes of an resource
+- `terraform state mv [options] [SOURCE] [DESTINATION]` - either rename a resource or move it to another state file.
+    ```sh
+    terraform state mv aws_dynamodb_table.state-locking aws_dynamodb_table.state-locking-db
+    ```
+    (we should then rename the resource in the configuration file)
+- `terraform state pull [options] [SOURCE] [DESTINATION]` - get the remote state
+    ```sh
+    terraform state pull | jq '.resource[] | select (.name =="state-locing-dbb").instances[].attributes.hash_key'`
+    ```
+- `terraform state rm <ADDRESS>` - remove an address and not longer manage it, it isn't destroyed, simple stops being managed.
+
+#### Lab: Terraform State Commands
+
+```sh
+terraform state list
+terraform state show local_file.classics
+terraform state show local_file.top10
+terrafrom state rm local_file.hall_of_fame
+terraform state mv random_pet.super_pet_1 random_pet.ultra_pet
+```
+
+</details>
+
 ## Terraform Provisioners
+
+<details>
+<summary>
+Understanding EC2 (Elastic Compute Cloud) instances and running commands on them.
+</summary>
+
+### Introduction to AWS EC2 (optional)
+
+EC2 (Elastic Compute Cloud) instances in AWS, virtual machines in the cloud, based on a OS (unix or windows).
+
+> AMI: Amazon Machine Image - templates for virtual machine configurations.
+
+the templates contain the the OS and additional software, each AMI has an id, which is different per region. there also different configurations for machine cpu and hardware, which are identified as *Instance Types*.
+
+general purpose instance type, compute optimized, memory optimized.
+
+the general purpose are divided into categories:
+
+here are some configuration for the T2 type, but there are also T3, M5, etc...
+InstanceType | vCPU | Memory (GB)
+---|---|---
+t2.nano|1|0.5
+t2.micro|1|1
+t2.small|1|2
+t2.medium|2|4
+t2.large|2|8
+t2.xlarge|4|16
+t2.x2large|8|32
+
+> EBS - Elastic Block Storage - the storage attached to the EC2
+
+Name | Type | Description
+---|---|---
+io1 | SSD | for business-critical Apps 
+io2 | SSD | for latency sensitive transactional workloads
+gp2 | SSD | general purpose
+st1 |HDD | low cost HDD frequently accessed, throughput-intensive workloads
+sc1 |HDD | lowest cost HDD  volume designed for less frequently accessed workloads
+
+we can also pass User Data to the Ec2, so that commands will be run as soon as the machine starts.
+
+```sh
+#!/bin/bash
+sudo apt update
+sudo apt install nginx
+systemctl enable nginx
+systemctl start nginx
+```
+
+for windows machines we can pass batch files or power shell. access to EC2 machine is done with a SSH key-pair.
+
+### Demo: Deploying an EC2 Instance (optional)
+
+in the management console, select <kbd>EC2</kbd> from the services (under the **compute** group).
+- <kbd>Launch Instance</kbd>
+- choose an *ami* and an *instance type*, such as ubuntu and t2.micro.
+- configure the instance, using the default vpc for the network, using the default value of the subnet.
+- in the *user data* block (advanced), we pass in the shell script
+    ```sh
+    #!/bin/bash
+    sudo apt update
+    sudo apt install nginx
+    systemctl enable nginx
+    systemctl start nginx
+    ```
+- in the storage section, we can use the default value.
+- we can add tags to the instances
+- configure security group, and allow it SSH access (inbound rule). when the source is "0.0.0.0/0", it means that all access is allowed.
+- we also create a key-pair and download them.
+- <kbd>View instaces</kbd> to see the details of the virtual machine.
+
+to access it from the terminal, we copy the public ip address (3.94.9.249). we might run into a problem and have to change the private key file permissions.
+
+```sh
+chmod 400 ~/Downloads/web.pem
+ssh -i ~/Downloads/web.pem ubuntu@3.97.9.249
+```
+if we did it correctly, our shell is now configured to the machine
+
+```sh
+systemctl status nginx   
+```
+
+
+### AWS EC2 with Terraform
+
+at "main.tf" file,
+the instance resource supports:
+- ami (required)
+- instance_type (required)
+- tags (optional)
+- user_date (optional)
+- key_name (optional) 
+- vpc_security_groups_ids (optional)
+
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43bdfa892279"
+    instance_type= "t2.micro"
+    tags = {
+        Name = "webserver"
+        Description = "An Nginx Web Server on Ubuntu"
+    }
+    user_date = <<EOF
+        #!/bin/bash
+        sudo apt update
+        sudo apt install nginx -y
+        systemctl enable nginx
+        systemctl start nginx
+        EOF
+}
+```
+
+at the "provider.tf" file
+```hcl
+provider "aws"{
+    region = "ws-west-1"
+}
+```
+
+but now we need the ip of the machine, and keys to access it via ssh. we use another resource for that.
+
+```hcl
+resource "aws_key_pair" "web"{
+    public_key=file("/root/.ssh/web/pub")
+}
+```
+and now we update the instance configuration to tell it to make use of the the key resource.
+
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43bdfa892279"
+    instance_type= "t2.micro"
+    # tags, shell
+
+    key_name = aws_key_pair.web.id
+}
+```
+the next issue is the networking, in the demo, we used the default vpc and used a new security group with inbound access rules.
+
+```hcl
+resource "aws_security_group" "ssh-access"{
+    name = "ssh-access"
+    description = "Allow SSH access from the internet"
+    ingress = {
+        from_port = 22
+        to_port = 22
+        protocol ="tcp"
+        cider_blocks = ["0.0.0.0/0"]
+    }
+}
+```
+and we connect our instance to this security group.
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43bdfa892279"
+    instance_type= "t2.micro"
+    # tags, shell
+
+    key_name = aws_key_pair.web.id
+    vpc_security_groups_ids = [aws_security_group.ssh-access.id]
+}
+```
+
+lets also have an output variable to display the public ip address
+
+```hcl
+output public-ip {
+    value = aws_instance.webserver.public_ip
+}
+```
+
+and to test everything
+```sh
+terraform apply
+terraform output public-ip #get ip
+ssh -i /root/.ssh/web ubuntu@3.96.203.171 #the ip
+systemctl status nginx #from inside the instance
+```
+
+### Terraform Provisioners
+
+- remote-exec
+- local-exec
+
+Provisioners allows us to run scripts or commands on resources. we can specify the script in a provisioner block.
+
+
+this requires a network connectivity
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43bdfa892279"
+    instance_type= "t2.micro"
+    # tags
+
+    key_name = aws_key_pair.web.id
+    vpc_security_groups_ids = [aws_security_group.ssh-access.id]
+
+    provisioner "remote-exec" {
+        inline = ["sudo apt update",
+        "sudo apt install nginx -y",
+        "systemctl enable nginx",
+        "systemctl start nginx"
+        ]
+    }
+    provisioner "local-exec" {
+        command = "echo {aws_instance.webserver.public_ip} >> /tmp/ips.txt"
+    }
+    connection {
+        type = "ssh"
+        host = self.public_ip
+        user = "ubuntu"
+        private_key = file ("/root/.ssh/web")
+    }
+}
+```
+the provisioners are run once the resource is created. we can also specify provisioners to run when the resource is destroyed by specifing the *when* argument.
+
+```hcl
+resource "aws_instance" "webserver"{
+
+    # ...
+
+provisioner "local-exec" {
+        command = "echo {aws_instance.webserver.public_ip} Created! > /tmp/ips.txt"
+    }}
+    provisioner "local-exec" {
+        when = destroy
+        command = "echo {aws_instance.webserver.public_ip} Destroyed! > /tmp/ips.txt"
+    }
+}
+```
+
+if the provisioner command fails, then the `terraform apply` command fails. but we can control this behavior with the *on_failure* argument in the provisioner block.
+```hcl
+provisioner "local-exec" {
+    on_failure = continue
+    command = "echo {aws_instance.webserver.public_ip} Created! > /temp/ips.txt"
+    }}
+```
+the best practice is to avoid using provisioners if possible, and to use the options from the provider instead
+
+Provider | Resource | Option
+---|---|---
+AWS | aws_instance | user_data
+Azure | azurrerm_virtual_machine | custom_data
+GCP | google_compute_instance | meta_data
+Vmware vSphere | vsphere_virtual_machine | user_data.txt
+
+### Provisioner Behavior
+
+as before the default behavior of provisioners is to run when the resource is created and to fail the apply command if there was as problem.
+
+```hcl
+provisioner "local-exec" {
+    when = destroy
+    on_failure = continue
+    command = "echo Instance ${aws_instance.webserver.public_ip} Destroyed! > /tmp/instance_state.txt"
+}
+```
+
+if we provisioner command fails, then the resource is considered to be **tainted**.
+
+#### Lab: AWS EC2 and Provisioners
+
+[aws_key_pair](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/key_pair), [aws_eip](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip)
+
+creating an instance
+```hcl
+resource "aws_instance" "cerberus" {
+  ami = var.ami
+  instance_type = var.instance_type
+}
+variable "region" {
+    default = "eu-west-2"
+    type = string
+}
+variable "instance_type" {
+    default = "m5.large"
+    type = string
+}
+variable "ami" {
+  default = "ami-06178cf087598769c"
+}
+```
+
+```sh
+terraform init
+terraform validate
+terraform plan
+terraform apply
+terraform show
+```
+creating a key_pair
+```hcl
+resource "aws_key_pair" "cerberus-key" {
+    key_name = "cerberus"
+    public_key = file("/root/terraform-projects/project-cerberus/.ssh/cerberus.pub")
+}
+```
+using the key_pair on the instance
+```hcl
+resource "aws_instance" "cerberus" {
+  ami = var.ami
+  instance_type = var.instance_type
+  key_name = aws_key_pair.cerberus-key.id
+}
+```
+adding the scripts
+```hcl
+resource "aws_instance" "cerberus" {
+  ami = var.ami
+  instance_type = var.instance_type
+  key_name = aws_key_pair.cerberus-key.id
+  user_data = file("install-nginx.sh")
+}
+```
+
+`terraform state show aws_instance.cerberus`
+
+elastic ip resource for a consistent ip address
+```hcl
+resource "aws_eip" "eip" {
+    vpc = true
+    instance = aws_instance.cerberus.id
+    provisioner "local-exec" {
+        command = "echo ${self.public_dns} > /root/cerberus_public_dns.txt"
+    }
+}
+```
+`terraform state show aws_eip.eip`
+
+### Considerations with Provisioners
+
+Provisioners aren't best practice for TF, they are powerful tools, but carry some issues.
+
+```hcl
+resource "aws_instance" "webserver"{
+    ami = "ami-0edab43b6fa892279"
+    instance_type = "t2.micro"
+    tags = {
+        Name = "webserver"
+        Description = "An NGINX WebServer on Ubuntu"
+    }
+    provisioner "remote-exec" {
+        inline = ["echo $(hostname -i) >> tmp/ips.txt"]
+    }
+}
+```
+
+**No Provisioner Information in Plan**: we can run anything on the resource, so we don't have any way to parse it in the `terraform plan` stage.
+
+**Network Connectivity and Authentication**: some provisioners require a connection block, which isn't alway possible. it's better to avoid provisioners which are native to the resource, like *user_date*
+
+it's better to keep the provisioners work to the minimum, it's better to use an image (ami) which has what we want already installed. we can create custom ami with tools like *Packer*
+
+</details>
+
 
 ## Terraform Import, Tainting Resources and Debugging
 
+<!-- <details> -->
+<summary>
+
+</summary>
+
+### Terraform Taint
+
+sometimes a resource creation can fail.
+
+here, we try to write to an invalid path.
+```hcl
+resource "aws_instance" "webserver-3"{
+    ami = "ami-0edab43b6fa892279"
+    instance_type = "t2.micro"
+    key_name = "ws"
+
+    provisioner "local-exec" {
+        command = "echo ${aws_instance.webserver-3.public_ip} > /temp/pub_ip.txt"
+    }
+}
+```
+`terraform apply`
+
+now the resource is marked as tainted, and when we run `terraform plan`, we will see the resource marked as tainted. and at the next time we run `terraform apply`, it will be re-created.
+
+if, for some reason, our resource was changed manually (and not by terraform), we need to recreate the resource. we could remove and re-apply the configuration block to force the creation, but it's easier to mark the resource as tainted, and then it'll happen in the next `terraform apply` run.
+
+`terraform taint aws_instance.webserver`
+
+if we want the resource to remain as it is, we can remove the this mark.
+
+`terraform untaint aws_instance.webserver`
+
+
+### Debugging
+
+sometimes, looking at the output from the apply command isn't enough to understand the problem. in those cases, we might wish to increase the verbosity of the logs, this is done by changing the log_level.
+
+`export TF_LOG=TRACE`
+
+- INFO
+- WARNING
+- ERROR
+- DEBUG
+- TRACE - the most verbose
+
+now when we run commands, we will see much more logs text, we can also store them in a file (if we want to send a bug report)
+
+
+`export TF_LOG_PATH=/tmp/terraform.log`
+
+to disable logging, we can unset the environment variable.
+
+`unset TF_LOG_PATH`
+
+#### Lab: Taint and Debugging
+
+```sh
+export TF_LOG=ERROR
+export TF_LOG_PATH=/tmp/ProjectA.log
+```
+### Terraform Import
+#### Lab: Terraform Import
+
+
+</details>
+
 ## Terraform Modules
+<!-- <details> -->
+<summary>
+
+</summary>
+</details>
+
 
 ## Terraform Functions and Conditional Expressions
+
+<!-- <details> -->
+<summary>
+
+</summary>
+</details>
 
 
 ## Takeaways
@@ -1559,7 +2277,7 @@ resource "aws_iam_user" "users" {
 Things to remember
 </summary>
 
-AWS human users have **Policies**, aws services have **Roles**. **ARN** - Amazon Resource Name.
+AWS human users have **Users**, aws services have **Roles**, and they both use **Policies**. **ARN** - Amazon Resource Name.
 
 `file("file-path")` - read file function.
 
@@ -1580,6 +2298,8 @@ AWS human users have **Policies**, aws services have **Roles**. **ARN** - Amazon
   - `terraform providers mirror <path>`
 - `terraform refresh`
 - `terraform graph`
+- `terraform taint`
+- `terraform untaint`
 
 ### Common File Structure
 
@@ -1590,18 +2310,26 @@ AWS human users have **Policies**, aws services have **Roles**. **ARN** - Amazon
 | outputs.tf        | Outputs from resources                                   |
 | provider.tf       | Providers defintions                                     |
 | variables.tfvars  | environment variables                                    |
-| terraform.tfstate | state, single source of truth                            |
+| terraform.tfstate | state, single source of truth          |
+terraform.tf                  | terraform block, for plugin configuration and remote state
 
 
 ### Block Types
 
 | block type | purpose                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------ |
-| resource   |
+| resource   | provision a resource
 | variable   | define variables to use in `var.$`                                                                     |
 | output     | displaying on screen, or to pass it forwad to other shell commands. `terraform output <variable_name>` |
 | data       | using resources that weren't created by Terraform.                                                     |
 | terraform  | controling versions and provider source                                                                |
+### Environment variables
+
+variable | usage | possible values
+---|---|---
+TF_VAR_\<variable name> | provide variable name | any
+TF_LOG_PATH | where to store logs | location of file
+TF_LOG | log verbosity | INFO, ERROR, WARNING, DEBUG, TRACE 
 
 </details>
 
@@ -1612,6 +2340,26 @@ AWS human users have **Policies**, aws services have **Roles**. **ARN** - Amazon
 Samples of Resource blocks
 </summary>
 
+### Terraform
+
+```hcl
+terraform {
+  backend "s3" {
+    key = "terraform.tfstate"
+    region = "us-east-1"
+    bucket = "remote-state"
+    endpoint = "http://172.16.238.105:9000"
+    force_path_style = true
+
+
+    skip_credentials_validation = true
+
+    skip_metadata_api_check = true
+    skip_region_validation = true
+  }
+}
+
+```
 
 ### Local
 
@@ -1696,9 +2444,34 @@ resource "aws_instance" "dev-server" {
     ami         = "ami-02cff456777cd"
 }
 
-resource "aws_s3_bucket" "falshpoint"  {
-    bucket = "project-flashpoint-paradox"
+resource "aws_s3_bucket" "finance"{
+    bucket = "finance-21092020"
+    tags = {
+        Description= "Finance and Payroll"
+    }
 }
+
+resource "aws_s3_bucket_object" "finance-2020"{
+    content = "/root/finance/finance-2020.doc"
+    key = "finance-2020.doc"
+    bucket = aws_s3_bucket_finance.id
+}
+resource "aws_s3_bucket_policy" "finance-policy"{
+    bucket = aws_s3_bucket_finance.id
+    policy = file("finance-policy.json")
+}
+
+resource "aws_security_group" "ssh-access"{
+    name = "ssh-access"
+    description = "Allow SSH access from the internet"
+    ingress = {
+        from_port = 22
+        to_port = 22
+        protocol ="tcp"
+        cider_blocks = ["0.0.0.0/0"]
+    }
+}
+
 ```
 
 data sources:
@@ -1715,6 +2488,11 @@ data "aws_ebs_volume" "gp2_volume" {
 
 data "aws_s3_bucket" "selected" {
   bucket_name = "bucket.test.com"
+}
+
+data "aws_iam_group" "finance-data"{
+    group_name = "finance-analysts"
+
 }
 ```
 
