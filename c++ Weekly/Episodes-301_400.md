@@ -632,3 +632,172 @@ the storage duration types are:
 - dynamic
 
 </details>
+
+## C++ Weekly - Ep 313 - The `constexpr` Problem That Took Me 5 Years To Fix!
+<details>
+<summary>
+Getting compile time values to be usable in runtime.
+</summary>
+
+[The `constexpr` Problem That Took Me 5 Years To Fix!](https://youtu.be/ABg4_EV5L3w)
+
+> (Compile-time views Into optimally sized comppile-time data. I'ts awesome, no really, trust me!)
+
+
+taking a standard string from compile time to runtime.
+
+```cpp
+#include <string>
+#include <fmt>
+constexpr std::string make_string(std::string_view base, const int repeat)
+{
+    std::string retval;
+    for (int count =0; count<repeat; ++count)
+    {
+        retval += base;
+    }
+    return retval
+}
+
+int main()
+{
+    std::string result = make_string("Hello Jason, ",3);
+    fmt::print("{}",result); //this works
+    constexpr std::string result2 = make_string("Hello Jason, ",3);
+    fmt::print("{}",result2); //this fails
+}
+```
+we can't let the constexpr string escape into a non-constexpr context.
+
+however, this does work, we get length at compile time and print it at runtime.
+```cpp
+constexpr auto get_length(std::string_view base, const int repeat)
+{
+    return make_string(base,repeat).size();
+}
+int main()
+{
+    constexpr static auto length = get_length("Hello world,",4);
+    fmt::print("{}", length); //this works
+}
+```
+
+we can get the size, but not the string itself.
+
+(he does something with std::array, but it needs to call the make_string function twice)
+```cpp
+template <std::size_t Len>
+constexpr auto get_array(const std::string& str)
+{
+    std::array<char,Len> result;
+    std::copy(str.begin(),str.end(),result.begin());
+    return result;
+}
+
+int main()
+{
+    constexpr static auto length = get_legnth(make_string("hello jason, ",3));
+    constexpr static auto str = get_array<legnth>(make_string("hello jason, ",3));
+    constexpr static auto sv = std::string_view(str.begin(), str.end());
+
+}
+```
+it's impossible to do this
+```cpp
+constexpr std::string value; //doesn't compile!
+```
+it can be a bit nicer if we delegate the creation of the string to a lambda, but it's still the same issue.
+
+lets try this, use some buffer data. it works, but the size of the binary increases!
+```cpp
+struct oversized_array
+{
+    std::array<char, 10*1024*1024> data{};
+    std::size_t size;
+};
+constexpr auto to_oversized_array(const std::string & str)
+{
+    oversize_array result;
+    std::copy(str.begin(),str.end(),result.begin());
+    result.size=str.size();
+    return result;
+}
+
+int main()
+{
+    constexpr auto make_data =[](){
+        return make_string("hello jason, ",3); // lambda
+    };
+    constexpr static auto str = to_oversized_array(make_data()));
+    constexpr static auto sv = std::string_view(str.begin(), str.end());
+    fmt::print("{}: {}", sv.size(), sv);
+}
+```
+lets try to get the correct size: but this doesn't work. an input variable can't be an constant expression value.
+```cpp
+constexpr auto to_right_size_array(const std::string & str)
+{
+    constexpr static auto oversized = to_oversized_array(str));
+    std::array<char, oversized.size> result;
+    std::copy(oversized.begin(),oversized.end(),result.begin());
+    return result;
+}
+```
+but we can pass a lambda that creates a constant expression value. the function should actually be **consteval**, because we would never want to all it in runtime.
+```cpp
+template<typename Callable>
+consteval auto to_right_size_array(Callable callable)
+{
+    constexpr static auto oversized = to_oversized_array(callable());
+    std::array<char, oversized.size> result;
+    std::copy(oversized.data.begin(),std::next(oversized.data.begin(),oversize.size),result.begin());
+    return result;
+}
+int main()
+{
+    constexpr auto make_data =[](){
+        return make_string("hello jason, ",3); // lambda
+    };
+    constexpr static auto str = to_right_size_array(make_data));
+    constexpr static auto sv = std::string_view(str.begin(), str.end());
+    fmt::print("{}: {}", sv.size(), sv);
+}
+```
+
+this still isn't good enough, we still create two oject, a *std::array* and the *std::string_view*. there also a problem with having static variables in the *consteval* function.
+
+so now we try other crazy stuff, we have a function that returns a refernce to the template argument. and now we got something that the compiler can optimize.
+
+> Class non template type parameter
+>
+```cpp
+template<auto Data>
+consteval auto & make_static()
+{
+    //take a template parameter and return a reference to it.
+    return Data;
+}
+
+consteval auto to_string_view(auto callable) -> std::string_view
+{
+    constexpr auto &static_data = make_static<to_right_sized_array(callable)>();
+    return std::string_view{static_data.begin(), static_data.end()};
+}
+
+int main()
+{
+    constexpr static auto sv = to_string_view(make_data);
+    fmt::print("{}: {}",sv.size(),sv);
+}
+```
+
+- lambda that returns a string
+- we create an oversized array (which should be big enough for any reason) which is constant time value
+- then we use the oversized array as template argument to create a smaller array.
+- which we use as static refernce 
+- and then we use it to create the string_view.
+
+
+
+
+</details>

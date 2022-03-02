@@ -2186,9 +2186,9 @@ it's better to keep the provisioners work to the minimum, it's better to use an 
 
 ## Terraform Import, Tainting Resources and Debugging
 
-<!-- <details> -->
+<details>
 <summary>
-
+Additional Terraform commands.
 </summary>
 
 ### Terraform Taint
@@ -2247,26 +2247,498 @@ to disable logging, we can unset the environment variable.
 export TF_LOG=ERROR
 export TF_LOG_PATH=/tmp/ProjectA.log
 ```
+
 ### Terraform Import
+
+importing existing infrastructure into our configuration, we don't always have the luxury of doing everything with terrafrom. but we can bring them into our control.
+
+the `data` block allows us to read from existing resources,
+
+```hcl
+data "aws_instance" "newserver"{
+    instance_id = "i-026e13be10d5326f7"
+}
+output newserver{
+    value = data.aws_instace.newserver.public_ip
+}
+```
+
+we can't update or delete this resource. if we want it to be under our command, we need to import it.
+
+`terrafrom import <resource_type>.<resource_name> <attribute>`
+
+when we run this command, we are requested to create a corresponding resource file in our configuration. the command only updates the state file, it doesn't update the config block on it own.
+
+```hcl
+resource "aws_instance" "webserver-2"{
+
+}
+```
+now when we run the import command\
+`terraform import aws_instance.webserver-2 i-026e13be10d536f7`
+
+we will see a msg that the import has succeeded, and we could fill in the missing stuff in the resource block. we can inspect the state file to find them, and run `terraform plan` to make sure our configuration is the same as what exists.
+
+
 #### Lab: Terraform Import
 
+```hcl
+resource "aws_instance" "ruby" {
+  ami           = var.ami
+  instance_type = var.instance_type
+  for_each      = var.name
+  key_name      = var.key_name
+  tags = {
+    Name = each.value
+  }
+}
+output "instances" {
+  value = aws_instance.ruby
+}
 
+```
+key was created
+```sh
+# example
+aws ec2 create-key-pair --endpoint http://aws:4566 --key-name jade --query 'KeyMaterial' --output text > /root/terraform-projects/project-jade/jade.pem.
+# example
+```
+describe instance
+```sh
+aws ec2 describe-instances --endpoint http://aws:4566
+#or
+aws ec2 describe-instances --endpoint http://aws:4566 --filters "Name=image-id,Values=ami-082b3eca746b12a89" |jq -r '.Reservations[].Instances[].InstanceId'
+```
+
+import
+```sh
+terraform import aws_instance.jade-mw i-f6f4f794b1577f607
+terraform state show aws_instance.jade-mw
+```
+fill in the blanks in the configuration
+```hcl
+resource aws_instance jade-mw{
+    ami = "ami-082b3eca746b12a89"
+    instance_type = "t2.large"
+    key_name = "jade"
+    tags= {
+        Name = "jade-mw"
+    }
+}
+```
 </details>
 
 ## Terraform Modules
-<!-- <details> -->
+<details>
 <summary>
-
+Using existing Terraform configuration folders as module resources.
 </summary>
+
+### What are Modules?
+since we've started with aws resources, our configuration files have gotten quite large:
+- aws_instance (ec2)
+- aws_key_pair
+- aws_iam_policy
+- aws_s3_bucket
+- aws_dynamodb_table
+
+
+but if we have shared defintions (like several ec2 machine), wouldn't it be easier to share the configuration between them?
+
+we can split a file into several smaller files. 
+
+Any configuration directory is already a terraform module. so far we run commands directly on a module, which made it into the root module. but if we want, we can reference this module from another one, by using a module block.
+
+we simple provide the path to the other module, which is now the "child module" for us to use.
+
+(in this example, we give a relative path)
+```hcl
+module "dev-webserver"{
+    source = "../aws-instance"
+}
+```
+
+### Creating and Using a Module
+
+assume that we have a architecture that needs to be deployed in several countries.
+- ec2 with custom ami
+- dynamodb table
+- s3 bucket
+- default vpc - no special end points
+
+so we start by designing this a module in folder "modules/payroll-app" with several files:
+- app_server.tf
+- dynamodb_table.tf
+- s3_bucket.tf
+- variables.tf
+
+those files will look something like this:
+```hcl
+resource "aws_instance" "app_server"{
+    ami = var.ami
+    instance_type = "t2.medium"
+    tags = {
+        Name = "${var.app_region}-app-server"
+    }
+    depends_on =[
+        aws_dynamodb_table.payroll_db,
+        asw_s3_bucket.payroll_data
+    ]
+}
+
+resource "aws_s3_bucket" "payroll_data" {
+    bucket = "${var.app_region}-${var.bucket}
+}
+
+resource "aws_dynamodb_table" "payroll_db" {
+    name = "user_data"
+    billing_mode = "PAY_PER_REQUEST"
+    hash_key = "EmployeeID"
+    
+    attribute{
+        name = "EmployeeID"
+        type = "N"
+    }
+}
+
+variable "app_region"{
+    description = "where this software is deployed"
+    type = string
+}
+
+variable "bucket"
+{
+    default = "flexit-payroll-alpha-22001c"
+    type = string
+}
+
+variable "ami" {
+    description = "custom ami image"
+    type = string
+}
+
+```
+
+now, we want to deploy this configuration, first to the US region. so we create a different folder, with two configuration files in it:
+- main.tf
+- provider.tf
+
+we now configure the module block in the root module configurations to connect to the child-module.
+```hcl
+module "us_payroll" {
+    source = "../modules/payroll-app"
+    app_region ="us-east-1"
+    ami = "ami-24e140119877avm"
+}
+```
+
+running `terraform init` will now tell us we are initilazing a module as well. all of there resources now have the \<module>.\<module_name> "module.us_payroll" prefix.
+
+we can now create a different folder for another region:
+
+```hcl
+module "uk_payroll" {
+    source = "../modules/payroll-app"
+    app_region ="eu-west-2"
+    ami = "ami-24e140119877avm"
+}
+provider "aws" {
+    region = "eu-west-2"
+}
+```
+
+the state file is in the root module, not in the child modules.
+
+using modules is simpler, lowers the risk, and makes the re-usable.
+
+
+### Using Modules from the Registry
+
+so far, we use local modules, they are located in a folder in the local machine. but it's also possible to share modules, this is done by getting them from the terraform registry.
+
+modules are grouped by the resource they use. there are official modules (managed by hashicorp) and community modules.
+
+the module page in the registry should contain instructions on how to use the module
+
+[example: aws security group](https://registry.terraform.io/modules/terraform-aws-modules/security-group/aws/latest)
+```hcl
+module "security-group" {
+    source  = "terraform-aws-modules/       security-group/aws"
+    version = "4.8.0"
+
+    # insert the 3 required variables here
+    # name
+    # security_group_id
+    # vpc_id
+    # ingress_cider_blocks
+}
+```
+there are also some submodules.
+
+we can run the `terraform get` command to download modules and plugins, even after `terraform init` has been run.
+
+#### Lab: Terraform Modules
+
+[aws_iam_user](https://registry.terraform.io/modules/terraform-aws-modules/iam/aws/latest/submodules/iam-user)
+
+```hcl
+module "iam_iam-user" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-user"
+  version = "3.4.0"
+  # insert the 1 required variable here
+  name ="max"
+  # optional
+  create_iam_access_key	= false
+  create_iam_user_login_profile = false
+}
+```
 </details>
 
 
 ## Terraform Functions and Conditional Expressions
 
-<!-- <details> -->
+<details>
 <summary>
-
+More functions, Terraform workspaces.
 </summary>
+
+### More Terraform Functions
+
+terraform has an interactive console.
+
+`terraform console`
+
+this loads the terraform state, so we can run functions and see how they would interpolate.
+
+
+```
+file("/root/terraform-projects.main.tf")
+length(var.region)
+toset(var.region)
+```
+
+there are many function in terraform, so we will look only at some of them:
+- numeric functions
+- string functions
+- collections functions
+- type conversion functions
+
+`max(-1,2,-10,200,-250)` -> 200\
+`min(-1,2,-10,200,-250)` -> -250
+
+```hcl
+variable "num" {
+    type = set(number)
+    default = [250,1,11,5]
+    description = "A set of numbers"
+}
+```
+to get use the "num" variable as an argument, we need to use the expansion operator (`...`, three dots):
+
+`max(var.num...)` -> 250
+
+`ceil`, `floor` rounding function.
+
+```hcl
+variable "ami" {
+    type= string
+    description = "A string containing the ami ids"
+    default = "ami-xyz,AMI-ABC,ami-efg"
+}
+```
+we can use the `split` function to split a string into a list. we provide the seperator
+
+
+
+`split(",","ami-xyz,AMI-ABC,ami-efg")` -> ["ami-xyz","AMI-ABC","ami-efg"]\
+`split(",",var.ami)`
+
+`lower("aBC")`->"abc"\
+`upper("aBC")`->"ABC"\
+`title("abc")`->"Abc"
+
+taking a substring\
+`substr(var.ami,0,7)` -> "ami-xyz"
+
+creating a string from a list\
+`join(",",["ab","cd","ef"])` -> "ab,cd,ef"
+
+`length` - number of elements in a collection\
+`index(var.ami, "AMI-ABC")` -> 1\
+`element(var.ami,2)` -> "ami-efg"\
+`contains(var.ami,"AMI-ABC")`->true
+`contains(var.ami,"AMI-AbC")`->false
+
+```hcl
+variable "ami" {
+    type= map
+    default  {
+        "us-east-1"="ami-xyz",
+        "ca-central-1"="ami-efg",
+        "ap-south-1"="ami-ABC"
+    }
+    description = "A map of AMI ids for specific regions"
+}
+```
+
+`keys(var.ami)` -> ["us-east-1","ca-central-1","ap-south-1"]\
+`values(var.ami)` ->["ami-xyz","ami-efg","ami-ABC"]\
+`lookup(var.ami, "ca-central-1")` -> "ami-efg"\
+`lookup(var.ami, "ca-central-2", "ami-pqr)` -> "ami-pqr"
+
+### Conditional Expressions
+
+common operator and conditional operators. we can use the terraform console to play with operators.
+
+- arithmetical operators
+- comparative operators `>`,`>=`,`==`,`<=`,`<`
+- logical operators: `&&`,`||`,`!`
+
+`var.a < var.b`
+
+lets have some conditional statements: we want to use the value given, but no smaller than eight.
+
+as a bash script
+```sh
+if [ $length -lt 8]
+    then
+        length=8
+        echo $length
+    else
+        echo $length
+    fi
+```
+in terraform
+```hcl
+variable password-length{
+    type=number
+    description = "the length of the password"
+}
+resource "random_password" "password-generator" {
+    length =max(var.password-length,8)
+}
+
+output password{
+    value = random_password.password-generator.result
+}
+```
+we can also use a three way coitional expression
+`condition ? true_val : false_value`
+
+```hcl
+resource "random_password" "password-generator" {
+    length = var.password-length < 8? 8 : var.password-length
+}
+```
+`terraform apply -var=password-length=5`
+
+#### Lab: Functions and Conditional Expressions
+
+```sh
+terraform console
+$floor(10.9)
+$title("user-generated password file")
+
+```
+creating iam users by spliting a string
+```hcl
+resource "aws_iam_user" "users"
+{
+    name = split(":",var.cloud_users)[count.index]
+    count = length(split(":",var.cloud_users))
+}
+```
+back to the console
+```sh
+terraform console
+$element(aws_iam_user.cloud,6)
+$index(var.sf,"oni")
+```
+uploading elements to a bucket
+```hcl
+resource "aws_s3_bucket_object" "upload_sonice_media" {
+    bucket= aws_s3_bucket.sonic_media.id
+    key = substr(each.value,length("/media/"),length(each.value)-length("/media"))
+    content = file(each.value)
+    for_each = var.media
+}
+```
+conditional statement
+```hcl
+resource "aws_instance" "mario_servers" {
+  ami = var.ami
+  tags ={
+      "Name"=var.name
+  }
+  instance_type = var.name == "tiny"? var.small : var.large
+}
+```
+
+### Terraform Workspaces (OSS)
+
+The Terraform state is the mapping between the configuration and the provisioned resources. so far we had one terraform state file (either stored locally or remotely).
+
+workspace are another way to re-use code. it's two state files that use the same configuration
+
+`terraform workspace new <Workspacename>`\
+`terraform workspace list`
+
+we move everything into the variable resource
+```hcl
+variable region {
+    default = "ca-central-1"
+}
+variable instance_type {
+    default = "t2.micro"
+}
+variable ami {
+    type=map(string)
+    default = {
+        "ProjectA" = "ami-0edab43b6fa892279"
+        "ProjectB" = "ami-0c2f25c1f66a1ff4d"
+    }
+}
+```
+and use them in the configuration file
+```hcl
+resource "aws_instance" "project"{
+    ami = lookup(var.ami,terraform.workspace)
+    instance_type = var.instance_type
+    tags = {
+        Name = terraform.workspace
+    }
+}
+```
+
+lets play in the console
+```sh
+terraform console
+$terraform.workspace
+$lookup(var.ami,terraform.workspace)
+```
+and if we want to work on the other workspace, we can create another workspace and run the same command.
+
+`terrafrom workspace select ProjectA`
+
+when we use workspaces, the statefiles are stored in a special folder **terraform.tfstate.d** which has sub directories per workspace.
+
+#### Lab: terraform Workspaces
+
+```sh
+terraform workspace new uk-payroll
+terraform workspace new us-payroll
+terraform workspace new india-payroll
+terraform workspace list
+terraform workspace select us-payroll
+```
+
+```hcl
+module "payroll_app"{
+  source = "/root/terraform-projects/modules/payroll-app"
+    app_region = lookup(var.region,terraform.workspace)
+    ami =  lookup(var.ami,terraform.workspace)
+}
+```
 </details>
 
 
@@ -2279,8 +2751,30 @@ Things to remember
 
 AWS human users have **Users**, aws services have **Roles**, and they both use **Policies**. **ARN** - Amazon Resource Name.
 
-`file("file-path")` - read file function.
+### Terraform functions
 
+- `file("file-path")` - read file contents.
+- Numeric Functions
+  - `max`
+  - `min`
+  - `ceil`
+  - `floor`
+- String Functions
+  - `split(delimiter, string)`
+  - `join(delimeter,list of strings)`
+  - `upper`
+  - `lower`
+  - `title`
+  - `substr`
+- Collection Functions
+  - `length(collection)`
+  - `index(list, value)`
+  - `element(list, index)`
+  - `contains(collection, value)`
+  - `toset(list)` - turn a list into a set
+  - `keys(map)` - get keys
+  - `values(map)` - get values 
+  - `lookup(map,value, <default>)`
 
 
 ### Cli Commands
@@ -2300,6 +2794,16 @@ AWS human users have **Users**, aws services have **Roles**, and they both use *
 - `terraform graph`
 - `terraform taint`
 - `terraform untaint`
+- `terraform import`
+- `terraform get`
+- `terraform console`
+- `terrafrom workspace`
+  - `terraform workspace show`
+  - `terraform workspace list`
+  - `terraform workspace select`
+  - `terraform workspace new`
+  - `terraform workspace delete`
+
 
 ### Common File Structure
 
@@ -2312,6 +2816,7 @@ AWS human users have **Users**, aws services have **Roles**, and they both use *
 | variables.tfvars  | environment variables                                    |
 | terraform.tfstate | state, single source of truth          |
 terraform.tf                  | terraform block, for plugin configuration and remote state
+terraform.tfstate.d | folder that holds state files for workpaces
 
 
 ### Block Types
@@ -2323,6 +2828,8 @@ terraform.tf                  | terraform block, for plugin configuration and re
 | output     | displaying on screen, or to pass it forwad to other shell commands. `terraform output <variable_name>` |
 | data       | using resources that weren't created by Terraform.                                                     |
 | terraform  | controling versions and provider source                                                                |
+module | reference and use a different tf module (folder or registry)
+
 ### Environment variables
 
 variable | usage | possible values
