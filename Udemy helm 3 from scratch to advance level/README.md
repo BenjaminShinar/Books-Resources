@@ -5,7 +5,7 @@ ignore these words in spell check for this file
 
 # Helm 3 From Scratch To Advance Level
 
-[udemy: Helm 3 From Scratch To Advance Level](https://www.udemy.com/course/helm-3-from-scratch-to-advance-leves/)\
+[udemy: Helm 3 From Scratch To Advance Level](https://www.udemy.com/course/helm-3-from-scratch-to-advance-level/)\
 [helm documentation](https://helm.sh/)\
 [Chart museum](https://chartmuseum.com/)
 
