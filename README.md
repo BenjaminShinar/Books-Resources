@@ -1,5 +1,5 @@
 <!--
-ignore these words in spell check for this file 
+ignore these words in spell check for this file
 // cSpell:ignore Okun Kube
 -->
 
@@ -46,37 +46,38 @@ Kubernetes use yaml to define the resources needed, we start with a small exampl
 
 ```yml
 kind: pod
-image: SVennam/frontend:latest 
+image: SVennam/frontend:latest
 labels:
-    app: frontend
+  app: frontend
 ```
 
 we can deploy that manifest with kubectl, the kubernetes command line tool. this sends the configuration to a worker node.
 
 we can also define a templat in the manifest for how pods look
+
 ```yml
 kind: deployment
-selector: {app:frontend}
+selector: { app:frontend }
 replicas: 3
 template:
-    image: SVennam/frontend:latest 
-    labels:
-        app: frontend
+  image: SVennam/frontend:latest
+  labels:
+    app: frontend
 ```
+
 now we use kubernetes to manage that deployment and ensure that state, so it will create more pods like that.
 
 each pod has an ip address, but when a pod dies it gets a new ip address, if we want to talk to a pod, we need something to manage that. this is done with a service defintion. this is also in the yaml file, this creates a reliable way for the KubeDNS to communicate.
 
 ```yml
 kind: service
-selector: {app:frontend}
+selector: { app:frontend }
 type: LoadBalancer
 ```
 
 the LoadBalancer type makes our nodes exposed to the outside world.
 
 we have pods, deployments and services as resources of kubernetes.
-
 
 #### How does Kubernetes create a Pod?
 
@@ -107,7 +108,7 @@ the last part of the Control node is the controller manager. it has the replicat
 
 #### Kubernetes Ingress in 5 Minutes
 
-assume we have a service with three pods, 
+assume we have a service with three pods,
 
 service types: Cluster-IP, NodePort, LoadBalancer
 
@@ -123,6 +124,7 @@ Helm is a Kubernetes package manager that makes deployment easier.
 let's take an example of a e-commerce site, which has a JS frontend application, with a mongo database and a node-port service.
 
 in Kubernetes, we will have files for deployment that define the configuration.
+
 ```yaml
 #deployment
 image: node/mongo
@@ -137,28 +139,31 @@ helm can help us separate the template of the configuration from the files thems
 
 ```yml
 deployment:
-    image: node/mongo1
-    replicas: 2 
+  image: node/mongo1
+  replicas: 2
 service:
-    type: NodePort
-    port: 8080
+  type: NodePort
+  port: 8080
 ```
 
 the chart makes it possible to pull values from an externa source.
+
 ```yaml
 #deployment
-image: {{values.deployment.image}}
-replicas: {{values.deployment.replicas}}
+image: { { values.deployment.image } }
+replicas: { { values.deployment.replicas } }
 
 #service
-type: {{values.service.type}}
-port: {{values.service.port}}
+type: { { values.service.type } }
+port: { { values.service.port } }
 ```
 
 the command that we run is, helm will inject the parametes from the chart and send them into a **Tiller** component on the kubernetes side.
+
 ```sh
 helm install <myApp>
 ```
+
 when we want to change the values, we simply update the chart, we can also rollback changes, and save the changes to a repository for future use.
 
 ```sh
@@ -168,7 +173,6 @@ helm package
 ```
 
 #### Kubernetes vs. Docker: It's Not an Either/Or Question
-
 
 we still use all the knowledge we got when we used docker, we build on top-of it to get a better deployment.
 
@@ -183,8 +187,9 @@ kubernetes resources.
 deployment -> replica set. rolling update.
 
 debugging
+
 - kubectl logs
-  - *--previous* - from a crushed container
+  - _--previous_ - from a crushed container
 - kubectl describe pod
 - kube exec -it sample-pod -- /bin/bash
 
@@ -210,4 +215,38 @@ applications, orchestrator.
 the development team cares about the applications, the operation teams cares about a whole lot more. deployment, scaling, networking (load balances, service discovery), insight, maintenance, plug-in configurations.
 
 service mesh.
+
+</details>
+
+## Markdown Formatting Tips
+
+<details>
+<summary>
+Markdown formatting tricks, tips, etc
+</summary>
+
+### Tags
+
+Dialog Box - don't use
+
+<dialog open>This is an open dialog window</dialog>
+
+\
+\
+\
+\.
+
+defintion and tooltip
+
+<dfn><abbr title="HyperText Markup Language">HTML</abbr></dfn> is the standard markup language for creating web pages.
+
+### keyboard tricks
+
+- Emojis <kbd>Windows</kbd> + <kbd>.</kbd>: ❄
+- Unicode: <kbd>Alt</kbd> + four digits of decimal number.
+- HTML Entity:
+  - <<kbd>&#</kbd>>\<Decimal Number><<kbd>;</kbd>> &#945;
+  - <<kbd>&#x</kbd>>\<Hexdecimal Number><<kbd>;</kbd>> &#x3B2;
+  - <<kbd>&#x</kbd>>\<symbol name><<kbd>;</kbd>> &gamma;
+
 </details>

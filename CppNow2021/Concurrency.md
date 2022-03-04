@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq Nikunj Exascale randomizer kokkos hpx lcos
+// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq Nikunj Exascale randomizer kokkos hpx lcos Harel
  -->
 
 [Main](README.md)
@@ -936,9 +936,9 @@ auto f = hpx::async(exec, func, args...);
 
 ## Converting a State Machine to a C++ 20 Coroutine - Steve Downey
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+making a state machine using c++20 Coroutines.
 </summary>
 
 [Converting a State Machine to a C++ 20 Coroutine](https://youtu.be/Z8jHi9Cs6Ug), [slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/04/convert-state-machine-coroutine-slides-1.pdf)
@@ -1061,9 +1061,242 @@ MinimalCoRo func()
 }
 ```
 
-### A bit of therory
+### A Bit of Therory
 
-(19:00)
+> UML State Diagrams\
+> Describes a "finite automaton", standardized as part of the Unified modeling language back in the last century.
+
+- activation/deactivation
+- sub-states
+- orthogonal regions, effect nearly everything (think <kbd>CapsLock</kbd> and <kbd>NumLock</kbd> keys)
+
+> UML based of Harel state charts:\
+> A generalization of state machine diagrams more usable for human being, allows for grouping states with the same parameters together as the substate charts. Allows for history, returning to a state with the substate active when the the superstate left. A full formal model.
+
+UMLs are models, but it doesn't necessarily translate 1-to-1 to code. tools can generate code based on a model, but it won't be the best (easiest, maintaible) way to express it. the state chart is a documention tool in some cases.
+
+> **The Core Coroutine Transformation is to a State Machine**\
+> C++20 coroutines are resumable functions. a coroutine is transformed into:
+>
+> - a handle to the frame holding the stack variables.
+> - an indicator of where to resume
+> - an instance comprising this particular execution.
+
+The State is maintained in the coroutine frame. the coroutine frame is equivalent to the member variables of an object.\
+`co_await` points are the states: the coroutine is waiting for input (to resume).\
+_Resumptions_ are transitions firing. When a transition fires the coroutine can decide how to proceed to the next state.
+
+State machines aren't just ways to implement regex, there are large state machines and (mostly) small state machines. for large state machine management tools are needed.\
+writing down the state machine model helps clarify the transitions.
+
+most state machines are simple, and have different paths:
+
+- **Golden path** - things go well.
+- **Error path** - things go badly in expected ways:
+  - bad input
+  - file not found
+- **Failure path** - things go badly in unexpected ways:
+  - "2+2 ==5"
+
+The 7&pm; rule (seven plus-minus two), this is about the size of a state machine we can mentally model, anything larger requires extrating substates or using management tools to maintain.
+
+> "Generality might mean `goto`"
+
+some times statemachines have states that can be reached from any other state, and states might need to go forward of backwards. this is ok, because we don't leave the scope of the machine / coroutine.
+
+> **Suspension and Decision**: guarded transitions just _if tests_ after a suspension point.
+
+in the diagrams, these are labels next to a transition. decision from input on where to transition.
+
+there are not standard library solutions and coroutine types defined as of c++20. there might be some added in the c++23 release. this isn't something new, in earlier versions of c++ it was expected of users to write their own containers and iterators types. it's okay for users and library writers to write and handcraft types. this is part of how the standardization process works. the community understands what is needed, what works and what is important. coroutines can be implemented by the users, and any additions to the standard won't break them.
+
+### Simple Multistep Async Operations
+
+basic example,(not actual production code)
+
+```cpp
+class CreateUser
+{
+    CreateUser (std::string id); //constructor
+};
+```
+
+Lookup user or create
+
+```cpp
+Result CreateUser::findUser(){
+    db::getUser(id,[](std::unique_ptr<User> user){
+        userCallback(user);
+        });
+    return CONTINUE;
+}
+
+void CreateUser::userCallback(std::unique_ptr<User> usr)
+{
+    user_ = std::move(user);
+    resume_();
+}
+```
+
+Validate request wih "Compliance"
+
+```cpp
+Result CreateUser::findUser()
+{
+    compliance::checkOK(user_, [] (bool isOK){
+        complianceCallback(isOk);
+        });
+    return CONTINUE;
+}
+
+void CreateUser::complianceCallback(bool isOK)
+{
+    isOK_ = isOK;
+    resume_();
+}
+```
+
+Broadcast operation
+
+```cpp
+Result CreateUser::broadcastNewUser()
+{
+    if (isOK_){
+        queueBroadcast(*user);
+    }
+    return CONTINUE;
+}
+```
+
+Return status for request
+
+```cpp
+Result CreateUser::endTransaction()
+{
+    return DONE;
+}
+```
+
+```cpp
+class CreateUser
+{
+    Result CreateUser::findUser();
+    Result CreateUser::okToCreate();
+    Result CreateUser::broadcastNewUser();
+    Result CreateUser::endTransaction();
+
+    void CreateUser::userCallback(std::unique_ptr<User> user);
+    void CreateUser::complianceCallback(bool isOK);
+
+};
+```
+
+> "Natural Non-Async Code is the Inverse of Coroutine Transform": if this were all synchonous it would just be a sequence of calls.
+
+but we don't want to simple wait for responses and block operations. we don't want to tie up the thread.
+
+> "While Not Done" : externally this is driven checking if the object said it was done, and if not, scheduling the next operation.
+
+### Async Callbacks and Threads
+
+```cpp
+void (* callback)(void * context, void * response, void * error); //function type declration
+void install (callback cb, void * context);
+```
+
+> Typical generic C-ish callback interface
+>
+> - you give the framework the context to give back to you
+> - it gives you the response you were waiting for
+> - alternatively or additionally it tells you about any errors.
+>
+> C++ callback is often a type-erased callable, like `std::function<>`, binding `this` and other parameters.
+
+the context is the _this_ pointer or the coroutine frame. we (or the framework) cast it back to the known type.
+
+a frequent source of errors is with threads, we might run into deadlocks and issues with locks. IO stalling. we might need to make use of threadpools and reschedule operations back to them, and the problems compound.
+
+**converting a callback to an awaitable**
+
+```cpp
+void api_with_callback(std::string p, std::function<void(int result)> callback);
+auto api_with_callback_awaitable(const std::string* parameter)
+{
+    struct awaiter :
+    {
+        std::sting parameter_;
+        int result_;
+        awaiter(const std::string& parameter): parameter_(parameter){}
+        bool await_ready(){return false;} // suspend always
+        void await_suspend(std::coroutine_handle<> handle)
+        {
+            api_with_callback(parameter_,[this,handle](int result){
+                result_=result;
+                handle.resume();
+            });
+        }
+        int await_resume { return result_; }
+    }
+
+    return awaiter(parameter);
+}
+```
+
+rescheduling on the thread pool
+
+```cpp
+// for exposition only
+void thread_pool::await_suspend(coroutine_handle<> handle)
+{
+    schedule(job([](){ handle.resume(); }));
+}
+```
+
+> **Coroutines are Not Async** : theres no magic that makes them asynchronous.\
+> **Coroutines are Deterministic**: transfer of control from the coroutine is deterministic, either outward to te owner or to a particular coroutine. resumption of a coroutine is direct.
+
+direct - not to a thread or fiber, just back to the normal stack. the frame is stored on the heap
+
+> **Suspension is Not Async**: nothing happens to a suspend coroutine, there are no threads.\
+> **Transfer of Control is Sync**: suspension hands control on the same thread. Resumption happens on the same thread as the resumer.\
+> **Async is External to the Coroutine**: Async can be built with coroutines, but it's external to the coroutine mechanism itself. Sync can be built from Async, the other way around is far more difficult.
+
+if we want async operations, we need to build them, there is nothing inherently asynchronous about coroutines. this is because coroutines are stackless. suspending a coroutine doesn't end the scope. if we have a lock, then it's not unlocked when we suspend the function.
+
+```cpp
+task<Excpected<std::unique_ptr<User>,bool>> createUSer(std::string id)
+{
+    std::unique_ptr<User> user = co_await db::getUser(id);
+    co_await threadpool_;
+    bool isOK = co_await compliance::checkOk(user);
+    co_await threadpool_;
+    if (isOK)
+    {
+        queueBroadcast(*user);
+    }
+
+    co_return {std::move(user), isOK};
+}
+```
+
+in the code above:
+
+- logic is clearer
+- writing new async state machines is easier
+
+the code is linear. `co_await` the threadpool is to request a reschedule for ourselves.
+
+### Questions
+
+- _canceling or timeout a coroutine which is async_
+- _tla + modeling_ (TLA: Temporal Logic of Actions)
+- _compiler stuff_
+- _changing behavior based on internal state_
+- _when does the work happen_ - it happens in compile time
+- _allocation costs and efficiency_
+- _`co_awaiting` a list of tasks_
+- _benchmarks and scaling_
+- _writing unit tests for coroutines_
 
 </details>
 

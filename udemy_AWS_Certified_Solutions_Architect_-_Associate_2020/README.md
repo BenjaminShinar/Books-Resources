@@ -161,46 +161,66 @@ humans who need to interact with the aws services are **users**, they can be par
 
 Aws services:
 
-- IAM
+- IAM - Identity Access Management:
 - Cloud Watch: for billing alarms
-- SNS: send emails
-- S3: Object Storage
-- EC2:
-- SQS
+- SNS- Simple Notification Service: send emails
+- S3 - Simple Storage Service: Object Storage
+- EC2 - Elastic Cloud Compute
+- SQS - :
 - DataSync: Synchronize data between AWS and on-premises.
 - Snowball: physical data transfer
 
-| Shorthand | Long name                           | Usage                                             | notes                     |
-| --------- | ----------------------------------- | ------------------------------------------------- | ------------------------- |
+Acronyms
+
+| Shorthand | Long name                           | Usage                                             | notes                            |
+| --------- | ----------------------------------- | ------------------------------------------------- | -------------------------------- |
 | ACL       | Access Control List                 | S3 buckets                                        |
 | ARN       | Amazon Resource Name                | amazon identifier                                 |
 | AWS       | Amazon Web Service                  | the amazon cloud eco-system                       |
-| CDN       | Content Delivery Network            |                                                   | Cloud Front               |
-| EC2       |
+| CDN       | Content Delivery Network            |                                                   | Cloud Front                      |
+| EC2       | Elastic Compute Cloud               |
 | ECS       | Elastic Container Services          |
 | EFS       | Elastic File System                 |
-| IA        | Infrequent Access                   |                                                   | S3 IA tiers               |
-| IAM       | Identity Access Management          | users, roles, policies, access                    | always global             |
+| IA        | Infrequent Access                   |                                                   | S3 IA tiers                      |
+| IAM       | Identity Access Management          | users, roles, policies, access                    | always global                    |
 | KMS       | Key Management Service              |
-| KMS       | Key Management Service              |                                                   | SSE-KMS                   |
+| KMS       | Key Management Service              |                                                   | SSE-KMS                          |
 | MFA       | Multi Factor Authentication         |
 | OU        | Organizational Unit                 |
 | S3        | Simple Storage Service              | storage                                           |
 | SCP       | Service Control Policies            | Manage access on accounts within AWS organization |
 | SLA       | Service Level Agreement             | What AWS promises (rather than advertises)        |
 | SNS       |
-| SNS       | Simple Notification Service         | Push notification services                        | used in the billing alarm |
+| SNS       | Simple Notification Service         | Push notification services                        | used in the billing alarm        |
 | SQS       |
-| SSE       | Server Side Encryption              |                                                   | SSE-S3                    |
+| SSE       | Server Side Encryption              |                                                   | SSE-S3                           |
 | SWF       |
 | VPC       | Virtual Private Cloud               |
 | WORM      | Write Once, Read Many               |
-| RTC       | Replication Time Control            |                                                   | S3 buckets replication    |
-| TTL       | Time to Live                        | Objects at cached location life time              | CDN, CloudFront           |
+| RTC       | Replication Time Control            |                                                   | S3 buckets replication           |
+| TTL       | Time to Live                        | Objects at cached location life time              | CDN, CloudFront                  |
 | WAF       | Web Application Firewall            |
-| OAI       | Origin Access Identification        | authentication                                    |
+| OAI       | Origin Access Identification        | Authentication                                    |
 | SAN       | Storage Area Network                |
 | EBS       | Elastic Block Store                 |
 | PII       | Personally Identifiable Information |
+| FPGA      | Field Programmable Gate Array       |
+| EDA       | Electronic Design Automation        |
+| AMI       | Amazon Machine Image                | EC2 machine images                                | linux flavours, windowes, etc... |
+| CIDR      | Classless Inter-Domain Routing      |                                                   | `0.0.0.0/0` allows all access    |
+| SSH       | Secure Shell                        |
+| IOPS      | Input-Output Per Second             |                                                   | a metric for hard disk           |
+| ENI       | Elastic Network Interface           | virtual network card                              |
+| EN        | Enhanced Networking                 |
+| SR-IOV    | Single Root I/O Virtualization      |
+| EFA       | Elastic Fabric Adaptor              |
+| HPC       | High Performance Computing          |
+| MAC       | Media Access Control (address)      |
+| PPS       | Packets Per Second                  |                                                   | networking metric                |
+| ENA       | Elastic Network Adaptor             | enable enhanced networking                        |
 
 </details>
+
+ENI - Elastic Network Interface - virtual network card
+EN - Enhanced Networking - uses single root I/O virtualization (SR-IOV) for better performan.
+EFA - Elastic Fabric Adaptor - attach EC2 to accelerate High Performance Computing (HPC) and machine learning capabilities

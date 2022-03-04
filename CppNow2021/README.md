@@ -15,6 +15,7 @@ all sorts of lectures, divided by field.
   - [x] [Adventures in SIMD-Thinking - Bob Steagall](Concurrency.md#adventures-in-simd-thinking---bob-steagall)
   - [x] [Parallelism on Ranges: Should We? - Giannis Gonidelis](Concurrency.mdd#parallelism-on-ranges-should-we---giannis-gonidelis)
   - [x] [Executors: The Art of Generating Composable APIs - Nikunj Gupta](Concurrency.md#executors-the-art-of-generating-composable-apis---nikunj-gupta)
+  - [x] [Converting a State Machine to a C++ 20 Coroutine - Steve Downey](Concurrency.md#converting-a-state-machine-to-a-c-20-coroutine---steve-downey)
 - [Interfaces](Interfaces.md)
   - [x] [When Should You Give Two Things the Same Name? - Arthur O'Dwyer](Interfaces.md#when-should-you-give-two-things-the-same-name---arthur-odwyer)
   - [x] [Windows, MacOS and Web: Lessons from Cross-platform Development @ think-cell - Sebastian Theophil](Interfaces.md#windows-macos-and-web-lessons-from-cross-platform-development--think-cell---sebastian-theophil)
@@ -55,8 +56,6 @@ all sorts of lectures, divided by field.
   - [x] Don't constexpr All the Things - David Sankel
 
 currently working on:
-
-- [ ] Converting a State Machine to a C++ 20 Coroutine - Steve Downey concurrency
 
 ### real talks:
 
