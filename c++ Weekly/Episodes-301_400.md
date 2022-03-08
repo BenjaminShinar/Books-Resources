@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize
+// cSpell:ignore fsanitize Fertig
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -800,4 +800,90 @@ int main()
 
 
 
+</details>
+
+## C++ Weekly - Ep 314 - Every Possible Way To Force The Compiler To Do Work At Compile-Time in C++
+<details>
+<summary>
+Different ways to do compile-time calculations.
+</summary>
+
+[Every Possible Way To Force The Compiler To Do Work At Compile-Time in C++](https://youtu.be/UdwdJWQ5o78)
+
+just making a value or function `constexpr` doesn't force the compiler to run it a compile time.
+
+we can make the value *static*, which forecs the compiler to compute the value at compile time, but also requires it to be const. 
+
+we can use `constinit`, but it also has to be static.
+
+```cpp
+constexpr int get_value(int value)
+{
+    return value *3;
+}
+
+int main()
+{
+    constexpr auto value1 = get_value(2); //up to the compiler to decide.
+    constexpr static auto value2 = get_value(3); //will be calculated at runtime.
+    constinit static auto value3 = get_value(4); //also must be static, but not const.
+}
+```
+if we change the function to be `consteval`, then it must be done it compile time sense, but that's not always what we want.
+
+```cpp
+consteval int get_value_consteval(int value)
+{
+    return value *3;
+}
+```
+
+in the previous episodes, we had some other tricks, like using a template parameter
+```cpp
+template<auto Value>
+consteval const auto make_compile_time()
+{
+    return Value;
+}
+int main()
+{
+    auto value 5 = make_compile_time<get_value(7)>();//comp
+}
+```
+
+there's also a [blog post](https://andreasfertig.info/) by Andreas Fertig, which wraps the normal function with a `consteval auto as_constant` function to force compile time calculations.
+
+```cpp
+consteval auto as_constant(auto value)
+{
+    return value;
+}
+int main()
+{
+    auto value7 = as_constant(get_value(15));
+}
+```
+
+and we want to generalize it to moveable stuff as well
+```cpp
+template <typename ... Param>
+consteval decltype(auto) consteval_invoke(Param && ... param)
+{
+    return std::invoke(std::forward<Param>(param)...);
+}
+
+int main()
+{
+    auto value8 = consteval_invoke(get_value, 9);
+}
+```
+type/keyword | compile-time calculation| const |static | example |notes
+----|----|----|---|---|---
+`constexpr` | up to the compiler | yes | no | `constexpr auto value = get_value(1);` 
+`constexpr static` | yes |yes | yes| `constexpr static auto value = get_value(1);` | must be static const
+`constinit static` | yes |no |yes | `constinit static auto value = get_value(1);` | must be static
+`consteval` function | yes |no |no | `auto value = get_value_consteval(5)` | argument must be compile time constants, function can't be used in run time.
+template parameter | yes |no |no | `auto value = make_compile_time<get_value(10)>()` | using templates
+wraping `consteval` function | yes | no | no | `auto value = as_constant(get_value(10))` |inner function can be reused
+`consteval invoke` wrapper | yes | no |no | with moveable and callable 
 </details>
