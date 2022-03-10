@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Mesos
+// cSpell:ignore Mesos LACP
  -->
 
 # Openshift For The Absolute Beginners
@@ -8,6 +8,7 @@ udemy course [Openshift for the absolute beginners](https://www.udemy.com/course
 
 
 ## Introduction
+
 <details>
 <summary>
 Course Introduction.
@@ -215,9 +216,9 @@ curl https://192.168.99.102:8443/oapi/v1/projects \
 </details>
 
 ## Openshift Concepts
-<!-- <details> -->
+<details>
 <summary>
-Openshift concepts
+Openshift concepts - projects, users, builds, deployments.
 </summary>
 
 ### Projects and Users
@@ -251,32 +252,275 @@ oc adm add-cluster-role-to-user cluster-admin administrator user
 now this user can see all the projects (including the ones that were configured by minishift).
 
 ### Builds and Deployments
+
+we want to add an application to our project, we integrate source code management services such as github into Openshift.
+
+when we add an application, we must specify the repository location, the build job is created automatically (clones the repository and builds an image), and it's pushed into a openshift repository.
+
+a successful build also triggers an Openshit deployment, which is similar, but not the same as kubernetes deployment.
+
+kubernetes deployment:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+```
+openshift deployment:
+```yaml
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+```
+
+adding an application does all the steps:
+> 1. Create Build
+> 2. Download Source
+> 3. Build Image
+> 4. Push to Repository
+> 5. Deploy
+
 #### Demo - Deploy an Application
+an example of deploying a simple application on the Openshift origin. we start with the openshift console, and a gitlab repository with two files: "app.py" and "requirements.txt".
+
+we create a new project, select it, click <kbd>Browse Catalog</kbd>, choose python, and fill in the details in the wizard, the name of the application and the source code path.
+
+now we move to the **overview** tab, and see that the deployment is in process. we can then move to the **builds** tab, to see the build pipeline in process. once it finished, we can see the deployment again and get the public ip address.
+
 ### Builds
+
+build strategies and build configurations. 
+
+strategies:
+- Docker Build
+- Source To Image (S2I)
+
+imagine we have this simple python app, built with the Flask framework.
+
+```py
+import os
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def main():
+  return "Welcome"
+
+@app.route('/how are you')
+def hello():
+  return "I am good, how about you?"
+
+if __name__ == "__main__":
+  app.run(host="0.0.0.0", port=8080)
+```
+
+kubernetes expects a docker image, so we need the configration to build it. manually, the dockerfile would look like this. this is the **Docker Build Strategy**
+
+```docker
+FROM ubuntu:16.04
+
+RUN apt-get update && apt-get install -y python python-pip
+
+RUN pip install flask
+
+COPY app.py /opt/
+
+ENTRYPOINT FLASK_APP=/opt/app.py flask run --host=0.0.0.0
+```
+
+the other strategy is **Source To Image Strategy**, which skips the manual docker file. and uses pre-built configurations.
+
+we can also build artifacts, like library files, with the **Custom Build** option.
+
+the internal registry is located at the address of "172.30.1.1:5000", we can use  **Image Streams** to map images at registries to images used by the applications, this uses the image sha, so even if the image at the source changes, the original image is still used.
+
+in the web console, we can see the Build configuration, and under the <kbd>Actions</kbd> button, we can view the build configuration yaml and see how it relates to the other fields/
+
+```yaml
+kind: "BuildConfig"
+apiVersion: "v1"
+metadate:
+  name: "simple-webapp"
+spec:
+  runPolicy: "Serial"
+  triggers:
+    -
+      type: "GitHub"
+      github:
+        secret: "<>"
+    -
+      type: "Generic"
+      generic:
+        secret: "<>"
+    -
+      type: "ImageChange"
+  source:
+    git:
+      uri: "https://github.com/mmushad/simple-webapp-flask.git"
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: "ImageStreamTag"
+        name: "python:3.6"
+  output:
+    to:
+      kind: "ImageStreamTag"
+      name: "simple-webapp:latest"
+```
+
+and to a docker file build strategy, we modify this file
+
+```yaml
+kind: "BuildConfig"
+apiVersion: "v1"
+metadate:
+  name: "simple-webapp-docker" #changed
+spec:
+  runPolicy: "Serial"
+  triggers:
+    -
+      type: "GitHub"
+      github:
+        secret: "<>"
+    -
+      type: "Generic"
+      generic:
+        secret: "<>"
+    -
+      type: "ImageChange"
+  source:
+    git:
+      uri: "https://github.com/mmushad/simple-webapp-docker.git" #dockerfile
+  strategy:
+    type: Docker 
+    dockerStrategy: 
+      from:
+        kind: "DockerImage"
+        name: "ubuntu:16.04"
+  output:
+    to:
+      kind: "ImageStreamTag"
+      name: "simple-webapp:latest"
+```
+
+to add this configuration, we click <kbd>Add To Project</kbd> and then <kbd>Import</kbd>, and now we will have two configurations. 
+
 #### Demo - Builds
 
-### Coding Exercise
-#### Coding Exercise 1: Builds - 1
-#### Coding Exercise 2: Builds - 2
-#### Coding Exercise 3: Builds - 3
-#### Coding Exercise 4: Builds - 4
+in the web console, we choose a project and an application, and view the build configuration. we can also see the web hooks/triggers, add environment variables and view events.
+
+now we do the same process as before, in this example we create the docker file. we also create a new ImageStream tag, we create it under the <kbd>Images</kbd> tab, and duplicating the existing json and changing the name.
+
+#### Coding Exercises: Builds
+
+```yaml
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: my-build-config
+spec:
+  runPolicy: Serial
+  source:
+      git:
+        ref: master
+        uri: https://github.com/mmumshad/simple-webapp-docker
+      type: Git
+  strategy:
+      dockerStrategy:
+      type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: simple-webapp-docker:latest
+  triggers:
+    - type: ConfigChange
+```
 ### Build Triggers
-### GitLab - Setup
+
+so far, we've initiated builds in a manual way, but in CI-CD cycles, we want to have automated builds. this means that when the source code is changed, then a new version of the application is built using the new code.
+
+this is done by using webhooks, which are triggered when an evert (code change) happens, and they notify a diffrent service.
+
+in github, we can look the <kbd>settings</kbd> tab, choose <kbd>webhooks</kbd> and then paste the url from the build configuration details.
+
+we just need to make sure that github and openshift can talk to one another, they need to belong to the same network!
+
 #### Demo - Build Triggers
+
+adding a webhook, there are some defaults, but we can create more, under <kbd>Actions</kbd>, in **triggers** and we select **gitlab** as the type, and we create a new secret. once created, we get a url that we can paste into gitlab.
+
+we might need to allow requests to local network if our openshift isn't public.
+
 ### Deployments
+
+deployment in OS are similar to kubernetes deployments. 
+
+in kubernetes, the smallest unit is a pod (which contains one or more containers), next up is the replica-set, which is a set of pods. another level up is the deployment, which controls life time and updating.
+
+in openshift, we can view the deployments under the applications tab in our project. the deployment uses the build configuration. it has the number of replicas and the deployment strategy (such as rolling update). just like builds, we can set deployment manually or by a trigger, and it is configured out of the box to run when the source code changes.
+
+we can configure the deployment at a yaml file or with a wizard. we can rollback to previous deployments.
+
+strategies:
+- Recreate - destroy all, deploy all new.
+- Rolling Update - destroy one, deploy one.
+- Blue Green Update - deploy all, route to new, destroy old.
+- AB deployment - splitting traffic between versions.
+
+```sh
+oc rollout latest dc/simple-webapp-docker
+oc rollout history dc/simple-webapp-docker
+oc rollout undo dc/simple-webapp-docker
+```
 #### Demo - Deployments
+
+in the web management, we add a deployment, we click the <kbd>learn more</kbd> link to get a template for a deploymentConfig yaml.
+
+we modify is and update the triggers. we click <kbd>add to project</kbd> and import the configuration file and fix any issues with the file.
+
+we update the source code in the version control, which triggers a build, which triggers a deployment.
 
 </details>
 
 ## Networks, Services, Routes and Scaling
 
+<!-- <details> -->
+<summary>
 
-### Networking Overview
+</summary>
+
+
+Kubernetes cluster are composed of nodes (master and workers), which run pods. the pods might need to communicate with one another, which means they must be on the same network, and have a unique IP address which they can access.
+
+openshift uses SDN - Software Defined Network, which is a virtual network, an overlay network.
+
+Open vSwitch:
+- VLAN Tagging
+- Trunking
+- LACP
+- Port Mirroring
+
+the default id for this overlay network is *10.128.0.0/14*, where each node has a unique subnet
+- *10.128.0.0/23*
+- *10.128.2.0/23*
+- *10.128.4.0/23*
+
+if we want to see the ip addresses.
+`oc get pods -o wide`
+
+but those ips aren't set int stone, if a pod goes down, it will come back with a differnet ip. Openshift comes with a builtin DNS, based on SkyDns.
+
+SDN plugins:
+- **ovs-subnet** - connects all pods in the cluster (across all projects)
+- **ovs-multitenant** - virtual network for each project.
+
+there is also support for other plugins. if we want external connectivity, we use services and routes.
+
+
 ### Services and Routes
 #### Demo - Services and Routes
 ### Scaling
 #### Demo - Scaling
 
+</details>
 
 ## Storage, Templates and Catalog
 
@@ -289,6 +533,159 @@ now this user can see all the projects (including the ones that were configured 
 
 
 ## Conclusion
+
+## Misc
+<details>
+<summary>
+Additional stuff
+</summary>
+
+### Yaml
+
+yaml is a file format, like xml and json. it is used to represent data, these three files represent the same data.
+
+xml
+```xml
+<Servers>
+  <Server>
+    <name>Server1</name>
+    <owner>John</owner>
+    <created>12232012</created>
+    <status>active</status>
+  </Server>
+</Servers>
+```
+json
+```json
+{
+  "Servers":[
+    {
+      "name": "Server1",
+      "owner": "John",
+      "created": 12232012,
+      "status": "active"
+    }
+  ]
+}
+```
+yaml
+```yaml
+Servers:
+  - name: Server1
+    owner: John
+    created: 12232012
+    status: active
+```
+
+yaml uses key-value pairs, the format is\
+`<key>: <value>`
+
+where the space after `:` matters.
+
+we can have arrays/list with the `-` to indicate elements, or inner dictionaries/maps. the indentation matters, elements at the same level must algin.
+```yaml
+Fruits:
+  - Oranage
+  - Apple
+  - Banana
+
+Banana:
+  Calories: 105
+  Fat: 0.4 g
+  Carbs: 27 g
+```
+
+we can either have a value or a inner object (list/map), not both.
+
+we can have nested elements, lists inside dictionaries, and so one.
+
+**Dictionary vs List vs List of Dictionaries**
+
+to store information on a single object, we use a dictionary. for many elements of the same type, we use a list.
+
+```yaml
+listExample:
+  - element1
+  - element2
+  - element3
+
+listOfDictionaries:
+  - Key1: Value1
+    Key2: Value2
+  - Key1: Value3
+    Key2: Value4
+  - Key1: Value5
+    Key2: Value6
+```
+
+dictionaries are unordered, while lists are ordered. dictionaries with the same proprties are identical if the values are the same, but lists aren't identical if the elements are identical, but not in the same values.
+
+#### Yaml Exercise
+
+```yaml
+Fruit: Apple
+Drink: Water
+Dessert: Cake
+Vegetable: Carrot
+```
+```yaml
+Fruits:
+  - Apple
+  - Banana
+  - Orange
+Vegetables:
+    - Carrot
+    - Tomato
+    - Cucumber
+```
+
+```yaml
+Fruits:
+  - Apple:
+        Calories: 95
+        Fat: 0.3
+  - Banana:
+      Calories: 105
+      Fat: 0.4
+  - Orange:
+        Calories: 45
+        Fat: 0.1
+        
+Vegetables:
+  - Carrot:
+        Calories: 25
+        Fat: 0.1
+  - Tomato:
+        Calories: 22
+        Fat: 0.2
+  - Cucumber:
+        Calories: 8
+        Fat: 0.1
+```
+```yaml
+Employee:
+  Name: Jacob
+  Sex: Male
+  Age: 30
+  Title: Systems Engineer
+  Projects:
+    - Automation
+    - Support
+  Payslips:
+    - 
+        Month: June
+        Wage: 4000
+    - 
+        Month: July
+        Wage: 4500
+    - 
+        Month: August
+        Wage: 4000
+
+```
+### GitLab - Setup
+
+</details>
 
 ## Takeways
 
@@ -311,5 +708,9 @@ Things to remember
   - `oc get projects`
   - `oc get users`
 - `oc adm add-cluster-role-to-user <cluster role> <user name>`
-
+- `oc rollout latest dc/<deployment-name>`
+- `oc rollout history dc/<deployment-name>`
+- `oc rollout undo dc/<deployment-name>`
+- `oc get <resource-type>`
+  - `oc get <resource-type> -o wide`
 </details>
