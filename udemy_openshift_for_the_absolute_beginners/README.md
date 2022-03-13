@@ -482,11 +482,10 @@ we update the source code in the version control, which triggers a build, which 
 
 ## Networks, Services, Routes and Scaling
 
-<!-- <details> -->
+<details>
 <summary>
-
+Communication Between Pods
 </summary>
-
 
 Kubernetes cluster are composed of nodes (master and workers), which run pods. the pods might need to communicate with one another, which means they must be on the same network, and have a unique IP address which they can access.
 
@@ -514,25 +513,204 @@ SDN plugins:
 
 there is also support for other plugins. if we want external connectivity, we use services and routes.
 
-
 ### Services and Routes
+services are a way to connect pods with one another, rather than using ip addresses or dns name, we have the service which acts as a load balancer. we can use services to connect between pods internally, between the outside world and our pods, and our pods can connect to other sites/services.
+
+each service has an ip address and DNS entry, there is an internal ip assigned, which is called **cluster IP**. services are linked to pods by using **selectors**. there are also the service ports and the target port.
+
+to connect the service to the outside world, we use **Routes**, which act as a proxy. routes uses load balancing strategies, such as
+- source - (default strategy) - always matching the same external ip to the same target, making it a *sticky session*.
+- roundrobin - each connection is routed to the next target.
+- leastconn - a connection is routed to the least used backend target.
+
+we can configure SSL connection in the **security section**, we can configure http/https access, certificates, and configure a/b routing.
+
 #### Demo - Services and Routes
+
+in the web console, we take an example service file from the *learn more* link, and we'll start editing it.
+
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-webapp-docker
+spec:
+  selector:
+    deployment: simple-webapp-docker
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+```
+
+now we import the file, and create the service, and we see the ip address. we can use the internal ip (ClusterIP) to access the pod from inside the cluster, but if we want to access it from outside, we need to create a **route**.
+
+we fill in the details, if we want to use an exiting DNS, we need to have it set up to forward to the openshift route.
+
+we can make a change to the application code and have the end-to-end cycle start again.
+
 ### Scaling
+
+deployment controller -> replication controller.
+
+the number of pods (replications) is controlled by the replication contoller. we can change it in the yaml file or in the web console.
+
 #### Demo - Scaling
+
+in the web management console.
+
+we start a new application, which has a random colored background. we create a new projects, a new application, a new deployment. we can increase the number of pods by clicking the up arrow in the application page. this creates a new pod, which is managed by the same service, each access to the website is done by the service controller.
+
+by default, the load balancing strategy uses the stickySession strategy, which means that the same client (browser) will always be directed to the same instance of the application.
+
+we can change this by using a different load balancing strategy, such as round robin, and by disabling the cookies.
 
 </details>
 
 ## Storage, Templates and Catalog
 
+<details>
+<summary>
+Storage (volumes, claims). Templates, Catalog.
+</summary>
+
 ### Storage
+
+docker containers are meant to be ephemeral, and aren't supposed to hold data over time. if we wish the data to remain, we need to use persistent volumes.
+
+openshift uses the same Kubernetes plugins to persist data and add storage to the cluster. we have persistant volumes and persistant volumes claims.
+
+<kbd>Create Storage</kbd>
+
+access modes:
+- Single User (RWO)- read and write to a single user.
+- Shared Access (RWX) - read and write for multiple users.
+- Read Only (ROX) - read only for multiple users.
+
+we give the volume a name and a size. and then we can add the storage to a pod.
+
 #### Demo - Storage
+
+we have a program that reads a file from a storage, so we need to provide a volume claim to make the pods able to access this file.
+
+<kbd>Create Storage</kbd>, and then in the deployment configuration, we select <kbd>add Storage</kbd> and select our new volume.
+
+in the example, the data is shared across multiple instances of the application. they can all see the changes done by the others.
+
 ### Example Voting Application Introduction
+
+microservice architecture using a simple application, the voting application sample.
+- voting-app
+- in-memory DB (redis)
+- worker (.Net)
+- db (Postgres SQL)
+- results-app (node JS)
+
+we have different services and different programs in our deployment.
+
 #### Demo - Deploy Example Voting Application on Openshift
+
+now in openshift.
+
+we create a new project. and now start deploying appliication. we take the template from github, copy it to a file and import it, so now we can use the redis template. we use the deafult values and set up a password. we next move to the python frontend application, we again use the default option. we need to pass the REDIS password as an environment variable.
+
+we now move to the results side, a postgres SQL database and a node JS results page. for now we use environment variables, but in real life scenarios, we should use secrets. we also change the default port to 8080.
+
+the final part is to deploy the worker application. this time we will use a docker-build strategy, we edit the yaml file and change the strategy. we can see the changes in the log of the application.
+
 ### Templates and Catalog
+
+the catalog consists of the known applications that openshift knows how to handle, if we look at the **Django + Postgres SQL** option:
+- image stream
+- Build
+- Deployment (application)
+- Deployment (database)
+- service (port 5432)
+- secret (database credentials)
+- Route
+- Additional User Parameters
+
+this is a template, it contains data about deploying a stack.
+
+```yaml
+apiVersion: v1
+kind: Template
+metadata:
+  name: custom-app
+objects:
+- apiVersion: v1
+  kind: Secret
+  #more fields
+- apiVersion: v1
+  kind: Service
+  #more fields
+- apiVersion: v1
+  kind: Service
+  #more fields
+- apiVersion: v1
+  kind: Route
+  #more fields
+- apiVersion: v1
+  kind: BuildConfig
+  #more fields
+- apiVersion: v1
+  kind: DeploymentConfig
+  #more fields
+- apiVersion: v1
+  kind: DeploymentConfig
+  #more fields
+- apiVersion: v1
+  kind: ImageStream
+  #more fields
+parameters:
+  - displayName: "Namespace"
+    name: "NAMESPACE"
+```
+
+we can now create this template as a catalog item by running the openshift command
+`oc create -f template-config.yml`.
+
+
 #### Demo - Create a custom Catalog
 
+we want to take the voting application and make it into a template / catalog item.
 
-## Conclusion
+*example-coting-app-template.yml*
+now we start copying the templates for all of the app components, we clear the unneeded parts. we start with the secrets, which are the passwords fot the postgres and redis databases.
+```yml
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimeStamp: null
+  name: example-voting-app-template
+objects:
+  - apiVersion: v1
+    kind: Secret
+    data:
+      database-name: db
+      database-password: <> #postgres password
+      database-user: postgres_user
+    metadata:
+      name: db
+  - apiVersion: v1
+    kind: Secret
+    data:
+      database-password: <> #redis_password
+    metadata:
+      name: redis
+```
+we do the same with the build configuration, and then the image streams configurations, we have 5 deployment configurations which we need to include. the next part is the services yaml files. and finally the routes.
+
+we need to provide the namespace, because we can't add templates to the default namespace.
+
+`oc create -f example-coting-app-template.yml -n someNameSpace`
+
+we could also make things more complex by requesting parameters from the user in the wizard.
+
+</details>
+
 
 ## Misc
 <details>
@@ -713,4 +891,6 @@ Things to remember
 - `oc rollout undo dc/<deployment-name>`
 - `oc get <resource-type>`
   - `oc get <resource-type> -o wide`
+- `oc create -f <file>`
+- `oc export service db`
 </details>
