@@ -862,6 +862,19 @@ Employee:
 
 ```
 ### GitLab - Setup
+setting up a local gitlab, virtual machine. we start with the orcale virtual box, so now we use it to deploy a **CentOS** machine.
+
+we go to the osBoxes website and pull the CentOS image. we extract it to a folder. we create a new virtual machine, the os system is *other (linux-64)*, we then take the image as the base for the hard drive. we need to set up a consistent, static ip address, so we need to add an adaptor, and disable the **dhcp** option.
+
+the default username and password is mentioned in the site where we took the image.
+
+we close the machine and then choose <kbd>clone virtual machine</kbd> (linked clone) to use the machine as a template.
+
+we need to run a script to get the static ip for the cloned machine.
+
+we get the gitlab to image from the gitlab website, we can use a docker image if we want.
+
+now we can use the image to host a gitlab web console.
 
 </details>
 
