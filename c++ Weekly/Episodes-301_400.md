@@ -887,3 +887,42 @@ template parameter | yes |no |no | `auto value = make_compile_time<get_value(10)
 wraping `consteval` function | yes | no | no | `auto value = as_constant(get_value(10))` |inner function can be reused
 `consteval invoke` wrapper | yes | no |no | with moveable and callable 
 </details>
+
+## C++ Weekly - Ep 315 - `constexpr` vs `static constexpr`
+<details>
+<summary>
+more comparison between constexpr and static constexpr. looking at benchmark numbers.
+</summary>
+
+[`constexpr` vs `static constexpr`](https://youtu.be/IDQ0ng8RIqs)
+
+clarify: static at global scope isn't the same as static in the function scope. static at global scope is duplicated into each translation unit.
+
+```cpp
+//some header
+
+static constexpr auto bigData = generate_bigData(); //duplicated
+inline constexpr auto bigData2 = generate_bigData(); //probably what i meant
+```
+
+at the function level scope we use `static constexpr`, and we usually mean this scope in the previous videos.
+
+benchmark examples, the version with the local constexpr array (dynamic initialization) is faster than the on with the static constexpr array. this is counter to what we said earlier.
+
+```cpp
+// in the current stack
+std::uint32_t to_ascii_base36_digit_dynamic(std::uint32 digit)
+{
+    constexpr std::array<char, 32> base36_map = {'0','1',/*...*/, 'x','y','z'};
+    return base36_map[digit];
+}
+// in the global storage
+std::uint32_t to_ascii_base36_digit_static(std::uint32 digit)
+{
+    static constexpr std::array<char, 32> base36_map = {'0','1',/*...*/, 'x','y','z'};
+    return base36_map[digit];
+}
+```
+he plays with the numbers (data size) in the benchmark, and increases the map size to 72, then 144 and 2048. now the results are reversed, the static constexpr version is much faster. it's just a matter of copying data onto the stack vs accessing the global data. it also changes with the optimization level and the compiler (clang vs gcc vs visual studio).
+
+</details>
