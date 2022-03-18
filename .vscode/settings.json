@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "availbe",
     "cbegin",
     "cend",
     "chrono",
@@ -11,8 +12,12 @@
     "endl",
     "ifdef",
     "iostream",
+    "kubectl",
+    "kubelet",
+    "Kubernetes",
     "lvalue",
     "malloc",
+    "mkdir",
     "multiset",
     "noexcept",
     "nulltpr",
@@ -22,12 +27,8 @@
     "rvalues",
     "struct",
     "t",
-    "unscoped",
-    "Kubernetes",
-    "kubelet",
-    "kubectl",
-    "mkdir",
-    "udemy"
+    "udemy",
+    "unscoped"
   ],
   "cSpell.ignoreWords": [
     "Amortised",

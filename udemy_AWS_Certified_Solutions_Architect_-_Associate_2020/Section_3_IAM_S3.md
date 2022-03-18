@@ -792,5 +792,5 @@ it's worth reading the S3 FAQ before the exam.
 
 ##
 
-[next](section_4_EC2.md)\
+[next](Section_4_EC2.md)\
 [main](README.md)

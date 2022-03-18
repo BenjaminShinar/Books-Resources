@@ -1445,7 +1445,7 @@ resource "aws_iam_user" "admin-user"{
 }
 ```
 
-the provider is aws, the resource type is iam_user, the resource name is "admin-user", and we provide the _name_ required argument, and the optional tags map. we could also provide a _path_ argument, a _permissions_boundary_ arn and an _force_destroy_ option.
+the provider is aws, the resource type is iam*user, the resource name is "admin-user", and we provide the \_name* required argument, and the optional tags map. we could also provide a _path_ argument, a _permissions_boundary_ arn and an _force_destroy_ option.
 
 now when we run terrafrom init, we download the plugins as usual, but when we run `terraform plan`, we will get an error because we don't have valid permissions.
 
@@ -1695,7 +1695,7 @@ in the management console. we go to the dynamoDB service and create a table, we 
 
 #### DynamoDB with Terraform
 
-lets define a dynamoDB resource block. we provide the table name and the hash_key to definf the primary key, we must define an _attribute_ for the primary key, but we can also provide attributes for other fields.
+lets define a dynamoDB resource block. we provide the table name and the hash*key to definf the primary key, we must define an \_attribute* for the primary key, but we can also provide attributes for other fields.
 
 ```hcl
 resource "aws_dynamodb_table" "cars"{

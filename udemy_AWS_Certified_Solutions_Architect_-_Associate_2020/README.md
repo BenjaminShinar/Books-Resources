@@ -2,129 +2,18 @@
 
 Udemy course [AWS Certified Solutions Architect - Associate 2020](https://www.udemy.com/course/draft/362328/). by _Ryan Kroonenburg_
 
-## Section 1 - Introduction
-
-<details>
-<summary>
-Course introduction.
-</summary>
-
-### Exam Blueprint
-
-what do we need to know to pass the exam (2020 version)
-
-- 130 minutes
-- 60 question
-- grades are between 100-1000, passing score is 720.
-- qualification is valid for 2 years
-- questions are scenario based - they aren't supposed to be tricky or memorization based.
-
-we can look up the details in the Amazon website. it costs money. we need a certification account, we can then book an exam, get training, see the previous scores, etc.
-
-### Why Should I learn AWS?
-
-why learn and get certified in AWS?
-
-(Ryan telling his own story), describing **A Cloud Guru** and **Linux Academy**.
-
-aws Consulting partner qualification has tiers, select,advanced, premiers, in order to reach a certain tier, employees of the company need aws certifications, such as _practitioner_,_Associate_ and _professional_ and other specialized certificates.
-
-each Tier of certifications has different certification
-
-- Practitioner Tier
-  - Certified Cloud Practitioner
-- Associate Tier
-  - Certified Solutions Architect Associate
-  - Certified Developer Associate
-  - Certified Sysops Administrator Associate
-- Professional Tier
-  - Certified Solutions Architect Professional
-  - Certified Devops Professional
-- Specialty Tier
-  - Advance Networking
-  - Database
-  - Data Analysis
-  - Machine Learning
-  - Security
-  - Alexa Skill BUilder
-
-Ryan says some are easier than others, but it depends on the person. the aws platform grows each year.
-
-</details>
-
-## Section 2 - AWS - 10,000 Foot Overview
-
-<details>
-<summary>
-Getting Acquainted with AWS
-</summary>
-
-### The History Of AWS
-
-> "Invention requires two things:
->
-> 1. The ability to try a lot of experiments
-> 2. Not having to live wit the collateral damage of failed experiments"\
->    ~ (Andy Jassy, ceo of AWS)
-
-aws started with SQS, and first marketed to developer and small companies, as it was easier to provision resources from amazon rather than buy them upfront.
-
-Certification started in 2013,
-
-re:invent is the aws conference, a lot of new stuff is announced then.
-
-### AWS - 10,000 Foot Overview
-
-there are tons of Aws Services, each year there are more and more, the services are grouped by concepts:
-
-- Compute: EC2, Lambda
-- Storage: S3, EFS
-- Databases: RDS, DynamoDb
-- Migration and Transfer: Snowball
-- Network and Content delivery: Vpc, Cloud front
-- Developer tools
-- Robotics
-- Block chain
-- Satellite
-- Management and Governance
-- Media Services
-- Machine Learning
-- Analytics
-- Security, Identity and Compliance
-- Mobile
-- AR and VR (augmented and virtual reality)
-- Application Integration
-- AWS Cost Management
-- Customer Engagement
-- Bussiness Application
-- Desktop and App Streaming
-- IOT (internet of thins
-- Game Development
-
-there are regions and availability zones. As of the time of the course, there are 24 regions and 72 availability zones. avalability zones are based on data-center. a datacenter is simply a location (one or more buildings) with tons of servers. A region consists of availability zones. there are also **edge locations**, which are end points for aws caching content, like this is used for CloudFront. edge locations aren't regions.
-
-to pass the solution architert exam, one would need to know:
-
-- **AWS Global infrastructure**
-- **Compute**
-- **Storage**
-- **Databases**
-- Migration and Transfer
-- **Network and Content delivery**
-- Management and Governance
-- Machine Learning
-- Analytics
-- **Security, Identity and Compliance**
-- Desktop and App Streaming
-
-### How To Sign Up To AWS
-
-Signing up into AWS and getting the free tier features.
-
-<kbd>Create aws Account</kbd>\
-use a personnel account, we need to provide credit information, even if we use a free account. choose the basic plan for support (free), we can personalize the account, and eventually sign into the console.
-
-</details>
+- Section 1 - Introduction
+- Section 2 - 10,000 Foot Overview
+- Section 3 - IAM & S3
+- Section 4 - EC2
+- Section 5 - Databases on AWS
+- Section 6 - Advanced IAM
+- Section 7 - Route 53
+- Section 8 - VPCs
+- Section 9 - HA Architecture
+- Section 10 - Applications
+- Section 11 - Security
+- Section 12 - Serverless
 
 ## Section 5 - Databases on AWS
 
@@ -141,6 +30,8 @@ use a personnel account, we need to provide credit information, even if we use a
 ## Section 11 - Security
 
 ## Section 12 - Serverless
+
+[Aws This Week](https://acloud.guru/aws-this-week): weekly AWS content.
 
 ## Takeaways
 
@@ -161,16 +52,22 @@ humans who need to interact with the aws services are **users**, they can be par
 
 Aws services:
 
-- IAM - Identity Access Management:
-- Cloud Watch: for billing alarms
-- SNS- Simple Notification Service: send emails
-- S3 - Simple Storage Service: Object Storage
-- EC2 - Elastic Cloud Compute
-- SQS - :
-- DataSync: Synchronize data between AWS and on-premises.
-- Snowball: physical data transfer
+- IAM (Identity Access Management):
+- Cloud Watch: Monitors Resource usage and other metrics, used for billing alarms. Alarms,Events,Logs and Dashboards.
+- CloutTrail: Monitors AWS actions (from the console or the API), which users and accounts.
+- SNS (Simple Notification Service): send emails
+- S3 (Simple Storage Service): Object Storage
+  - DataSync: Synchronize data between AWS and on-premises.
+  - Snowball: physical data transfer
+- EC2 (Elastic Cloud Compute): Computing Instances
+- SQS :
+- FSx (windows and Lustre) - native windows managed file system. Lustre is for compute intensive data.
 
-Acronyms
+CloudWatch monitors resource usage, such as the number of EC2 instances we have, EBS volumes used, redirections from load balancers, etc... . CloudTrail Monitors aws actions such as API calls or other aws actions, the focus is how the users and services interact with AWS itself, not the metrics of the services themselves.
+
+To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, Secret Access Key.
+
+### Acronyms
 
 | Shorthand | Long name                           | Usage                                             | notes                            |
 | --------- | ----------------------------------- | ------------------------------------------------- | -------------------------------- |
@@ -218,9 +115,9 @@ Acronyms
 | MAC       | Media Access Control (address)      |
 | PPS       | Packets Per Second                  |                                                   | networking metric                |
 | ENA       | Elastic Network Adaptor             | enable enhanced networking                        |
+| NFS       | Network File System                 |                                                   | used in EFS                      |
+| SMB       | Server Message Block                |                                                   | FSx Windows                      |
+| AD        | Active Directory                    |
+| DFS       | Distributed File System             |
 
 </details>
-
-ENI - Elastic Network Interface - virtual network card
-EN - Enhanced Networking - uses single root I/O virtualization (SR-IOV) for better performan.
-EFA - Elastic Fabric Adaptor - attach EC2 to accelerate High Performance Computing (HPC) and machine learning capabilities

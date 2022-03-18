@@ -231,7 +231,7 @@ if we choose types like MS-SQL or MY-SQL, we will get the correct port. we can h
 
 ### EBS Basics
 
-<!-- <details> -->
+<details>
 <summary>
 EBS - Elastic Block Storage
 </summary>
@@ -358,29 +358,371 @@ an ELastic Fabric Adapter can be attached to an EC2 instance to acclarate High P
 
 #### Encrypted Root Device Volumes & Snapshots
 
+The root device volume is basically the disk space with the operating system, in the past, we would need to create and snapshot and encrypt that snapshot, but now we can provision enctypred root device volumes directly.
+
+in the console, we open the <kbd>EC2</kbd> and create a t2.micro machine, and in the storage page, we can add the encryption at creation. but if we don't encrypt it now, we can do so later. we add it to proper security group and start it.
+
+now, under the **Elastic Block Store** option in the side bar, we can se that this volume isn't encrypted. <kbd>Actions</kbd>, <kbd>Create Snapshot</kbd>, and once it's live, we can click it, <kbd>Actions</kbd>, <kbd>Copy</kbd> and check the **Encryption** box. once it's done coyping, we click <kbd>Actions</kbd> again, and choose <kbd>Create Image</kbd> to create an encrypted AMI.
+
+we could use this ami to create a new EC2 instance.
+
+(this process can come up in the exam, but it isn't as popular as it once was).
+
+> - Snapshots of enctyped volumes are encrypted automatically.
+> - Volumes restoed from enctyped snapshots are encrypted automatically.
+> - You can share snapshots, but only if they are un-encrypted.
+> - These snapshots can be shared with other AWS accounts or made public.
+> - It is now possible to encrypt root device volumes upon creation of the EC2 instance.
+> - The process to make an un-encrypted machine into an encrypted root device one is:
+>   - Create a snapshot of the un-encrypted root device volume.
+>   - Create a copy of the snapshot and select the encrypt option.
+>   - Create and AMI from the encrypted snapshot
+>   - Use the AMI to create a new EC2 machine.
+
 </details>
 
 ### Spot Instances & Spot Fleets [SAA-C02]
 
+> **Amazon EC2 Spot Instances** let you take advantage of unused EC2 capacity in the AWS Cloud. Spot Instances are available at up to 90% discount compared to On-Demand prices. You can use **Spot Instances** for various stateless, fault tolerant or flexible applications, such as big data, containerized workloads, CI/CD, web servers, high-performance computing (HPC) and other test and development workloads.
+
+to use spot instances,we decide on the maximum **spot price**, which is the price we are willing to pay. as long as the asking price is below this amount, the EC2 instance will be provisioned to us.
+
+The hourly spot price varies depending on capacity and region, if the price goes above the maximum spot price we marked, we have **two minutes** to choose whether to stop or terminate the instances.
+
+we can prevent spot instances from being terminated by activating **spot block**. this means that even if the price goes above the spot price, we will still continue with the job, this can be done in blocks between one and six hours. in the aws console, we can see the price fluctuations.
+
+Spot instances aren't suitable for:
+
+- Persistent workloads
+- Critical jobs
+- Databases
+
+however,if our application can cope with sudden stops and terminations, it might be suitable.
+
+the process:
+
+1. we start by creating a request, this consists of the maximum spot price, the desired number of instances, launch specifications, the type of the request (one-time | persistent), and the valid from and valid until times.
+2. if the current price is above the spot price, the request will fail. if not, it will launch the instance.
+3. if the prices rises above the spot prices and we chose the the one-time request type, then our instance is stopped and terminated.
+4. if the request type was persistent, then the instance is stopped, but once the price falls below the spot price, the instance will begin again.
+
+there is a flow of how the request works in the amazon documentation.
+
+> **Spot Fleets**\
+> A Spot Fleet is a collection of Spot Instances and, optionally, On-Demand Instances.
+>
+> The Spot Fleet attempts to launch the number of Spot Instances and On-Demand Instance to meet the target capacity you specified in the Spot Fleet requests. The request for the Spot Instances is fulfilled if there is available capacity and the **maximum price you specified in the request exceeds the current Spot price**.\
+> The Spot Fleet also attempts to maintain its target capacity fleet if your Spot Instances are interrupted.
+
+Spot fleets will try and match the target capacity with you price restanits
+
+- Different launce pools, like EC2 instance types, operating systems and availability zones.
+- We can have multiple pools, and the fleet will choose the best way to implemenate the request based on the chosen strategy.
+  - **capacityOptimized** - The Spot instances come from the pool with optimal capacity for the number of instances launching.
+  - **diversified** - The Spot instances are distributed across all pools.
+  - **lowestPrice** - The Spot instances come from the pool with the lowest price, default strategy.
+    - **InstancePoolsToUseCount** - The Spot instances are distributed across the number of spot instance pools you specify, this is only valid when used in combination with **lowestPrice**.
+- Spot fleets will stop launching instaces once the desired capacity is reached of the the price is above the price threshold.
+
+> - Spot instances save up to 90% of the cost of On-Demand instances.
+> - Useful for anytype of computing where you don't need persistent storage
+> - You can use **Spot block** to stop running spot instances from terminating.
+> - A Spot Fleet is a collection of Spot instances and, (optionally), On-Demand instances.
+
 ### EC2 Hibernate [SAA-C02]
 
-### AWS This Week
+for EC2 instances, we can **stop** or **terminate** them.
+
+- **Stop** - the data is kept on the disk (EBS) and will remain there until the EC2 instance is started again.
+- **Terminate** - by default, the root device volume will also be terminated. (there is an option to keep the root device)
+
+when we start the ec2 instance
+
+- Operating system boots up
+- User data script is run (_boostreap scripts_)
+- The application starts
+
+> When you hibernate and EC2 instance, the operating system is told to perform hibernation (suspend-to-disk). Hibernation **saves the contents** from the instacne memory (RAM) to your amazon EBS root volume. We persist the instance Amazon EBS root volume and any attached EBS data volumes.
+>
+> When we start the instace out of hibernation
+>
+> - The Amazon EBS root is restored to its' previous state.
+> - The RAM contnets are reloaded.
+> - The processes that were previously running on the instance are resumed.
+> - Previously attached data volumes are **reattached and the instance retains its instance ID**.
+
+with hibernate, the instance boots much faster, the operating system doesn't need to reboot because the in-memory (RAM) state is preserved. this is usefull for long-running process and services that take a time to initialize.
+
+in the AWS Console, <kbd>EC2</kbd>, we start with a normal AMI, and in the configuration step, there is an _Stop - Hibernate behavior_ checkbox.
+
+- root volume must be large enough.
+- root volume must be an encrypted EBS volume.
+
+we ssh into the machine, and run the `uptime` command. then we choose <kbd>Actions</kbd> for the instance, <kbd>Instance State-> Stop - Hibernate</kbd>. and then we start it again by clicking <kbd>Actions</kbd> and choosing <kbd>Instance State -> Start</kbd>. we ssh into it again, and run the `uptime` again, and we see that it doesn't count as a re-boot.
+
+> - EC2 Hibernate preserve the in-memory RAM on persistent storage (EBS).
+> - Much faster to bot up because you do no't need to reload the operating system
+> - Instance RAM must be **less than 150GB**.
+> - Instance families include C3, C4, C5, M3,M4,M5, R3,R4,R5. (M - general purpose, C - compute optimized, R - memory optimized).
+> - Available for WIndows, Amazon linux 2 AMI, and Ubuntu.
+> - Instances cant be hibernated for more than **60 days**.
+> - Available for **On-Demand Instances** and **Reserved Instances**.
 
 ### CloudWatch 101
 
-### CloudWatch Lab
+> AWS CloudWatch is a Monitoring service to monitor your AWS resources, as well as the application that you run on AWS.
+
+it monitors performacne, things such as:
+
+- Compute
+  - EC2 Instances
+  - AutoScaling Groups
+  - Elastic Load Balancers
+  - Route53 Health Checks
+- Storage & Contnt Delivery
+  - EBS Volumes
+  - Storage Gateways
+  - CloudFront
+
+Host level metrics:
+
+- CPU
+- Network
+- Disk
+- Status Check
+- Hypervisor
+
+not to be confused with Cloud Trail
+
+> AWS CloudTrail increases visibility into your yser and resource activity by recording AWS management console actions and API calls. you can Identify which users and account called AWS, the source IP address from which the calls were made, and the the calls occurred.
+
+CloudWatch knows how many EC2 machines are running, cloud trail knows if they were provisioned by the same user.
+
+> - CloudWatch is used for monitoring performance.
+> - CloudWatch can monitor most of AWS as well as your applications that run on AWS.
+> - CloudWatch with EC2 will monitor event every 5 minutes by deafult.
+> - You can have 1 minute intervals by turning on detailied monitoring.
+> - You can create CloudWatch alarms which trigger notifications.
+> - CloudWatch is all about performace, Cloud Trail is all about audting.
+
+#### CloudWatch Lab
+
+in the AWS console. we provision an EC2 instance. in the configuration step, we select the _Enable CloudWatch detailed monitoring (additional charges apply)_ checkbox. the rest is default.
+
+when we look at the instance, we have the **monitoring tab**, and for now we have the basic metrics. in this demo, we will max out the cpu of the instance, and we will want to receive an alert about it.
+
+to create the alert, we find the <kbd>CloudWatch</kbd> service, (under the _Management and Governance_ group), then we select **Alarms** and click <kbd>Create New Alarm</kbd>, now we can view the metrics for our running services, we find the EC2 instance, and choose the _Per-Instance Metrics_, and then we find the suitable metric for the EC2 instance we care about. the metric is _CPU Utilization_. so we click <kbd>Select metric</kbd> and we now need to configure it.
+
+we give the alarm a name and a description, and choose that the threshold and window (how many data points must pass this threshold to trigger the alarm).
+we can also choose how to treat missing data, and we can control the action to take when the alarm is triggered.
+
+- send a notification (email)
+- do some auto scaling stuff
+- do an EC2 action
+
+now we want to make the alarm trigger, so we ssh into the machine and start running an endless loop
+
+```sh
+ssh ec2-user@12.123.12.123 -i key.pem
+$ sudo su
+$ while true; do echo; done #infinite loop
+```
+
+now we should get an alarm in the email, and we will see the alarm state in the EC2 Instance monitoring tab.
+
+we can also create dashboards to monitor alarms (global or regional), we can also monitor logs or monitor aws events.
+
+> - Standard Monitoring : 5 minutes.
+> - Detailed Monitoring : 1 minute.
+> - Dashboards - Create dashboards to see what is happening with your aws environment
+> - Alarms - Allows you to set Alarms that notify you when particular thresholds are hit.
+> - Events - CloudWatch Events Helps you to respond to state changes in your aws Resources.
+> - Logs - CloudWatch Logs Helps you to aggregate, monitor and store logs.
+> - CloudWatch monitors performance.
+> - CloudTrail monitor API calls in the AWS Platform.
 
 ### The AWS Command Line
 
-### Using IAM Roles With EC2
+AWS command line tool. interact directly with AWS from the terminal without using the aws console.
+
+in order to use the AWS CLI, we need an user with programattic access. so we can create a user in the IAM. this user will have an **Access Key Id** and **Secret Access Key**. we can only get the key once, but we can make it inactive and get another one.
+
+the command line tool is global.
+
+if we create a new ssh key, we need to put it in the corret place and set the proper permissions
+
+```sh
+mv Key.pem ssh #move to ssh folder
+chmod 400 ssh/Key.pem # change permissions
+```
+
+we can either run the aws cli commands from an EC2 instance or from the terminal locally.
+
+```sh
+aws configure # fill in the access key Id, secret Access Key, default region and output format.
+aws s3 ls #list buckets
+aws s3 mb s3://testbucket #make bucket
+
+cd ~
+ls -a # list hidden files
+cd .aws
+ls
+#config, credentials
+cat credentials
+```
+
+if we run the aws from the EC2 instances, then someone can pull the keys from the configuration folder, so it's more secure to use roles instead.
+
+> - You can interact with aws from anywhere in the world just by using the command line interface (CLI).
+> - You will need to set up access in IAM.
+> - The commands themselves aren't in the exam, but some basic commands will be useful to know for real life situations.
+
+#### Using IAM Roles With EC2
+
+rather than using the secret key directly, we can use roles instead.
+
+in the aws console, we go to <kbd>IAM</kbd>, under the roles option, we can see the roles we have for this account, including the one we created in the S3 section for cross region replication. for a new role, we click <kbd>Create Role</kbd>, we choose the service that will use the role, such as the EC2 entity. and then we attach policies to the role (like administrator policy), and in the EC2 instances, we can ssh back to it.
+
+we can delete the _.aws_ folder (with the credentials!)
+
+```sh
+rm -rf .aws #delete
+aws s3 ls #won't work
+```
+
+in the EC2 service, we choose <kbd>Actions</kbd>, and then <kbd>Instance Settings - Attach/Replace IAM Role</kbd>. we attach the admin access role which we created before,
+
+now we can can run all commands from the EC2 instance without having the credentails stored in it.
+
+> - Roles are more secure than storing your access key and secret access key on individual EC2 instances.
+> - Roles are easier to manage.
+> - Roles can be assigned to an EC2 instance after it is created by using either the web management console or the command line.
+> - Roles are universal - you can use them in any region.
 
 ### Using Boot Strap Scripts
 
+running commands in the EC2 instance once it boots up, like getting packages, updating software and running a program.
+
+in the aws web console, we provision a new EC2 instance, in the configuration step we give it the role with admin access. this is because we want it to create a S3 bucket when it starts. then we click on _advanced details_ and there is a box called **User Date**. here we can type bash scripts which will run as the instance starts.
+
+all scripts start with `#!/bin/bash`
+
+in this example script we install the apache service to make the instance act as a website
+
+```sh
+#!/bin/bash
+yum update -y
+yum install httpd -y
+service httpd start
+chkconfig httpd on
+cd /var/www/html
+echo "<html><h1>Hello world</h1></html>" > index.html
+
+aws s3 mb s3://someBucketName # make bucket
+
+aws s3 cp index.html s3://someBucketName #copy file to bucket
+```
+
 ### EC2 Instance Meta Data
+
+ssh back into the ec2 instance, then curl to get the user-date
+
+the 169.254 ip range is special
+
+```sh
+sudo su
+curl http://169.254.169.254/latest/user-data > bootstrap.txt
+curl http://169.254.169.254/latest/meta-data/ #see the metadata
+curl http://169.254.169.254/latest/meta-data/local-ipv4 #see the local ip address
+curl http://169.254.169.254/latest/meta-data/public-ipv4 #see the public ip address
+```
 
 ### Elastic File System [SAA-C02]
 
-### FSX for Windows & FSX for Lustre [SAA-C02]
+> Amazon Elastic File System (EFS) is a file storage service for Amazon EC2 instances. Amazon EFS is easy to use and provides a siple interface that allows you to create and configure file systems quickly and easily. With Amazon EFS, storage capacity is elastic, growing and shrking automatically as you add and remove files, so your applications have the storage they need, when they need it.
+
+EBS is mounted to a single EC2 instance, and can't be shared. EFS can be shared across the EC2 instances, and it can grow as needed, there is no wasted space like EBS volume, and we can use the same files in many instances.
+
+in the aws management console, we choose services <kbd>EFS</kbd> under storage. and we click <kbd>Create File system</kbd>, we can have lifecycle policies, storage classes like S3, thorughput mode, performance mode and encryption.
+
+in the EC2 service, we provision two instances, and give them the following User-data bash script
+
+```sh
+#!/bin/bash
+yum update -y
+yum install httpd -y
+service httpd start
+chkconfig httpd on
+yum install -y amazon-efs-utils
+```
+
+in the security group page, we want to open the inbound rules to add the access through the NFS port (protocol TCP, port 2049) and we give the security group as the source.
+
+back in the EFS page, we see that there are mount target states which are available. and with the EC2 instances, we grab the public ips and ssh into the EC2 instaces.
+
+```sh
+sudo ec2-user@<ip> -i key.pem
+sudo su
+cd /var/www/html # folder exists because of apache
+cd ..
+
+```
+
+in the efs service, we want to grab commands to mount the efs.
+
+```sh
+mkdir efs
+sudo mount -t efs fs-<identifier>:/ efs
+sudo mount -t efs -o tls fs-<identifier>:/ efs #with encryption
+
+```
+
+but instead of mounting to efs, we want to mount to the /var/www/html folder, so in the ec2 instances
+
+```sh
+mount -t efs -o tls fs-<identifier>:/ /var/www/html #this should take a few seconds, no longer than a minute
+```
+
+now we can create a file in one ec2 instaces at the mounted folder, and it will be availbe in both instances. the file is shared in both instaces, so it's easier to update.
+
+> - EFS supports the Network file System version 4 (NFSv4) protocol.
+> - You only pat for the storage you use (no pre-provisioning required).
+> - Can scale up to petabytes.
+> - Can support thousads of concurrent NFS connections.
+> - Data is stored across multiple Availability Zones within a region.
+> - Read after Write Consistency.
+
+### FSx for Windows & FSx for Lustre [SAA-C02]
+
+> Amazon FSx for Windows File Server provides a fully managed native Microsoft WIndows file System so you can easily move your windows-based applications that require file storage to aws. Amazon FSx is built on Windows Server.
+>
+> **Windows FSx**
+>
+> - A managed windows server that runs Windows Server Message Block (SMB)- based file services.
+> - Designed for Windows and Windows Applications.
+> - Supports AD (active directory) users, access control lists groups and security policies, along with Distributed File System (DFS) namespaces and replication.
+>
+>   **Lustre FSx**
+>
+> - Designed specifically for fast processing of workloads such as machine learning, hight performance computing, video processing, financial modeling and electronic design automation (EDA).
+> - Lets you launch and run a file system that provide sub-milliseconds access to your data and allows you to read and write data at speeds of up to hundreds of gigabytes per second of throughput and million of IOPS.
+>
+>   **EFS**
+>
+> - A managed NAS filer for EC2 instances based on Network file System (NFS) version 4.
+> - One of the first network file sharing protocols native to Unix and Linux.
+
+EFS is not Message blocks based.
+
+> Amazon FSx for Luster is a fully managed file system that is optimized for compute intensive workloads, such as high performance computing (HPC), machine learning, media data processing workflows, and electronic desgin automation (EDA).
+>
+> With Amazon FSx, you launch and run a Lustre file system that can process massive data sets up to hundreds of gigabytes per second of thoughtput, million of IOPS (io operations per second), and sub-millisecond latencies.
+
+summary points:
+
+> - EFS: When you need distributed, highly resilient sotrage for linux instances and linux based applications.
+> - Amazon FSx For Windows: when you need centralized storage for Windows-bae application such as Sharepoint, Microsoft SQL Server, workspaces, IIS web Server or any other native microsoft application.
+> - Amazon FSx For Lustre: when you need high speed, high-capacity distributed storage. This will be for applications that do High Performance Compute (HPC), financial modling, etc... Remember that FSx for Lustre can store data directly on S3.
 
 ### EC2 Placement Groups
 
@@ -396,5 +738,5 @@ an ELastic Fabric Adapter can be attached to an EC2 instance to acclarate High P
 
 ##
 
-[next](section_4_EC2.md)\
+[next](Section_5_Databases.md)\
 [main](README.md)
