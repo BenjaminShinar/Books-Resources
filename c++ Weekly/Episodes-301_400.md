@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize
+// cSpell:ignore fsanitize Fertig
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -799,5 +799,130 @@ int main()
 
 
 
+
+</details>
+
+## C++ Weekly - Ep 314 - Every Possible Way To Force The Compiler To Do Work At Compile-Time in C++
+<details>
+<summary>
+Different ways to do compile-time calculations.
+</summary>
+
+[Every Possible Way To Force The Compiler To Do Work At Compile-Time in C++](https://youtu.be/UdwdJWQ5o78)
+
+just making a value or function `constexpr` doesn't force the compiler to run it a compile time.
+
+we can make the value *static*, which forecs the compiler to compute the value at compile time, but also requires it to be const. 
+
+we can use `constinit`, but it also has to be static.
+
+```cpp
+constexpr int get_value(int value)
+{
+    return value *3;
+}
+
+int main()
+{
+    constexpr auto value1 = get_value(2); //up to the compiler to decide.
+    constexpr static auto value2 = get_value(3); //will be calculated at runtime.
+    constinit static auto value3 = get_value(4); //also must be static, but not const.
+}
+```
+if we change the function to be `consteval`, then it must be done it compile time sense, but that's not always what we want.
+
+```cpp
+consteval int get_value_consteval(int value)
+{
+    return value *3;
+}
+```
+
+in the previous episodes, we had some other tricks, like using a template parameter
+```cpp
+template<auto Value>
+consteval const auto make_compile_time()
+{
+    return Value;
+}
+int main()
+{
+    auto value 5 = make_compile_time<get_value(7)>();//comp
+}
+```
+
+there's also a [blog post](https://andreasfertig.info/) by Andreas Fertig, which wraps the normal function with a `consteval auto as_constant` function to force compile time calculations.
+
+```cpp
+consteval auto as_constant(auto value)
+{
+    return value;
+}
+int main()
+{
+    auto value7 = as_constant(get_value(15));
+}
+```
+
+and we want to generalize it to moveable stuff as well
+```cpp
+template <typename ... Param>
+consteval decltype(auto) consteval_invoke(Param && ... param)
+{
+    return std::invoke(std::forward<Param>(param)...);
+}
+
+int main()
+{
+    auto value8 = consteval_invoke(get_value, 9);
+}
+```
+type/keyword | compile-time calculation| const |static | example |notes
+----|----|----|---|---|---
+`constexpr` | up to the compiler | yes | no | `constexpr auto value = get_value(1);` 
+`constexpr static` | yes |yes | yes| `constexpr static auto value = get_value(1);` | must be static const
+`constinit static` | yes |no |yes | `constinit static auto value = get_value(1);` | must be static
+`consteval` function | yes |no |no | `auto value = get_value_consteval(5)` | argument must be compile time constants, function can't be used in run time.
+template parameter | yes |no |no | `auto value = make_compile_time<get_value(10)>()` | using templates
+wraping `consteval` function | yes | no | no | `auto value = as_constant(get_value(10))` |inner function can be reused
+`consteval invoke` wrapper | yes | no |no | with moveable and callable 
+</details>
+
+## C++ Weekly - Ep 315 - `constexpr` vs `static constexpr`
+<details>
+<summary>
+more comparison between constexpr and static constexpr. looking at benchmark numbers.
+</summary>
+
+[`constexpr` vs `static constexpr`](https://youtu.be/IDQ0ng8RIqs)
+
+clarify: static at global scope isn't the same as static in the function scope. static at global scope is duplicated into each translation unit.
+
+```cpp
+//some header
+
+static constexpr auto bigData = generate_bigData(); //duplicated
+inline constexpr auto bigData2 = generate_bigData(); //probably what i meant
+```
+
+at the function level scope we use `static constexpr`, and we usually mean this scope in the previous videos.
+
+benchmark examples, the version with the local constexpr array (dynamic initialization) is faster than the on with the static constexpr array. this is counter to what we said earlier.
+
+```cpp
+// in the current stack
+std::uint32_t to_ascii_base36_digit_dynamic(std::uint32 digit)
+{
+    constexpr std::array<char, 32> base36_map = {'0','1',/*...*/, 'x','y','z'};
+    return base36_map[digit];
+}
+// in the global storage
+std::uint32_t to_ascii_base36_digit_static(std::uint32 digit)
+{
+    static constexpr std::array<char, 32> base36_map = {'0','1',/*...*/, 'x','y','z'};
+    return base36_map[digit];
+}
+```
+he plays with the numbers (data size) in the benchmark, and increases the map size to 72, then 144 and 2048. now the results are reversed, the static constexpr version is much faster. it's just a matter of copying data onto the stack vs accessing the global data. it also changes with the optimization level and the compiler (clang vs gcc vs visual studio).
 
 </details>
