@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Bjarne Strostrup  Bazel libcxx libstdc libc cppstd soname ccmake spack cstdio ipython cppm fimplicit fmodules fmodule clangmi pybind numpy pyplot asarray
+// cSpell:ignore Bjarne Strostrup Bazel libcxx libstdc libc cppstd soname ccmake spack cstdio ipython cppm fimplicit fmodules fmodule clangmi pybind numpy pyplot asarray vcrt getptd tpxcptinfoptrs pxcptinfoptrs mtdll vcruntime
  -->
 
 [Main](README.md)
@@ -1786,6 +1786,483 @@ hpx::for_loop(hpx::execution::par,0 v.size(),
 theres also the `.then()` to avoid blocking and make composable code.
 
 in conclusion, the c++ jupyter notebook is a a prototype, with some hurdles to overcome.
+
+</details>
+
+## The Quest For A Better Crash - Victor Ciura
+
+<details>
+<summary>
+Introducing a framework to get and analyse crash reports.
+</summary>
+
+[The Quest For A Better Crash](https://youtu.be/pJPRdNTxL-E),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/The-Quest-For-A-Better-Crash-Victor-Ciura-C-Now-2021.pdf).
+
+> - _CRT_ - C Runtime Library.
+> - _SEH_ - structured exception handling.
+> - _ISA_ - Instruction Set Architecture.
+
+getting the crash report, reproducing it, investigating it, and having the appropiate infrastructure for this.
+
+> Vignette in 3 parts
+>
+> 1. Remember the crash
+> 2. Roll your own
+> 3. The Future: post-pandemic crashes
+
+note: there are some differences between how windows and linux machines handle exceptions and stack traces.
+
+### Remember The Crash
+
+we have crash reports (**windows error reporting**), which we can sometimes send a report, but how do we use the same capabilities as developers?
+
+- can we register to receive crash dumps?
+- how does the crash report look like?
+- where is it stored?
+
+in the past it was custom regiteration which required a **Microsoft symbol server** deployed on premise, where each version had to be separately registered, and the whole thing was less in the developer level, and more of a configuration nightmare.
+
+### Roll Your Own
+
+if we want a crash reporting infrastructure, what should it be like?
+
+- **quick to develop.** this isn't the main product, it's an add-on. it shouldn't take ages to develop and get right.
+- **easy to integrate into the CI/CD (no special service, no symbol server).** no additional custom work to configure.
+- **zero footprint on client side (not shipping symbols).** this shouldn't bloat our binaries.
+- **zero performance impact on Release Binaries (on the happy path).**
+- **east to use standalone tool (non-dev machine) for processing crash reports.**
+
+it needs to be integrated with the ci/cd tools (jenkins, gitlab, build artifacts), so we need to remember the symbols for each release and have a tool that works for each version, some build systems are non-determinstic, so we need to be prepared. each build can contain different symbols, which is how we process the crash, so we need to have the symbols stored.
+
+the symbols are stored in the **.pdb** extentions files ([pdb - program database](https://en.wikipedia.org/wiki/Program_database)). there are some variations of how the pdb files are build (incremental, full build):
+
+[Debug Information options](https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info?view=msvc-170)
+
+> - Generate Debug Information (`/DEBUG`)
+> - Generate Debug Information optimized for faster links (`/DEBUG:FASTLINK`)
+> - Generate Debug Information optimized for sharing and publishing (`/DEBUG`)
+
+a stack trace can be "dry" or "full", where full stack traces contain enviornment, context and names, just like when we crash in the development cycle. so when we collect crash reports, we need to collect that data (and anonymise it), add back the symbols (which we remove in the release build) and be able to recreate the situation.
+
+### How is works
+
+a lot of windows programs use SEH, and even _asynchronous_ exception (`/EHa`), so our workflow needs to support those. this is one of the settings for the build process.
+
+`/EHa /DEBUG:FULL /Zi`
+
+[Debug Information Formats](https://docs.microsoft.com/en-us/cpp/build/reference/z7-zi-zi-debug-information-format?view=msvc-170)
+
+- `/Z7` - object file with full symbolic debugging information built in.
+- `/Zi` - separate pdb file with debuging symbols.
+- `/ZI` - like `/Zi`, but a pdb file that supports _edit and continue_.
+
+we also need to set ourselves to handle C structured exceptions (primitive exceptions) as C++ typed exceptions.
+
+`_set_se_translator(ExceptionHandling:TransFunc);`
+
+we also want to intercept exceptions if they happen in a process which we don't debug. so we intercept them.
+
+```cpp
+static bool installedFilter = false;
+if (!installedFilter)
+{
+    ::SetUnhandledExceptionFilter(ExceptionHandling:UnhandledException);
+    installedFilter = true;
+}
+```
+
+> If an exception occurs in a process that is not being debugged, and the exception makes it to the Unhandled exception filter => we intercept it.
+>
+> This replaces the existing top-level exception filter for ALL existing and ALL future threads in the calling process.
+
+this is like having a massive try-catch block that encompasses everything. we can use this opportunity to log the issue.
+
+below is the logging function example and the translation between C (primitive) exception into C++ typed exceptions.
+
+_(I'm not super clear about this code)_
+
+```cpp
+LONG ExceptionHandling::UnhandledException(EXCEPTION_POINTERS * aExceptionInfo)
+{
+    wstring message(L"[EXCEPTION_UNHANDLED] ");
+    wchar_t buf[MSG_BUFFER_LEN];
+    swprintf_s(buf, MSG_BUFFER_LEN, L"(0x%.8x) at address " ADDRESS_FORMAT SW_EOL,
+    aExceptionInfo->ExceptionRecord->ExceptionCode,
+    aExceptionInfo->ExceptionRecord->ExceptionAddress);
+    message += buf;
+
+    StackWalker::TraceFromContext(message, aExceptionInfo->ContextRecord);
+    ErrMsgPresenter::Message(message);
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+void ExceptionHandling::TransFunc(unsigned int aSECode, EXCEPTION_POINTERS * aExInfo)
+{
+    // write the exception prolog (type, code, address, etc.)
+    switch (aSECode) // decode SEH exception type
+    {
+        case EXCEPTION_ACCESS_VIOLATION:
+            swprintf_s(buf, MSG_BUFFER_LEN, L"%hs (0x%.8x) at address " ADDRESS_FORMAT SW_EOL,
+            "ACCESS_VIOLATION", EXCEPTION_ACCESS_VIOLATION,
+            aExInfo->ExceptionRecord->ExceptionAddress);
+            break;
+        case EXCEPTION_DATATYPE_MISALIGNMENT:
+            break;
+        case EXCEPTION_INT_DIVIDE_BY_ZERO:
+            break;
+        case EXCEPTION_INT_OVERFLOW:
+            break;
+        case EXCEPTION_ILLEGAL_INSTRUCTION:
+            break;
+        case EXCEPTION_STACK_OVERFLOW:
+            break;
+        /*...*/
+    }
+
+    SehException::SEType seType = SehException::SEH_GENERIC;
+    // for AV exception, we can determine the type of operation that caused it
+    if (aSECode == EXCEPTION_ACCESS_VIOLATION)
+    {
+        // the first element of the array contains a read-write flag
+        // that indicates the type of operation that caused the access violation
+        ULONG_PTR operationType = aExInfo->ExceptionRecord->ExceptionInformation[0];
+        // the second array element specifies the virtual address of the inaccessible data
+        ULONG_PTR virtualAddress = aExInfo->ExceptionRecord->ExceptionInformation[1];
+        if (operationType == 0)
+            seType = virtualAddress ? SehException::SEH_AV_READ_BADPTR : SehException::SEH_AV_READ_NULLPTR;
+        else if (operationType == 1)
+            seType = virtualAddress ? SehException::SEH_AV_WRITE_BADPTR : SehException::SEH_AV_WRITE_NULLPTR;
+        else if (operationType == 8)
+            seType = virtualAddress ? SehException::SEH_AV_DEP_BADPTR : SehException::SEH_AV_DEP_NULLPTR;
+    }
+    // record SEH type info in exception message
+    exceptionMsg.insert(0, L"[" + SehException::SeTypeToString(seType) + L"] ");
+
+    // write the exception prolog (type, code, address, etc.)
+    // decode SEH exception type
+    /*...*/
+
+    // walk the function call stack and gather information about each frame
+    StackWalker::TraceFromContext(exceptionMsg, aExInfo->ContextRecord);
+    // for AV exception, we can determine the type of operation that caused it
+    /* ... => seType */
+
+    // extract SEH exception origin from StackTrace
+    SymbolUtil::SrcPos exOrigin = GetExceptionOrigin(aExInfo->ContextRecord);
+
+    // throw a C++ typed exception with the necessary fault information (attached)
+    throw SehException(exOrigin.mFile, exOrigin.mLine, seType, exceptionMsg);
+}
+```
+
+we also want the stack trace for the exception in the current thread, this gives us the context, which is a struct called **PCONTEXT** in windows. this is alo held as part of the _EXCEPTION_POINTERS_ structures
+
+```cpp
+/*utility function*/
+std::wstring ExceptionHandling::GetStackTraceForCurrentException()
+{
+    std::wstring stackTrace;
+    StackWalker::TraceFromContext(stackTrace,ExceptionHandling::GetCurrentExceptionContext());
+    return stackTrace;
+}
+```
+
+(aside, we can give the same struct different names, and special names for a pointer. [stackoverflow](https://stackoverflow.com/questions/30370036/how-a-struct-being-typedef-ed-to-multiple-names))
+
+```cpp
+typedef struct _EXCEPTION_POINTERS
+{
+    PEXCEPTION_RECORD ExceptionRecord;
+    PCONTEXT ContextRecord;
+} EXCEPTION_POINTERS, *PEXCEPTION_POINTERS;
+```
+
+and also the _EXCEPTION_RECORD_ stucture, which can link to other exceptions and has different meanings based on the architecture (32/64 bit).
+
+```cpp
+typedef struct _EXCEPTION_RECORD
+{
+    DWORD ExceptionCode;
+    DWORD ExceptionFlags;
+    struct _EXCEPTION_RECORD * ExceptionRecord;
+    PVOID ExceptionAddress;
+    DWORD NumberParameters;
+    ULONG_PTR ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+} EXCEPTION_RECORD;
+
+typedef struct _EXCEPTION_RECORD32 {
+    DWORD ExceptionCode;
+    DWORD ExceptionFlags;
+    DWORD ExceptionRecord;
+    DWORD ExceptionAddress;
+    DWORD NumberParameters;
+    DWORD ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+} EXCEPTION_RECORD32, *PEXCEPTION_RECORD32;
+
+typedef struct _EXCEPTION_RECORD64 {
+    DWORD ExceptionCode;
+    DWORD ExceptionFlags;
+    DWORD64 ExceptionRecord;
+    DWORD64 ExceptionAddress;
+    DWORD NumberParameters;
+    DWORD __unusedAlignment;
+    DWORD64 ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+} EXCEPTION_RECORD64, *PEXCEPTION_RECORD64;
+```
+
+if we want this **PCONTEXT**, we can write a function, but it will be different based on the version of visual-studio
+
+`#if _MSC_VER >= 1900` visual studio 2015-19
+
+```cpp
+PCONTEXT ExceptionHandling::GetCurrentExceptionContext()
+{
+    __vcrt_ptd * pTid = nullptr;
+    #ifdef _DLL // Multi-Threaded DLL /MD or /MDd
+
+    pTid = (__vcrt_ptd *) (((BYTE *)__current_exception_context())
+    - offsetof(__vcrt_ptd, _curcontext));
+
+    #else // Multi-Threaded /MT or /MTd
+
+    pTid = __vcrt_getptd();
+    #endif
+    return (CONTEXT *)pTid->_curcontext;
+}
+```
+
+`#if _MSC_VER < 1900` visual studio 2013
+
+```cpp
+PCONTEXT ExceptionHandling::GetCurrentExceptionContext()
+{
+    _tiddata * pTid = nullptr;
+    #ifdef _DLL // Multi-Threaded DLL /MD or /MDd
+
+    pTid = (_tiddata *) (((BYTE *)__pxcptinfoptrs())
+    - offsetof(_tiddata, _tpxcptinfoptrs));
+
+    #else // Multi-Threaded /MT or /MTd
+
+    pTid = _getptd();
+    #endif
+    return (CONTEXT *)pTid->_curcontext;
+}
+```
+
+those functions are hard to get, it's a lot of undocumentaed API.
+
+```cpp
+#include <eh.h>
+#include <signal.h> // for use of API void ** __pxcptinfoptrs()
+#if _MSC_VER >= 1900
+ #include <../CRT/src/vcruntime/vcruntime_internal.h>
+ extern "C" __vcrt_ptd * __cdecl __vcrt_getptd();
+ extern "C" void ** __cdecl __current_exception_context();
+#else
+ // for use of (private) API _tiddata * _getptd()
+ #include <../CRT/src/mtdll.h>
+#endif
+```
+
+the data itself looks like this, this allows us to get the context for the stack trace.
+
+```cpp
+// per-thread data
+typedef struct __vcrt_ptd // #include <../CRT/src/vcruntime/vcruntime_internal.h>
+{
+    // C++ Exception Handling (EH) state
+    unsigned long _NLG_dwCode; // Required by NLG routines
+    unexpected_handler _unexpected; // unexpected() routine
+    void * _translator; // S.E. translator
+    void * _purecall; // called when pure virtual happens
+    void * _curexception; // current exception
+    void * _curcontext; // current exception context
+    int _ProcessingThrow; // for uncaught_exception
+    void * _curexcspec; // for handling exceptions thrown from std::unexpected
+    int _cxxReThrow; // true if it's a rethrown C++ exception
+#if defined _M_X64 || defined _M_ARM || defined _M_ARM64
+    void * _pExitContext;
+    void * _pUnwindContext;
+    void * _pFrameInfoChain;
+    uintptr_t _ImageBase;
+    uintptr_t _ThrowImageBase;
+    void * _pForeignException;
+#elif defined _M_IX86
+    void * _pFrameInfoChain;
+#endif
+} __vcrt_ptd;
+```
+
+we also want to the stackTrace from the context of the caller, how the user called the function. even if there was no exception, maybe we want to identify how our code is being used.
+
+```cpp
+void StackWalker::TraceFromCaller(wstring & aStackMsg)
+{
+    using PF_RtlCaptureContext = void(WINAPI *)(PCONTEXT aContextRecord);
+
+    // dynamically load the RtlCaptureContext() kernel API
+    static auto CaptureCtx = (PF_RtlCaptureContext)::GetProcAddress(
+    ::LoadLibraryA("Kernel32.dll"), "RtlCaptureContext");
+    CONTEXT context;
+    ::ZeroMemory(&context, sizeof(context));
+
+    // retrieve the context record of the caller function
+    CaptureCtx(&context);
+    StackWalker::TraceFromContext(aStackMsg, &context);
+}
+```
+
+and now that we have the context, we need to do something with, we want to _walk the stack_, we see this in many of the code snippets so far.
+
+```cpp
+std::wstring stackTrace;
+StackWalker::TraceFromContext(stackTrace, GetCurrentExceptionContext());
+```
+
+so lets look at it
+
+```cpp
+void StackWalker::TraceFromContext(wstring & aStackMsg, PCONTEXT aContext, int MaxFrameCount)
+{
+    // All <DbgHelp> functions, such as StackWalk(), are single threaded.
+    // (calls from more than one thread to this function will likely result
+    // in unexpected behavior or memory corruption)
+    // => we must synchronize all concurrent calls to this function
+    SyncGuard guard(sEHSyncSupport);
+
+    // Copy the given machine CONTEXT structure because the StackWalk() API
+    // might modify it and subsequent calls needing the CONTEXT will fail
+    CONTEXT context;
+    ::CopyMemory(&context, aContext, sizeof(context));
+
+    HANDLE hProcess = ::GetCurrentProcess();
+    HANDLE hThread = ::GetCurrentThread();
+    // create a symbol explorer
+    SymbolUtil symMgr;
+    if (!symMgr.Init(hProcess))
+    return;
+
+    /*...*/
+
+    // initialize the STACKFRAME according to the platform we are working on (PE type)
+    STACKFRAME sf;
+    DWORD imageType = InitStackFrameFromContext(&sf, &context);
+    for (int frmIndex = 0; frmIndex < MaxFrameCount; frmIndex++)
+    {
+        // get the current frame info
+        BOOL result = ::StackWalk(imageType, hProcess, hThread, &sf, &context, nullptr,
+        SymFunctionTableAccess, SymGetModuleBase, nullptr);
+        if (!result)
+            break;
+        aStackMsg += symMgr.ComposeStackFrame(sf.AddrPC.Offset);
+    }
+
+    // write the module load address - needed because of ASLR (Address Space Layout Randomization)
+    aStackMsg += symMgr.ComposeModuleBaseAddress();
+}
+```
+
+this introduces another utility function `InitStackFrameFromContext` and the `STACKFRAME` struct.
+
+```cpp
+DWORD InitStackFrameFromContext(LPSTACKFRAME aStackFrame, PCONTEXT aContext)
+{
+    ::ZeroMemory(aStackFrame, sizeof(STACKFRAME));
+#if defined _M_IX86
+    DWORD imageType = IMAGE_FILE_MACHINE_I386;
+    aStackFrame->AddrStack.Offset = aContext->Esp;
+    aStackFrame->AddrStack.Mode = AddrModeFlat;
+    aStackFrame->AddrFrame.Offset = aContext->Ebp;
+    aStackFrame->AddrFrame.Mode = AddrModeFlat;
+    aStackFrame->AddrPC.Offset = aContext->Eip;
+    aStackFrame->AddrPC.Mode = AddrModeFlat;
+#elif defined _M_X64
+    DWORD imageType = IMAGE_FILE_MACHINE_AMD64;
+    aStackFrame->AddrStack.Offset = aContext->Rsp;
+    aStackFrame->AddrStack.Mode = AddrModeFlat;
+    aStackFrame->AddrFrame.Offset = aContext->Rbp;
+    aStackFrame->AddrFrame.Mode = AddrModeFlat;
+    aStackFrame->AddrPC.Offset = aContext->Rip;
+    aStackFrame->AddrPC.Mode = AddrModeFlat
+#endif
+    return imageType;
+}
+```
+
+> _ASLR_ - Address Space Layout Randomization
+
+we need the baseModuleBaseAdderess to counter the ASLR and find the correct real module base address.
+
+```cpp
+// Serialize module base address - needed because of ASLR
+wstring SymbolUtil::ComposeModuleBaseAddress()
+{
+    std::wstring stackFrame;
+    HMODULE moduleLoadAddress = ::GetModuleHandle(nullptr);
+    wchar_t buf[MAX_PATH];
+    swprintf_s(buf, MAX_PATH, ADDRESS_FORMAT L" ", (size_t) moduleLoadAddress);
+    stackFrame += buf;
+    stackFrame += SW_MODULE_LOAD_ADDRESS;
+    stackFrame += SW_EOL;
+    return stackFrame;
+}
+```
+
+### _Symbolicate_ tool to handle crash reports
+
+in the tool:
+
+- select build
+- select crash report
+- get a full stack trace
+
+the tool comes in two instruction set architecture flavours: X86 and X64. the tool must match the architecture of the debugged (crashed) process.
+
+functions (_not copying the code here_):
+
+they use a lot of helper functions from the debug helper library.
+
+- header: `#include <dbghelp.h>`
+- linker: `/LINK Dbghelp.lib`
+- dynamic dependency on **Dbghelp.dll**
+
+```cpp
+bool SymbolUtil::Init(HANDLE aProcess, const std::wstring & aSymbolsPath);
+bool SymbolUtil::SetSymbolSearchPath(std::wstring symbolSearchPath);
+std::wstring StackTraceAnalyzer::Symbolicate(const std::wstring & aRawCrashReport);
+std::wstring StackTraceAnalyzer::ProcessStackFrame(const StackFrame & aStackFrame);
+std::wstring SymbolUtil::ComposeStackFrame(DWORD_PTR aAddress);
+std::wstring SymbolUtil::SymbolNameFromAddress(DWORD_PTR aAddress) const;
+std::wstring SymbolUtil::SymbolSourceFromAddress(DWORD_PTR aAddress) const;
+```
+
+### Out of the box Alternative - Minidump
+
+in the recent years, minidump got some major enhancement.
+
+minidump has the _.dmp_ extension, it works with the Windows snapshot process, visual studio can parse and open the file, and point at the location the error occurred. it's a very nice experience. it even supports _life share_, as shared debugging session/
+
+### Post pandemic crashes
+
+where are we going from here? how will things look like in future versions of c++?
+
+there is a proposal that is based on **Boost.Stacktrace**, `#include <stackrace>`, which is in the works for many years,but didn't make it into _c++20_.
+
+> C++23 \<stracktrace> Key features (desired):
+>
+> - all functions are **lazy**: do not query the stacktrace entry info without explicit request
+> - **dynamic size** for trace. all the available invokers must be stored in a stacktrace.
+> - implementations. allow to **disable/enable** gathering stacktraces by a linker switch.
+> - stacktracing shouldn't prevent any **optimizations**.
+> - stacktrace should be **usable** in contract violation handler, coroutines, handler functions, parallel algorithms.
+> - `stacktrace_entry::description()` should return a **demangled** function signature.
+> - `to_string(stacktrace)` should query information from **debug symbols**, symbol export tables and any other sources, returning **demangled signatures**.
+> - information about **inlined functions** that have no separate stacktrace entries is welcomed `-> to_string(stacktrace)`.
+> - **avoid doing heavy** operations in `basic_stacktrace` constructors or
+>   `stacktrace_entry::current()`..
+
+the datatype will have a native handle (just like the standard thread has),will have the source code locations (function name, file, line), it will have a dynamic memory and ways to iterate over them. a way to get the current stack frame.
 
 </details>
 
