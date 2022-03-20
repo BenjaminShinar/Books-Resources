@@ -6,7 +6,7 @@
 
 ## Section 4 - EC2
 
-<!-- <details> -->
+<details>
 <summary>
 Elastic Compute Cloud, Elastic Block Storage
 </summary>
@@ -726,13 +726,184 @@ summary points:
 
 ### EC2 Placement Groups
 
+EC2 Placement groups are ways to place your EC2 machines in the physical world. it's how we set up the EC2 machine in terms of real computers and servers rack.
+
+**Clustered**
+
+> A cluster placement group is a grouping of instances within a single availability zone. Cluster Placement groups are recommended for applications that need a low network latency, high network throughput, or both.\
+>  Only certain instances can be launched into a clustered placement group.
+>
+> **Spread**
+> A spread placement group is a group of instances that are each place on distinct underlying hardware.\
+>  Spread Placement groups are recommended for applications that have a small nubmer of critical instances that should be kept separate from each other.
+>
+> **Partitioned**
+> When using partition placement groups, Amazon EC2 divides each group into logical segments called partitins. Amazon EC2 ensures that each partition within a placement group has it's own set of racks. each rack has its own network and power source.\
+>  No two partitions within a placement group share the same rack, allowing you to isolate the impact of hardware failure within your application.
+
+| Type        | Arrangement                                                 | Use case                                      |
+| ----------- | ----------------------------------------------------------- | --------------------------------------------- |
+| clustered   | put everything as close together as possible.               | low network latency, high network throughput. |
+| partitioned | divide into groups (partitions), separate those partitions. | individual critical EC2 instances.            |
+| spread      | instances are separate.                                     | HDFS,HBASE, Cassandra.                        |
+
+> - a Clustered placement group must be in the same avalability zone.
+> - The name for the placement group must be unique within the AWS account.
+> - only certain types of instances can be launched in a placement group (Compute Optimized, GPU, Memort Optimized, Storage optimized).
+> - AWS recommend homogenous instances within clustered placement groups.
+> - Placement groups can't be merged.
+> - it's possbile to move an existing (stopped) instance into a placement group.
+
 ### HPC On AWS [SAA-C02]
+
+High performance computed.
+
+used for industries such as genomics, finance and financial risk modeling, machine learning, weather prediction and autonomous drivers.
+
+steps needed:
+
+1. Data transfer
+2. Compute and networking
+3. Storage
+4. Orchestration and automation
+
+**data Transfer:**
+
+- Snowball, Snowmobile (terabyte and petabyte)
+- AWS dataSync to store on S3, EFS, FSx, etc..
+- Direct Connect
+
+> AWS Direct Connect is a cloud service solution that makes it easy to establish a dedicated connection from your premises to AWS. Using AWS direct connect, you can establish private connectivity between AWS and your data center, office, or colocation environment - which, in many cases, can reduce your network costs, increase bandwidth throughput, and provide a more consistent network experience than internet based connections.
+
+**Compute and network Services:**
+
+- EC2 instances tha are GPU or CPU optimized.
+- EC2 Fleets (Spot Instances or Spot Fleets).
+- Placement groups (cluster placement group).
+- Enhanced networking:
+  - Elastic Network Adapters.
+  - Elastic Fabric Adapters.
+
+> Enhanced networking uses **Single Root I/O virtualization (SR-IOV)** to provide high performance networking capabilities on supporeted instance types. SR-IOV is a method of device virtualization that provides Higher I/O performance and lower CPU utilization when compared to traditional virtualized network interfaces.\
+> Enhanced networking provides higher bandwidth, higher packer per second (PPS) performance, and consistently lower-inter-instance latencies. _There is no additional charge for using enhanced networking._
+
+has two different flavours:
+
+- **Elastic Network Adapator (ENA)**, 100 GBPS.
+- **Intel 82599 Virtual Function (VF)** interface, typically used for legacy instances.10 GBPS.
+
+**Elastic Fabric Adapter**
+
+- network device which we can attach to the amazon EC2 instance
+- lower latency, higher throughput,
+- uses **OS-bypass**, enables the HPC and machine learning applications to interact directly with the EFA device without the operating system kernel. linux only, not windows.
+
+**Storage:**
+
+- Instance attached storage:
+  - EBS: scale up to 64,000 IOPS
+  - Instance Store: scale to million of IOPS.
+- Network storage:
+  - Amazon S3: distributed object based storage, not a file system.
+  - Amazon EFS: Scale IOPS based on total size, or use provisioned IOPS
+  - Amazon FSx for Luster: HPC-optimized distributed file system, millions of IOPS, backed by S3.
+
+**orchastration:**
+
+AWS BATCH
+
+> AWS Batch enables developers, scientists and enginners to easily and efficiently run hundreds of thousand of batch computing jobs on AWS. AWS batch support multi-node parallel jobs, which allows you to run a single job that spans multiple EC2 instances. you can easily schedule jobs and launch EC2 instances according to your needs.
+
+AWS ParallelCluster
+
+> Open source cluster management tool that makes it easy for you to deploy and manage HPC clusters on AWS. ParallelCluster uses a simple text file to model and provision all the resources needed for your HPC application in an automated and secure manner. Automatic creation of VPC, subnet, cluster types and instance types.
 
 ### AWS WAF [SAA-C02]
 
+**AWS WAF - web Application firewall**
+
+> AWS WAF is a web application firewall that lets you monitor the HTTP and HTTPS requests that are forwarded to amazon CloudFront, an application load balancer of API gatway. AWS WAF also lets you control access to your content.
+
+with http/https it happens at the application level, or layer 7, it can see the query string ana parameters.
+
+so, with this query:
+
+> `http://acloud.guru?id=1001&name=ryan`\
+> there are two parameters
+>
+> - id, value 1001
+> - name, value "ryan"
+
+you can configure conditions for which ip addresses are allowed, what query parameters are needed, etc. the request will either be allowed to pass through or be blocked with a http 403 status code.
+
+at the most basic level, there are 3 different behaviors for AWS WAF:
+
+- allow all requests, except for the ones specified.
+- block all requests, except for the ones specified.
+- count the requests that match some specified properties (passive mode)
+
+possible conditions:
+
+> - IP address
+> - Country that request originate from
+> - Values in the request header
+> - Strings in the request header
+> - Lengths of the requests
+> - Presence of sql code (possible sql injection)
+> - Presence of scripts (cross site scripting)
+
+in the exam, this can come up in questions about blocking malicious attacks, we could also use network ACLS.
+
 ### EC2 Summary
 
+EC2 - virtual machine on the cloud. allows to provision computing power quickly and efficiently.
+
+pricing modes:
+
+- on demand
+- reserved - provision in advance
+- spot - bid with a price
+- dedicated host - a dedicated physical machine.
+
+EBS - Elastic block storage, termination is off by default. attached volumes aren't deleted automatically. the root volume can be encrypted now even at creation.
+
+security groups:
+
+- all inbound traffic is blocked by default, outbound traffic is allowed. security groups are stateful, opening a port for inbound opens it for outbound. we can specify allowed rules, but not blocing rules. for those we need ACL.
+
+storage can be SSD or HDD, we can get different kinds of drives for different tasks. volumes exists on EBS, snapshots are on S3, snapshots are "points in time" of a volume, they are incremental, so the first one is heavy, but the next ones are just the deltas.
+
+we can create AMI from both volumes and snapshot. Snapshot must exist in the same Avalability zone, but we can create instance from an AMI in the other avalability zone. theres also a process to move AMI from region to region.
+
+in the past there was a need to do a process to encrypt the root volume. today it's not so needed.
+
+Instance store volumes are ephemeral, if the instance fails, the data is lost. we can't stop the instance store volume. EBS backed stopped instances can be stopped, so we can reboot it and keep the data.
+
+Cloud Watch to monitor performance, the default time interval is 5 minutes, but we can pay extra for detailed 1 minute intervals. Cloud trail audits AWS actions (api calls, user logins,etc...)
+
+AWS CLI programmatic access, roles to use EC2 instances as the CLI instance without giving it the secret key. roles are universal. bootstrap scripts run when the EC2 instance starts.
+
+- `curl http://169.254.169.254/latest/user-data/`
+- `curl http://169.254.169.254/latest/meta-data/`
+
+EFS - elastic file system, pay for what you need, shared accross instances. read after write consistency.
+
+Placement groups:
+
+- clustered
+- spread
+- partitioned
+
 ### Quiz 3: EC2 Quiz
+
+> - Which of the following features only relate to Spread Placement Groups?
+>   ANSWER: _Spread placement groups have a specific limitation that you can only have a maximum of 7 running instances per Availability Zone and therefore this is the only correct option. Deploying instances in a single Availability Zone is unique to Cluster Placement Groups only and therefore is not correct. The last two remaining options are common to all placement group types and so are not specific to Spread Placement Groups._
+> - If an Amazon EBS volume is an additional partition (not the root volume), can I detach it without stopping the instance?
+> - _ANSWER: YES, although it will take some time_
+> - Individual instances are provisioned at?.
+> - _ANSWER: In Avalability zones._
+> - Can you attach an EBS volume to more than one EC2 instance at the same time?
+> - _ANSWER: YES_
 
 </details>
 
