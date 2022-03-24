@@ -693,15 +693,180 @@ we could then see the new user and the policy in the aws web console.
 ## RDS
 <details>
 <summary>
-
+Relation Database
 </summary>
+
+### Planning Phase
+
+we want to start a relational database instance.
+
+in the web management console, services <kbd>RDS</kbd>, then <kbd>Create Database</kbd>, we choose an engine (mysql, aurora, maria, etc...). we can fill in the fields, set the storage. we can use storage types, choose the connectivity (the VPC) and which instance type we want to use.
+
+### Creating an RDS Instance in Terraform
+
+
+there is a difference between the identifier, which is the aws FQDN name, and the "name", which is the name of the database instance.
+
+```hcl
+resource aws_db_instance "my_RDS"{
+  name= "myDB"
+  identifier = "my-first-rds"
+  
+  instance_class = "db.t2.micro"
+  engine = "mariadb"
+  engine_version = "10.2.21"
+  #should use secret
+  username = "bob"
+  password = <>
+
+  port = 3306
+  allocated_storage = 20
+  #important for terraform
+  skip_final_snapshot = true
+}
+```
+
 </details>
 
 ## Advanced Terraform
 <details>
 <summary>
-
+More Terraform concepts.
 </summary>
+
+### Remote Backend
+
+the state file is the source of truth for the configuration. but if we work in a team, we can have a shared state file which is stored remotely, and this gives us version control and helps us avoid bugs.
+
+we can host the remote state file on an S3 bucket.
+
+to connect to a remote backend, we define the special terraform block.
+
+we provide the bucket name, and the object key, which is the path to the state file inside the bucket.
+it's better to provide a name. we also need to provide the region and the access key and the secret key.
+
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket = "bucket_name"
+    key = "terraform/tfstate.tfstate"
+    region = "eu-west-2"
+    access_key =""
+    secret_key =""
+  }
+}
+```
+
+now the state file is stored in the s3 bucket.
+
+### Dependencies
+
+when we need resources to be created in a specified folder. there are direct implicit dependencies, like how values can depend on variables, but if we have dependencies which aren't directly expressed by the configuration (such as script that connects to a resource) , or those which are costly to create, we can set explicit dependencies order with the `depends_on` argument.
+
+```hcl
+resource "aws_instance" "db"{
+  instance_type = "t2.micro"
+  ami = "ami-032598fcc7e9d1c7a"
+}
+
+resource "aws_instance" "web_server"{
+  instance_type = "t2.micro"
+  ami = "ami-032598fcc7e9d1c7a"
+  user_date = file("script_to_connect_db.sh")
+  depends_on = [aws_instance.db]
+}
+```
+
+### Count
+
+`count` allows us to create multiple resources with slight changes between them.
+
+this will create 3 instance of the ec2 instances. 
+```hcl
+resource "aws_instance" "ec2"{
+  instance_type = "t2.micro"
+  ami = "ami-032598fcc7e9d1c7a"
+  count = 3
+}
+```
+we can also use variables and get the element with `count.index`. and we can use the `*` to get all the elements from a list/enumerable.
+
+```hcl
+
+variable  "server_names"{
+  type = list(string)
+}
+
+resource "aws_instance" "ec2"{
+  instance_type = "t2.micro"
+  ami = "ami-032598fcc7e9d1c7a"
+  count = length(var.server_names)
+  tags={
+    Name = var.server_names[count.index]
+  }
+}
+
+output "PrivateIP"{
+  value = [aws_instance.ec2.*.private_ip]
+}
+```
+
+
+
+### Multiple Variable Files
+
+```hcl
+variable  "number_servers"{
+  type = number
+}
+
+resource "aws_instance" "ec2"{
+  instance_type = "t2.micro"
+  ami = "ami-032598fcc7e9d1c7a"
+  count = var.number_servers
+}
+```
+
+we can have different variable files and pass them with `-var-file=<>` when we run the terraform commands. `-var 
+
+### Terraform Import
+
+we can also import already existing resources and take control over them. this is called importing.
+
+```hcl
+resource "aws_vpc" "my_vpc"
+{
+  cidr_block = "10.0.0.16/17"
+}
+```
+
+we create a resource on the aws web console, and then we grab the ip.
+
+we run the import command with the ip
+`terraform import aws_vpc.my_vpc" <id>`
+
+which will connect the terraform block with existing resource on the cloud. after that, the resource belongs to the terraform configuration.
+
+### Data Sources
+
+data resources are a way to interact with resources which are already existing, but not under terraform control. just like the ones which we imported, but without taking over the control.
+
+there are many ways to connect to existing resource, like a filter for some attribute or a direct connection with the id.
+
+```hcl
+date "aws_instance" "db_search"{
+  filter {
+    name = "tag:Name"
+    values = ["DB Server"]
+  }
+}
+
+output "db_servers"{
+  value = data.aws_instance.db_search.avalability_zone
+}
+```
+
 </details>
 
 
@@ -715,7 +880,9 @@ Things worth remembering
 - `terraform init`
 - `terraform plan`
 - `terraform apply`
+  - `terraform apply -auto-approve`
 - `terraform destroy`
+  - `terraform destroy -auto-approve`
 - `terraform output`
 
 Dynamic content blocks - create a list inside a resource. allows us to repeat blocks of contents with a variable into a list.
@@ -725,6 +892,11 @@ Dynamic content blocks - create a list inside a resource. allows us to repeat bl
 `{user_data = file("${path.module}/server-script.sh")}` - use `${path.module}` to get the location of the current module.
 
 policy documents have a size limit.
+
+we can connect to a remote backend with the `terraform` configuration block. [documentation](https://www.terraform.io/language/settings/backends/s3)
+
+iterating with `count`, `count.index`.
+
 ### Aws Resources
 
 Resource | Terraform Block Name | Usage | Documentation
@@ -736,6 +908,6 @@ Security group | "aws_security_group" | statefull firewall | https://registry.te
 IAM User | "aws_iam_user" | aws user | https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user
 IAM Policy | "aws_iam_policy" | aws policy | https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy
 IAM Policy Attachment | "aws_iam_policy_attachment" | attach policy to users/ groups/roles | https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy_attachment
-
+AWS Database | "aws_db_instance" | Relational Database |https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance
 </details>
 
