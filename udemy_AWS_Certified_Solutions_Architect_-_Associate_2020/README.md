@@ -46,6 +46,10 @@ Aws services:
 - EC2 (Elastic Cloud Compute): Computing Instances
 - SQS :
 - FSx (windows and Lustre) - native windows managed file system. Lustre is for compute intensive data.
+- RedShift - AWS data warehouse solution.
+- ElastiCache - in memory "database".
+- DynamoDB - AWS NoSQL solution.
+- Aurora - Serverless RDS by Amazon.
 
 CloudWatch monitors resource usage, such as the number of EC2 instances we have, EBS volumes used, redirections from load balancers, etc... . CloudTrail Monitors aws actions such as API calls or other aws actions, the focus is how the users and services interact with AWS itself, not the metrics of the services themselves.
 
@@ -53,53 +57,61 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 
 ### Acronyms
 
-| Shorthand | Long name                           | Usage                                             | notes                                        |
-| --------- | ----------------------------------- | ------------------------------------------------- | -------------------------------------------- |
+| Shorthand | Long name                           | Usage                                             | notes                                         |
+| --------- | ----------------------------------- | ------------------------------------------------- | --------------------------------------------- |
 | ACL       | Access Control List                 | S3 buckets                                        |
+| AD        | Active Directory                    |                                                   | non-aws way to manage users in other systems  |
+| AMI       | Amazon Machine Image                | EC2 machine images                                | linux flavours, windowes, etc...              |
 | ARN       | Amazon Resource Name                | amazon identifier                                 |
 | AWS       | Amazon Web Service                  | the amazon cloud eco-system                       |
-| CDN       | Content Delivery Network            |                                                   | Cloud Front                                  |
+| BI        | Business Intelligence               |
+| CDN       | Content Delivery Network            |                                                   | Cloud Front                                   |
+| CIDR      | Classless Inter-Domain Routing      | security groups                                   | `0.0.0.0/0` allows all access                 |
+| DAX       | DynamoDB Accelerator                | in memory-cache                                   |
+| DFS       | Distributed File System             |
+| DMS       | Database Migration Service          | migrate from one database to another              |
+| EBS       | Elastic Block Store                 |
 | EC2       | Elastic Compute Cloud               | Virtual machine                                   |
 | ECS       | Elastic Container Services          |
+| EDA       | Electronic Design Automation        |
+| EFA       | Elastic Fabric Adaptor              |
 | EFS       | Elastic File System                 |
-| IA        | Infrequent Access                   |                                                   | S3 IA tiers                                  |
-| IAM       | Identity Access Management          | users, roles, policies, access                    | always global                                |
-| KMS       | Key Management Service              |                                                   | SSE-KMS                                      |
+| EN        | Enhanced Networking                 |
+| ENA       | Elastic Network Adaptor             | enable enhanced networking                        |
+| ENI       | Elastic Network Interface           | virtual network card                              |
+| FPGA      | Field Programmable Gate Array       |
+| HPC       | High Performance Computing          |
+| IA        | Infrequent Access                   |                                                   | S3 IA tiers                                   |
+| IAM       | Identity Access Management          | users, roles, policies, access                    | always global                                 |
+| IOPS      | Input-Output Per Second             |                                                   | a metric for hard disk                        |
+| KMS       | Key Management Service              |                                                   | SSE-KMS                                       |
+| MAC       | Media Access Control (address)      |
 | MFA       | Multi Factor Authentication         |
+| NFS       | Network File System                 |                                                   | used in EFS                                   |
+| OAI       | Origin Access Identification        | Authentication                                    |
 | OU        | Organizational Unit                 |
-| S3        | Simple Storage Service              | storage                                           | globally unique names                        |
+| PII       | Personally Identifiable Information |
+| PPS       | Packets Per Second                  |                                                   | networking metric                             |
+| RDS       | Relational Database                 |                                                   | mariadb, Aurora                               |
+| RTC       | Replication Time Control            |                                                   | S3 buckets replication                        |
+| S3        | Simple Storage Service              | storage                                           | globally unique names                         |
+| SAN       | Storage Area Network                |
 | SCP       | Service Control Policies            | Manage access on accounts within AWS organization |
 | SLA       | Service Level Agreement             | What AWS promises (rather than advertises)        |
-| SNS       | Simple Notification Service         | Push notification services                        | used in the billing alarm                    |
+| SMB       | Server Message Block                |                                                   | FSx Windows                                   |
+| SNS       | Simple Notification Service         | Push notification services                        | used in the billing alarm                     |
 | SQS       |
-| SSE       | Server Side Encryption              |                                                   | SSE-S3                                       |
-| SWF       |
-| VPC       | Virtual Private Cloud               |
-| WORM      | Write Once, Read Many               |
-| RTC       | Replication Time Control            |                                                   | S3 buckets replication                       |
-| TTL       | Time to Live                        | Objects at cached location life time              | CDN, CloudFront                              |
-| WAF       | Web Application Firewall            |
-| OAI       | Origin Access Identification        | Authentication                                    |
-| SAN       | Storage Area Network                |
-| EBS       | Elastic Block Store                 |
-| PII       | Personally Identifiable Information |
-| FPGA      | Field Programmable Gate Array       |
-| EDA       | Electronic Design Automation        |
-| AMI       | Amazon Machine Image                | EC2 machine images                                | linux flavours, windowes, etc...             |
-| CIDR      | Classless Inter-Domain Routing      | security groups                                   | `0.0.0.0/0` allows all access                |
-| SSH       | Secure Shell                        | access to other machine                           |
-| IOPS      | Input-Output Per Second             |                                                   | a metric for hard disk                       |
-| ENI       | Elastic Network Interface           | virtual network card                              |
-| EN        | Enhanced Networking                 |
 | SR-IOV    | Single Root I/O Virtualization      |
-| EFA       | Elastic Fabric Adaptor              |
-| HPC       | High Performance Computing          |
-| MAC       | Media Access Control (address)      |
-| PPS       | Packets Per Second                  |                                                   | networking metric                            |
-| ENA       | Elastic Network Adaptor             | enable enhanced networking                        |
-| NFS       | Network File System                 |                                                   | used in EFS                                  |
-| SMB       | Server Message Block                |                                                   | FSx Windows                                  |
-| AD        | Active Directory                    |                                                   | non-aws way to manage users in other systems |
-| DFS       | Distributed File System             |
+| SSE       | Server Side Encryption              |                                                   | SSE-S3                                        |
+| SSH       | Secure Shell                        | access to other machine                           |
+| SWF       |
+| TTL       | Time to Live                        | Objects at cached location life time              | CDN, CloudFront                               |
+| VPC       | Virtual Private Cloud               |
+| WAF       | Web Application Firewall            |
+| WORM      | Write Once, Read Many               |
+| WORM      | Write Once, Read Many               |
+| OTAP      | Online Analytics Processing         |                                                   | BI operation                                  |
+| OTLP      | Online Transaction Processing       |                                                   | BI operation                                  |
+| PITR      | Point in Time Recovery              | DynamoDB backup                                   | protects against accidental writes or deletes |
 
 </details>
