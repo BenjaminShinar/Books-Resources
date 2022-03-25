@@ -12,35 +12,36 @@ all sorts of lectures, divided by field.
   - Practical TMP: A C++17 Compile Time Register Machine - Daniel Nikpayuk
   - [Better C++ Ranges - Arno Schödl
 - [Concurrency](Concurrency.md)
-  - [Adventures in SIMD-Thinking - Bob Steagall](Concurrency.md#adventures-in-simd-thinking---bob-steagall)
-  - [Parallelism on Ranges: Should We? - Giannis Gonidelis](Concurrency.mdd#parallelism-on-ranges-should-we---giannis-gonidelis)
-  - [Executors: The Art of Generating Composable APIs - Nikunj Gupta](Concurrency.md#executors-the-art-of-generating-composable-apis---nikunj-gupta)
-  - [Converting a State Machine to a C++ 20 Coroutine - Steve Downey](Concurrency.md#converting-a-state-machine-to-a-c-20-coroutine---steve-downey)
+  - Adventures in SIMD-Thinking - Bob Steagall
+  - Parallelism on Ranges: Should We? - Giannis Gonidelis
+  - Executors: The Art of Generating Composable APIs - Nikunj Gupta
+  - Converting a State Machine to a C++ 20 Coroutine - Steve Downey
 - [Interfaces](Interfaces.md)
-  - [When Should You Give Two Things the Same Name? - Arthur O'Dwyer](Interfaces.md#when-should-you-give-two-things-the-same-name---arthur-odwyer)
-  - [Windows, MacOS and Web: Lessons from Cross-platform Development @ think-cell - Sebastian Theophil](Interfaces.md#windows-macos-and-web-lessons-from-cross-platform-development--think-cell---sebastian-theophil)
-  - [Iterators and Ranges: Comparing C++ to D to Rust - Barry Revzin](Interfaces.md#iterators-and-ranges-comparing-c-to-d-to-rust---barry-revzin)
-  - [What is an ABI and Why is Breaking it a Problem? - Marshall Clow](Interfaces.md#what-is-an-abi-and-why-is-breaking-it-a-problem---marshall-clow)
-  - [Semantic Sugar: Tips for Effective Template Library APIs - Roi Barkan](Interfaces.md#semantic-sugar-tips-for-effective-template-library-apis---roi-barkan)
+  - When Should You Give Two Things the Same Name? - Arthur O'Dwyer
+  - Windows, MacOS and Web: Lessons from Cross-platform Development @ think-cell - Sebastian Theophil
+  - Iterators and Ranges: Comparing C++ to D to Rust - Barry Revzin
+  - What is an ABI and Why is Breaking it a Problem? - Marshall Clow
+  - Semantic Sugar: Tips for Effective Template Library APIs - Roi Barkan
+  - What Belongs In The C++ Standard Library? - Bryce Adelstein Lelbach
 - [Language](Language.md)
-  - [The C++ Rvalue Lifetime Disaster - Arno Schödl](Language.md#the-c-rvalue-lifetime-disaster---arno-sch%C3%B6dl)
-  - [C++11/14 at Scale: What Have We Learned? - John Lakos & Vittorio Romeo](Language.md#c1114-at-scale-what-have-we-learned---john-lakos--vittorio-romeo)
-  - [The Performance Price of Dynamic Memory in C++ - Ivica Bogosavljevic](Language.md#the-performance-price-of-dynamic-memory-in-c---ivica-bogosavljevic)
-  - [The Complete Guide to `return x;` - Arthur O'Dwyer](Language.md#the-complete-guide-to-return-x---arthur-odwyer)
-  - [The Worst Best Practices - Jason Turner](Language.md#the-worst-best-practices---jason-turner)
-  - [Surveying the C++ Community - Jens Weller](Language.md#surveying-the-c-community---jens-weller)
+  - The C++ Rvalue Lifetime Disaster - Arno Schödl
+  - C++11/14 at Scale: What Have We Learned? - John Lakos & Vittorio Romeo
+  - The Performance Price of Dynamic Memory in C++ - Ivica Bogosavljevic
+  - The Complete Guide to `return x;` - Arthur O'Dwyer
+  - The Worst Best Practices - Jason Turner
+  - Surveying the C++ Community - Jens Weller
 - [OOP](OOP.md)
-  - [Keynote: SOLID, Revisited - Tony Van Eerd](OOP.md#keynote-solid-revisited---tony-van-eerd)
-  - [Polymorphism À La Carte - Eduardo Madrid & Phil Nash](OOP.md#polymorphism-%C3%A0-la-carte---eduardo-madrid--phil-nas)
+  -[Keynote: SOLID, Revisited - Tony Van Eerd
+  - Polymorphism À La Carte - Eduardo Madrid & Phil Nash
 - [Text](Text.md)
-  - [A Crash Course in Unicode for C++ Developers - Steve Downey](Text.md#a-crash-course-in-unicode-for-c-developers---steve-downey)
+  - A Crash Course in Unicode for C++ Developers - Steve Downey
 - [Tools](Tools.md)
-  - [Keynote: CMake: One Tool To Build Them All - Bill Hoffman](Tools.md#keynote-cmake-one-tool-to-build-them-all---bill-hoffman)
-  - [Code Analysis++ - Anastasia Kazakova](Tools.md#code-analysis---anastasia-kazakova)
-  - [CMake + Conan: 3 Years Later - Mateusz Pusz](Tools.md#cmake--conan-3-years-later---mateusz-pusz)
-  - [C++ Insights: How Stuff Works, Lambdas and More! - Andreas Fertig](Tools.md#c-insights-how-stuff-works-lambdas-and-more---andreas-fertig)
-  - [Interactive C++ in a Jupyter Notebook Using Modules for Incremental Compilation - Steven R. Brandt](Tools.md#interactive-c-in-a-jupyter-notebook-using-modules-for-incremental-compilation---steven-r-brandt)
-  - [The Quest For A Better Crash - Victor Ciura](Tools.md#the-quest-for-a-better-crash---victor-ciura)
+  - Keynote: CMake: One Tool To Build Them All - Bill Hoffman
+  - Code Analysis++ - Anastasia Kazakova
+  - CMake + Conan: 3 Years Later - Mateusz Pusz
+  - C++ Insights: How Stuff Works, Lambdas and More! - Andreas Fertig
+  - Interactive C++ in a Jupyter Notebook Using Modules for Incremental Compilation - Steven R. Brandt
+  - The Quest For A Better Crash - Victor Ciura
 - [Type Design](Type%20Design.md)
   - How to: Colony - Matthew Bentley
   - Variations on variants - Roi Barkan
@@ -69,7 +70,6 @@ currently working on:
 - [ ] What Neighborhoods Owe Each Other: Rights, Duties, Immunities & Disabilities of Functions & Objects
 - [ ] Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy
 - [ ] Taskflow: A Heterogeneous Task Graph Programming System with Control Flow: Tsung-Wei Huang
-- [ ] What Belongs In The C++ Standard Library? - Bryce Adelstein Lelbach
 
 ### lighting talks:
 
@@ -95,3 +95,7 @@ high on entertainment value:
 
 1. Keynote: SOLID, Revisited - Tony Van Eerd
 2. Don't constexpr All the Things - David Sankel
+
+informative
+
+1. What Belongs In The C++ Standard Library? - Bryce Adelstein Lelbach

@@ -1,7 +1,8 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore O'Dwyer Theophil conio Revzin swappable ssize Niebloids Hollman Niebler Sutter Clow libstdc
+// cSpell:ignore Niebloids Hollman Niebler libnv Hyrum
 -->
+
 [Main](README.md)
 
 Interfaces
@@ -676,7 +677,7 @@ template <class T2, std::size_t N>
 constexpr void swap(T2 (&a)[N], T2 (&b)[N]) noexcept;
 ```
 
-somtimes multiple overloads are legitmate, but one is preferable, so we can use _std::enable_if_ and SFINAE[^1].
+somtimes multiple overloads are legitmate, but one is preferable, so we can use _std::enable_if_ and SFINAE.
 
 things that we will see this lecture
 
@@ -739,7 +740,7 @@ struct is_scalar : integral_constant<bool,
     >
 ```
 
-SFINAE[^1], void_t, the detection idiom a way, to use something like 'required' in pre c++20 standards (the new syntax makes things easier to read a and write). the default is false, but we specialize on the true types.
+SFINAE, void_t, the detection idiom a way, to use something like 'required' in pre c++20 standards (the new syntax makes things easier to read a and write). the default is false, but we specialize on the true types.
 
 ```cpp
 template <typename T,typename =void>
@@ -788,7 +789,7 @@ overload resolution with concepts:
 > - 'requires' clause
 >   - Two more syntax alternatives for good measure
 > - The most specialized version wins (see standard for details)
-> - SFINAE[^1] friendly
+> - SFINAE friendly
 > - Clear error messages
 > - Faster compilation speed
 > - Library defines requirements - Application must conform.
@@ -911,7 +912,7 @@ What are ABI changes, and what would happen if we break the ABI?
 
 in 2020, there was a formal request to the standard committee to commit to breaking ABI in the future, people wanted to know that the committee was ready to do so if needed and in order to improve the language. the committee didn't fully respond.
 
-ABI[^2] - application binary interface.
+ABI - application binary interface.
 
 changes to the standard library that would entail an ABI break.
 
@@ -929,7 +930,7 @@ changes to the standard library that would entail an ABI break.
 
 > "If there is more than one (non-identical) defintion of an entity visible in a program than the behavior of the program is undefined"
 
-the actual term for the standard is "Ill-formed, no diagnostic required" (IF-NDR[^3]). this means that the toolchain is allowed to produce a program that the can do anything, and doesn't have to tell you that it has done so.
+the actual term for the standard is "Ill-formed, no diagnostic required" (IF-NDR). this means that the toolchain is allowed to produce a program that the can do anything, and doesn't have to tell you that it has done so.
 
 examples of ODR violations:
 
@@ -1023,7 +1024,7 @@ users can re-compile all of their code to make it fit the new defintions, but th
 | Bar vtable size          | $2*8=16$  | $3 * 8 = 24$     |
 | trivially copyable pairs | no        | yes (supposedly) |
 
-so if IF-NDR[^3] is so scary, why can't the compiler diagnose this?
+so if IF-NDR is so scary, why can't the compiler diagnose this?
 
 three cases to consider
 
@@ -1087,12 +1088,500 @@ We assume stability and backward compatibility, this was historically prized in 
 
 </details>
 
+## What Belongs In The C++ Standard Library? - Bryce Adelstein Lelbach
+
+<details>
+<summary>
+How the standard is changed, what are the considerations, and what can be done.
+</summary>
+
+[What Belongs In The C++ Standard Library?](https://youtu.be/OgM0MYb4DqE),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/04/what_belongs_in_the_cpp_standard_library__r2__2021_05_07_cppnow.pdf)
+
+(starts the talk by introducing **#include <C++>**, an initiative to increase divercity in the c++ community).
+
+the Standard C++ committee and the language evolution sub committee.
+
+### What has made C++ successful?
+
+is it performance (zero cost abstraction - don't pay for what you don't need)? portability? stability? there are other langueges that do each of those things better, and C++ sometimes falls short in them.
+
+But she argues that c++ is universal, solve any type of problem (HPC, Finance, gGaming, Apps, Robotics, Vehicles) using any paradigm (Imperative, OOP, Functional, Generic, Parallel, Reactive) for any platform (windows, linux, mac, embedded).
+
+> A multi purpose and multi paradigm language.
+
+it's both the advantage and the weakpoint of the language, it's hard to move forward and set priorites that are acceptable for everyone. each domain has different, sometimes conflicting, needs and desires.
+
+> "Use Case Sympathy" (noun)
+>
+> Accepting the importance and validity of use cases that you are not personally familiar with or believe in.
+
+the committee needs to find solutions that are relevent and usefull for a large number of the language users. but the more universal a feature is, the harder it is to get the standardization right. but we also don't want to prioritise one subset of users in the community and cause fragmentation, if the changes negatively effect other users
+
+incrementalism - features are relased in limited form, and are expended later on.
+
+an example topic:
+
+**Should everything in std:: support allocators?**
+
+for some domains, controlling allocations is critical, like determinstic allocations, performance critical. and while c++ treats all memories the same way, this isn't true, there is shared memory, io memory, and gpu memory.
+
+can most container support allocators? even for the basic _std::vector_ it's not so simple.
+
+(something about statefull allocators )
+
+- `propagate_on_container_copy_assignment`
+- `propagate_on_container_move_assignment`
+- `propagate_on_container_swap`
+
+and also the other containers, _std::tuple_, _std::pair_ and _std::optional_, they don't allocate memory themselves, but they might hold elements that do. there are also type-erasing facilities such as _std::function_ and _std::generator_ (in c++23), how do we recover the type-erased allocator?
+
+in the past, _std::function_ supported allocator, but it was removed in c++17 [cpp-reference page](https://en.cppreference.com/w/cpp/utility/functional/function). are we going to keep delaying the release of _std::generator_ until we manage to figure out allocator support
+
+**Should everything in std:: have a type erased form?**
+
+type erasure is important for some, such as dynamic typing, plugins, reducing build times, hiding away types...
+
+but should everything support it? ranges, iterators?
+
+```cpp
+//currently
+template <typename R>
+requires std::ranges::random_access_range<R>
+void my_algorithm(R && r)
+{
+    //...
+}
+
+//should this also exist?
+
+void my_algorithm(std::any_random_access_range<int> r)
+{
+    //...
+}
+```
+
+it's hard to decide what's in scope, and what should get priority, it's hard to be universal, it's a source of strength and a weakness. if the committee doesn't support all it's users, then it risks the entire community.
+
+### What is the C++ Standard Library
+
+we shouldn't conflate the **standard library** with a **standard library implementation**.
+
+> - GCC's libstdc++ is not **The** C++ Standard Library.
+> - MSVC's STL is not **The** C++ Standard Library.
+> - LLVM's libc++ is not **The** C++ Standard Library.
+> - NVIDIA's libnv++ is not **The** C++ Standard Library.
+>
+> The C++ Standard library is a **specification**.
+
+however, this means that it's not an efficient way of delivering features, each implementation does duplicated work when they all implement the same features separately.
+
+> The C++ Standard library is a **descriptive**, not **prescriptive**.
+
+it's the structure of the code, the semantics of the abstract machine and requirements. it's a principle called **Implementation Freedom**. Enough to be portable and consistent, but not so much as to dictate the design.
+
+> "implemenation-defined and undefined behavior are often a feature, not a bug."
+
+example of _std::mutex_, different implemations have different advantages.
+
+| Implementation     | Supported On                      | Pros                                                | Cons                         |
+| ------------------ | --------------------------------- | --------------------------------------------------- | ---------------------------- |
+| OS kernel mutexes  | Older and newer operating systems | Fair, Good perf under contention                    | Higher latency               |
+| Futexes            | Newer operating systems           | Fair, Lower latency                                 |
+| Spinlocks          | Bare metal                        | Much lower latency, Never yields,Doesn’t need an OS | Unfair,Less energy efficient |
+| No synchronization | Single core platforms             | No overhead,Doesn’t need an OS                      |
+
+Also the index operator _[]_ on containers: `std::vector::operator[]` and `std::string::operator[]`. some people said that they should perform out of bounds checking, and some say that they shouldn't, as it harms performance. therefore, the standard doesn't **require** or **forbid** out of bounds checking, it **permits** each implementation to decide. so the users can decide and choose different implementions for different scenarios (like debug and production).
+
+**Standardization takes time**\
+Is the committee too slow? too fast? unlike other libraries, the standard library can't choose to drop support for one platform, so the time to deployment is much longer. this is why we have such a large gap in standrads releases, and why even today, the industry still hasn't fully integrated the changes from c++11. the committee plans and operates in spans of decades,not months or even years.
+Because of that, the scope of what the standard can focus on is much more limited.
+
+**The _std::_ implemnators aren't domain experts**\
+They don't have both the necessary knowledge and skills to maintain C++ Standard Library implementations and the specialized domain expertise for each domain for which c++ is used. so it's sometimes better to grab a domain specific library which fits the platform you are using and has optimized performance than wait for the C++ Standard Library to figure out all the kinks, which might result in a less optimized solution.
+
+a prime example is _std::regex_, which is notoriously slow. boost's implementation was the foundation for it, but is still much faster than most standard implementations.
+
+> implementers are experts at:
+>
+> - Their specific platform.
+> - Balancing tradeoffs.
+> - Handling corner cases.
+>
+> They are less good at:
+>
+> - Domain specific work:
+>   - Math special functions
+>   - _std::regex_
+>   - `<charconv>`
+
+### Stability vs Velocity
+
+it's not so clear as to say "one or the other".
+
+> Hyrum's Law:\
+> "With a sufficent number of users, it doesn't matter what you promise in the contract: all observable behaviors of your system will be depended on by somebody."
+
+every observable part of an implementation is implicitly part of the interface.
+
+there is an example that in one case, the implementation of _std::string_ had to be delayed for one company because a customer of theirs was relying on the ability to destroy the same string twice.
+
+- API - Syntax & semantics. source code, in the C++ standard.
+- ABI - Binary representation & conventions. compiled code, platform specific.
+
+> C++ Language ABI:\
+> Binary represtation & conventions for language facilities.
+>
+> - function calling conventions
+> - name mangling
+> - layour and size of types
+> - layour of virtual tables
+> - exception handling
+> - floating point mathematics
+
+it's hareder to change, and can have cascading effects
+
+> C++ Standard Library ABI:\
+> Binary represtation & conventions for C++ Standard Library facilities.
+>
+> - linkage of _std::_ functions
+> - _std::_ name mangling (of types and function)
+> - layouts and size of _std::_ types
+> - _std::_ virtual tables
+> - _std:: constexpr_ values and functions
+> - `<type_traits>` and _std:: concepts_
+
+the focus is on the C++ Standard Library ABI, not the core language facilities.
+
+> **API Stability**: existing syntax and semantics should rarely change.
+
+it's important, but we would like to sometimes change them.
+
+> **ABI Stability**: binary representations of existing facilities should rarely change.
+
+there are voices who question the case for ABI stability.
+
+- backward compatiblity: older code, new builds.
+- forward compatiblity: newer code, old builds.
+
+also having objects which were compiled as different versions depending on one another. users don't always have the option to compile everything from scratch. how can address this problem today?
+What if we have multiple components that depend on different versions of other components?
+
+one suggested solution is "don't upgrade if you can't get newer dependencies", but that makes it harder to upgrade, and stops adoption from happening as everyone waits for something else to finish upgrade. this is what happened with python, which took years to transistion from python2 to python3.
+
+it's also important to consider how th breaking change manifests:
+
+- at build time: compile or runtime?
+- run time: can we detect it? is a graceful or catastrophic?
+- are these breaks consistent? will they always happen?
+
+if the layout of _std::string_ changes by requireing small string optimization, we can run into this problem, this won't be caught at compile time, and the bug will be hard to track. the receiving function from the old ABI would treat the string as one without the SSO, and will missinterpet it.
+
+```cpp
+void f(std::string &s); // compiled as c+11 code. no small string optimization
+
+void g() //this is now c++23 imaginary code with the abi change
+{
+    f(std::string("BAL")); //small string
+}
+```
+
+or in a return value from a function.
+
+```cpp
+
+std::string f(); // compiled as c+11 code. no small string optimization
+
+std::string g() //this is now c++23 imaginary code with the abi change
+{
+    std::string s = f(); //small string
+    return s + "bryce";
+}
+```
+
+we can also run into problem with our own data types, if they have members from the standard library
+
+```cpp
+//this was compiled as c++11
+struct X {
+    std::string s;
+}
+X make_x()
+
+
+// and this was compiled after the ABI change
+void g()
+{
+    X x = make_x();
+    x.s = "hello world\n";
+}
+```
+
+also inlining of data members and functions can cause problems (as they use the old implementation rather than the shared implemention), ODR (one defintion rule) mayhem. there is also problem with constexpr stuff. also concepts.
+
+also polymorphism, removing virtual tables changes the layout, adding virtual functions change the address.
+
+> C++ Standard Library polymorphism, type erasure and named concepts are fixed forever.
+
+this is a problem for incremental development, this makes the deployment of features harder, as there is less room for course correction.
+
+#### examples
+
+> In c++03, _std::list::size_ can have linear complexity, no size data member needed.\
+> In c++11 _std::list::size_ must have constant time complexity, a size data member is required.
+
+this was an ABI breaking change.
+
+```cpp
+template <class T,class A =std::allocator<T>>
+class std::list03
+{
+  __list_node<T> root;
+};
+
+sizeof(std::list03<int>) == 16;
+
+template <class T,class A =std::allocator<T>>
+class std::list11
+{
+  __list_node<T> root;
+  std::size_t size;
+};
+
+sizeof(std::list11<int>) == 24;
+```
+
+also, in c++03, _copy on write_ was allowed for _std::string_, but it was prohibited in c++11. (Copy on write - delay the actual copy of the string until it needs to change). in c++11, the specification changed, and it was also an ABI break.
+
+those two changes were massive, and caused a lot of issues, maybe even delayed the adoption of c++11.
+
+in c++11, _std::lock_guard_ had a single template parameter, so using multiple locks was problematic and could cause deadlocks. in c++17, it was supposed to become a variadic template, and could take multiple arguments. which worked great with class template argument deduction, and made the process of taking multiple locks much easier to handle.\
+While the API (the source) itself was backward compatible, it did change the name mangeling of the function. this was an ABI change the committee didn't want to push forward, so the name was changed to _std::scoped_lock_.\
+
+```cpp
+template <class MutexType>
+struct std::lock_guard;
+//...
+{
+    std::lock_guard<std::mutex> l0(mtx0);
+    std::lock_guard<std::mutex> l1(mtx1);
+}
+
+
+template <class... MutexTypes>
+struct std::scoped_lock;
+//...
+{
+    std::scoped_lock l(mtx0,mtx1);
+}
+```
+
+while introducing a new feature allows us to avoid breaking changes to the ABI, it also clutters the implementations and bloats it. as both functionalities must now be maintained.
+
+again in c++17, a new virtual function overload was suggested for _std::system_error:message_. one that would not allocate memory and would not throw.
+
+> "Proposed addition was non-pure, existing derived classes would continue to compile"
+
+```cpp
+virtual char const * message(int, char*, size_t) const noexcept;
+```
+
+but because it would change the virtual table layout, it would be an ABI break, and it was rejected.
+
+these restrictions also effect performance
+
+in c++17, _std::shared_mutex_ was added in addition to _std::mutex_, it was a more complex type, so the simpler type should be faster and more performant. however, the MSVC implementation is faster, because the older version must continue to support the old abi which uses windows _CRITICAL SECTION_ api, rather than the newer _SRW lock interface_. the older version is also ten times the size of the new version, but it can't be changed.
+
+> "The C++ Standard Library is good at stability, but bad at fixing mistakes"
+
+so, do we have to choose between stability and velocity?
+
+there are some users who must have stability, but other don't. we can't fix this via policy, a technical solution is needed.
+
+#### Proposed Fixes
+
+c++11 introduced inline namespaces, members of the inline namespace can be used as part of the exterior namespace, but have a mangled name with the internal namespace.
+
+```cpp
+namespace std {
+    inline namespace __cxxNN {
+
+    template <class C, class T = std::char_traits<C>, class A = std::allocator<C>>
+    class basic_string;
+
+    using string = basic_string<char>;
+    }
+}
+```
+
+so we our previous example,the source code remains the same, but the mangled code now directs to different implementions of _std::string_.
+
+```cpp
+void f(std::__cxx11::string &s); // compiled as c+11 code. no small string optimization
+
+void g() //this is now c++23 imaginary code with the abi change
+{
+    f(std::__cxx23::string("BAL")); //small string
+}
+```
+
+unfortunately. this isn't fully supported today, the implementations don't support multiple versions of the standard in the same translation unit.
+
+also, what if we have a function that returns a object which has different implementations? the mangled name doesn't contain data about the return type, so we can't use this to detect calls to functions which were compiled differently.\
+we also can't detect breaks for data types with _std::_ members inside of them. the data members of a type effect the size and layout, but not the mangling, so we can't use this to catch ABI changes.
+
+inline namespace can help with ABI breaks, they can help us detect them, but not solve the problem.
+
+another solution is the `abi_tag`, which can be applied as an attribute to namespaces, functions of variables. the tag is viral and recursive, if the function signature contains something with the tag, then so does the function. the tag is added to the mangled name.
+
+```cpp
+namespace std {
+inline namespace __cxxNN __attribute__((abi_tag)) {
+// ...
+}}
+```
+
+like before, it helps us find problems, but it doesn't solve the issue.
+
+another possible fix is `std2::`, a new version of existing `std::` features which are not compatbile, but might be interoperable. should everything have a new version? this came down to an understanding about this approach:
+
+> **std2::approach** - Any solution that is equivalent to "duplicate and maintian multiple generations of the same facilities".
+
+this is what happened with _std::scoped_lock_, they cause maintainence burden, and causes confusion, as many ideas now have different names.
+
+but what if the type system had the interface implemented in it?
+
+```cpp
+struct point {
+    interface(std::cxx23) { //interface tag
+    int x, y, z;
+    interface(std::cxx26) int w; //interface block, only for std::cxx26
+    int get_x() const { return x; }
+    int get_y() const { return y; }
+    int get_z() const { return z; }
+    int get_w() const interface(std::cxx26) { return w; } //only for std::cxx26
+    }
+};
+
+sizeof(interface(std::cxx23) point) == 12
+sizeof(interface(std::cxx26) point) == 16
+
+```
+
+they support forward compatiblity, with resiliency overloads.
+
+```cpp
+void f(interface(std::cxx23) std::string & s); //only support std::23
+void f(interface(std::cxx23+) std::string & s); //support std::23 and above
+```
+
+there will be drawbacks, like losing type erasure and inlining capabilites in resilient functions, but they would only come into effect when we decide to use them.
+
+| ABI Problem         | Internal Name space | `abi_tag`     | Interfaces         |
+| ------------------- | ------------------- | ------------- | ------------------ |
+| Parameters          | Diagnose only       | Diagnose only | Diagnose and solve |
+| Return Types        | No effect           | Diagnose only | Diagnose and solve |
+| Non-Local Variables | Diagnose only       | Diagnose only | Diagnose and solve |
+| Data Members        | No effect           | No effect     | Diagnose and solve |
+| Inlining            | No effect           | No effect     | Diagnose and solve |
+| Constant Evaluation | Diagnose only       | Diagnose only | Diagnose and solve |
+| Polymorphism        | Diagnose only       | Diagnose only | Diagnose and solve |
+
+### The Stability Thesis
+
+> Until we learn to change things after we ship them, the C++ Standard Library should only contain things that are unlikely to need many changes.
+
+the standard library shouldn't innovate, the c++ community should innovate. the changes should come from the field before being standardized, we need to wait until the research and discussion is done before putting things into the standard. **Avoid premature standardization!**
+
+as an example, the _std::_ unordered containers (like _std::unordered_set_) were node based, but today, we know that flat containers can be better in terms of performance, but we can't change the standard to fit that.
+
+Field experience is needed before standardization
+
+- Implementaiton experience: was this implemented before? tested? on enough platforms?
+- Usage experience: how did users accept this? is this up to their needs?
+- Deployment experience: do we understand the maintence burdens?
+
+| Good Implementation Experience       | Better Implementation Experience           |
+| ------------------------------------ | ------------------------------------------ |
+| Prototype                            | Production                                 |
+| Preceding or similar to the standard | Written from or conforming to the standard |
+| For one platform                     | For multiple platforms                     |
+| In any publicly available codebase   | In a C++ Standard Library codebase.        |
+
+> Incrementalism is key to C++ Standard Library Evolution.\
+> We’re bad at changing things, but we’re good at extending things.
+
+a flowchart to determine if something should go in the inital release.
+
+#### The Necessity Thesis
+
+> The C++ Standard Library should only contain facilities that can’t live elsewhere.
+
+> **Language Support:** Facilities that require language support for correct or optimal implementation.
+>
+> - `<type_traits>`
+> - _std::stacktrace_
+> - _std::tuple_element_
+> - _std::memcpy_
+>
+> **Portability**: Facilities that provide portable abstractions of platform-specific behavior and interfaces.
+>
+> - _std::chrono_
+> - _std::atomic_
+> - _std::sort_
+> - _std::numeric_limits_
+>
+> **Vocabulary**: Facilities that need a common definition for interoperability across the C++ ecosystem.
+>
+> - **Interface Vocabulary**: Concepts, types, and operations that commonly appear in C++ interfaces. Common definitions means different codebases can interoperate.
+>   - Concepts
+>   - Containers and Views (ranges and iterators, string_view)
+>   - `<algorithm>`
+>   - _std::format_
+> - **Tooling Vocabulary**: Facilities that tools want to recognize.
+>   - MSVC iterator debugging.
+>   - GDB container pretty printing.
+>   - Clang thread safety analysis.
+
+#### the Priorites
+
+- Asynchronous and Parallelism - hopefully executers will help.
+- Input and output
+- Text processing
+- Metaprogramming & Reflections
+- Compile time expression support.
+
+An alternative to the necessity thesis is the _usefullness thesis_
+
+> The Usefulness Thesis:\
+> "The C++ Standard Library should expand in scope to contain anything that is useful to C++ programmers."
+
+this isn't good, this is a recipe for losing focus, there are many burdens in being in the standard library. but features want to be part of the base package, to be default availability?
+
+(another flow chart)
+
+the C++ Standard Library is not a package manager. it shouldn't be. but currently people aren't using package manegers enough. but maybe it should standardize how package managers operate? this could be nice. what about a standard build system (why not stick with cmake)? this is a better path to pursue rather than pushing everything into the standard. this will help facilitate innovation.
+
+another suggestion is to intoduce an intermediate scoped library, between the default standard library and individual external libraries.
+middle ground - solutions with a single implementations, like how boost used to operate. they wont need to be re-implemented for each C++ Standard Library implementation.
+
+| Library                     | Availability                                             | Stability                       | Implementation                           |     |
+| --------------------------- | -------------------------------------------------------- | ------------------------------- | ---------------------------------------- | --- |
+| C++ Standard Library        | Comes with toolchain by default                          | 10-20 year stability guarantees | Implemented separately for each provider |
+| C++ Collections (suggested) | Optionally comes with toolchain                          | Flexible stability guarantees   | Single code base                         |
+| External Libraries          | Must be acquired separately; aren’t available by default | Flexible stability guarantees   | Single source                            |
+
+### Audience Questions
+
+- why do companies use c++?
+- why do companies support and get involved in the c++ committee?
+- is cmake really the only future? is standardization needed
+- should we keep the same 3 year cycle of standard releases
+- what happend to library technical specifications? why did the committee stop releasing them?
+- did we over-standardize parallelism?
+- again, who should take care of the package manager standardization / deployment?
+
+</details>
+
 ##
-
-<!-- footnotes -->
-
-[^1]: Substuition-Failure-is-not-an-Error
-[^2]: Application-Binary-Interface
-[^3]: Ill-Formed,No-Diagnostic-Required
 
 [Main](README.md)
