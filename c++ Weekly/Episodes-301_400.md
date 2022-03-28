@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -924,5 +924,114 @@ std::uint32_t to_ascii_base36_digit_static(std::uint32 digit)
 }
 ```
 he plays with the numbers (data size) in the benchmark, and increases the map size to 72, then 144 and 2048. now the results are reversed, the static constexpr version is much faster. it's just a matter of copying data onto the stack vs accessing the global data. it also changes with the optimization level and the compiler (clang vs gcc vs visual studio).
+
+</details>
+
+## C++ Weekly - Ep 316 - What Are `const` Member Functions?
+<details>
+<summary>
+The basics on `const` and non-`const` member functions.
+</summary>
+
+[What Are `const` Member Functions?](https://youtu.be/bqd9ILyQRxQ)
+
+`const` and none `const` member functions.
+
+the only difference between `struct` and `class` is the default access level.
+
+we can use `const` member functions on non-`const` objects, just like we can make a `const` reference to a non-const variable, but not the opposite.
+
+```cpp
+#include <fmt/format.h>
+
+struct string
+{
+    std::size_t size(){ return m_size;}
+    std::size_t const_size const (){ return m_size;}
+    private: 
+    std::size_t m_size{};
+};
+
+int main()
+{
+    const string my_const_str;
+
+    // fmt::print("string size: {}",my_const_str.size()); //fails
+    fmt::print("string size: {}",my_const_str.const_size()); //ok
+    
+    string my_str;
+    [[maybe_unused]] const &str_ref_const = my_str; // no problem
+    [[maybe_unused]] &my_const_str = my_str; // error!
+}
+```
+
+continuing our string example, now supposedly we look at the *iterator*. we again need a const and non const version, and this is important if we want **for loops**.
+
+luckily, const and non const functions acts as overloads, so we have both version and the correct one is chose as needed.
+```cpp
+#include <fmt/format.h>
+
+class string
+{
+    public:
+    std::size_t const size(){ return m_size;}
+    char * begin(); 
+    char * end();
+    const char * begin() const; 
+    const char * end() const;
+    private: 
+    std::size_t m_size{};
+};
+
+int main()
+{
+    const string my_str;
+
+    for (const auto character : my_str)
+    {
+        fmt::print("character: {}\n",character); 
+    }
+}
+```
+</details>
+
+## C++ Best Practices Game Jam
+<details>
+<summary>
+C++ game jam. starts April 1,2022.
+</summary>
+
+### Info, Rules and Quick-Start
+
+[Info, Rules and Quick-Start](https://youtu.be/4V4ZrB3o6g4)
+
+- must use FTXUI
+- must follow c++ best practices
+- must start from the provided template and compile all the actions.
+- run with no errors or address sanitizer warning.
+- try not to disable warnings.
+
+
+<kbd>Use this template</kbd>, then <kbd>Create Repository from template</kbd>.
+
+we need a build enviornment,visual studio and some other stuff.
+
+```sh
+sudo apt install python3-pip g++ clang-tidy clang-format git cppcheck
+pip3 install cmake ninja conan
+# add folders to path
+```
+
+c/c++ extension pack (from microsoft)
+
+configure to run with debug. launch target "intro" to compile the ftxui dependencies
+
+there are two demo
+```sh
+./intro turn_based
+./intro loop_based
+```
+
+we document disabling warning with `NOLINT`, for debugging we need a debug configuration.
 
 </details>
