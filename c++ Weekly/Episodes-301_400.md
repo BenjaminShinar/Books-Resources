@@ -995,6 +995,26 @@ int main()
 ```
 </details>
 
+
+## C++ Weekly - Ep 317 - How Member Functions Work
+<details>
+<summary>
+
+</summary>
+
+[How Member Functions Work](https://youtu.be/4etjb2_KAaE)
+
+continuing the previous video, this time understanding what the compiler does.
+
+first of all, a function overload is happening at compile time, unlike virtual functions, which happen at runtime.
+
+if we play with compiler explorer and the optimizations, we can see that the compiler passes the *this* pointer as the first argument to the function, and if the member function is `const`, then the pointer is const.\
+this parameter is sometimes passed in the registers.
+
+there is actually even another thing which is passed, the return type, according to the caller conventions.
+
+</details>
+
 ## C++ Best Practices Game Jam
 <details>
 <summary>
@@ -1033,5 +1053,4 @@ there are two demo
 ```
 
 we document disabling warning with `NOLINT`, for debugging we need a debug configuration.
-
 </details>
