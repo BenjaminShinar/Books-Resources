@@ -999,12 +999,10 @@ int main()
 ## C++ Weekly - Ep 317 - How Member Functions Work
 <details>
 <summary>
-
+continuing the previous video, this time understanding what the compiler does.
 </summary>
 
 [How Member Functions Work](https://youtu.be/4etjb2_KAaE)
-
-continuing the previous video, this time understanding what the compiler does.
 
 first of all, a function overload is happening at compile time, unlike virtual functions, which happen at runtime.
 
@@ -1013,6 +1011,169 @@ this parameter is sometimes passed in the registers.
 
 there is actually even another thing which is passed, the return type, according to the caller conventions.
 
+</details>
+
+## C++ Weekly - Ep 318 - My Meetup Got Nerd Sniped! A C++ Curry Function
+<details>
+<summary>
+Creating a `curry` function, which can either execute a function or return a new one.
+</summary>
+
+[My Meetup Got Nerd Sniped! A C++ Curry Function](https://youtu.be/15U4qutsPGk)
+
+someone said that it's hard to create a currying function in c++.
+
+requirements:
+- be like `bind`
+- take the first N parameters
+- either return a function or execute it
+  
+
+```cpp
+int add (int x, int y, int z){return x+y+z;}
+
+int main()
+{
+    auto new_func = curry(add,1,2);
+    auto result = new_func(3);
+    return result; //should return 6
+}
+```
+
+so here is a solution that was suggested.
+
+1. something that takes a callable and varidatic parameters.
+2. create a lambda which captures the callable and the parameters, and can take in another set of variadic parameters. when the lambda is called, it executes the callable with both sets of parameters.
+3. we check (during compile time, `if constexpr`) with the `requires` clause if we can immediately execute the function with the current set of parameters,if it's possible, then call the function without returning the lambda.
+
+```cpp
+template<typename Callable, typename ... Param>
+auto bind(Callable callable, Param ... param)
+{
+    auto bound = [callable, param ...](auto ... inner_param)
+    {
+        return callable(param..., inner_param...);
+    }
+
+    if constexpr (requires {callable(param...);})
+    {
+        return callable(param...);
+    }
+    else
+    {
+        return bound;
+    }
+}
+
+int main()
+{
+    auto bound1 = bind(add,1,2);
+    auto result1 = bound1(3);
+    auto result2 = bind(add,1,4,5); // int value of 10, not a function.
+    return result1; //should return 6
+}
+```
+
+however, this will fail for trying to cascade the calls.
+```cpp
+int main()
+{
+    const auto bound = bind(add,1)(2)(3);
+    return bound; 
+}
+```
+
+so we move to the next version, which works recursively and instantiates additional templates. it doesn't package them one inside another.
+
+```cpp
+template<typename Callable, typename ... Param>
+auto curry(Callable f, Param ... ps)
+{
+    return [f,ps...](auto...qs)
+    {
+        if constexpr (requires {f(ps...,qs...);})
+        {
+            return f(ps...,qs...);
+        }
+        else
+        {
+            return curry(f,ps...,qs...);
+        }
+    };
+}
+
+int main()
+{
+    const auto curried = curry(add,1)(2)(3);
+    return curried; 
+}
+```
+
+the paramaters are copied each time, which might be a problem, and more than that, the function doesn't work for the basic case.
+```cpp
+int main()
+{
+    const auto curried = curry(add,1,2,3);
+    return curried; 
+}
+```
+
+so the updated form is similar, but with a `if constexpr` check at the start.
+```cpp
+template<typename Callable, typename ... Param>
+auto curry(Callable f, Param ... ps)
+{
+    if constexpr( requires {f(ps...)})
+    {
+        return f(ps...);
+    }
+    else
+    {
+        return [f,ps...](auto...qs)
+        {
+            if constexpr (requires {f(ps...,qs...);})
+            {
+                return f(ps...,qs...);
+            }
+            else
+            {
+                return curry(f,ps...,qs...);
+            }
+        };
+    }
+}
+```
+
+not quite there, we have duplicated code of checking if the current form is callable. so we move to the next form. which works for all cases so far.
+
+```cpp
+template<typename Callable, typename ... Param>
+auto curry(Callable f, Param ... ps)
+{
+    if constexpr( requires {f(ps...)})
+    {
+        return f(ps...);
+    }
+    else
+    {
+        return [f,ps...](auto...qs)
+        {
+            return curry(f,ps...,qs...);
+        };
+    }
+}
+```
+
+it even works for weird cases, like passing it no parameters.
+```cpp
+int main()
+{
+    const auto curried = curry(add,1,2)()()(()(3);
+    return curried; 
+}
+```
+
+the problem is the copying, we don't handle forwarding. if we take references, we run into object lifetime issues. there might be a way to parametrize it (take copy of rvalue, refernce of lvalue), but it would probably quickly become a monsteroues code.
 </details>
 
 ## C++ Best Practices Game Jam
