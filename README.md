@@ -7,8 +7,7 @@ ignore these words in spell check for this file
 
 where I store my learning from books, youtube videos, and other sources which don't fit elsewhere.
 
-#### FireShip - WebSockets in 100 Seconds & Beyond with Socket.io
-
+### FireShip - WebSockets in 100 Seconds & Beyond with Socket.io
 <details>
 <summary>
 A bidirectional connection over tcp/ip.
@@ -29,7 +28,7 @@ there're also **webRTC** for video/voice, and **webTransport** as a possible upg
 
 ### IBM Kubernetes Essentials
 
-<!-- <details> -->
+<details>
 <summary>
 IBM Kubernetes
 </summary>
@@ -218,13 +217,19 @@ service mesh.
 
 </details>
 
-### Regex Stuff
+## Regex Stuff
+<details>
+<summary>
+Things to remember about regex
+</summary>
 
 patterns:
 
 - Email: `[\w\.+-]+@[\w\.-]+\.[\w\.-]+`
 - URI: `[\w]+://[^/\s?#]+[^\s?#]+(?:\?[^\s#]*)?(?:#[^\s]*)?`
 - IPv4: `(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])`
+
+</details>
 
 ## Markdown Formatting Tips
 
@@ -258,3 +263,16 @@ defintion and tooltip
   - <<kbd>&#x</kbd>>\<symbol name><<kbd>;</kbd>> &gamma;
 
 </details>
+
+## Other stuff
+<details>
+<summary>
+MISC
+</summary>
+
+set environment variables
+- linux: `export AWS_DEFAULT_REGION=us-east-1`
+- windows cmd: `set AWS_DEFAULT_REGION=us-east-1`
+- powershell: `$Env:AWS_DEFAULT_REGION='us-east-1'`
+</details>
+
