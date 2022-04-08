@@ -1,12 +1,12 @@
 <!--
-// cSpell:ignore chkconfig Postgre Sybase
+// cSpell:ignore chkconfig Postgre Sybase Flink Hudi
  -->
 
 [main](README.md)
 
 ## Section 5 - Databases
 
-<!-- <details> -->
+<details>
 <summary>
 Databases on AWS
 </summary>
@@ -139,7 +139,7 @@ two different types of backups
 
 > Automated Backups allow you to recover your database to any point in time within a "retention period". the retention period can e between one and 35 days. Automated backups will take a full daily snapshot and will also store transaction logs throughout the day. When you do a recovery, AWS will first choose the mode recent daily backup, and then apply transaction logs relevent to that day. This allows you to do a point in time recovery down to a second, within the retention period.
 
-Automated backups are enabled by deafult and are stored in S3, you get an S3 bucket the size of the of the database storage. the backups are taken within a time windows, during this time storage I/O might be suspended and you might have more latency while the data is being backed-up. there is no additional charge for the S3 bucket.
+**Automated backups are enabled by deafult** and are stored in S3, you get an S3 bucket the size of the of the database storage. the backups are taken within a time windows, during this time storage I/O might be suspended and you might have more latency while the data is being backed-up. there is no additional charge for the S3 bucket.
 
 > Database Snapshots are done manually (user initiated), they are stored even after the original RDS is deleted (unlike automated backups).
 
@@ -279,23 +279,206 @@ the source database remains operational.
 
 ### Redshift
 
+> Amazon redshift is a fast and powerful, fully managed, petabyte scale data warehouse service in the cloud. customers can start small and scale.
+
+it is used for BI (business intelligence). OLAP - online analytics processing, requires much more compute power than OLTP (online transaction processing).
+
+there are single Node configuration modes (160GB) or multi node. multi nodes have a _leader node_ which manages client connections and recives queries, and up to 128 _Compute Node_ which do the work.
+
+> Advanced Compression:\
+> Columnar data stores can be compressed much more than row-based data stores because similar data is stored sequentially on dsk. Amazon Redshift employs multiple compression techniques and can often achieve significant compression relative to traditional relational data stores. in addition, Amazon Redshift doesn't require indexes or materialized viewas and so usesss less sapace than traditional relational database systems. Wen loading data into an empty table, Amazon redshift automatically samples your data and selects the most appropriate compression scheme.
+>
+> Massively Parallel Processing (MMP):\
+> Amazon Redshift automatically distributes data and query load across all nodes, Amazon Redshift makes it easy to add nodes to you data warehouse and enables you to maintain fast query performance as your data warehouse grows.
+
+backups are enable by default, starting from one day to 35. there will always be at least 3 copies of the data (original, replica, S3 backup), and an additional disaster recovery snapshot at a differnet region.
+
+pricing is based on the compute Nodes hours (not for leader node hours), also charge for backups and data transfer inside the vpc.
+
+- encrypted in transit with ssl
+- encrypted in res using AES-256
+- Amazon Redshift manages keys by itself, but we can use HSM (hardware security module) or AWS-KMS
+
+currently (2020) only avalabile on 1 AZ, but we can have snapshot backup on a different Region.
+
 ### Aurora [SAA-C02]
 
-### Elasticache
+Amazon property database. like Oracle or MySQL server
+
+> Amazon Aurora is a MySQL and PostgreSQL compatible relational database engine that combines the speed and availability of high-end commercial databases with the simplicity and cost-effectiveness of open source databases.
+
+- starts at 10GB, scales to 64TB in 10GB increments (storage autoscaling).
+- Compute resources can scale up to 32v CPUs and 244GB memory.
+- each availability zone has two copies of the data, with a minimum of 3 AZ, so at least six copies.
+
+aurora is designed to handle the loss of two copies without effecting write avaliability, and handle the loss of three copies without effecting reads. it is also self-healing, so data-blocks and disks are scanned for errors and repaired automatically.
+
+replicas:
+
+- aurora replicas (up to 15)
+- mysql read replicas (up to 5)
+- postgres read replicas (one)
+
+backups are always enabled, no effect on performance, we can take database snapshot and share them with other AWS accounts.
+
+> Amazon Aurora Serverless is an on-demand, autoscaling configuration for the MySQL and PostgreSQL-compatible editions of Amazon Aurora. An Aurora Serverless DB cluster automatically starts up, shuts down and scales capacity up or down based on your application's needs.
+
+it's a simple, cost-effective, option for infrequent, intermittent or unpredictable workloads. in serverless options, we only pay for operations (invocation), not for the time and storage.
+
+in the AWS console, we want to create an aurora read replica of a mysql database. <kbd>Create Database</kbd>, <kbd>Create Aurora Read Replica</kbd>, the two node (read and write) have different end points, we can now <kbd>Promote Read Replica</kbd> which effectively migrates the original database to the aurora database, we can now take a snapshot and restore it into a database instance as it's own.
+
+> - 2 copies of the data in each AZ, minimal 3 AZ, so minmal 6 copies.
+> - we can share aurora snapshots with other AWS accounts.
+> - Aurora, MySql and PostgreSQL replicas are availbe.
+> - automated failover is only for Aurora replicas.
+> - automated backup is turned on by default.
+> - Aurora serverless if we want a simple, cost effective option for infrequent, intermittent or unpredictable workloads.
+
+### ElastiCache
+
+> ElasticCache is a web service that makes it easy to deploy, operate and scale an in-memory cache in the cloud. The service improves the performance of web applications bby allowing you to retrieve information from fast, managed, in-memory caches, instead of relying entirely on slower disk-based databases.
+
+supports _Memcached_ and _Redis_ as engines.
+
+| Requirement                         | Memcached | Redis |
+| ----------------------------------- | --------- | ----- |
+| Simple Cache to offload DB          | yes       | yes   |
+| Horizontal Scaling                  | yes       | yes   |
+| Multi-threaded Performance          | yes       | no    |
+| Advanced data types                 | no        | yes   |
+| Ranking/Sorting data sets           | no        | yes   |
+| Publisher / Subscriber capabilities | no        | yes   |
+| Persistence                         | no        | yes   |
+| Multi Avalability Zone              | no        | yes   |
+| Backup and Restore capabilities     | no        | yes   |
+
+- Use ElasticCache to increase database and web application performance.
+- Redis is AZ and supports backups.
 
 ### Database Migration Services (DMS) [SAA-C02]
 
+> AWS Database Migration Service (DMS) is a cloud service that makes it easy to migrate relational databases, data warehouses, NoSQL databases and other types of data stores. you can use AWS DMS to migrate tour data into the AWS cloud, between on-premises instance (through AWS Cloud setups) or between combinations of cloud and on-premises setups.
+
+AWS DMS is a server that runs replication services, it connects a source and target databases through endpoint and migrates the contents. we can use **AWS Schema Conversion Tool (SCT)** to to create some or all of the target tables, indexes, triggers, etc...
+
+types of DMS migrations
+
+- _homogenous migrations_ - from db of the same type (orcale -> orcale)
+- _heterogenous migrations_ - source and target of different types (MySql -> aurora). requires a schema conversion.
+
+sources:\
+Orcale, Microsoft SQL server, MySQL, MariaDb, PostgreSQL, SAP, MongoDB, Db2, Azure, Amazon RDS (also Aurora), Amazon S3.\
+Targets:
+Orcale, Microsoft SQL server, MySQL, MariaDb, PostgreSQL, SAP, RDS, Redshift, DynamoDb, S3, **Elasticsearch**, **kinesis** data strems, Document DB.
+
 ### Caching Strategies on AWS [SAA-C02]
+
+services with caching capabilities:
+
+- Cloudfront (at edge location)
+- API gateways
+- ElasticCache (Memcached or Redis)
+- DAX (dynamo DB accelerator)
+
+scenarios:
+
+1. Cloud front -> origin
+2. Cloud front -> Api Gateway -> Lambda -> (elasticCache, RDS, DynamoDb)
+
+the earlier we cache, the lower the latency, there is always a tradeoff between being up to date and being fast.
 
 ### EMR Overview [SAA-C02]
 
+EMR - Elastic Map Reduce
+
+> Amazon EMR (Elastic Map Reduce) is the industry leading cloud big data platform for processing vast amounts of data using open-source tools such as Apache Spark, Apache Hive, Apache HBase, Apache Flink, Apache Hudi and Presto. With EMR, you can run petabyte-scale analysis at less than half the cost of traditional on-premises solutions and over three times faster than standard Apache Spark.
+
+it works with big-data that is inside Aws, it uses an EMR cluster of EC2 machines, where each node has a role, called _node type_. each role runs a diffrent software.
+
+- Master Node - a node that manages the cluster. The master Node **tracks the status of tasks** and monitors the health of the cluster. Every cluster has a master node.
+- Core Node - a node with software components that **runs tasks and stores data in the Hadoop Distributed File System (HDFS)** on the cluster. Multi-node cluster have at least one core node.
+- Task Node - a node with software components that only runs task and **does not store data in HDFS**. Task Nodes are optional.
+
+| Type   | Amount                        | Role                      |
+| ------ | ----------------------------- | ------------------------- |
+| Master | one                           | manage the cluster        |
+| Core   | at least one (if not manager) | runs task and stores data |
+| Task   | zero or more                  | only runs tasks           |
+
+all the logs are stored in the master node "/mnt/var/log/", wo if we want the logs to persist, we configure archive to an S3 bucket (five-minutes intervals), this can be configured only when setting up the cluster.
+
 ### Databases Summary
 
+> - RDS (OLTP)
+>
+>   - SQL
+>   - MySQL
+>   - PostgreSQL
+>   - Oracle
+>   - Aurora
+>   - MariaDb
+>
+> - DynamoDB (NoSQL)
+> - ReShift (OLAP)
+> - ElasticCache
+>
+>   - Memcached
+>   - Redis
+>
+> - RDS runs on virtual machines. you cannot log in to the operating systems (no ssh).
+> - Patching of the RDS is amazon's responsibility.
+> - RDS is not Serverless.
+> - Aurora Serverless is the exception.
+> - Backups can be automated or with snapshots.
+> - Read Replicas
+>   - Can be multi-AZ.
+>   - Used to increase performance.
+>   - must have backups turned on.
+>   - can be in different regions.
+>   - can be MySQL, PostgreSQL, MariaDb, Oracle, Aurora (not SQL server).
+>   - can be promoted to master, this will break the read replicas.
+> - Multi-Az
+>   - Used for Disaster Recovery, not performance.
+>   - you can force a failover from one AZ t another by rebooting the RDS instance.
+> - Encryption is done with KMS
+>   - read Replicas, backups and snapshos will also be encrypted.
+> - DynamoDB
+>   - Stored on SSD Storage.
+>   - Spread Across 3 geographically distinct data centers.
+>   - Eventual Consistent Reads (deafult)
+>   - Strongly Consistet Reads
+> - RedShift
+>   - used for BI
+>   - backups from 1 to 35 period
+>   - mantains at least 3 copies of the data (original,replica, S3 )
+>   - we can take a snapshot and Restore it.
+> - Aurora
+>   - two copies at each AZ, at least 3 Az, so 6 copies total
+>   - snapshots can be shared with other AWS accounts
+>   - replica types: aurora, MySQl, PostgreSQL.
+>   - only aurora replicas can be used as automatic failover.
+>   - automated backup by deafult.
+>   - Aurora serverless for a simple, const effective solution for infrequent, intermittent or unpredictable workloads.
+> - ElasticCache
+>   - Use Elasticache to increase database and web application performance.
+>   - Redis is multi-AZ.
+>   - Redis supports backups and restores.
+>   - Memcached supports horizontal scaling.
+
 ### Quiz 4: Databases on AWS Quiz
+
+> - RDS Reserved instances are available for multi-AZ deployments. _ANSWER: TRUE_.
+> - RDS Reserved instances are available for multi-AZ deployments. _ANSWER: TRUE_.
+> - MySQL installations default to port number. _ANSWER: 3306_.
+> - If you want your application to check RDS for an error, have it look for an **\_\_** node in the response from the Amazon RDS API. _ANSWER: "error"_
+> - What data transfer charge is incurred when replicating data from your primary RDS instance to your secondary RDS instance?. _ANSWER: There is no extra charge._
+> - If you are using Amazon RDS Provisioned IOPS storage with a Microsoft SQL Server database engine, what is the maximum size RDS volume you can have by default? _ANSWER: 16TB._
+> - In RDS, changes to the backup window take effect **\_\_\_\_**. _ANSWER: Immediately._
+> - When you add a rule to an RDS DB security group, you must specify a port number or protocol. _ANSWER: FALSE_
 
 </details>
 
 ##
 
-[next](Section_6_Advanced_IAM.md)\
+[next](Section_6_7_Advanced_IAM_Route53.md.md)\
 [main](README.md)
