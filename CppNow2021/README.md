@@ -46,6 +46,7 @@ all sorts of lectures, divided by field.
   - How to: Colony - Matthew Bentley
   - Variations on variants - Roi Barkan
   - Simplest Strong Typing instead of Language Proposal ( P0109 ) - Peter Sommerlad
+  - Simplest Safe Integers - Peter Sommerlad
   - Techniques for Overloading any_invocable - Filipp Gelman
   - Writing a C++20 Module - Steve Downey
   - Preconditions, Postconditions, Invariants: How They Help Write Robust Programs - Andrzej Krzemieński
@@ -66,7 +67,6 @@ currently working on:
 - [ ] STL Algorithms as Expressions - Oleksandr Bacherikov
 - [ ] Frictionless Allocators - Alisdair Meredith
 - [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
-- [ ] Simplest Safe Integers - Peter Sommerlad
 - [ ] What Neighborhoods Owe Each Other: Rights, Duties, Immunities & Disabilities of Functions & Objects
 - [ ] Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy
 - [ ] Taskflow: A Heterogeneous Task Graph Programming System with Control Flow: Tsung-Wei Huang
