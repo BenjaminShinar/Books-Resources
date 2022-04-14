@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore ostringstream ptrdiff_t Filipp Downey Inlines fmodules Andrzej Krzemieński nodiscard Richárd Szalay Levehnstein Loew varargs Dimov arity Alloc cvref deducer
+// cSpell:ignore fmodules Levehnstein cvref deducer psssint ultr
  -->
 
 [Main](README.md)
@@ -907,6 +907,532 @@ we can affine spaces that are related, like celsius and kelvin, which are the sa
 
 units library doesn't solve the same problems that strong types do
 slides continue with more stuff..
+
+</details>
+
+## Simplest Safe Integers - Peter Sommerlad
+
+<details>
+<summary>
+Implementing a safe integer type.
+</summary>
+
+[Simplest Safe Integers - Peter Sommerlad](https://youtu.be/Z0X_TFCcTXA),[slides](https://github.com/PeterSommerlad/talks_public/raw/master/C%2B%2Bnow/2021/SimplestSafeIntegers.pdf), [github code](https://github.com/PeterSommerlad/PSsimplesafeint).
+
+starting with an example of undefined integer behavior
+[is_modulo](https://en.cppreference.com/w/cpp/types/numeric_limits/is_modulo)
+
+```cpp
+std::cout << 65535 * 32768 << '\n';
+// print 2147450880
+std::cout << 65536 * 32768 << '\n';
+// print ?
+std::cout << std::numeric_limits<int>::is_modulo << '\n';
+// print false
+```
+
+if we use unsigned integers
+
+```cpp
+std::cout << 65535u * 32768u << '\n';
+// print 2147450880
+std::cout << 65536u * 32768u << '\n';
+// print 2147483648
+std::cout << 65536u * 32768u *2u << '\n';
+// print ?
+std::cout << std::numeric_limits<unsigned>::is_modulo << '\n';
+// print true
+```
+
+we have some domains where undefined behavior is critical, so we want to avoid it. there is the **MISRA-C++** standard with guidelines to avoid UB, one of the recommendations is to avoid impelemnation defiend types,to use bit operations only for with unsigend types, and to have a tool that enforces them.
+
+goals:\
+no mixing of integers with characters types (char, char8_t, char16_t char32_t), no promoting and no changing of sign, no signed integer overflow UB, no silent conversions (except for widening of the same sign).\
+another goal is to have the exact same code generation.
+
+Enums of integer replacements:\
+limitations:
+
+> - cannot have implicit conversions
+> - needs name conversion function for checks
+> - division by zero, bit shifting (undefined behavior)
+>   - throws exception (macro controlled)
+>   - asserts (no exceptions)
+>   - returns 0 (NDEBUG)
+
+`enum` for wrapping integers:
+
+> - enum class types (`std::byte` does it as well)
+> - operator overloading
+> - concepts constrained operators
+> - `consteval` user-defined-literal operators
+
+### Defining the class
+
+so we can have non-promoting integers:
+
+```cpp
+// unsigned
+enum class ui8 : std::uint8_t { tag_to_prevent_mixing_other_enums };
+enum class ui16: std::uint16_t{ tag_to_prevent_mixing_other_enums };
+enum class ui32: std::uint32_t{ tag_to_prevent_mixing_other_enums };
+enum class ui64: std::uint64_t{ tag_to_prevent_mixing_other_enums };
+// signed
+enum class si8 : std::int8_t { tag_to_prevent_mixing_other_enums };
+enum class si16: std::int16_t{ tag_to_prevent_mixing_other_enums };
+enum class si32: std::int32_t{ tag_to_prevent_mixing_other_enums };
+enum class si64: std::int64_t{ tag_to_prevent_mixing_other_enums };
+```
+
+user defined literals (UDL), creating a user defined literal suffix, which checks at compile time.
+
+```cpp
+inline namespace literals {
+
+// none-standard user defined literal
+// used in compile time
+consteval ui16 operator""_ui16(unsigned long long val)
+{
+    if (val <= std::numeric_limits<std::underlying_type_t<ui16>>::max())
+    {
+        return ui16(val);
+    }
+    else
+    {
+        throw "integral constant too large"; // trigger compile-time error
+    }
+}
+// etc...
+```
+
+usage, detecting errors, checking equality
+
+```cpp
+using namespace psssint::literals; // required for UDLs
+void ui16intExists()
+{
+    using psssint::ui16;
+    auto large=0xff00_ui16;
+    //0x10000_ui16; // compile error
+    //ui16{0xfffff}; // narrowing detection
+    ASSERT_EQUAL(ui16{0xff00u},large);
+}
+```
+
+traits and concepts: `is_` for traits, `a_` and `an_` for concepts. we have a concept to detect that our type is an enum, and then check that we can't convert to the underlying type (scoped enum), and then we define that as another concept. we can use traits even without c++20.
+
+```cpp
+template<typename T>
+using plain = std::remove_cvref_t<T>; // just a shorthand
+
+template<typename T>
+concept an_enum = std::is_enum_v<plain<T>>;
+
+// from C++23
+template<an_enum T>
+constexpr bool is_scoped_enum_v = !std::is_convertible_v<T,std::underlying_type_t<T>>;
+
+template<typename T>
+concept a_scoped_enum = is_scoped_enum_v<T>;
+```
+
+the "Detection Idiom" with concepts, we define a trait `is_safeint_v` that is false, and specialize it on the earlier concept of `a_scoped_enum` with a and a _requires_ clause to check for our special tag. then we create another concept that defines a safe integer type which is a scoped enum with this tag.
+
+```cpp
+template<typename T>
+constexpr bool is_safeint_v = false;
+
+template<a_scoped_enum E>
+constexpr bool is_safeint_v<E> = requires
+{
+     E{} == E::tag_to_prevent_mixing_other_enums;
+};
+
+template<typename E>
+concept a_safeint = is_safeint_v<E>;
+```
+
+testing detection idiom
+
+```cpp
+namespace _testing {
+using namespace psssint;
+//positive tests
+static_assert(is_safeint_v<ui8>);
+// more asserts on the types we created
+
+// negative tests
+enum class enum4test{};
+static_assert(!is_safeint_v<enum4test>); // enum is not a safe integer,
+static_assert(!is_safeint_v<std::byte>); // nor is a std::byte
+static_assert(!detail_::is_safeint_v<int>); // nor is int
+```
+
+we started with an enum class that inherits from a primitive type and has a special enum value `tag_to_prevent_mixing_other_enums`, then we created a concept `a_scoped_enum` that this enum cannot be converted back to the underlying type, and then another concept `a_safeint` that a scoped enum must have this predefined tag.
+
+### Promotions and Conversions
+
+meta programming for promotion. we allow integer promotion, but not sign change. we have a way to do this.
+
+```cpp
+template<typename E> // ULT = underlying type
+using ULT = std::conditional_t<std::is_enum_v<plain<E>>,
+ std::underlying_type_t<plain<E>>, plain<E>>; //
+
+template<typename E>
+using promoted_t = // will promote keeping signedness
+ std::conditional_t<
+ (sizeof(ULT<E>) < sizeof(int)) // test if promotion is needed
+ , std::conditional_t<std::is_unsigned_v<ULT<E>> , unsigned , int > // return the same sign
+ , ULT<E> //no promotion
+ >;
+
+template<a_safeint E>
+constexpr auto to_int(E val) noexcept
+{
+  return static_cast<promoted_t<E>>(val); // promote keeping signedness
+}
+```
+
+testing sign promotions, are thing the same type and sign?
+
+```cpp
+static_assert(std::is_same_v<unsigned,decltype(to_int(1_ui8)+1)>);
+static_assert(std::is_same_v<unsigned,decltype(to_int(2_ui16)+1)>);
+static_assert(std::is_same_v<int,decltype(to_int(1_si8))>);
+static_assert(std::is_same_v<int,decltype(to_int(2_si16))>)
+```
+
+this is bad, a sigend char is actually `int8_t`. but long is weird. the promotion flow should be:
+
+> char < short <int < long < long long
+
+```cpp
+template<std::integral T>
+constexpr bool is_integer_v =
+    std::is_same_v<uint8_t , T> ||
+    std::is_same_v<uint16_t, T> ||
+    std::is_same_v<uint32_t, T> ||
+    std::is_same_v<uint64_t, T> ||
+    std::is_same_v<int8_t , T> ||
+    std::is_same_v<int16_t , T> ||
+    std::is_same_v<int32_t , T> ||
+    std::is_same_v<int64_t , T>;
+
+template<typename T>
+concept an_integer = is_integer_v<T>;
+```
+
+so lets find something better, we check for the integral type, remove char and bool, check the sign to be the same and the range to be the same as that of int.
+
+```cpp
+template<typename INT, typename TESTED>
+constexpr bool is_compatible_integer_v =
+    std::is_same_v<TESTED,INT> || // either the same type
+    (
+        std::is_integral_v<TESTED> && //
+        !std::is_same_v<bool,TESTED> &&// exclude bool
+        !is_chartype_v<TESTED> && // exclude characters
+        (std::is_unsigned_v<INT> == std::is_unsigned_v<TESTED>) &&
+        std::numeric_limits<TESTED>::max() == std::numeric_limits<INT>::max()
+    );
+
+// concept
+template<typename INT, typename TESTED>
+constexpr bool is_similar_v=is_compatible_integer_v<INT,TESTED>;
+```
+
+character types are not intgers, the MISRA-C++ excludes them. so lets check againts them (also wide character )
+
+```cpp
+template<typename CHAR>
+constexpr bool is_chartype_v =
+    std::is_same_v<char, CHAR>
+ || std::is_same_v<wchar_t, CHAR>
+#ifdef __cpp_char8_t // feature test to check if type exists
+ || std::is_same_v<char8_t, CHAR> //c++20 addition
+#endif
+ || std::is_same_v<char16_t,CHAR>
+ || std::is_same_v<char32_t,CHAR> ;
+```
+
+so now our check looks like this
+
+```cpp
+template<typename TESTED>
+constexpr bool
+is_known_integer_v = is_similar_v<std::uint8_t, TESTED>
+ || is_similar_v<std::uint16_t, TESTED>
+ || is_similar_v<std::uint32_t, TESTED>
+ || is_similar_v<std::uint64_t, TESTED>
+ || is_similar_v<std::int8_t, TESTED>
+ || is_similar_v<std::int16_t, TESTED>
+ || is_similar_v<std::int32_t, TESTED>
+ || is_similar_v<std::int64_t, TESTED>;
+// deliberately not std::integral, because of bool and characters!
+
+template<typename T>
+concept an_integer = detail_::is_known_integer_v<T>;
+```
+
+and the conversion is
+
+```cpp
+template<an_integer T>
+constexpr auto from_int(T val)
+{
+    using detail_::is_similar_v;
+    using std::conditional_t;
+    struct cannot_convert_integer{}; //type for unconvertible values
+    using result_t = //this is basically a huge if-else statements that returns the correct safe type.
+        conditional_t<is_similar_v<std::uint8_t,T>, ui8,
+        conditional_t<is_similar_v<std::uint16_t,T>, ui16,
+        conditional_t<is_similar_v<std::uint32_t,T>, ui32,
+        conditional_t<is_similar_v<std::uint64_t,T>, ui64,
+        conditional_t<is_similar_v<std::int8_t,T>, si8,
+        conditional_t<is_similar_v<std::int16_t,T>, si16,
+        conditional_t<is_similar_v<std::int32_t,T>, si32,
+        conditional_t<is_similar_v<std::int64_t,T>, si64,
+        cannot_convert_integer>>>>>>>>;
+        return static_cast<result_t>(val);
+}
+```
+
+and a way to directly convert from an integer type to an safe integer type. we check the value is larger than zero for unsigned safe types, and that it fits inside the range of the requested type, and for signed types, we check the min and max ranges.
+
+```cpp
+template<a_safeint TO, an_integer FROM>
+constexpr auto from_int_to(FROM val)
+{
+    using result_t = TO;
+    using ultr = std::underlying_type_t<result_t>;
+    if constexpr(std::is_unsigned_v<ultr>)
+    {
+        if ( val >= FROM{} && val <= std::numeric_limits<ultr>::max())
+        {
+            return static_cast<result_t>(val);
+        }
+        else
+        {
+            throw "integral out of range";
+        }
+    }
+    else
+    {
+        if (val <= std::numeric_limits<ultr>::max() &&
+        val >= std::numeric_limits<ultr>::min())
+        {
+            return static_cast<result_t>(val);
+        }
+        else
+        {
+            throw "integral out of range";
+        }
+    }
+}
+```
+
+testing this explicit conversion, and checking the compile time behavior (that we can convert from the default value) by making sure an expression is a valid behavior. there is still an issue with the equal sign after `>>`.
+`>> =` is ok, `>>=` is still _shift equal_.
+
+```cpp
+static_assert(1_ui8 == from_int(uint8_t(1)));
+static_assert(42_si8 == from_int_to<si8>(42));
+//static_assert(32_ui8 == from_int(' ')); // does not compile
+//static_assert(1_ui8 == from_int_to<ui8>(true)); // does not compile
+
+void checkedFromInt()
+{
+    using namespace psssint;
+    ASSERT_THROWS(from_int_to<ui8>(2400u), char const *); // this should throw, we 2400u doesn't fit in eight bits
+}
+
+template<typename FROM, typename=void>
+constexpr bool from_int_compiles=false;
+
+template<typename FROM>
+constexpr bool from_int_compiles<FROM, std::void_t<decltype(psssint::from_int(FROM{}))>> = true;
+//...
+
+static_assert(from_int_compiles<long>); // detect long bug
+static_assert(! from_int_compiles<bool>); // can't convert from bool (false)
+static_assert(! from_int_compiles<char>); // can't convert from char (0)
+```
+
+### Operators
+
+output operator `<<`. concept `a_safeint` prevents using it for other types, we can use either form to define the operator, this is a matter of style preference.
+
+```cpp
+//form 1
+template<a_safeint E>
+std::ostream& operator<<(std::ostream &out, E value){
+    out << to_int(value);
+    return out;
+}
+
+//form 2
+std::ostream& operator<<(std::ostream &out, a_safeint auto value)
+{
+    out << to_int(value);
+     return out;
+} // concept short-hand notation
+```
+
+arithmetic operator example, for addition, we combine to safe integers, which must be of the same sign. we allow for promotion (to the wider type), and before the operator itself we convert to unsigned, so we can get wrong results (wrapping), but not overflow
+
+```cpp
+template<a_safeint E, a_safeint F>
+constexpr auto operator+(E l, F r) noexcept
+requires same_sign<E,F>
+{
+    using result_t=std::conditional_t<sizeof(E)>=sizeof(F),E,F>;
+    return static_cast<result_t>(
+        static_cast<ULT<result_t>>(
+            to_uint(l)
+            + // use unsigned op to prevent signed overflow, but wrap.
+            to_uint(r))
+        );
+}
+```
+
+an example of code generation...
+
+```cpp
+template<typename INT>
+struct operations {
+operations(std::initializer_list<INT> seedvalues):values{seedvalues}{};
+    std::vector<INT> values;
+    INT sum() const
+    {
+        return std::accumulate(begin(values),end(values),INT());
+    }
+};
+std::initializer_list<int8_t> i8_seed{1,1,2,3,5,8,13,21,34,55,89};
+
+std::initializer_list<psssint::si8>
+si8_seed{1_si8,1_si8,2_si8,3_si8,5_si8,8_si8,13_si8,21_si8,34_si8,55_si8,89_si8};
+
+auto sum(operations<int8_t> const &ops)
+{
+    return ops.sum();
+}
+
+auto sum(operations<si8> const &ops)
+{
+    return ops.sum();
+}
+```
+
+### Supressing All undefined behavior
+
+some operations might fail, division by zero, modulo by zero, shifting too many bytes. in some cases, we can throw exceptions, but some domains disallow exceptions. a known _wrong result_ is better than undefined behavior.
+
+this macro throws on debug, and returns a know wrong result (default value) in regular mode. if we can detect the error at compile time, we can fail the exception. if we are in release mode and the condition fails, we return the default value.
+
+```cpp
+
+#ifdef NDEBUG /* case 3 - release mode*/
+    #define ps_assert(default_value, cond) \
+    if (std::is_constant_evaluated()) {\
+    if (not (cond)) throw(#cond); /* compile error */\
+    } else {\
+    if (not (cond) ) return (default_value);/* last resort avoid UB */\
+    }
+    #define NOEXCEPT_WITH_THROWING_ASSERTS noexcept
+#else /* debug mode */
+    #ifdef PS_ASSERT_THROWS /* case 1 - we allow throwing exceptions*/
+        #define ps_assert(default_value, cond) ((cond)?true: throw(#cond))
+        #define NOEXCEPT_WITH_THROWING_ASSERTS noexcept(false)
+    #else /* case 2 crush the program with asset */
+        #include <cassert>
+        #define ps_assert(default_value, cond) assert(cond)
+        #define NOEXCEPT_WITH_THROWING_ASSERTS noexcept
+    #endif
+#endif
+```
+
+and now actually using this, return zero (deafult value of type) when dividing by zero. we check if we can divide by zero.
+
+```cpp
+template<a_safeint E, a_safeint F>
+constexpr auto operator/(E l, F r) NOEXCEPT_WITH_THROWING_ASSERTS // <--
+requires same_signedness<E,F>
+{
+    using result_t=std::conditional_t<sizeof(E)>=sizeof(F),E,F>;
+    ps_assert(result_t{}, r != F{} && " division by zero"); // <--
+
+    return static_cast<result_t>(
+        static_cast<detail_::ULT<result_t>>(
+            to_uint(l)
+            / // use unsigned op to prevent signed overflow, but wrap.
+            to_uint(r)
+        )
+    );
+}
+```
+
+and now testing the assertion handling, again with macros, and traits, and templates... we turn all the values into void
+(not writing the code)
+
+now, we can go back to the conversion function and make it better, we get the same behavior (throw, crush, return some value) as before.
+
+```cpp
+template<a_safeint TO, an_integer FROM>
+constexpr auto from_int_to(FROM val) NOEXCEPT_WITH_THROWING_ASSERTS
+{
+    using result_t = TO;
+    using ultr = std::underlying_type_t<result_t>;
+    if constexpr(std::is_unsigned_v<ultr>)
+    {
+        ps_assert( result_t{}, (val >= FROM{} && val <= std::numeric_limits<ultr>::max()));
+        return static_cast<result_t>(val);
+    }
+    else
+    {
+        ps_assert( result_t{}, (val <= std::numeric_limits<ultr>::max() &&
+        val >= std::numeric_limits<ultr>::min()));
+        return static_cast<result_t>(val);
+    }
+}
+```
+
+there is a bug with gcc compiler that gives us a false alarm so we might need a pragma to disable this warning for this code block.
+
+### Extra stuff
+
+we would also like our types to have limits, so we specialize over the `numeric_limits` struct,
+
+```cpp
+template<psssint::a_safeint type> // constrained
+struct numeric_limits<type>
+{
+    using ult = psssint::detail_::ULT<type>;
+    static constexpr bool is_specialized = true;
+    static constexpr type min() noexcept
+    { return type{numeric_limits<ult>::min()}; }
+    static constexpr type max() noexcept
+    { return type{numeric_limits<ult>::max()}; }
+
+    // ...
+    static constexpr int digits = numeric_limits<ult>::digits;
+    static constexpr int digits10 = numeric_limits<ult>::digits10;
+
+    //...
+    static constexpr bool is_modulo = true; // even for signed
+    static constexpr bool traps = false; // never signals
+};
+```
+
+theres also a c++17 branch without concepts, uses `std::enable_if` and SFINAE and not concepts, and also something else for `std::numeric_limits<>`.
+
+the alternatives are _boost/safe_numerics_ or _CNL: Compositional Numeric Library_ (also fixed points arithemtic).
+
+Q&A
+
+> - _why not pass `modulo` to the base numeric limit?_. because he wanted signed numerics to wrap around.
+> - _matching to a standard behavior of numeric types_
+> - _using compiler flags to force wrapping_
 
 </details>
 
