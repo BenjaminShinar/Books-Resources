@@ -229,6 +229,25 @@ patterns:
 - URI: `[\w]+://[^/\s?#]+[^\s?#]+(?:\?[^\s#]*)?(?:#[^\s]*)?`
 - IPv4: `(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])`
 
+commands:
+
+
+
+```ps
+# regex match
+Select-String -Path .\regex22.txt -Pattern "^fooa+bar$" 
+# simple match
+"aaaabc" -match "a+bc"
+# simple replace
+"aaaabc" -replace "a+","x"
+# then single quote matters
+"aaaabc" -replace "(a+).([cd])",'$2 then $1'
+# from file
+(Get-Content -Path .\udemy_regular_expressions_mastery\input_files\regex19.txt) -replace "^(l)(.*)",'Z$2'
+```
+
+- [About Regex](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_regular_expressions?view=powershell-7.2)
+- [PowerShell](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/select-string?view=powershell-7.2)
 </details>
 
 ## Markdown Formatting Tips

@@ -326,17 +326,117 @@ Select-String -Path .\regex24.txt -Pattern "^(log|ply|red)wood$"
 ## Find and Replace with Capture Groups
 <details>
 <summary>
-Capture Groups
+Capture Groups and "find and replace" behavior.
 </summary>
 
+not only detection, but also replacing parts.
+
+steps:
+1. what needs to be replaced, and with what?
+2. represent the replacement parts with capture groups
+3. use a substition string
+
 ### The Monitor Resolutions Problem
+
+in example 25, we have text like "1280x720", which we want to transform into something such as "1280 pix by 720 pix", the regex pattern is `([0-9]+)x([0-9]+)`, the parentheses are a capture group. we can refer to those groups with syntax of forward slash and a number `\1` for the first group, `\2` for the second, etc. the zeroth group `\0` is the entire string.
+
+in linux we will use `sed` as the command, with the format
+
+`sed -r 's/pattern/replacement/g' inputfile`
+
+
+```sh
+sed -r 's/([0-9]+)x([0-9]+)/\1 pix by \2 pix/g' regex25.txt
+```
+```ps
+(Get-Content -Path ./regex25.txt) -replace '^([0-9]+)x([0-9]+)','$1 pix by $2 pix'
+```
+
+the java code example uses the `matcher` class and then the `replace` methods.
+
 ### The First Name Last Name Problem
+
+in the next example, we want to replace a name string into "<last_name>,<first_name>" pattern.
+
+the pattern itself will be `([a-zA-Z]+)\s[a-zA-Z]+)`
+
+```sh
+sed -r 's/([a-zA-Z]+)\s([a-zA-Z]+)/\2,\1/g' regex26.txt
+(Get-Content -Path .\regex26.txt) -replace '([a-zA-Z]+)\s([a-zA-Z]+)','$2, $1'
+```
+
 ### The Clock Time Problem
+
+next we want to match hours, transform "7:32" into "32 minutes past 7". we use the curly braces quantifier to capture one or two occurens of the pattern (the character class with the square brackets).
+
+```sh
+#linux
+sed -r 's/([0-9]{1,2}):([0-9]{1,2})/\2 mins past \1/g' regex27.txt
+#powershell
+(Get-Content -Path .\regex27.txt) -replace '([0-9]{1,2}):([0-9]{1,2})','$2 mins past $1'
+```
+
 ### The Phone Number Problem
+
+in file "regex28.txt" there are phone number in the format "###.###.####", which we want to replace with "xxx.xxxx.####", only keep the last four digits.
+
+the match pattern is `[0-9]{3}.[0-9]{3}.([0-9]{4})`, and the replacement string will be `xxx.xxx.\1`. we don't need to capture the starting numbers, as we replace them with x no matter what their original value was.
+
+```sh
+#linux
+sed -r 's/[0-9]{3}.[0-9]{3}.([0-9]{4})/xxx.xxx.\1/g' regex28.txt
+#powershell
+(Get-Content -Path .\regex28.txt) -replace '[0-9]{3}.[0-9]{3}.([0-9]{4})','xxx.xxx.$1'
+```
+
 ### The Date Problem
+next, we want to replace a date format, "Jan 5th 1987" into "5-Jan-87". the match pattern will be `([a-zA-z]{3})\s([0-9]{1,2})[a-z]{2}\s[0-9]{2}([0-9]{2})` and the replacement will be `\2-\1-\3`.
+
+we could also be more specific
+`\(([0-9]{3}\)\.([0-9]{3})\.([0-9]{4})`
+```sh
+#linux
+sed -r 's/([a-zA-z]{3})\s([0-9]{1,2})[a-z]{2}\s[0-9]{2}([0-9]{2})/\2-\1-\3/g' regex29.txt
+#powershell
+(Get-Content -Path .\regex29.txt) -replace '([a-zA-z]{3})\s([0-9]{1,2})[a-z]{2}\s[0-9]{2}([0-9]{2})','$2-$1-$3'
+```
+
 ### Another Phone Number Problem
+
+now we have a phone number in the format of `(###).###.####`, from which we want to remove the parentheses. this means we hav to escape them somehow. so the pattern will be `\(([0-9]{3})\)(.*)` and the substition `\1\2`
+
+```sh
+#linux
+sed -r 's/\(([0-9]{3})\)(.*)/\1\2/g' regex30.txt
+#powershell
+(Get-Content -Path .\regex30.txt) -replace '\(([0-9]{3})\)(.*)','$1$2'
+```
+
 ### Quiz 4: Regex: Find and Replace with Capture Groups
 
+> - what is the symbol for matching a capture group in the replacement string?
+> - match a state and zip code.
+> - substitution order of the dollar sign.
+
+### Challenges
+
+Email challenge:
+match an email
+
+- valid mails
+  - bob.123@gmail.com
+  - alice-personal@yahoo.com
+  - admin@cloud.guru
+  - tom_bussiness@amazon.ca
+- invalid address
+  - george@yahoo.com
+  - robert_at_gmail.com
+  - steve austin@gmail.com
+
+
+```sh
+ Select-String -Path .\email_challenge.txt -Pattern "^[a-zA-Z_.0-9\-]+@[a-zA-Z]{2,}\.[a-zA-Z]{2,}$"
+```
 </details>
 
 ## Takeaways
@@ -348,6 +448,12 @@ Things worth remembering
 in powershell
 ```ps
 Select-String -Path C:\temp\*.log -Pattern "pat"
+# <text> -match <pattern>
+"abc" -match "[ab]"
+# <text> -replace <pattern>,<substition>
+"abc" -replace "[ab]", "d"
+# from file
+(Get-Content -Path .\udemy_regular_expressions_mastery\input_files\regex19.txt) -replace "^(l)(.*)",'Z$2'
 ```
 
 email validation - `^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$`
@@ -358,6 +464,9 @@ some symbols need to be escaped in different situations.
   - Escape the hyphen `-` range symbol.
   - Escape the backslash `\` escape character.
   - **no need** to escape the `.` wild card.
+  - **no need** to escape the parenthese `(`,`)` capture group.
+- the parenthese should be escaped, so they won't be confused with a capture group
+- the dot wild card needs to be escaped outside a character class.
 
 character class: negation caret, range hyphen
 
@@ -365,6 +474,7 @@ character class: negation caret, range hyphen
 - quantifiers
 - anchors
 - character classes
+- capture groups
 
 </details>
 
