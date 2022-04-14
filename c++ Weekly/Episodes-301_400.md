@@ -1176,6 +1176,22 @@ int main()
 the problem is the copying, we don't handle forwarding. if we take references, we run into object lifetime issues. there might be a way to parametrize it (take copy of rvalue, refernce of lvalue), but it would probably quickly become a monsteroues code.
 </details>
 
+## C++ Weekly - Ep 319 - A JSON To C++ Converter
+<details>
+<summary>
+A zero runtime library that allows using Json resources at compile time.
+</summary>
+
+[A JSON To C++ Converter](https://youtu.be/HROQPE59q_w)
+
+introducing json2cpp compiler library, the goal is to have no runtime overhead, to use a statically compiled json resource that can be used in compile time. compatible with what it needs to be, and with an adaptor.
+
+everything is statically known at compile time, it creates a cpp class that is directly mapped to the properties of the json file. it's a custom data structure that we can include as part of the compile process. this can be used as a configuration file that makes compile time decisions. he suggests that it's great for embedded devices.
+
+
+</details>
+
+
 ## C++ Best Practices Game Jam
 <details>
 <summary>
