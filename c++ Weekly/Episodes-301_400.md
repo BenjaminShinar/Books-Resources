@@ -1188,7 +1188,98 @@ introducing json2cpp compiler library, the goal is to have no runtime overhead, 
 
 everything is statically known at compile time, it creates a cpp class that is directly mapped to the properties of the json file. it's a custom data structure that we can include as part of the compile process. this can be used as a configuration file that makes compile time decisions. he suggests that it's great for embedded devices.
 
+</details>
 
+## C++ Weekly - Ep 320 - Using `inline namespace` To Save Your ABI
+<details>
+<summary>
+
+</summary>
+
+[Using `inline namespace` To Save Your ABI](https://youtu.be/rUESOjhvLw0).
+
+avoid problems with ABI (application binary interface) breaking.
+
+imagine that we start with this code:
+```cpp
+namespace lefticus{
+    struct Data{
+        char c;
+        int i;
+        char c2'
+
+    };
+    int calculate_things(const Data& data);
+}
+
+int main()
+{
+    const lefticus::Data some_data{};
+    return lefticus::calclate_things(some_data);
+}
+```
+
+but now we want to change the order of the arguments in the struct. but this is breaking ABI. the layout changed, the size changed. We want to be able to safely change the ABI, in c++11 there was a new feature called **inline namespaces**
+
+
+```cpp
+namespace lefticus{
+inline namespace v2_0_0 {
+    struct Data{
+        int i;
+        char c;
+        char c2'
+
+    };
+    int calculate_things(const Data& data);
+}
+}
+
+
+int main()
+{
+    const lefticus::Data some_data{};
+    return lefticus::calclate_things(some_data);
+}
+```
+
+now we have two defnintios, so we either get a compile time error if we try to use them, or a linkage error. this protects us from undefined behavior.
+
+the downside is that we need to manually change the namespace. the inline namespace means that the name never shows up in the code. we can have multiple ABIs maintained at the same time.
+
+```cpp
+namespace lefticus{
+namespace v1_0_0 { //explicit namespace
+    struct Data{
+        char c;
+        int i;
+        char c2'
+
+    };
+    int calculate_things(const Data& data);
+}
+
+inline namespace v2_0_0 { //implicit inline namespace
+    struct Data{
+        int i;
+        char c;
+        char c2'
+
+    };
+    int calculate_things(const Data& data);
+}
+}
+
+
+int main()
+{
+    const lefticus::Data some_data{}; // uses implicit namespace
+    const lefticus::v2_0_0::Data some_old_data{}; // uses explict namespace
+    auto x = lefticus::calclate_things(some_data); // overload resolution
+    auto old_x = lefticus::calclate_things(some_data); // overload resolution
+}
+```
+```
 </details>
 
 
