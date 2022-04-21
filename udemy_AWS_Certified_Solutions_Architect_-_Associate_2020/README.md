@@ -54,6 +54,7 @@ Aws services:
 - DMS - Database Migration
 - Managed Microsoft AD - Active Directory by AWS
 - RAM - Resources Access Manger - share resources across account
+- Route53 - Dns
 
 CloudWatch monitors resource usage, such as the number of EC2 instances we have, EBS volumes used, redirections from load balancers, etc... . CloudTrail Monitors aws actions such as API calls or other aws actions, the focus is how the users and services interact with AWS itself, not the metrics of the services themselves.
 

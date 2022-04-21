@@ -263,9 +263,9 @@ all sign-on activities are recorded in CloudTrail
 
 ## Section 7 - Route53
 
-<!-- <details> -->
+<details>
 <summary>
-Domain Name Server
+Domain Name Server and routing Polices.
 </summary>
 
 ### DNS 101
@@ -343,36 +343,118 @@ we will now launch EC2 instances, we choose three regions to deploy ec2 instance
 
 ### Routing Policies
 
-<!-- <details> -->
+<details>
 <summary>
-
-//TODO: add Summary
-
+The different Routing Polices available.
 </summary>
 
-#### Route53 Routing Policies Available On AWS
+- Simple Routing - random order
+- Weighted Routing - based of weights proportions
+- Latency-based Routing - lowest network latency for the end-user
+- Failover Routing - primary and secondary sites
+- Geolocation Routing - based on geolocation of the queries
+- GeoProximity Routing (traffic flow only) - geolocation of users and resources, with an optional bias (complex rules)
+- Multivalue Answer Routing - multiple responses, but with health checks.
+
+we'll go over each policy in the demo.
 
 #### Simple Routing Policy Lab
 
+one record with one or multiple IP addresses. if there are multiple addresses, then the are returned in a random order (each user gets one!).
+
+in the console,we should write down all the ec2 addresses.
+in the <kbd>Route53</kbd> service, we choose the <kbd>Hosted Zone</kbd> and then <kbd>Create Record Set</kbd>. we choose the **A - IPv4 address** type, without specifying a name. in the "value" text box, we paste the 3 ip addresses, and choose **simple** as the <kbd>Routing Policy</kbd>, we click <kbd>Create</kbd>.
+
+to test it, we navigate to the record, once the **TTL** (time to live) passes, we might get a different machine.
+
 #### Weighted Routing Policy Lab
+
+in a weighted routing policy, we can specify which percantage of the traffic is directed to which address.
+
+we delete the older record set, and create a new one. this time we choose **Weighted** <kbd>Routing Policy</kbd>, we give it only one address in the "Values" text box, and we give it a weight of 20. the "Set ID" is descrption.\
+we create another record set with a different ip address value, set a weight and "Set ID". we do the same with the 3rd address.
+
+the weights don't need to amount to 100, the calculation is done based on the total.
+
+we can also check the <kbd>Associate with Health Check</kbd> box, and then route53 won't respond with resources that fail the health-check.
+
+we can create a healthCheck for the specific address, this is done by <kbd>end point monitor</kbd>, we can also add an SNS notification if we want. each record needs it's own health check.
 
 #### Latency Routing Policy
 
+> Latency Based Routing allows you to route traffic based on the lowest network letency for your end user (i.e. which region will give them the fastest response time).
+>
+> To use latency-based routing, you create a latency resource record set for the Amazon EC2 (or ELB) resource in each region that hosts your website. when Amazon Route53 recives a query for your site, it selects the latency record set for the region that gives the user the lowest latency, Route53 then responds with the value associated with the resource record set.
+
+we create the record sets again, each with the **latency** routing policy, and we select the region, give it the "Set-ID" identifier and associate with a health check.
+
+if we have a vpn installed, we can choose to connect through a diffrent region and see different regions.
+
 #### Failover Routing Policy
+
+> Failover routing policies are used wheen tou want to create an active/passive set up. For example, you may want tour primart site to be in EU-WEST-2 and your secondary DR site in AP-SOUTHEAST-2. Route 53 will monitor the health f your primary sire using a health check, a health check monitor the health of your end points.
+
+to set this up, we create a record set with failover policy, we create a primary and secondary record sets with health checks.
+
+if we want to test this, we can stop the EC2 machine running the primary address.
 
 #### Geolocation Routing Policy
 
+> Geolocation routing lets tou choose where your traffic wil be sent based on the geographic location of tour users (ie the location from which DNS queries originate), For example, you might want all queries from Europe to be routed to a fleet of EC2 instances that are specifally configured for your european customers, These servers may have the local languages of your european customer and all prices are displayed in Euros.
+
+to set this up, we create a record set with the ip values, the **Geolcation** Routing police, and a setID. we can choose locations by countries and continents. there can also be "default" value. the value with with smallest geographical gets priority.
+
 #### Geoproximity Routing Policy (Traffic Flow Only)
+
+> Geoproximity routeing lets amazon Route53 route traffic to your resources based in the geographic location of your users and your resources. you can also choose to route more or less traffic to a gives resource by specifying a value, known as a **bias**. a bias expands or shrinks the size of the geographic region from which traffic is routed to a resource.\
+> **To use geoproximity routing, your must use Route53 traffic flow.**
+
+we first need to select <kbd>Traffic Policy</kbd> in the Route53 Service dashboard, we need to create a new traffic policy, we need to configure the flow:
+
+- start point
+- geo proximity rule (multiple rules/regions)
+- end points
+
+#### Multivalue Answer Routing Policy
+
+> Multivalue answer routing lets you confire amazon route53 to return multiple values, such as Ip addressess for your web servers, in respones to DNS queries. You can specify multiple values for almost any record, but multivalue answer routing lets you check the health of each resource, so route53 returns only values for healthy resources.\
+> **This is similar to simple routing but it allows you to put health checks on each record set.**
+
+we create records set with **multivalue answer** routing policy, setId and healthchecks.
 
 </details>
 
-### Multivalue Answer
-
 ### Route53 Summary
+
+[Combinign Polices](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-complex-configs.html)
+
+- ELB do not have a pre-defined IPv4 addresses, you resolve to them using A DNS name
+- Alias Record vs CName
+  - choose alias record over CName when possible.
+- Common DNS types:
+  - SOA - Start of Address
+  - NS - Namespace
+  - A - Alias
+  - CName - Canonical Name
+  - MX - (mail)
+  - PTR
+- Policies
+  - Simple - no health checks
+  - MultiValue Answer - with health check
+  - Weighted - with weights (like A/B testing)
+  - Latency - based on fastest latency
+  - Failover - primary and secondary
+  - Geolocation - DNS queries location
+  - GeoProximity (traffic flow) - complex rules.
+- HealthCheck
 
 ### Quiz 5: Route53 Quiz
 
+> -"You have created a new subdomain for your popular website, and you need this subdomain to point to an Elastic Load Balancer using Route53. Which DNS record set should you create?" _ANSWER: CNAME_
+
+</details>
+
 ##
 
-[next](Section_8_Route53.md)\
+[next](Section_8_VPC.md)\
 [main](README.md)
