@@ -7,10 +7,11 @@ all sorts of lectures, divided by field.
 - [Algorithms and Concepts](Algorithms%20and%20Concepts.md)
   - Algorithms from a Compiler Developer's Toolbox - Gábor Horváth
   - So You Think You Know How to Work With Concepts? - Andrzej Krzemieński
-  - The Concepts of concepts - Sandor Dargo
+  - The Concepts of Concepts - Sandor Dargo
   - Using Concepts: C++ Design in a Concept World - Jeff Garland
   - Practical TMP: A C++17 Compile Time Register Machine - Daniel Nikpayuk
-  - [Better C++ Ranges - Arno Schödl
+  - Better C++ Ranges - Arno Schödl
+  - STL Algorithms as Expressions - Oleksandr Bacherikov
 - [Concurrency](Concurrency.md)
   - Adventures in SIMD-Thinking - Bob Steagall
   - Parallelism on Ranges: Should We? - Giannis Gonidelis
@@ -50,13 +51,13 @@ all sorts of lectures, divided by field.
   - Techniques for Overloading any_invocable - Filipp Gelman
   - Writing a C++20 Module - Steve Downey
   - Preconditions, Postconditions, Invariants: How They Help Write Robust Programs - Andrzej Krzemieński
-  - Weak Interfaces --> Weak Defences: The Bane of Implicit Conversion in Function Calls - Richárd Szalay
+  - Weak Interfaces --> Weak Defenses: The Bane of Implicit Conversion in Function Calls - Richárd Szalay
   - hop: A Language to Design Function-Overload-Sets - Tobias Loew
 - [Lightning Talks](Lightning%20Talks.md)
   - Complecting Made Easy - Tony Van Eerd
   - Dashboards to the Rescue - Matthias Bilger
   - Universal Function Call Syntax in C++20 - Devon Richards
-  - Don't constexpr All the Things - David Sankel
+  - Don't `constexpr` All the Things - David Sankel
 
 currently working on:
 
@@ -64,7 +65,6 @@ currently working on:
 
 - [ ] Designing Concurrent C++ Applications - Lucian Radu Teodorescu
 - [ ] Library Approaches for Strong Type Aliases - Anthony Williams
-- [ ] STL Algorithms as Expressions - Oleksandr Bacherikov
 - [ ] Frictionless Allocators - Alisdair Meredith
 - [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
 - [ ] What Neighborhoods Owe Each Other: Rights, Duties, Immunities & Disabilities of Functions & Objects

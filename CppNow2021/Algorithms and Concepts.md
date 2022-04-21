@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore rtime conceptify Parnas Permutatic Distributic regtr
+// cSpell:ignore rtime conceptify Parnas Permutatic Distributic regtr Eigen padd Treap
 -->
 
 [Main](README.md)
@@ -3455,6 +3455,478 @@ void repeat_with ranges(char chA, int cchA,char chB, int cchB,char chC, int cchC
 the results show that the overhead cost is minimal, about 50% when `repeat_n`is iterator based, and about 15% when it supports internal iteraton. the overhead gets even smaller when the task isn't trivial, like when we need to convert numbers to strings.
 
 and example of re-implemanting the basic string using ranges, getting some improvements over the standard. there are some other stuff to work on.
+
+</details>
+
+## STL Algorithms as Expressions - Oleksandr Bacherikov
+
+<details>
+<summary>
+Using Expression templates to implements algorithms and customizing them with policies.
+</summary>
+
+[STL Algorithms as Expressions](https://youtu.be/ehtBUKHNJlw),[slides](https://docs.google.com/presentation/d/1Jr20Xa6dK8wU7W1SWlPScCQfnIx4Ng-mqPMGn0zYqLQ/edit?usp=sharing), [github](https://github.com/AlCash07/ACTL/tree/master/include/actl/operation)
+
+challenge: comparing floats (used in computational geometry), there is not single way to compare floats that always yields a correct result. different thresholds are used in different places, and computations might require casting to integers (and then there's a danger of overflowing).
+
+> "Basic operations such as comparison, multiplication and division are all customization points. Most STL algorithms have just 1 or 2 two customization points."
+
+one example of customization is by using **traits**.
+
+### Expression Templates
+
+we can look at the example of vectors addition to understand template expressions.
+
+given three vectors: a,b, and c, we want an operation to add them together and produce the sum.
+
+```cpp
+//not std::vector
+Vector operator + (const Vector &lhs, const Vector &rhs)
+{
+    assert(lhs.size() == rhs.size());
+    Vector sum(lhs.size());
+    for (size_t i = 0; i< lhs.size() ;++i)
+    {
+        sum[i]= lhs[i]+rhs[i];
+    }
+
+    return sum;
+}
+```
+
+the problem is that we create an additional temproray Vector for each sub expression `sum = a+b+c`.
+
+in linear algebra libraries, it was solved in the past as an expression template. there is no computation overhead to create the class itself.
+
+```cpp
+template <class T, class U>
+struct VectorSum
+{
+    // use references
+    const T& lhs;
+    const U& rhs;
+
+    size_t size() const
+    {
+        assert(lhs.size() == rhs.size());
+        return lhs.size();
+    }
+
+    auto operator[](size_t i) const
+    {
+        return lhs[i]+rhs[i];
+    }
+};
+
+template <class Vector1,class Vector2>
+VectorSum<Vector1,Vector2> operator + (const Vector1 &lhs,const Vector2 &rhs)
+{
+    return VectorSum<Vector1,Vector2>{lhs,rhs};
+}
+```
+
+with this, adding the Vectors doesn't construct a new temporary vector, only the actual left hand side assignment does real work. this is also called _lazy/deferred evaluation_.
+
+in the C++ Standard Library there are expressions: the adaptors and views from the _std::ranges_ library.
+
+```cpp
+std::vector<int> const vi{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+auto rng = vi |
+        views::filter([](int i) { return i % 2 == 0; }) |
+        views::transform([](int i) { return std::to_string(i)});
+
+// prints: [2,4,6,8,10]
+std::cout << rng << '\n'; // expression isn't evaluated until this line
+
+//we never do the work on the unreachable number
+int sum = accumulate(views::ints(1, unreachable)
+        | views::transform([](int i) {return i * i;}) //square
+        | views::take(10), // take the first 10
+        0); // initial value
+// prints: 385
+std::cout << sum << '\n';
+```
+
+### Designing Operations to support Operations.
+
+the C++ Standard Library has arithemetic operations and comparison operators defined (e.g `std::plus`, `std::greater_equal`), which can be passed to algorithms, but they are defined in terms of the operators themselves, and don't help with the actual implementation.
+
+Scalar operations in the Eigen Linear Algebra library
+
+- wrappers to support vector operations.
+- function object wrap all the functions ins _\<math>_.
+
+```cpp
+template <typename LhsScalar, typename RhsScalar>
+struct scalar_sum_op : binary_op_base<LhsScalar, RhsScalar>
+{
+    const result_type operator()(const LhsScalar& a, const RhsScalar& b) const
+    {
+        return a + b;
+    }
+
+    template <typename Packet>
+    const Packet packetOp(const Packet& a, const Packet& b) const
+    {
+        return internal::padd(a, b);
+    }
+};
+```
+
+extensible plus expression support
+
+```cpp
+namespace scalar
+{
+    struct add_f : operation<add_f>
+    {
+        template class<T, class U>
+        static auto evaluate(T lhs, U rhs)
+        {
+            return lhs + rhs;
+        }
+    }
+    inline constexpr add_f add;
+}
+
+struct add_f: operation<add_f>
+{
+    static constexpr auto formula = scalar::add;
+};
+inline constexpr add_f add;
+```
+
+and also
+
+```cpp
+template <class T, class U, enable_operators<T,U>=true>
+auto operator + (T&& lhs, U&& rhs)
+{
+    return add(std::forward<T>(lhs), std::forward<U>(rhs));
+}
+
+template <class T, class U, enable_operators<T,U>=true>
+decltype(auto) operator += (T&& lhs, U&& rhs)
+{
+    return add(inout{std::forward<T>(lhs), std::forward<U>(rhs)});
+}
+```
+
+(this required traits and sfinae).
+
+operation based class, using the Curiosly Recurring Template Patterns
+
+```cpp
+template <class Derived> // Curiously Recurring Template Pattern
+struct operation
+{
+    template <class... Ts>
+    constexpr decltype(auto) operator()(Ts&&... xs) const
+    {
+        if constexpr (!is_any_inout_v<Ts...>)
+        {
+            return expression{derived(), std::forward<Ts>(xs)...};
+        }
+        else
+        {
+            //extention to arbitrary types
+            auto&& op = resolve_overload<Ts...>(derived());
+            static_assert(1 == (... + is_inout_v<Ts>));
+            auto& dst = find_dst(xs...);
+            op.evaluate_to(dst, remove_inout(xs)...);
+            return dst;
+        }
+    }
+};
+
+const Derived& derived() const
+{
+   return static_cast<const Derived&>(*this);
+}
+```
+
+> In order to support operations like this for a Vector class (including expressions):
+
+```
+    Vector a, b, c;
+    Vector sum = a + b + c;
+    sum += a;
+```
+
+> 1. Implement a Vector.
+> 1. Make sure the operators are found via ADL (Argument dependant lookup), for example using an empty base class from the namespace with operators (like in _boost::operators_).
+> 1. Implement an operation that applies a given scalar operation to the vectors element-wise (single one to handle all the scalar operations).
+> 1. Write a rule that resolves universal operations (that are scalar by default) to this element-wise operation if its arguments are vectors.
+
+input-output parameters wrapper - main purpose is to distinguish between pure operators and assignment operators (`+` and `+=`).
+
+```cpp
+template<class T>
+struct inout
+{
+    T x;
+};
+
+template<class T>
+inout(T&&) -> inout<T>;
+```
+
+overload resolution - distinguish scalares from ranges and tuples, currenlty template class specialization. something about broadcasting.
+
+expression implementation
+
+```cpp
+template <class Op, class... Ts>
+struct expression : expression_base<expression<Op, Ts...>, result_tag_t<Op, Ts...>>
+{
+    std::tuple<Op, Ts...> args;
+
+    template <class... Us> // temporaries are moved, not stroed by refernce
+    constexpr expression(Us&&... xs) : args{std::forward<Us>(xs)...}
+    {}
+
+
+    constexpr auto& operation() const
+    {
+        return std::get<0>(args);
+    }
+};
+```
+
+simplified code examples:
+
+sum of squares
+
+```cpp
+
+int sum_before = accumulate(views::ints(1, unreachable) |
+    views::transform([](int i) {return i * i;}) |
+    views::take(10),
+    0);
+
+int sum_after = accumulate(sqr(views::ints(1, unreachable)) |
+    views::take(10), 0);
+```
+
+range projections vs expressions, fold operations as expressions(including short-circuting folds)
+
+### Alternatives to Lambda Expressions
+
+revisiting how we define functions
+
+```cpp
+template <class T>
+auto cos_derivative(const T& x)
+{
+    return -sin(x);
+}
+constexpr auto cos_derivative = -sin;
+constexpr auto cos_derivative = -sin(x_); //placeholder-like syntax
+
+double x = cos_derivative(1.0);
+```
+
+and also
+
+```cpp
+constexpr auto f = add * sub; // define expression operator
+constexpr auto f = (lhs_ + rhs_) * (lhs_ - rhs_); // same
+constexpr auto f = sqr(lhs_) - sqr(rhs_); // simplified
+static assert(f(4,1)== 15); // (4+1)*(4-1)
+```
+
+(how to implement the placeholder like syntax, with some aliases).
+
+more operations that can be defined in terms of basic template expressions.
+
+```cpp
+struct sqr_f : operation<sqr_f> {
+    static constexpr auto formula = x_ * x_;
+};
+inline constexpr sqr_f sqr;
+
+inline constexpr auto greater = rhs_ < lhs_;
+
+struct cmp3way_f : operation<cmp3way_f>
+{
+    static constexpr auto formula = cast<int>(greater) - cast<int>(less);
+};
+inline constexpr cmp3way_f cmp3way;
+
+inline constexpr auto none_of = !any_of;
+```
+
+using this syntax, we can write shorter lambda code, we remove the boiler plate code and replace it with expression code.
+
+_add 2 to each elements_
+
+```cpp
+//before
+ranges::transform(src, dst, [](auto x) { return x + 2; });
+//after
+ranges::transform(src, dst, x_ + 2);
+```
+
+_find single element larger than 2_
+
+```cpp
+//before
+ranges::find_if(src, [](auto x) { return x > 2; });
+//after
+ranges::find_if(src, x_ > 2);
+```
+
+_transform all even elements to string_
+
+```cpp
+//before
+vi
+    | views::filter([](int i) { return i % 2 == 0; })
+    | views::transform([](int i) { return std::to_string(i); });
+
+//after
+vi
+    | views::filter(x_ % 2 == 0)
+    | views::transform(to_string);
+```
+
+in the C++ Standard Library we have algorithm with the `_if` suffix, because they are a common use-case.
+
+> - `std::count_if`
+> - `std::find_if`
+> - `std::find_if_not`
+> - `std::find_first_of`
+> - `std::remove_if`
+> - `std::remove_copy_if`
+> - `std::replace_if`
+> - `std::replace_copy_if`
+> - `ranges::find_if(range, predicate);`
+> - `ranges::find(range, value);`
+
+we can change them to use a single form.
+
+| Usage                              | Current                               | Proposed (expression)                   |
+| ---------------------------------- | ------------------------------------- | --------------------------------------- |
+| by predicate                       | `find_if(range, pred)`                | `find(range, pred)`                     |
+| by value                           | `find(range, value)`                  | `find(range, x_ == value)`              |
+| not matching predicate             | `find_if_not(range, pred)`            | `find(range, !pred)`                    |
+| first match in both                | `find_first_of(range1, range2)`       | `find(range1, is_in(x_, range2))`       |
+| first match in both with predicate | `find_first_of(range1, range2, pred)` | `find(range1, is_in(x_, pred(range2)))` |
+
+this can also be used to implement _upper_bound_ and _lower_bound_.
+
+### Policy Based Design
+
+the motivating example for the talk was comparing vectors of 3d points. we want to check the equality between them with a threshold.
+
+```cpp
+//normal form
+std::vector<glm::vec3> expected, actual;
+assert(expected.size() == actual.size());
+for (size_t i = 0; i < expected.size(); ++i) {
+    assert(std::abs(expected[i].x - actual[i].x) < 1e-6f);
+    assert(std::abs(expected[i].y - actual[i].y) < 1e-6f);
+    assert(std::abs(expected[i].z - actual[i].z) < 1e-6f);
+}
+
+//ranges form
+assert(ranges::equal(expected, actual, compare_vectors{1e-6f}));
+```
+
+the proposal is to have operations affected by polices.
+
+```cpp
+std::vector<glm::vec3> expected, actual;
+assert ((equal | absolute_error{1e-6f})(expected, actual));
+
+//alias
+auto my_equal = equal | absolute_error{1e-6f};
+assert(my_equal(expected, actual));
+
+```
+
+the form is `operation | policy1 |policy2|....`, each policy effects the policy. so in our example
+
+```cpp
+template <class T>
+struct absolute_error {
+    struct is_policy;
+    T threshold;
+};
+
+
+template <class T>
+auto apply_policy(scalar::equal_f, absolute_error<T> policy) {
+    return abs(sub) <= policy.threshold;
+}
+template <class T>
+auto apply_policy(scalar::less_f, absolute_error<T> policy) {
+    return policy.threshold < rhs_ - lhs_;
+}
+```
+
+while there is a compiler flag for "fast math", it means that we can't have some functions use the fast math and some not, policies allow us to decide per case.
+
+while c++ has execution policies, he doesn't like the form of the function. also the Generator function in `<random>` header and the allocators. we can have policies to effect how the allocator works.
+
+for example, the _std::vector_ has a growth factor, but it's not up for the programmer to set, it's defined in the compiler. we could create a growth policy and pass it.
+
+in the _std::unordered_set_ class:
+
+```cpp
+template <
+    class Key,
+    class Hash = std::hash<Key>,
+    class KeyEqual = std::equal_to<Key>,
+    class Allocator = std::allocator<Key>
+    >
+class unordered_set;
+```
+
+the _Hash_ and _KeyEqual_ classes must be consistent, but that is not enforced by the interface.
+
+> Problems:
+>
+> - There are too many template parameters.
+> - Custom allocator specification requires specifying defaults for all other parameters.
+> - It’s easy to forget to specify correct KeyEqual unless it’s the default.
+>
+> Solution:
+>
+> - Introduce hashing policy that consistently affects hash and equality.
+> - Compose hashing and allocator policy into a single Policy parameter.
+
+Treap example - a data structure with many customization points that could make use of policy.
+
+> Treap is a data structure used in Competitive Programming:
+> https://en.wikipedia.org/wiki/Treap
+>
+> Treap can represent an array that supports:
+>
+> - slicing and concatenation
+> - reverse on a subarray
+> - query on a subarray (sum of elements)
+> - modification on a subarray (increment)
+>
+> All in O(log N).
+>
+> Customizable operations:
+>
+> - allocation
+> - random numbers generation
+> - combination of queried values
+> - reverse of queried value
+> - modification of queried value
+> - identity modification value
+> - combination of modifying values
+> - shift of modifying value
+> - reverse of modifying value
+
+### Generic Policy Based Mechanisms
+
+customzing advanced algorithms, steps in creating the expression pipeline. applying the policy and the operation expresion with an expression tree.
+
+templates for operation instead of types?
 
 </details>
 

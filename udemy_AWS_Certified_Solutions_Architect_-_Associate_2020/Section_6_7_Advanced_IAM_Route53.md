@@ -334,6 +334,13 @@ A CName can't be used for a naked domain (zone apex record, no www). you can't h
 
 ### Route53 - Register A Domain Name Lab
 
+demo in the AWS manager console. under <kbd>services</kbd>, choose <kbd>Route53</kbd>. we first register a domain (for a price), we need to fill the personal details and pay up. it can take up to three days to complete. once successful, the domain will appear as a **hosted zone**.
+
+we will now launch EC2 instances, we choose three regions to deploy ec2 instances in. we use the same bootstrap issue to host an serve an html webpage (with the region name). we might need to set up new security group if we never used those regions. we will use them in the later portions.
+
+> - you can buy domain names directly with AWS.
+> - it can take up to 3 days to register a domain.
+
 ### Routing Policies
 
 <!-- <details> -->
