@@ -64,14 +64,14 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 
 | Shorthand | Long name                             | Usage and Related AWS service        | Notes                                             |
 | --------- | ------------------------------------- | ------------------------------------ | ------------------------------------------------- |
-| ACL       | Access Control List                   | S3                                   |
+| ACL       | Access Control List                   | **S3, VPC**                          |
 | AD        | Active Directory                      |                                      | non-aws way to manage users in other systems      |
 | AMI       | Amazon Machine Image                  | EC2                                  | linux flavours, windowes, etc...                  |
 | ARN       | Amazon Resource Name                  |                                      | amazon identifier                                 |
 | AWS       | Amazon Web Service                    | the amazon cloud eco-system          |
 | BI        | Business Intelligence                 |
 | CDN       | Content Delivery Network              | Cloud Front                          |                                                   |
-| CIDR      | Classless Inter-Domain Routing        | security groups                      | `0.0.0.0/0` allows all access                     |
+| CIDR      | Classless Inter-Domain Routing        | security groups                      | `0.0.0.0/0` and `::/0` allow all access           |
 | DAX       | DynamoDB Accelerator                  | Aws DynamoDB                         | in memory-cache                                   |
 | DFS       | Distributed File System               |
 | DMS       | Database Migration Service            | migrate from one database to another |
@@ -96,6 +96,7 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | MAC       | Media Access Control (address)        |                                      | networking                                        |
 | MFA       | Multi Factor Authentication           | IAM                                  |
 | MMP       | Massively Parallel Processing         | Redshift                             |
+| NAT       | Network Address Translation           | **VPC**                              |
 | NFS       | Network File System                   |                                      | FS                                                |
 | OAI       | Origin Access Identification          | Authentication                       |
 | OTAP      | Online Analytics Processing           | RedShift                             | BI operation                                      |
@@ -128,5 +129,7 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | RAM       | Resource Access Manager               | **AWS Service**                      | Share resource between AWS accounts               |
 | SAML      | Security Assertion Markup Langauge    | IAM access                           | single sign on                                    |
 | SOA       | Start of Authority                    | Route53, DNS                         | record with information about domain access       |
+| VPN       | Virtual Private Network               | VPC                                  |
+| IGW       | Internet Gateways                     | VPC                                  |
 
 </details>
