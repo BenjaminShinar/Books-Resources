@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore printjson
+// cSpell:ignore
 -->
 
 [main](README.md)
@@ -14,11 +14,11 @@ First steps, installations, introduction.
 
 mongoDB is a database, the company behind it is also called MongoDB, the source of the name is "Humongous", meaning large and big. mongoDB is a server,which can contain databases, databases contain colletions, and documents contain documents. documents are Schemaless, we aren't required to have the same field in all documents! 
 
-Mongo | SQL
----|---
-Database|Database
-Collection | Table
-Document | Row
+| Mongo      | SQL      |
+| ---------- | -------- |
+| Database   | Database |
+| Collection | Table    |
+| Document   | Row      |
 
 a documents is a JSON data format, which means nested objects inside a documents, we can have arrays, primitives and strings. this structure means that we can have complex related data in a single document, rather than having many joins to combine data from different tables.
 
@@ -102,9 +102,9 @@ the storage engine writes and reads data from files, but it also stores data in 
 
 ## Section 2 - Understaning The Bascis and CRUD Operations
 
-<!-- <details> -->
+<details>
 <summary>
-CRUD - Create, Read, Update, Delete.
+CRUD - Create, Read, Update, Delete. Basic Mongo db actions and concepts
 </summary>
 
 core concepts of crud operations, basics of collections and documents, basic datatypes used in mongodb.
@@ -257,7 +257,7 @@ db.flightData.deleteMany({marker:"toDelete"})
 ```
 the dollar sign `$` is a special symbol that mongodb knows how to handle.
 
-### Understanding "insertMany()"
+### Understanding `insertMany()`
 
 before, we inserted documents one by one, but with with `insertMany`, we can add multiple documents at once, we pass them as an array.
 
@@ -417,19 +417,121 @@ we can force the return of all the results by turning them all into an array.
 
 we can also do something to each document in the collection
 
-`db.passengers.find().forEach((passangerData)=> {printjson(passengerData)})`
+`db.passengers.find().forEach( (passangerData) => { printjson(passengerData) } )`
 
 this cursor business is also the reason why `.pretty()` doesn't work with `findOne()`. the function exists for cursor objects, not for a single document. for the other operations (insert, update, delete) there isn't any cursor, as those operations don't fetch data. 
 
 ### Understanding Projection
-### Embedded Documents & Arrays - The Theory
-### Working with Embedded Documents
-### Working with Arrays
-### Accessing Structured Data
-### Quiz 1: Time to Practice - The Basics & CRUD Operations
-### Wrap Up
-### Useful Resources & Links
 
+Projections are a way to display a part of each document (only certain fields), and this is done in the mongo engine side, rather than getting all the data and modifying it in the client side. projections allow us to perfrom this on the server side, therefore reducing the load that is retrieved.
+
+to perform a projection on a find query, we pass another document as the second argument, where we specify which fields we wish to display.
+
+`db.passengers.find({},{name:1}).pretty()`
+
+the id is a special field, it is always included, unless explicitly excluded. other fields are implicitly removed if not specified.
+
+`db.passengers.find({},{name:1,_id:0}).pretty()`
+
+### Embedded Documents & Arrays
+
+the value of a field can be a document by itself, not just primitives, we can have nested documents (json objects,but without the id field,of course).
+
+limits:
+- up 100 levels of nesting
+- max size of the document is 16MB
+
+arrays are values which are in a list form.
+
+lets update the data with a nested document.
+
+`db.flightData.updateMany({},{$set:{status:{description:"on-time",lastUpdated:"1 hour ago"}}})`
+
+lets add an array to one of the passengers. we simply use the square brackets.
+
+`db.passengers.updateOne({name: "Albert Twostone"},{$set:{hobbies:["sports",cookies"]}})`
+
+
+### Accessing Structured Data
+
+mongoDb knows how to query arrays and find an element within them, if we have a nested search document string we need to wrap the entire path in quotation marks.
+
+
+```sh
+db.passengers.findOne({name:"Albert Twostone"}).hobbies #findOne returned one object
+db.passengers.find({hobbies:"sports"}) #mongo db knows how to handle arrays
+db.flightData.find({"status.descrption":"on-time"}) #nested drill down
+```
+
+### Assignments 1: Time to Practice - The Basics & CRUD Operations
+
+patients data example
+```json
+{
+  "firstName": "Max",
+  "lastName": "Schwarzmueller",
+  "age":29,
+  "history":[
+    {"disease":"cold", "treatment": "rest"}
+  ]
+}
+```
+
+tasks:
+> 1. insert 3 patient into a new db and new collection, each patients has at least one history entry
+> 2. update one patient with new age, name and history entry
+> 3. find all patients who are older than some age.
+> 4. delete all patients who got a cold as a disease.
+
+solution:
+
+```sh
+
+use quiz1
+
+db.patients.insertMany(
+  [
+    {
+    "firstName": "Dan",
+    "lastName": "Green",
+    "age":20,
+    "history":[
+      {"disease":"cold", "treatment": "rest"}
+      ]
+    },
+    {
+    "firstName": "Ann",
+    "lastName": "Field",
+    "age":29,
+    "history":[
+      {"disease":"flue", "cause": "virus"}
+      ]
+    },
+    {
+    "firstName": "John",
+    "lastName": "Smith",
+    "age":35,
+    "history":[
+      {"disease":"pox", "cure": "none"}
+      ]
+    }
+  ]
+)
+
+db.patients.updateOne({"firstName":"Ann"}, {$set:{"firstName":"Anna","age":32,"history":[{"disease":"danceMania","maxSteps":50},
+{"disease":"discoFever","beats":[1,2,3]}
+]}})
+
+db.patients.find({"age":{$gt:30}}).pretty()
+db.patients.find({"history":{"disease":"cold"}}).pretty()
+#db.patients.find({"history":{$elemMatch:{"disease":"cold"}}}).pretty()
+db.patients.deleteMany({"history":{$elemMatch:{"disease":"cold"}}})
+db.dropDatabase()
+```
+
+in the solution he used a different syntax
+
+`db.patients.deleteMany({"history.disease":"cold"})`
 
 </details>
 

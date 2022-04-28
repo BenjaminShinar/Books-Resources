@@ -21,7 +21,12 @@ default port is 27017
 - we can't use `.pretty()` after `findOne`.
 - matching a value greater than a threshold `db.flightData.find({distance:{$gt:10000}})`
 - `update` doesn't care if we forget the `{$set:{}}` part, it will replace the entire document.
-
+- the **_id** field in always included in projections, unless excluded with `{_id:0}`.
+- Nested Documents Limits:
+  - up 100 levels of nesting.
+  - max size of the document is 16MB.
+- `db.patients.find({"history":{$elemMatch:{"disease":"cold"}}}).pretty()`
+- `db.dropDatabase()`
 - `show dbs` - list database
 - `use <db>` - switch to a database
 	<samp>

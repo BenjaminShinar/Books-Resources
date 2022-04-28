@@ -996,6 +996,44 @@ int main()
 </details>
 
 
+## C++ Best Practices Game Jam Info, Rules and Quick-Start
+
+<details>
+<summary>
+C++ game jam. starts April 1,2022.
+</summary>
+[Info, Rules and Quick-Start](https://youtu.be/4V4ZrB3o6g4)
+
+- must use FTXUI
+- must follow c++ best practices
+- must start from the provided template and compile all the actions.
+- run with no errors or address sanitizer warning.
+- try not to disable warnings.
+
+
+<kbd>Use this template</kbd>, then <kbd>Create Repository from template</kbd>.
+
+we need a build enviornment,visual studio and some other stuff.
+
+```sh
+sudo apt install python3-pip g++ clang-tidy clang-format git cppcheck
+pip3 install cmake ninja conan
+# add folders to path
+```
+
+c/c++ extension pack (from microsoft)
+
+configure to run with debug. launch target "intro" to compile the ftxui dependencies
+
+there are two demo
+```sh
+./intro turn_based
+./intro loop_based
+```
+
+we document disabling warning with `NOLINT`, for debugging we need a debug configuration.
+</details>
+
 ## C++ Weekly - Ep 317 - How Member Functions Work
 <details>
 <summary>
@@ -1279,46 +1317,19 @@ int main()
     auto old_x = lefticus::calclate_things(some_data); // overload resolution
 }
 ```
-```
+
 </details>
 
+## C++ Weekly - Ep 321 - April 2022 Best Practices Game Jam Results
 
-## C++ Best Practices Game Jam
 <details>
 <summary>
-C++ game jam. starts April 1,2022.
+Game Jam conclusion
 </summary>
 
-### Info, Rules and Quick-Start
+[April 2022 Best Practices Game Jam Results](https://youtu.be/TQTb6ewowtk).
 
-[Info, Rules and Quick-Start](https://youtu.be/4V4ZrB3o6g4)
+the topic of the gameJam was "round", some problems were encountered, etc...
 
-- must use FTXUI
-- must follow c++ best practices
-- must start from the provided template and compile all the actions.
-- run with no errors or address sanitizer warning.
-- try not to disable warnings.
-
-
-<kbd>Use this template</kbd>, then <kbd>Create Repository from template</kbd>.
-
-we need a build enviornment,visual studio and some other stuff.
-
-```sh
-sudo apt install python3-pip g++ clang-tidy clang-format git cppcheck
-pip3 install cmake ninja conan
-# add folders to path
-```
-
-c/c++ extension pack (from microsoft)
-
-configure to run with debug. launch target "intro" to compile the ftxui dependencies
-
-there are two demo
-```sh
-./intro turn_based
-./intro loop_based
-```
-
-we document disabling warning with `NOLINT`, for debugging we need a debug configuration.
+(going over some games - not much of an episode)
 </details>

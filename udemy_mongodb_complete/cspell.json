@@ -3,7 +3,7 @@
     "ignorePaths": [],
     "dictionaryDefinitions": [],
     "dictionaries": [],
-    "words": ["bson"],
-    "ignoreWords": ["mycoll"],
+    "words": ["bson","printjson"],
+    "ignoreWords": ["mycoll","Schwarzmueller","Manu","Kumar","Maier","Brugge", "Mayr","Karandeep", "Alun","Michaela","Drayer","Bernd","Hoftstadt","Tolib","Melver","Bohed", "Armin","Glutch","Arber"],
     "import": []
 }
