@@ -27,6 +27,7 @@ default port is 27017
   - max size of the document is 16MB.
 - `db.patients.find({"history":{$elemMatch:{"disease":"cold"}}}).pretty()`
 - `db.dropDatabase()`
+- `db.myCollection.drop()`
 - `show dbs` - list database
 - `use <db>` - switch to a database
 	<samp>
@@ -36,6 +37,7 @@ default port is 27017
 - `db.products.insertOne()`
 - `db.products.find()`
 - `.pretty()`
+- `db.stats()`
 
 command | action
 ----|----
@@ -48,5 +50,21 @@ command | action
 `help keys` | key shortcuts
 `help misc` | misc things to know
 `help mr` | mapreduce
+
+
+DataType | Notes | Example
+---|---|---
+Text | always quotes | "Max"
+Boolean | true of false | true
+Integer | int32 | 55, `NumberInt(11)`
+NumberLong | int64 | 1000000000, `NumberLong(1000000000)`
+double | floating point| 12.25
+NumberDecimal | High precision | 12.99, `NumberDecimal(11.95)`
+ObjectId | automatically generated, has a timestamp internally | ObjectId("text")
+ISODate | date | ISODate("2018-09-09")
+Timestamp| date time |Timestamp(11421532)
+Embedded Documents | nesting | {"a":{}}
+Array | list of values| {"b":[]}
+
 </details>
 

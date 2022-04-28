@@ -520,6 +520,7 @@ like ".gitignore", ".dockerignore", this file controls what won't be taken insid
 | default  | `default "foo" .Bar`                         | if bar is empty, use "foo"                                  |
 | coalesce | `coalesce .name .parent.name "Matt"`         | first non-empty value, like a chained default command       |
 | ternary  | `ternary "foo" "bar" {{ .Values.someValue}}` | like c ` value ? "foo" : "bar"`                             |
+|  has | `if has "security.openshift.io/v1" .Capabilities.APIVersions` | list contains, string contains
 
 #### The "values.yaml" file
 
