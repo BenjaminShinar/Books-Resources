@@ -147,10 +147,43 @@ db.drivers.findOne({name:"Max"})
 but maybe we don't really care about exploring the relationship between the persons and the cars, maybe we just analyze the cars in some cases, and the drivers in other cases, but we don't really care about who drives which car in terms of analyzing. in these cases, having an embedded document just forces us to use more projection on our data and bloats our queries.\
 we could store the drivers and the cars apart from one another, and use references from one to the other in the rare cases that we do care about joining the data together.
 
-### One To Many - Embedded
-### One To Many - Using References
-### Many To Many - Embedded
-### Many To Many - Using References
+### One To Many 
+
+one to many - like one question with many answers, we can store references to objects in a different collection.
+
+```sh
+use support
+db.questionThreads.insertOne({creator:"max",question "how does this work?",answers:["q1a1","q1a2"]})
+db.answers.insertMany([{_id:"q1a1",answer:"aa"},{_id:"q1a2",answer:"ab"}])
+```
+
+alternately,we could store the answers inside the question objects. in this use case, embedding them makes sense.
+
+```sh
+use support
+db.questionThreads.insertOne({creator:"max",question "how does this work?",answers:[{,answer:"aa"},{,answer:"ab"}]})
+```
+
+a different case might be the population of a city, we can store all the citizens of a city inside the city document, but that would mean storing millions of complete records inside the city object, even storing all the references(ids) can be too much. it'll be easier to have to two different collections, and query the citizens collection when needed.
+
+we don't want to embed too much data, we remember that documents have a size limit!
+
+### Many To Many 
+
+a many to many example is many customers, each buying many products. we usually do this with references, and we might even have a relationship collection, which is the SQL way to do this.
+
+```sh
+use shop
+db.products.insertOne({_id:"productA"})
+db.customers.insertOne({_id:"customer1"})
+db.orders.insertOne({productId:"productA",customerId:"customer1"})
+```
+but the mongo way is to use only two collections, and store the id as a referece
+```sh
+db.customers.updateOne({_id:"customer1"},{$set:{orders:[{productId:"productA",quantity:3}]}})
+```
+or to store it as a nested objects. but this might be a source of data duplications, and update to the nested documents will also have to be replicated. this might not be relevent if future changes don't affect existing copies, but this depends on the use case.
+
 ### Summarizing Relations
 ### Using `lookUp()` for Merging Reference Relations
 ### Planning the Example Exercise

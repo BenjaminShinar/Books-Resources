@@ -1333,3 +1333,68 @@ the topic of the gameJam was "round", some problems were encountered, etc...
 
 (going over some games - not much of an episode)
 </details>
+
+## C++ Weekly - Ep 322 - Top 4 Places To Never Use `const`
+<details>
+<summary>
+Cases where declaring const is not the preferred behavior.
+</summary>
+
+[Top 4 Places To Never Use `const`](https://youtu.be/dGCxMmGvocE)
+
+a list episode!
+
+
+### On a non-reference return type
+
+
+```cpp
+std::string make_value();
+const std::string make_value_const(); //bad
+
+int main()
+{
+
+    std::string s;
+    s= make_value_const();
+}
+```
+this behavior stops us from performing move operatons, as we can't move from const, so we must perform a copy/assignment operator, which is a performance issue.
+
+### Don't `const` local values that need to take advantage of implicit moe-on-return operations
+
+```cpp
+inline const S make_value_3()
+{
+    const S s;
+    return s;
+}
+
+inline const std::optional<S> make_value_4()
+{
+    const S s;
+    return s;
+}
+
+int main()
+{
+    S s = make_value_3(); // again, no move
+    auto s2 = make_value_4(); // use move
+}
+```
+
+we have a techincally true but actually pointless warning about a move constructor.
+
+*std::optional* has an implicit conversion, because it's a value type, rather than a pointer type.
+
+```cpp
+inline std::optional<S> make_value_5()
+{
+    //const S s;
+    return std::optional<S>{std:in_place_t{}};
+}
+```
+
+> if you have multiple differnt objects that might be returned, then you are also relying on implicit move-on-return (aka automatic move).
+> 
+</details>
