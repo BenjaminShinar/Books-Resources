@@ -24,6 +24,7 @@ all sorts of lectures, divided by field.
   - What is an ABI and Why is Breaking it a Problem? - Marshall Clow
   - Semantic Sugar: Tips for Effective Template Library APIs - Roi Barkan
   - What Belongs In The C++ Standard Library? - Bryce Adelstein Lelbach
+  - What Neighborhoods Owe Each Other: Rights, Duties, Immunities & Disabilities of Functions & Objects
 - [Language](Language.md)
   - The C++ Rvalue Lifetime Disaster - Arno Schödl
   - C++11/14 at Scale: What Have We Learned? - John Lakos & Vittorio Romeo
@@ -67,7 +68,6 @@ currently working on:
 - [ ] Library Approaches for Strong Type Aliases - Anthony Williams
 - [ ] Frictionless Allocators - Alisdair Meredith
 - [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
-- [ ] What Neighborhoods Owe Each Other: Rights, Duties, Immunities & Disabilities of Functions & Objects
 - [ ] Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy
 - [ ] Taskflow: A Heterogeneous Task Graph Programming System with Control Flow: Tsung-Wei Huang
 

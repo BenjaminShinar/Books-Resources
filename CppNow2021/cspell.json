@@ -3,7 +3,7 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": ["cpp"],
-  "words": ["Clonable", "initializable", "invokable", "Nemo"],
+  "words": ["Clonable", "initializable", "invokable", "Nemo", "nulllptr"],
   "ignoreWords": [
     "Adelstein",
     "Alisdair",
@@ -33,6 +33,7 @@
     "Krzemieński",
     "Lakos",
     "Lelbach",
+    "Lippincott",
     "Loew",
     "Mateusz",
     "Nikpayuk",

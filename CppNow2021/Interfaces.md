@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Niebloids Hollman Niebler libnv Hyrum
+// cSpell:ignore Niebloids Hollman Niebler libnv Hyrum Hohfeld
 -->
 
 [Main](README.md)
@@ -1579,6 +1579,484 @@ middle ground - solutions with a single implementations, like how boost used to 
 - what happend to library technical specifications? why did the committee stop releasing them?
 - did we over-standardize parallelism?
 - again, who should take care of the package manager standardization / deployment?
+
+</details>
+
+## What Neighborhoods Owe Each Other: Rights, Duties, Immunities & Disabilities of Functions & Objects - Lisa Lippincott
+
+<details>
+<summary>
+Defining code behavior in terms of contracts. 
+</summary>
+
+[What Neighborhoods Owe Each Other: Rights, Duties, Immunities & Disabilities of Functions & Objects](https://youtu.be/pDpdb6T1c1k)
+
+a vision of programming, having neighborhoods
+
+> Neighborgood: a portion we can reason about independently.
+
+we already do this in a way, we have functions, objects, etc...
+
+the function interface is the "area where neighborhoods interact". everything that goes inside our outside the function passes through those interfaces.
+
+we also have "claims", or pre- and post- conditions. those conditions are connected to one another across different levels.
+
+a simple example:
+
+```
+void foo() implementation
+{
+    bool b = bar();
+
+    if (b)
+        return;
+
+    if (b)
+        fail;
+}
+```
+
+reaching the fail path is outside the scope of the neighborhood, getting to it can only happen from outside interference.
+
+another sample where reaching the fail statement means that something outside the neighborhood went wrong. the _false_ value acts as an interface to a world of boolean expressions.
+
+```
+void foo() implementation
+{
+    bool b = false;
+
+    if (b)
+        fail;
+}
+```
+
+a harder example, the true and false now have phantom parentheses to indicate that they are akin to function calls, and they represent a gateway to a different neighborhood.
+
+```
+void foo()
+// implementation
+{
+    bool b = false();
+
+    if (b)
+        fail;
+
+    b = true();
+
+    if (b)
+    {}
+    else
+        fail;
+}
+```
+
+the questions this example raises are
+
+- Repetition
+  - Q: "Why do branches sometimes repeat?"
+  - A: "Branched repeat when neighborhood has a right to the stability of an object."
+- Not repeating
+  - Q: "And why is that not the case here?"
+  - A: "To perfrom the assignment, this neighborhood must relinquish its right to that stability."
+
+### Rights And Duties
+
+in a previous lecture "Locally atomic capabilites: and how to count them" (may 2017), there were some missing explaintations.
+
+Wesley Newcomb Hohfeld (1879-1918) wrote a paper "Some fundamental legal conceptions as applied in judical reasoning" (1913), which helped guide the current talk. the paper pushes for the words of the law to be more precise, and describe contracts in unambiguous ways. he provides two terms:
+
+> - Right: The ability to call upon another to act.
+> - Duty: The responsability to act when called upon.
+
+a Right and a Duty are a pair, two parts of a whole, but the purpose of this relationship derives meaning when two different entities hold the two parts. there is no point in having both the right and the duty.
+
+> - No right: The absence of right, the lack of ability to call upon another.
+> - Privilege: The absence of duty. the lack of responsability to act when called upon.
+
+for programming we focus on Right and Duty, the "No right" and "Privilege" are the background, the common, unspoken case (they can come up when discussing threads)
+
+the stability of a boolean objects is the stability of it's bytes.
+
+```
+inline claimable bool::stability() const
+{
+    entail_right byte0.stability();
+    entail_right byte1.stability();
+    entail_right byte2.stability();
+    entail_right byte3.stability();
+}
+```
+
+we can't define the stability of bytes in cpp, but it would look like this:
+
+```
+claimable byte::stability() const
+//implementaiton
+{
+    if (bit0) {} else {};
+    if (bit1) {} else {};
+    if (bit2) {} else {};
+    if (bit3) {} else {};
+    if (bit4) {} else {};
+    if (bit5) {} else {};
+    if (bit6) {} else {};
+    if (bit7) {} else {};
+}
+```
+
+the branches just demonstarate that a state of a byte determine the path(flow), and a stable byte would always behave the same.
+
+we can also imagine a _parity_ stability, _initialzed_ stability, or other theoretical properties.
+
+### Lifetime of a Right
+
+right and duty are created together. but the right leaves the neighborhood, and is **returned** from it's creator, and is given to a higher (more abstract) neighborhood. the right can then be passed around, but the duty remains with it's creator. and eventually the right is returned to the creator, and then the right and duty are cancelled together. there is no expectation to stability.
+
+```
+void foo()
+// implementation
+{
+    bool b = false();
+
+    if (b)
+        fail;
+
+    b = true();
+
+    if (b)
+    {}
+    else
+        fail;
+
+    end_lifetime(b);
+}
+```
+
+when an object lifetime ends, the right of stability is returned to it, so there is no longer a duty for it to behave a certain way. this is also true for assignment operations, the right is reliqueshed in the proluge of the operation, and a different right (value) is created and returned, the state is changed, so the path inside the object is different,
+
+```
+bool & bool::operator (const bool r)
+//interface
+{
+    claim_right this->stability();
+    // implementation
+    claim_right this->stability();
+    // ...
+
+    claim aliased(result, *this);
+    claim result == r
+}
+```
+
+but what is this "alias" part?
+
+lets look at swapping, are there two rights? are we claiming the same right twice?
+
+```
+template <class T>
+void swap_with_other(T& a, T & b)
+//interface
+{
+    claim_right a->stability();
+    claim_right b->stability();
+    // implementation
+    claim_right a->stability();
+    claim_right b->stability();
+}
+```
+
+a simple answer is saying the each claim is linked to a distinct right, so there are two rights being claimed. so this doesn't fit the situation of passing the same object. for that case we need something else:
+
+```
+template <class T>
+void swap_with_other(T& a, T & b)
+//interface
+{
+    claim_right a->stability();
+    if (&a != &b)
+        claim_right b->stability();
+    else
+        claim aliased(a,b); // see below
+
+    // implementation
+
+    claim_right a->stability();
+    if (&a != &b)
+        claim_right b->stability();
+}
+
+template <class T>
+inline claimable aliased(T & a, T & b)
+{
+    entail &a == &b;
+    entail substitutable(&a,&b);
+}
+
+template <class T>
+inline claimable may_be_aliased(T & a, T & b)
+{
+    if (&a == &b)
+        entail substitutable(&a,&b);
+}
+```
+
+(there is a point about equability of pointers and refernecing objects)
+
+back to our earlier example, there are three assignments in it when we assign the boolean value `true` to b.
+
+```
+void foo()
+// implementation
+{
+    bool b = false();
+
+    if (b)
+        fail;
+
+    //b = true();
+    {
+        auto r = true();
+        b = r;
+        end_lifetime(r);
+    }
+
+    if (b)
+    {}
+    else
+        fail;
+
+    end_lifetime(b);
+}
+```
+
+so there is another right, the temporary value of 'true' which is created in the assignment operation.
+
+### Immunity and Disability
+
+so we now get two more terms
+
+> - Disability: The responsability to refrain from chaning a realtionship.
+> - Immunity: The ability to rely upon an unchanging relationship.
+
+and their negations:
+
+> - Power: The absence of disability, the lack of responsability to refrain from change.
+> - Liability: The absence of immunity. the lack of an excpectation of constancy.
+
+a police search warrent is a "power", it dispels a previously held right (the property right in the house), getting an injunction provides immunity from the warrent, so the right remains as it was. "Power" changes a relationship. "Immunity" and "Disability" prevent a relationship from changing.
+
+> a disability begins when immunity is extended downward from a right.\
+> the disability remains with the right holder - the immunity is extended and retracted.\
+> the disability ends when the immunity is retraced upwards to its right.
+
+the immunity is what moves around.
+
+```
+bool & bool::operator (const bool r)
+//interface
+{
+    claim_right this->stability();
+    discern_input r->value();
+
+    // implementation
+
+    claim_right this->stability();
+    discern_output this->value();
+    // ...
+
+    claim aliased(result, *this);
+    claim result == r
+}
+
+discernible bool::value() const
+//interface
+{
+    claim_immunity stability();
+    //implementation
+}
+```
+
+### Claims as Assertions
+
+and now for something real, two assertions (claims), but one has side effects, and the value is changed.
+
+```
+claim p = nulllptr; // bad assertion - assignment
+claim p != nulllptr; // good assertion
+```
+
+but side effects is a very broad term, even wrting a log message is a side effect, not to mention that allocating memory is a side effect.
+
+but the correct way to tell apart a good or bad assertions is to say that a good assertion does not effect the logic of the surronding code. this can be translated into the more precise terms of rights.
+
+> - `claim p = nullptr;`
+>   - consumens an external right.
+>   - produces an unconsumed internal right.
+> - `claim p != nullptr`;
+>   - consumes no external rights.
+>   - consumes all internally produced rights.
+
+more examples
+
+```
+// bad assessments
+claim (delete p), true; // consumes an external right
+claim new int != nullptr; // produces an unconsumed internal right
+claim p = nullptr; // consumes an external right, produces unconsumed internal right
+
+// good assessments
+claim (delete new int), true; // consumes no external rights and consumes all created internal rights
+```
+
+another example:
+
+1. This right passes to the impelmentation.
+   - The prologue may not consume it.
+   - The prologue has immunity to it.
+1. This right passes to the epilogue.
+   - The implementation has no right to it.
+   - The implementation has liability to it.
+   - The epilogue must consume it
+1. This right passes to the caller.
+   - The epilogue may not consume it.
+   - The epilogue has immunity to it.
+
+```
+int & int::operator++()
+//interface
+{
+
+    claim_right this->stability(); //1
+    discent_input this->value();
+
+    int expected_result = *this+1; //2
+
+    //implementation
+
+    claim_right this->stability(); //3
+    discent_output this->value();
+
+    claim aliased(result, *this);
+    claim result == expected_result;
+}
+```
+
+> interfaced need not mention aliasing between immunities.
+
+```
+int & int::operator+(const int& a, const int &b)
+//interface
+{
+
+    discern_input a.value();
+    discern_input b.value();
+    claim can_add(a,b);
+
+    //implementation
+
+    claim_right result.stability();
+    discern_output result.value();
+}
+```
+
+counter case,
+
+> interfaces must mention aliasing between immunities and rights.
+
+```
+int & int::operator+=(int& a, const int &b)
+//interface
+{
+    claim may_be_aliased(a,b);
+    claim right a.stability();
+
+    discern_input a.value();
+    discern_input b.value();
+    claim can_add(a,b);
+
+    int expected_result = a+b;
+
+    //implementation
+
+    claim_right result.stability();
+    discern_output result.value();
+
+    claim aliased(result,a);
+    claim result == expected_result;
+}
+```
+
+we can remove the aliasing part if we decide that b is passed by value.
+
+```
+int & int::operator+=(int& a, const int b)
+//interface
+{
+    claim right a.stability();
+
+    discern_input a.value();
+    discern_input b.value();
+
+    int expected_result = a+b;
+
+    //implementation
+
+    claim_right result.stability();
+    discern_output result.value();
+
+    claim aliased(result,a);
+    claim result == expected_result;
+}
+```
+
+### Duties in Objects
+
+- Constructor
+- Mutator
+- Accessor
+- Destructor
+
+duties flow, either from lowlevel code, or from class types.
+
+the constructor produces a right of stability. it flows to the caller, but a mutator take the right a produce a different right. an accessor doesn't need the right of stability, as it has _immunity_. a destructor consumes that right of stability. the duty of stability is also passed around inside the objects. the constructor and destructor are connected by "the right of lifetime", this right is connected with the right of stability. there is also an immunity of lifetime.
+
+> - the promise of stability depends on lifetime.
+> - A neighborhood holding the _right of **stability**_ holds _immunity_ to **lifetime**.
+> - A neighborhood holding the _duty of **stability**_ holds _immunity_ to **lifetime**.
+> - A neighborhood holding the _immunity of **stability**_ holds _immunity_ to **lifetime**.
+> - For the entire duration of a promise of **stability**, the promise of **lifetime** must not be cancelled.
+
+```
+claimable some_class::stability() const
+//interface
+{
+    entail_immunity lifetime();
+
+    //implementation
+}
+```
+
+dependant rights, what happens in a function call, how rights,duties and immunities pass in function call. the outer right must always be in a higher level code from the inner right.
+
+one case where this is clear is with threads.
+
+> Launching a thread:
+>
+> - ➡ Provides _rights_ for the thread to consume.
+> - ➡ Extend _immunities_ for the thread to rely upon.
+> - ⬅ Receive the _right_ for the thread lifetime which depends on the _immunities_.
+>
+>   Thread runtime:
+>
+> - ▶ While the Thread is running, the disabilities are prolonged
+> - ◼ After the thread completes, the disabilities are prolonged
+>
+> Joining a thread
+>
+> - ➡ Provide the _right_ of the thread lifetime, which is consumed.
+> - ⬅ Receive any _rights_ produced by the thread.
+
+Change is Ordinary, the normal way of things. Stability is extra-ordinary.
 
 </details>
 
