@@ -6,7 +6,7 @@
 
 ## Section 8 - VPC: Virtual Private Cloud
 
-<!-- <details> -->
+<details>
 <summary>
 Virtual Private Cloud.
 </summary>
@@ -577,10 +577,34 @@ Think of a VPC as a logical datacenter in AWS.
 
 **VPC Endpoints**
 
-> A Vpc Endpoint enables you to privarly connect your VPC to suppoeted AWS services and VPC endpoint services powered bt PrivateLink without requeuing an internet gateway,NAT device, VPN connection or AWS direct Connect connection. Instance in your VPC do not require public IP addresses to communicate with resources in the service. Traffic between your VPC and the other service doesn't leave the Amazon Network.\
+> A Vpc Endpoint enables you to privately connect your VPC to suppoeted AWS services and VPC endpoint services powered bt PrivateLink without requeuing an internet gateway,NAT device, VPN connection or AWS direct Connect connection. Instance in your VPC do not require public IP addresses to communicate with resources in the service. Traffic between your VPC and the other service doesn't leave the Amazon Network.\
 > Endpoints are virtual devices, they are horizonally scaled, redundant and highly available VPC components that allow communication between instances in your VPC and services without imposting availability risks or bandwidth constraints on your network traffic.
 
+- interface endpoints - any services
+- gateway endpoints - s3, dynamoDB
+
+**AWS Private Link**
+peer multiple VPC, using **network load balances** and **ENI**
+
+**Transit Gateway**
+
+- hub and spoke model
+- simply network topography
+- transitive peering
+- use route table to limit how vpc connect
+- support IP multicast
+
+**VPN Cloud Hub**
+Simplify VPN connections
+
 ### Quiz 6: VPCs Quiz
+
+> -"Having just created a new VPC and launching an instance into its public subnet, you realize that you have forgotten to assign a public IP to the instance during creation. What is the simplest way to make your instance reachable from the outside world?" _ANSWER: Create an Elastic IP address and associate it with your instance_
+> -"Are you permitted to conduct your own vulnerability scans on your own VPC without alerting AWS first?" _ANSWER: Depends_
+>
+> - "By default, instances in new subnets in a custom VPC can communicate with each other across Availability Zones?" _ANSWER: True_
+> - "How many internet gateways can I attach to my custom VPC?" _ANSWER: 1_
+> - "When I create a new security group, all outbound traffic is allowed by default?" _ANSWER: TRUE_
 
 </details>
 
