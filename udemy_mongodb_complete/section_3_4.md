@@ -5,8 +5,9 @@
 [main](README.md)
 
 ## Section 3 - Schemas & Relations: How to Structure Documents
-<!-- <details> -->
+<details>
 <summary>
+Data Types, Relations, Schema Validation
 </summary>
 
 when we start a project, we first decide on how our data is modeled, and what types of relations exists. we use document schemas and data types to describe the data in our documents. we also have ways to model relations between entities in the database. in addition, we will also want to validate incoming data, and make sure it fits our schema.
@@ -309,7 +310,7 @@ we could model this as one collection, everthing is under the posts.
 }
 ```
 
-in some sense, this is okay, nesting the comments seems right, as comments belong to a post, and are usually very tightly coupled with a post. but nesting the user might not be the smart idea. each user has many posts (and comments), so nesting the users inside the posts and comments might not be efficent.\
+in some sense, this is okay, nesting the comments seems right, as comments belong to a post, and are usually very tightly coupled with a post. but nesting the user might not be the smart idea. each user has many posts (and comments), so nesting the users inside the posts and comments might not be efficient.\
 it's probably better to have a users collection and posts collections, but not a comments collection.
 
 ```sh
@@ -325,14 +326,135 @@ db.posts.findOne()
 ```
 
 ### Understanding Schema Validation
+
+mongodb is flexable,we can have different documents and structures in the same collection. but sometimes we want to set the schema in place. we want to make sure all documents folllow a certain form, having data with a certain name and of certain type.
+
+using schema validation, we can control what kind of documents exist inside the collection, so we have a tighter control over it. if a document doesn't fit the schema, it can't be added.
+
+- Validation level - "Which documents get validated"
+  - strict - All inserts and updates
+  - moderate - All inserts and update to correct documents.
+- Validation Action - "What happens if validation fails"
+  - error - throw error and deny insert/update
+  - warn - log warning but proceed
+
 ### Adding Collection Document Validation
+
+using the posts example.
+
+we can add a schema when we create a collection explicitly, we pass a document, which one of its' key is a **validator**.
+
+```sh
+db.posts.drop()
+dp.createCollection("posts",{validator: {$jsonSchema:{
+  bsonType:"object",
+  required:[] ,
+  properties:{}
+}
+}})
+```
+
+we can put this in a javascript file instead, to make it easier to read and understand
+
+```js
+dp.createCollection("posts",{validator: {$jsonSchema:{
+  bsonType:"object",
+  required:["title","text","creator","comments"],
+  properties:
+  {
+    title: {
+      bsonType: "string",
+      description: "must be a string type and is required"
+    },
+    text: {
+      bsonType: "string",
+      description: "must be a string type and is required"
+    },
+    creator: {
+      bsonType: "objectId",
+      description: "must be an objectId type and is required"
+    },
+    comments: {
+      bsonType: "array",
+      descrption: "must be an array"
+      required:['text','author'],
+      items: {
+        bsonType: "object",
+        properties:
+        {
+          text: {
+            bsonType:"string"
+          },
+          author:{
+            bsonType: "objectid"
+          }
+        }
+      }
+    }
+
+  } 
+}
+}})
+```
+
+now if we try to add document which doesn't match the schema, we will get an error
+
 ### Changing the Validation Action
+
+when we have an existing database, we don't want to drop and recreate it, so we can modify it instead,
+```sh
+db.runCommand({colMod:"posts",validator:{}},validationLevel:"warn"})
+```
 ### Wrap Up
+
+What do we consider?
+> - in which format will you fetch your Data?
+> - How often will you fetch and change your data?
+> - how much data will you save (and how big is it)?
+> - how is your data related?
+> - will duplicates hurt you (=> many updates)?
+> - will you hit data storage limits?
+>
+> Modelling Schemas
+> - Schemas should be modelled based on your application needs
+> - important factors are: read and write frequency, relations, amount (and size) of data.
+> 
+> Modelling  Relations
+> - Two options: embedded document or references.
+> - Use embedded documents if you got one-to-oe or one-to-many relationships and no app or data size reason to split.
+> - Use references if data amount/size or applications needs require it. or for many-to-many relations.
+> - Exceptions are always possible. Keep your app requirement in mind.
+> 
+> Schema Validation
+> - You can define rules to validate inserts and updates before writing to the database.
+> - Choose your validation level and action based on your application requirements
+
+</details>
+
+## Section 4: Exploring The Shell and The Server
+<!-- <details> -->
+<summary>
+
+</summary>
+
+### Module Introduction
+
+### Finding Available Options
+
+### Setting "dbpath" & "logpath"
+
+### Exploring the MongoDB Options
+
+### MongoDB as a Background Service
+
+### Using a Config File
+
+### Shell Options & Help
+
 ### Useful Resources & Links
 
 
 </details>
-
 
 
 ##

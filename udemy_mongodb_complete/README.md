@@ -29,6 +29,7 @@ default port is 27017
 - `db.dropDatabase()`
 - `db.myCollection.drop()`
 - `db.customers.aggregate([$lookup:{from: "books",localField: "favBooks",foreignField:"_id",as: "favBookData"}])` - merge documents.
+- `db.runCommand({colMod:"posts",validator:{}},validationLevel:"warn"})` - update validation schema and validation action
 - `show dbs` - list database
 - `use <db>` - switch to a database
 	<samp>
