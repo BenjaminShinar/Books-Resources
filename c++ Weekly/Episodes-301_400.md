@@ -1345,7 +1345,7 @@ Cases where declaring const is not the preferred behavior.
 a list episode!
 
 
-### On a non-reference return type
+> On a non-reference return type
 
 
 ```cpp
@@ -1361,7 +1361,7 @@ int main()
 ```
 this behavior stops us from performing move operatons, as we can't move from const, so we must perform a copy/assignment operator, which is a performance issue.
 
-### Don't `const` local values that need to take advantage of implicit moe-on-return operations
+> Don't `const` local values that need to take advantage of implicit moe-on-return operations
 
 ```cpp
 inline const S make_value_3()
@@ -1395,6 +1395,89 @@ inline std::optional<S> make_value_5()
 }
 ```
 
-> if you have multiple differnt objects that might be returned, then you are also relying on implicit move-on-return (aka automatic move).
-> 
+> if you have multiple different objects that might be returned, then you are also relying on implicit move-on-return (aka automatic move).
+
+
+in the following case we have two constructors and a copy, because both options are initiliazed, if we would move the objects into the inner scopes, we could create just one and get move operations and return value optimization.
+```cpp
+inline S make_value_multiple(bool option)
+{
+    S s1;
+    S s2;
+    if (option)
+    {
+        return s1;
+    }
+    else
+    {
+        return s2;
+    }
+
+}
+
+int main(int argc, const char*[])
+{
+    auto s = make_value_multiple(argc==1); // can't optimize return value
+   
+}
+```
+
+> don't `const' non-trivial value parameters that you might need to return directly from the function.
+
+
+```cpp
+
+inline S make_value_from_arg_const(const S s)
+{
+    return s; //because we return it, const is bad in function defintion
+}
+
+inline S make_value_from_arg_move(S s)
+{
+    return s;
+}
+
+int main([[maybe_unused]] int argc, const char*[])
+{
+    auto s1 = make_value_from_arg_const(s{}); // no move 
+    auto s2 = make_value_from_arg_move(s{}); // move
+}
+```
+> Don't `const` any **member** data!\
+> It breaks implicit and explicit moves\
+> It breaks common use cases
+
+```cpp
+struct Data
+{
+    const S s;
+}
+
+int main()
+{
+    Data d;
+    //d = Data{}; // doesn't work, default assignment operator for D can't assign const;
+    Data d2 = std::move(d); // also a copy, not a move. can't move from const
+
+}
+```
+this behavior is seen when we use data containers, this prevents us from efficiently resizing containers.
+
+```cpp
+struct StringData
+{
+    const std::string s;
+}
+
+int main()
+{
+    std::vector<StringData> data;
+    data.emplace_back();
+    data.emplace_back(); //resizing requires copying because we don't have move operations
+}
+```
+
+if we have an invarient data member which we can't change without breaking other stuff, then we should simply write an accessor/mutator.
+
+
 </details>

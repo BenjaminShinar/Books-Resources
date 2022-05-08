@@ -74,6 +74,11 @@ Guiding Question | Examples | Actions
 MongoDb core principal is to design the structure to fit the usage, so there won't be many joins and lookup and other operations across collections.
 
 ### Understanding Relations
+<details>
+<summary>
+One to One, One to Many, Many to Many. Nested documents vs references.
+</summary>
+
 
 we usually have multiple collections inside our database, the documents are usually related to one another,
 
@@ -119,7 +124,7 @@ but we can also store a reference (identifier, foreign key) in one document to a
   },
 ]
 ```
-### One To One Relations 
+#### One To One Relations 
 if we have a one to one relation, such as a patient in a hospital and a summary of their case. each patient has a unique case summary. 
 
 as a reference
@@ -147,7 +152,7 @@ db.drivers.findOne({name:"Max"})
 but maybe we don't really care about exploring the relationship between the persons and the cars, maybe we just analyze the cars in some cases, and the drivers in other cases, but we don't really care about who drives which car in terms of analyzing. in these cases, having an embedded document just forces us to use more projection on our data and bloats our queries.\
 we could store the drivers and the cars apart from one another, and use references from one to the other in the rare cases that we do care about joining the data together.
 
-### One To Many 
+#### One To Many 
 
 one to many - like one question with many answers, we can store references to objects in a different collection.
 
@@ -168,7 +173,7 @@ a different case might be the population of a city, we can store all the citizen
 
 we don't want to embed too much data, we remember that documents have a size limit!
 
-### Many To Many 
+#### Many To Many 
 
 a many to many example is many customers, each buying many products. we usually do this with references, and we might even have a relationship collection, which is the SQL way to do this.
 
@@ -178,16 +183,147 @@ db.products.insertOne({_id:"productA"})
 db.customers.insertOne({_id:"customer1"})
 db.orders.insertOne({productId:"productA",customerId:"customer1"})
 ```
-but the mongo way is to use only two collections, and store the id as a referece
+but the mongo way is to use only two collections, and store the id as a reference
 ```sh
 db.customers.updateOne({_id:"customer1"},{$set:{orders:[{productId:"productA",quantity:3}]}})
 ```
 or to store it as a nested objects. but this might be a source of data duplications, and update to the nested documents will also have to be replicated. this might not be relevent if future changes don't affect existing copies, but this depends on the use case.
 
-### Summarizing Relations
+in some cases it's better to have many-to-many relationship as a reference. imagine that we have book and authors.
+
+this is how an embedded data will look
+```sh
+use bookRegistry
+db.books.insertOne({name: "my book", authors:[{name:"max", dob:"2000-01-13"},{name:"bob",dob:"1995-04-15"} ]})
+db.books.find().pretty()
+db.authors.insertMany([{name:"max", dob:"2000-01-13",address:{}},{name:"box",address:{},role:"editor",dob:"1995-04-15"}])
+```
+
+having a snapshot of the data is ok when the data isn't meant to change, but if we want the data to always be up to date, we would need to update all documents. this is worse if we have a high frequency of updates.
+
+so the better approach is to use references. we might need to run some join commands, but it will be more efficient and have less errors than the nested documents approach.
+
+```sh
+use bookRegistry
+db.books.insertOne({name: "my book", authors:["id1","id2" ]})
+db.books.find().pretty()
+db.authors.insertMany([{_id:"id1",name:"max", dob:"2000-01-13",address:{}},{_id:"id2",name:"box",address:{},role:"editor",dob:"1995-04-15"}])
+```
+#### Summarizing Relations
+
+the correct relation depends on the type of data, the frequency of the updates, and the common use case
+
+>**Nested/Embedded Documents**
+>- Group data together locally.
+>- Great for data that belongs together and is not really overlapping with other data.
+>- Avoid super deep nesting (100+ levels) or extremely long arrays (16mb size limit per document).
+>**References**
+>- Split data across collections.
+>- Great for related but shared data, as well as for data which is used in relations and standalone.
+>- Allow you to overcome nesting and size limits (by creating new documents).
+
+</details>
+
 ### Using `lookUp()` for Merging Reference Relations
-### Planning the Example Exercise
-### Implementing the Example Exercise
+
+when we have a relation that uses references, we can join the documents together by using the `$lookup` operator. it allows us to merge documents in one command.
+
+```sh
+db.customers.aggregate([$lookup:{
+  from: "books",
+  localField: "favBooks",
+  foreignField: "_id",
+  as: "favBookData"
+}])
+```
+we need four values, which are passed as a document.
+
+- *from* - which collection to relate to
+- *localField* - how the value is called in the current document
+- *foreignField* - how the value is called in the related documents
+- *as* - the name of the new field which will be displayed
+with our previous command.
+
+```sh
+db.books.aggregate([$lookup:{
+  from:"authors", 
+  localField:"authors",
+  foreignField:"_id",
+  as:"creators"
+}])
+```
+### Example Exercise
+
+we will start with an example project.
+
+we have a user
+
+users can:
+- create Post
+- edit post
+- delete posts
+- delete posts
+- fetch post (single)
+- comment on a post
+
+the user will communicate with an app server, which holds the code itself, as well as the mongoDB driver, which connects to the MongoDB server, and eventually, the Database.
+
+the data entities, and which data do they have
+1. users
+   1. _id
+   2. name
+   3. age
+   4. email
+2. posts
+   1. _id
+   2. title
+   3. text
+   4. tags
+3. comments
+   1. _id
+   2. text
+
+we also define the relationships.
+
+- a user can create and delete posts
+- a user can comment on a post
+- a post has multiple comments, each belonging to different user.
+
+
+we could model this as one collection, everthing is under the posts.
+```json
+// posts
+{
+  "creator":{}, //user
+  "title":"",
+  "tags":[],
+  "text":"",
+  "comments":
+  [
+    {
+      "user":{},
+      "text":"" //comment text
+
+    }
+  ]
+}
+```
+
+in some sense, this is okay, nesting the comments seems right, as comments belong to a post, and are usually very tightly coupled with a post. but nesting the user might not be the smart idea. each user has many posts (and comments), so nesting the users inside the posts and comments might not be efficent.\
+it's probably better to have a users collection and posts collections, but not a comments collection.
+
+```sh
+use blog
+db.users.insertMany([{_id:"user1",name:"max",email:"a@b.com"},
+{_id:"user2",name:"bob",email:"b@a.com"}])
+db.posts.insertOne({title:"my post",text:"first post", tags:["a","b","c"]}, creator: "user1", comments:
+[
+  {text:"First!", author:"user2"},
+  {text:"spam!", author:"user1",edits:4}
+])
+db.posts.findOne()
+```
+
 ### Understanding Schema Validation
 ### Adding Collection Document Validation
 ### Changing the Validation Action

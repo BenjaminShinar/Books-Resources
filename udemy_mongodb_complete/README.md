@@ -28,6 +28,7 @@ default port is 27017
 - `db.patients.find({"history":{$elemMatch:{"disease":"cold"}}}).pretty()`
 - `db.dropDatabase()`
 - `db.myCollection.drop()`
+- `db.customers.aggregate([$lookup:{from: "books",localField: "favBooks",foreignField:"_id",as: "favBookData"}])` - merge documents.
 - `show dbs` - list database
 - `use <db>` - switch to a database
 	<samp>
