@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore
+// cSpell:ignore dbpath directoryperdb
 -->
 
 [main](README.md)
@@ -434,19 +434,52 @@ What do we consider?
 ## Section 4: Exploring The Shell and The Server
 <!-- <details> -->
 <summary>
-
+Getting better with the mongo shell and mongo server, what we can configure and how to work with them.
 </summary>
-
-### Module Introduction
 
 ### Finding Available Options
 
+we can always learn about options to configure in the documentations, we can look at the mongo shell section.
+
+in the shell
+
+```sh
+mongod # start a mongo server
+mongo # connect a client
+```
+we can see the available flags with the `mongod --help` commnad
+
 ### Setting "dbpath" & "logpath"
+
+- `--quiet` - reduce verbosity, less output.
+- `--logpath <path to file>` - where the logs are stored.
+- `--dbpath <folder>` - where the data is actually stored.
+
+we can use this to have different databases and collections, and we can store the logs in a file, for later use.
 
 ### Exploring the MongoDB Options
 
-### MongoDB as a Background Service
+- `--repair` - 
+- `--directoryperdb` - group databases into sub folders
+- `--storageEngine <engine>` - default is wiredTiger
 
+
+### MongoDB as a Background Service
+- `--fork` - only for mac and linux. run as a background process, as a service. must have a log path (can't log to the terminal).
+
+
+in windows we can run mongo server as a service, if we checked the option when we installed
+
+```cmd
+net start MongoDB
+net stop MongoDB
+```
+
+to quit 
+```sh
+use admin
+db.shutdownServer()
+```
 ### Using a Config File
 
 ### Shell Options & Help

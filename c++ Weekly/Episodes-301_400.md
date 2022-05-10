@@ -1481,3 +1481,74 @@ if we have an invarient data member which we can't change without breaking other
 
 
 </details>
+
+## C++ Weekly - Ep 323 - C++23's `auto{}` and `auto()`
+<details>
+<summary>
+explicitly copy a value.
+
+</summary>
+
+[C++23's `auto{}` and `auto()`](https://youtu.be/5zVQ50LEnuQ)
+
+a C++23 feature, we can use `auto{}` to make a copy of something.
+
+```cpp
+int main()
+{
+    int i =4;
+    return auto{4}; //explicitly make a copy
+}
+```
+this comes into use in templates and when we use *auto* type parameters.
+```cpp
+void use (const auto &);
+void function(const auto &something)
+{
+
+    //auto copy = something; //can't be done
+    use(std::decay_t<decltype(somthing)>{something});
+}
+```
+this is the motivating example. we want to erase all the elements which are like the first one.\
+but the output of the code also removes all additional instances of the second unique element.
+this is because we use swapping internally in (`std::erase_if`).
+```cpp
+void erase_all_of_first(auto & container)
+{
+    //c++20 std::erase standard form
+    std::erase(container, container.front());
+}
+
+int main()
+{
+    std::vector<std::string> values {"test3","test3","hello there world","bod", "test","hello there world"};
+
+    erase_all_of_first(values);
+    for (const auto &str : values)
+    {
+        std::cout<< str<< '\n';
+    }
+    // "hello there world","bob", "test"
+}
+```
+to fix this, we take a copy.
+```cpp
+void erase_all_of_first(auto & container)
+{
+    //c++20 std::erase standard form
+    std::erase(container, {container.front()});
+}
+```
+
+note: the same functionaliy can be acheieved with a short function`
+
+```cpp
+auto copy (const auto & value)
+{
+    return value;
+}
+```
+
+
+</details>
