@@ -4,6 +4,6 @@
     "dictionaryDefinitions": [],
     "dictionaries": [],
     "words": ["bson","printjson"],
-    "ignoreWords": ["mycoll","Schwarzmueller","Manu","Kumar","Maier","Brugge", "Mayr","Karandeep", "Alun","Michaela","Drayer","Bernd","Hoftstadt","Tolib","Melver","Bohed", "Armin","Glutch","Arber"],
+    "ignoreWords": ["mycoll","Schwarzmueller","Manu","Kumar","Maier","Brugge", "Mayr","Karandeep", "Alun","Michaela","Drayer","Bernd","Hoftstadt","Tolib","Melver","Bohed", "Armin","Glutch","Arber","dbpath","directoryperdb","nodb"],
     "import": []
 }

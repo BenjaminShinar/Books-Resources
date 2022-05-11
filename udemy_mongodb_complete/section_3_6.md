@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore dbpath directoryperdb
+// cSpell:ignore
 -->
 
 [main](README.md)
@@ -432,7 +432,7 @@ What do we consider?
 </details>
 
 ## Section 4: Exploring The Shell and The Server
-<!-- <details> -->
+<details>
 <summary>
 Getting better with the mongo shell and mongo server, what we can configure and how to work with them.
 </summary>
@@ -445,7 +445,8 @@ in the shell
 
 ```sh
 mongod # start a mongo server
-mongo # connect a client
+mongo # connect a client using legacy shell
+mongosh # connect a client using modern shell
 ```
 we can see the available flags with the `mongod --help` commnad
 
@@ -459,7 +460,7 @@ we can use this to have different databases and collections, and we can store th
 
 ### Exploring the MongoDB Options
 
-- `--repair` - 
+- `--repair` - try and fix corruptions in database
 - `--directoryperdb` - group databases into sub folders
 - `--storageEngine <engine>` - default is wiredTiger
 
@@ -482,6 +483,17 @@ db.shutdownServer()
 ```
 ### Using a Config File
 
+rather than run those option manually, we can create a config file with the *cfg* extenesion and store them there.
+
+```yaml
+storage:
+  dbPath: "path/to/db"
+systemLog:
+  destination: file
+  path: "path/to/log/file.log"
+```
+we can pass the  path to to the file with `--config` (or `-f`) option.
+
 ### Shell Options & Help
 
 ### Useful Resources & Links
@@ -490,6 +502,47 @@ db.shutdownServer()
 </details>
 
 
+## Section 5 : Using MongoDB Compass To Explore Data Visually
+<details>
+<summary>
+MongoDB Compass allows us to work with the database visually
+</summary>
+
+we download the mongodb compass tool from the official site, we connect to a host, we must have a mongodb server running.
+
+we launch the program, and we get a broweser GUI to connect to the server, and we can manage data from it, like creating databases, collections, inserting documents, and so on.
+
+we can also do some data exploration like aggregations, see indexes, etc...
+
+</details>
+
+## Section 6: Diving Into Create Options
+<!-- <details> -->
+<summary>
+
+</summary>
+
+
+### Creating Documents - An Overview
+
+### Understanding `insert()` Methods
+
+### Working with Ordered Inserts
+
+### Understanding the "writeConcern"
+
+### The "writeConcern" in Practice
+
+### What is Atomicity?
+
+### Assignemt 2: Time to Practice - Create Operations
+
+### Importing Data
+
+### Wrap Up
+
+</details>
+ 
 ##
 
 [main](README.md)
