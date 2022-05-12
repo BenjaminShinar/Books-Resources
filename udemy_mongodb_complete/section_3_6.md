@@ -25,18 +25,18 @@ we can use the `null` value to say that a field exists, but there is no value fo
 
 ### Data Types - An Overview
 
-DataType | Notes | Example
----|---|---
-Text | always quotes | "Max"
-Boolean | true of false | true
-Integer | int32 | 55
-NumberLong | int64 | 1000000000
-NumberDecimal | High precision | 12.99
-ObjectId | automatically generated, has a timestamp | ObjectId("text")
-ISODate | date | ISODate("2018-09-09")
-Timestamp| date time |Timestamp(11421532)
-Embedded Documents | nesting | {"a":{}}
-Array | list of values| {"b":[]}
+| DataType           | Notes                                    | Example               |
+| ------------------ | ---------------------------------------- | --------------------- |
+| Text               | always quotes                            | "Max"                 |
+| Boolean            | true of false                            | true                  |
+| Integer            | int32                                    | 55                    |
+| NumberLong         | int64                                    | 1000000000            |
+| NumberDecimal      | High precision                           | 12.99                 |
+| ObjectId           | automatically generated, has a timestamp | ObjectId("text")      |
+| ISODate            | date                                     | ISODate("2018-09-09") |
+| Timestamp          | date time                                | Timestamp(11421532)   |
+| Embedded Documents | nesting                                  | {"a":{}}              |
+| Array              | list of values                           | {"b":[]}              |
 
 the shell always uses floats to represent numbers. this is because the shell is based on JavaScript, which doesn't have diffrent numeric types.
 
@@ -64,13 +64,13 @@ there are also different ways of how data is stroed in BSON, see documentation.
 
 some guidelines
 
-Guiding Question | Examples | Actions
----|---|---
-"Which Data does my application need or generates?" | User Information, Product Information, Orders | Defines the Fields you'll need (and how they relate)
-"Where do I need my data?" | Welcome Page, Products List Page, Orders Page | Defines your required collections + field groupings
-"Which kind of Data or Information do I want to display?" | Welcome Page, Product Names, Product Page | Defines which queries you'll need
-"How often do I fetch my Data?" | every page, every second, on demand | Defines whether you should optimize for easy fetching
-"How often do I write or change my Data" | Orders-> often, Product Data-> rarely | Defines whether you should optimize for easy writing
+| Guiding Question                                          | Examples                                      | Actions                                               |
+| --------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------- |
+| "Which Data does my application need or generates?"       | User Information, Product Information, Orders | Defines the Fields you'll need (and how they relate)  |
+| "Where do I need my data?"                                | Welcome Page, Products List Page, Orders Page | Defines your required collections + field groupings   |
+| "Which kind of Data or Information do I want to display?" | Welcome Page, Product Names, Product Page     | Defines which queries you'll need                     |
+| "How often do I fetch my Data?"                           | every page, every second, on demand           | Defines whether you should optimize for easy fetching |
+| "How often do I write or change my Data"                  | Orders-> often, Product Data-> rarely         | Defines whether you should optimize for easy writing  |
 
 MongoDb core principal is to design the structure to fit the usage, so there won't be many joins and lookup and other operations across collections.
 
@@ -517,30 +517,150 @@ we can also do some data exploration like aggregations, see indexes, etc...
 </details>
 
 ## Section 6: Diving Into Create Options
-<!-- <details> -->
+<details>
 <summary>
-
+Closer look at creating and importing documents.
 </summary>
 
-
-### Creating Documents - An Overview
+ways of creating documents
+- `insertOne()` - one document
+- `insertMany([])` - multiple documents
+- `insert()` - deprecated, both a single and multiple documents
+- `mongoimport -d <database> -c <collection> --drop --jsonArray`
+- (update methods which can also create documents)
 
 ### Understanding `insert()` Methods
 
+```sh
+use contactData
+db.persons.insertOne({name:"Max",age:30, hobbies:["sports","cooking"]}) #
+db.persons.insertMany([
+                  {name:"dan",age:28, hobbies:["cars"]},
+                  {name:"anna", age:29, hobbies:["cats"]}
+                  ]) #objects in an array
+db.persons.insert({name:"phil",age:45}) # one document, doesn't return the object id.
+db.persons.insert([{name:"josh",age:77},{name:"hans",age:46}]) #many documents, a different output
+```
+
 ### Working with Ordered Inserts
 
-### Understanding the "writeConcern"
+it's ok to have our own ids,
+```sh
+db.hobbies.insertMany(
+  [
+    {name:"Sports",_id::"sports"},
+    {name:"Cars",_id::"cars"},
+    {name:"Cooking",_id::"cooking"},
+    {name:"Cats",_id::"cats"}
+  ]
+)
+```
+but if we repeat the command, we might get an error for duplicated keys, but the first elements is still inserted, everything before the error happens. this is the default behavior. **Ordered Insert** means that each insert is handled separately. until the error which stops the execution of the command
+```sh
+db.hobbies.insertMany(
+  [
+    {name:"Horses",_id::"horses"}
+    {name:"Sports",_id::"sports"},
+    {name:"Yoga",_id::"yoga"}
+  ]
+)
 
-### The "writeConcern" in Practice
+db.hobbies.find({name:"Horses"}) #match
+db.hobbies.find({name:"Yoga"}) #not found
+```
+
+we might not want this behavior, we can change it by passing a 2nd argument to the `insertMany()` command,we pass a document which specifies that we want all the documents to be inserted, even after an error.
+
+```sh
+db.hobbies.insertMany(
+  [
+    {name:"Horses",_id::"horses"}
+    {name:"Sports",_id::"sports"},
+    {name:"Yoga",_id::"yoga"} # still inserted
+  ],
+  {ordered:false}
+)
+
+
+db.hobbies.find({name:"Yoga"}) # found, even if there was an error before
+```
+
+### Understanding the **writeConcern**
+
+another option to specify is the *writeConcern*.
+
+when we issue an insert command, we pass it from the client, to the server and eventually the storage engine, which has data in memory and on disk. (also journal)
+
+the writeConcern document determines how the insertion behaves. it can require the data to be written to a number of instances (if we have more than one), and to also be written to the journal. the journal is also a file on disk, which records actions that need to be taken.
+The Journal is easier to manage than writing directly to the datbase files, as the journal doesn't have any indexes, positions and other stuff to handle. still slower than keeping the data in memory only. but it lets us recover in case there was a crash.
+
+there is also a write timeout option, *wtimeout*.
+
+the default is to write to one instance, and not write at the journal. setting the number of instances to zero means we don't get an acknowledgment. the write will still happen.
+```js
+{
+  writeConcern: {
+    w: 1,
+    j: undefined,
+    //wtimeout: 200
+  }
+}
+```
+
+and lets look at this in practice
+```sh
+db.persons.insertOne({name:"chris",age:25},{writeConcern:{w:1,j:false}})
+```
 
 ### What is Atomicity?
 
+mongoDB guarantees atomic operation for documents, a document is always either inserted/changed as requested, or fails and doesn't change at all. this isn't true for `insertMany` operations.
+
+
 ### Assignemt 2: Time to Practice - Create Operations
+
+> 1. Insert multipleCompanies (comany data of your choice) into a collection - both with `insertOne()` and `insertMany()`.
+> 2. Delibratry insert duplicate ID data and "fix" failing additions with unordered inserts.
+> 3. Write Data for a new company with both jouraniling being guranteed and not being guaranteed.
+
+```sh
+use test
+db.companies.insertOne({_id:"mcr",name:"microsoft"})
+db.companies.insertMany([{_id:"ggl",name:"google"},{_id:"amzn",name:"amazon"}])
+
+db.companies.insertMany([{_id:"nflx",name:"netflix"},{_id:"amzn",name:"amazon"},{_id:"dpx",name:"dropbox"}],{ordered:true})
+db.companies.findOne({name:"netflix"}) #match
+db.companies.findOne({name:"dropbox"}) #no match
+
+db.companies.insertMany([{_id:"intl",name:"intel"},{_id:"amzn",name:"amazon"},{_id:"dpx",name:"dropbox"}],{ordered:false})
+db.companies.findOne({name:"intel"}) #match
+db.companies.findOne({name:"dropbox"}) #match
+
+db.companies.insertOne({_id:"dl",name:"dell"},{writeConcern:{w:1,j:false}}) #no journaling
+db.companies.insertOne({_id:"cpx",name:"checkpoint"},{writeConcern:{w:1,j:true}}) #journaling
+```
 
 ### Importing Data
 
+we can import a data file json into a db with `mongodbimport` command. we have flags for specifying the database, the collection, how the file is structured (one document or an array), and whether to append or replace the collection
+
+```sh
+cd resources
+mongoimport tv.shows.json -d movieData -c movies --jsonArray --drop
+```
+
 ### Wrap Up
 
+>- `insertOne()`,`insertMany([])`
+>   - You can insert documents with `insertOne()` (one document at a time) or `insertMany()` (multiple documents).
+>   - `insert()` also exists, but it's not reccomended to use  it anymore, it also doesn't return the inserted ids.
+> - Ordered Inserts
+>   - By default, when using `insertMany()`, inserts are ordered - that means that the inserting process stops if an error occurs.
+>   - You can change this by switching to "unordered inserts" - your inserting process will then continue, even if errors occurs.
+>   - In both cases, no successfull inserts (before the error) will be rolled back.
+> - Write Concern
+>   - Data should be stored and you can control the "level of guarantee" of that to happen with the *writeConcern* option.
+>   - Choose the option value based on your app requirements.
 </details>
  
 ##

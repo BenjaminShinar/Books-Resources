@@ -40,8 +40,36 @@ default port is 27017
 - `db.products.insertOne()`
 - `db.products.find()`
 - `.pretty()`
+- 
+- `mongoimport <path/to/file.json>` - import a file into a database. [documentation](https://docs.mongodb.com/manual/reference/program/mongoimport/index.html)
+  - `-d` - database to use
+  - `-c` - collection to use
+  - `--JsonArray` - when we have an array of elements, not just one document
+  - `--drop` - if collection exists, drop it (clear contents) before importing, otherwise it's an append operation
 
-### special type of objects
+### Additional Options Arguments
+
+inserts:
+- ordered inserts - do insert for all or stop on the first error.
+- write concern - how data is inserted (`insertMany`)
+	- *w* - number of instances to write to (default 1, zero means no validation).
+	- *j* - write to journal, (default undefined/ false)
+	- *wtimeout* - time to wait until for response.
+
+```js
+db.mycoll.insertMany([{_id:1,name:"a"},{_id:2, name:"b"}],
+{
+	unordered:false,
+	writeConcern: {
+		w: 1,
+		j: true,
+		wtimeout: 200
+	}
+})
+```
+
+
+### Special types of objects
 - point: geospacial data
 ```
 {
@@ -66,7 +94,6 @@ db.shutdownServer()
 ```
 
 ### CLI flags
-
 
 when running `mongod` - [documentation](https://www.mongodb.com/docs/manual/reference/program/mongod/)
 
@@ -100,6 +127,7 @@ command | action
 `db.stats()`| help on collection methods
 `sh.help()` | sharding helpers
 `rs.help()` | replica set helpers
+`db.dropDatabase()` | clear current database
 `db.shutdownServer()` | shut down
 `show dbs`| list databases
 `show collections`| list collections in current database
