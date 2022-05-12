@@ -646,7 +646,7 @@ we can import a data file json into a db with `mongodbimport` command. we have f
 
 ```sh
 cd resources
-mongoimport tv.shows.json -d movieData -c movies --jsonArray --drop
+mongoimport tv-shows.json -d movieData -c movies --jsonArray --drop
 ```
 
 ### Wrap Up
