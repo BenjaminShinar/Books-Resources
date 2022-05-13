@@ -128,5 +128,5 @@ use a personnel account, we need to provide credit information, even if we use a
 
 </details>
 
-[next](Section_3_IAM_S3.md)\
+[next](Section_03_IAM_S3.md)\
 [main](README.md)

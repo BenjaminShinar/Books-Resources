@@ -3,12 +3,7 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": [],
-  "words": [
-    "Alexa",
-    "Mbps"
-  ],
-  "ignoreWords": [
-    "Kroonenburg"
-  ],
+  "words": ["Alexa", "Mbps"],
+  "ignoreWords": ["Kroonenburg", "chkconfig"],
   "import": []
 }
