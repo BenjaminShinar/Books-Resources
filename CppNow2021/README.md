@@ -54,19 +54,17 @@ all sorts of lectures, divided by field.
   - Preconditions, Postconditions, Invariants: How They Help Write Robust Programs - Andrzej Krzemieński
   - Weak Interfaces --> Weak Defenses: The Bane of Implicit Conversion in Function Calls - Richárd Szalay
   - hop: A Language to Design Function-Overload-Sets - Tobias Loew
+  - Frictionless Allocators - Alisdair Meredith
 - [Lightning Talks](Lightning%20Talks.md)
   - Complecting Made Easy - Tony Van Eerd
   - Dashboards to the Rescue - Matthias Bilger
   - Universal Function Call Syntax in C++20 - Devon Richards
   - Don't `constexpr` All the Things - David Sankel
 
-currently working on:
-
 ### real talks:
 
 - [ ] Designing Concurrent C++ Applications - Lucian Radu Teodorescu
 - [ ] Library Approaches for Strong Type Aliases - Anthony Williams
-- [ ] Frictionless Allocators - Alisdair Meredith
 - [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
 - [ ] Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy
 - [ ] Taskflow: A Heterogeneous Task Graph Programming System with Control Flow: Tsung-Wei Huang
@@ -88,14 +86,3 @@ currently working on:
 - [ ] Stdfwd - Forward Declarations for C++ Standard Library - Oleh Fedorenko
 - [ ] Surveying the Community – What Could Possibly Go Wrong - Anastasia Kazakova
 - [ ] When Paradigms Collide - Ben Deane
-
-### Suggested Talks
-
-high on entertainment value:
-
-1. Keynote: SOLID, Revisited - Tony Van Eerd
-2. Don't constexpr All the Things - David Sankel
-
-informative
-
-1. What Belongs In The C++ Standard Library? - Bryce Adelstein Lelbach

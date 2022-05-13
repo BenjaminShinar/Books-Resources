@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore fmodules Levehnstein cvref deducer psssint ultr
+// cSpell:ignore fmodules Levehnstein cvref deducer psssint ultr defences moda unsynchronized
  -->
 
 [Main](README.md)
@@ -3698,6 +3698,493 @@ we can see some demos on compiler explorer
 
 some statistics about the library, about ~2000 lines of code.
 what's missing.
+
+</details>
+
+## Frictionless Allocators - Alisdair Meredith
+
+<details>
+<summary>
+A suggestion to add language support allocators, the issue, the problems, and how it might look
+</summary>
+
+[Frictionless Allocators](https://youtu.be/1PWFQVvaOl4)
+
+### Why Allocators
+
+What is an allocator?
+
+> A service that grants exclusive use of a region of memory to clients.\
+> Nice clients will return that region to the service when no longer needed.
+
+Why do we Want allocators? is the `operator new` not good enough? the answer is mostly performance, but also instrumentation and special memory regions.
+
+using allocators get us about 3-5 speed up compared to `new`, and even order of magnitude in extreme cases.
+
+A Faster Allocator:
+
+> - A general purpose allocator tries to minimize _contention_.
+>   - a better/replacement for `operator new`
+> - Avoid synchronization if we can guarantee all access from a single thread.
+> - Simplified bookkeeping if we never reclaim memory.
+>   - A _monotonic_ allocator simply advances a pointer through a buffer on each allocation.
+
+Performance benefits:
+
+> Better memory locality improves runtime **after** allocation.
+>
+> - Keeping memory in L1/L2 cache has an enormous impact on runtime performance.
+> - Altough the CPU is trying to manage the cache to make this happen anyway, a local memory pool goes a long way to help.
+> - Memory pools minimize the effects of _diffusion_ on a single task.
+> - Memory pools on the stack reduce fragmentation of long running processes.
+> - No synchronization needed if allocation is confined to a single thread.
+
+Two common strategies to improve locality:
+
+- The first is **allocation on the thread stack**, typically from a pre-sized memory buffer.
+- The second way is by **managing a pool of memory** to avoid system calls to the _memory manager_. this is the common implemenation of the `operator new`, but having a specific pool for each data structure is better for locality.
+
+custom operators also have additional functionalies besides the main utility of handing out memory.
+
+- Debugging
+- Logging
+- Profiling
+- Test drivers
+
+> **Special Memory**\
+> Special memory may be hardware specific, or have some other property, e.g. shared memory. it ofter requires a _handle_ with more info than a native c++ pointer. for example, `boost::interprocess` for shared memory containers.\
+> Some architectures provide different access to differnet regions of memory. such as VRAM on video cards.
+
+(introducing his colleague, Emery Berger)
+
+> goals: Accelerating Programs Via Custom Allocators:
+>
+> - **Demonstrate** value of custom allocation. empirically measure opportunities, performance impact and space impact.
+> - Help programmers
+>   - **Automatically** identify opportuninites for custom allocation in legacy code.
+>   - Provide tools to ensure **efficiency** for programers using custom allocation.
+
+initial results with the **BufferedSequentialAllocator** custom allocator, using three benchmarks,
+
+- _stresstest_ - sort, filter and change data based on random numbers.
+- _moda_moda_: single-stage and multi-stage. execl worksheet computations, join views and perfrom computations.
+
+about 25% improvemnt.
+
+### What do allocators look like in C++20?
+
+In c++11, we got [allocator traits](https://en.cppreference.com/w/cpp/memory/allocator_traits). some `using` defintions, we pass the allocator to some other facility. we have customization points at the _construct_ and _destroy_. there was also a probelm of propageting allocators across containers.
+
+```cpp
+template <class Alloc>
+struct allocator_traits {
+	using allocator_type = Alloc;
+	using value_type = typename Alloc::value_type;
+	using pointer = /*see documentation*/;
+	using const_pointer = /*see documentation*/;
+	using void_pointer = /*see documentation*/;
+	using const_void_pointer = /*see documentation*/;
+	using difference_type = /*see documentation*/;
+	using size_type = /*see documentation*/;
+	//...
+	template <class T>
+	using rebind_alloc = /*see documentation*/;
+
+	template <class T>
+	using rebind_traits = allocator_traits<rebind_alloc<T>>;
+	//...
+	static pointer allocate(Alloc& a, size_type n);
+	static pointer allocate(Alloc& a, size_type n, const_void_pointer hint);
+	static void deallocate(Alloc& a, pointer p, size_type n);
+
+	template <class T, class ... Args>
+	static void construct(Alloc& a, T* p, Args&&... args);
+
+	template <class T>
+	static void destroy(Alloc& a, T* p);
+
+	static size_type max_size(const Alloc& a);
+	//...
+	using propagate_on_container_copy_assignment = /*see documentation*/;
+	using propagate_on_container_move_assignment = /*see documentation*/;
+	using propagate_on_container_swap = /*see documentation*/;
+	static Alloc select_on_container_copyconstruction(const Alloc& rhs);
+};
+```
+
+in c++17 things were improved
+
+> - `is_always_equal` - propagated tag.
+> - Improved exception specifications on containers.
+> - `std::pmr` - the polymorphic memory resources namespace and the containers. supplying allocator (actually, memory resource) at runtime.
+> - constraint: fancy pointers must be _contiguous_ iterators.
+
+```cpp
+template <class T>
+struct allocator {
+	using value_type = T;
+	using size_type = size_t;
+	using difference_type = ptrdiff_t;
+	using propagate_on_container_move_assignment = true_type;
+	using is_always_equal = true_type;
+
+	allocator() noexcept;
+	allocator(const allocator&) noexcept;
+
+	template<class U>
+	allocator(const allocator<U>&) noexcept;
+	~allocator();
+	allocator & operator=(consst allocator&) = default;
+
+	T* allocate(size_t n);
+	void deallocate(T* p, size_t n);
+};
+```
+
+in c++20, `constexpr` support was added to allocators. now we can use custom allocators inside constexpr blocks, even though we can't get them out of the compile time blocks into the runtime.
+
+```cpp
+template <class T>
+struct allocator {
+	using value_type = T;
+	using size_type = size_t;
+	using difference_type = ptrdiff_t;
+	using propagate_on_container_move_assignment = true_type;
+	using is_always_equal = true_type;
+
+	constexpr allocator() noexcept;
+	constexpr allocator(const allocator&) noexcept;
+
+	template<class U>
+	constexpr allocator(const allocator<U>&) noexcept;
+	constexpr ~allocator();
+	constexpr allocator & operator=(consst allocator&) = default;
+
+	[[nodiscard]] constexpr T* allocate(size_t n);
+	constexpr void deallocate(T* p, size_t n);
+};
+```
+
+**How does `pmr` work?**
+
+> - Resource derived from _std::pmr::memory_resoure_.
+>   - Override the pure abstract members.
+> - Clients store pointer to memory resoure ("like a vtable")
+> - Resource pointer never propagates
+>   - Scopre resource object with a longer lifetime than customers.
+>   - Data strucuters "guarantee" all elements using the same resource.
+> - Alias templates for all standard containers to use tis new scheme.
+
+**memory resource** - public interface for the user, protected interface for derived classes.
+
+```cpp
+class memory_resource{
+	// For exposition only
+	static constexpr size_t max_algin = alignof(max_align_t);
+	public:
+		virtual ~memory_resource();
+		void* allocate(size_t bytes, size_t alignment = max_align);
+		void deallocate(void p*,size_t bytes, size_t alignment = max_align);
+
+		bool is_equal(const memory_resource& other) const noexcept;
+
+	protected:
+		virtual void* do_allocate(size_t bytes, size_t alignment) = 0;
+		virtual void do_deallocate(void p*,size_t bytes, size_t alignment) = 0;
+
+		virtual bool do_is_equal(const memory_resource& other) const noexcept = 0;
+};
+```
+
+standard resources:
+
+```cpp
+memory_resource* new_delete_resource() noexcept; // delegates to the new/delete
+memory_resource* null_memory_resource() noexcept; // always throws bad_alloc
+memory_resource* get_default_resource() noexcept; // customizable
+
+class monotonic_buffer_resource; //fixed size memory, never released
+class synchronized_pool_resource; //static memory pools for different sized memory
+class unsynchronized_pool_resource; // when we don't have threeads
+```
+
+> **Idiom and usage of pmr**
+>
+> - Memory resources are objects, typically scoped to a function, with a lifetime longer than their clients below them.
+> - Default, object, adn global "allocators"
+>   - System-wide default used for all objects unless otherwise specified.
+>   - Use the default for function-scope objects unless otherwise specified.
+>   - Use object allocator (supplied at construction) only (and always) for data that is part of the objects data structure (that persists beyone the function call).
+>   - Use another "global allocator" for any object with static of thread-local sotrage duration, as it may outlive the the default resource after _main_.
+> - _no support for fancy pointers_
+
+quick example, potential bug because of RVO, so we force a creation of a copy.
+
+```cpp
+pmr::string make_string(const char *s)
+{
+	pmr::monotonic_resource res;
+	pmr::string x(s,&res);
+	//return x; //potential RVO - which means leaking
+	return {x}; //force creation of a temporary, using the default resource.
+}
+```
+
+> **Scoped Allocator Model**
+>
+> - Simple idea: every element in the data structure uses the same allocator(memory-resource).
+> - Class design: every ember of the object graph (all bases and members) uses the same allocator.
+> - Invariant: all dynamically allocated _persistent_ data uses the same allocator.
+> - Key Benfit: underpins performance when looking to avoid diffusion and fragmentation.
+> - Important benefit: easy to guarantee allocator/resource has a longer lifetime that it's clients.
+> - Implication: **allocators can never propagate**, or else any swap or assignment could invalidate the whole system.
+
+structure of std::pmr::allocator, [documentation](https://en.cppreference.com/w/cpp/memory/polymorphic_allocator). no assignment operator (deleted), c++20 added some behavior.
+
+> **pmr limitations**
+>
+> - Solves the vocabulary problem, but only if used consistently (i.e., the vocabulary problem! it's still there).
+> - No support for fancy pointer / special memory regions.
+> - Storing an extra pointer in every object, repeatedly though the whole data structure.
+> - Cost of dynamic dispatch.
+
+### What causes friction?
+
+one cause of friction is types that don't have support for the scoped allocator model, and the users didn't provide appropiate constructors.
+
+> - c-style array - `pmr::string data[42]`
+> - std::array can't have an allocator. `std::array<pmr::string,42> more_data`
+> - lambda objects - capturing and closures.
+> - strucutred bindings.
+> - deafult member initlizars - which allocator is used?
+> - this problem is recursive,such as `std::vector<std::array<string,10>>` - can't provide the allocator on the way down the chain.
+
+Allocator Propagation
+
+> - Allocator is bound at construction.
+> - Should the allocator be rebound on assignment?
+>   - Assignment copies data.
+>   - Allocator is orthogonal, specific to each container object.
+> - Traits give contorl of the Propagation strategy (deafult is to never propagate)
+> - Propagation is complex
+>   - too many fine-grainted traits dimensions to reasonably support.
+>   - what does it mean to propagate on _swap_, but not on _move-assignment_? or vice-versa?
+>   - the trait for copy construction is actually a function call?
+
+the syntantic overhead is high, writing code through _allocator_traits_ looks like expert level code. the amount of constructors is usually doubled to allow for optional allocator, and this prevents us from having multiple defaulted arguments, because we must have one for the allocator.\
+as an example, c++11 _std::unordered_map_ had 8 constructors (and that was when we thought it was allocator aware), but c++17 has 15, with most delegating to the original eight.\
+there is also a complexity of argument order, should the allocator be the final argument, or should we pass the allocator arguments and the allocator at the start to avoid template issues.
+
+There is a **copy constructor issue**, copy ellison might lead to a situation where we return an object with a reference to a memory resource that is about to leave scope. this was improved in c++17, and compiler warnings might help in the future, but behavior will be unpredictable.
+
+### What should we do about it?
+
+> **The ideal Model**
+>
+> - No allocator spam in the interface.
+> - A single data structure uses the same allocator throughout.
+>   - a container and all its elements.
+>   - e.g. a graph, its nodes, their contents, etc...
+> - If a type manages dynamic memory, it _always_ supports an allocator.
+> - "Allocator aware" types are known to the type system.
+>   - it can query if a type is allocator aware.
+>   - it can query which allocator an object uses.
+
+this will require us to have a model of allocator awareness: explicitly aware types will be classes marked as such. and implicitly aware types are those which derive from other allocator aware classes or have data members which are allocator aware. awareness is viral from both base class and data members.
+
+> **Allocator Aware Properties**
+>
+> - The allocator aware class will use the supplied allocators to acquire all memory for the data structure persistent needs.
+> - There is a consistent (customizable) API to query which allocator an object is using.
+> - The allocator for an object will not change during its lifetime. **i.e. alloctoars do not propagate**.
+
+We need Querying to allow operations that require allocators to be the same, like move and swap. if we want to build an object outside the object (to avoid copies), we will need to create it with the correct allocator.
+
+we don't want to add allocator overloads to every constructor, maybe a new syntax will be needed.
+
+```cpp
+multipool_resource res;
+set<string>x {"hello","world"} using res; // suggestion, pass the allocator this way
+```
+
+### What is our experience?
+
+here is an example, we need to specify the behavior of the move constructor to take a differnet allocator
+
+```cpp
+class Object {
+		std::pmr::string d_name;
+
+	public:
+	using allocator_type = std::pmr::polymorphic_allocator<>;
+
+	explicit Object (allocator_type a = {}): d_name("<UNKNOWN>",a){}
+	Object (const Object& rhs,allocator_type a = {}): d_name(rhs.d_name,a){}
+	Object(Object&&) = deafult;
+	Object (Object&& rhs,allocator_type a): d_name(std::move(rhs.d_name),a){}
+
+	//apply rule of 6
+	~Object() = deafult;
+	Object& operator=(const Object& rhs) = default;
+	Object& operator=(Object&& rhs) = default;
+};
+```
+
+if the new syntax was implemented, it would look like this: some things could be simplified,
+
+```cpp
+class Object {
+		std::pmr2::string d_name;
+
+	public:
+	//using allocator_type = std::pmr::polymorphic_allocator<>;
+
+	Object (): d_name("<UNKNOWN>"){} //no longer explicit
+	Object (const Object& rhs) = default;
+	Object(Object&&) = deafult;
+	//Object (Object&& rhs,allocator_type a): d_name(std::move(rhs.d_name),a){}
+
+	//apply rule of 6
+	~Object() = deafult;
+	Object& operator=(const Object& rhs) = default;
+	Object& operator=(Object&& rhs) = default;
+};
+```
+
+and if we give the _d_name_ argument a default initialization, all our constructor are defaulted, so we go down to the rule of zero and we no longer have to write them
+
+```cpp
+class Object {
+	std::pmr2::string d_name = <"UNKOWN">;
+};
+pmr::multipool_resource res;
+Object X{"Hello world"} using res;
+```
+
+> Implementing Awareness
+>
+> - Stash an allocator pointer as construction, much like vtable pointer.
+>   - does not vary through construting a hierarchy.
+> - Customization API to give precise control of storage if needed.
+>   - e.g. _optional_ object needs to stash allocator when empty, but can re-use to storage for the missing object.
+> - If awareness is _implicit_ , access the allocator through the entity granting awareness.
+>   - Do not pay to store excess copies of the pointer.
+>   - Leaf nodes of data strucutres will always need a pointer.
+
+in most use cases, the awareness will be implicit, so it won't impact common users and will have low implemenation costs. implicit awarensscan be supported by c++11 containers, using an allocator-aware allocator object (the allocator template parameter). and implicit awareness implies the need for a new language feature.
+
+> Allocator injection
+>
+> - Inject an allocator at object creation time, in addition to constructor arguments.
+>   - needs language support with an extension syntax.
+>   - `new` operator one obvious customization, but need local object support too.
+> - An implicit extra argument for every constructor.
+>   - No constructor spam with allocator overloads.
+>   - process-wide deafult is provided if not supplied by the caller.
+>   - note: the move constructor is special
+> - implicitly propgagate that injection through member initlizars for all bases and members.
+>   - but **not** into constructor body.
+
+Sean Baxter has his own c++20 compiler, where he works on Circle as a post c++ language, and he managed to get a running prototype working quickly. it seems to work fine so far, even if it doesn't have implicit generation of _allocator_type_.
+
+```cpp
+// allocator-specifier in initializers and postfix-expressions
+
+#include <list>
+#include "logger.hxx"
+
+int main(){
+	logging_resource_t logger("logger");
+	// using-allocator in a braced initializer for a declaration creates a PMR list when the allocator expresion dervies memory_resource.
+	pmr::list<int> my_list{1,2,3} using logger;
+
+	// using-allocator in a braced initializer on an expresion.
+	auto my_list2 = pmr::list<int>{4.4,5.5,6.6} using logger;
+}
+```
+
+this will also cascade into other cases, such a factory functions, like _std::make_shared_ and _std::to_string_. we will either need to pass the allocator as an argument, or add the same syntax support. but we also need to avoid redundant allocations with the the default allocator inside the factory.
+
+and what about the move constructor? can we have a support for a move constructor that uses diffent allocator?
+
+```cpp
+template <class T>
+struct NamedValue{
+	std::string name;
+	T value;
+	NamedValue(NamedValue &&) = deafult;
+	NamedValue(NamedValue &&) using Alloc = deafult;
+};
+```
+
+> Option 1:\
+> Member initializers call extended-move-with-allocator for each base and member. The classes that handle memory allocation directly(i.e. vector, rahter than classes with a vector member) will implement the custom logic to test the allocator, and move or make copies as needed.\
+> this supports move-only types as members, as long as they manage any extended-move logic themsevels, which is trivial by deafult for _non_-allocator aware types.
+>
+> Option 2:\
+> Test whether the allocators are compatible. if so delegate to the regular move constructor, if not compatible, delegate to the extended-copy-constructor.\
+> if the extended-copy-constructor is not available, the move is ill-formed, and therefore deleted at compile level.\
+> The ideal is to provide custom overloads to handle non-default cases.
+
+the correct course is probably option 2.
+
+Internal Pointers example:
+
+```cpp
+struct highlight{
+	std2::vector<int> d_values;
+	int* d_focus; // invarient: points to an element in d_values
+
+	highlight(const highlight &) = delete; //copy constructor
+	highlight(highlight &&) = deafult; //move constructor
+};
+```
+
+copying _d_focus_ would violate the invarient so the copy constructor was delete. an alternative way was to implement a look-up to fix and make the pointer point to the correct coresponding element. in this example, only option 2 is safe.
+
+Dispatching Extended Move
+
+```cpp
+struct highlight{
+	std2::vector<int> d_values;
+	int* d_focus; // invarient: points to an element in d_values
+
+	highlight(const highlight &):d_values(other.d_values), d_focus(nullptr)
+	{
+		//maybe find a new address for d_focus in d_values.
+	} // copy constructor
+	highlight(highlight &&) = deafult; //move constructor
+	highlight(highlight &&) [[?]] // magical using overload
+	: hightlight(copy_or_move(other)) {} // delegating constructor
+
+	private:
+		//factory function
+		static hightlight copy_or_move(highlight& other){
+			if (allocator_of(other) == allocator_of(copy_or_move)){
+				return std::move(other); // move
+			}
+			else {
+				return other; //copy
+			}
+		}
+};
+```
+
+### What next?
+
+> Basic Feature Set
+>
+> - Pass allocators to _factory_ function and initializers thorough extra _using_ argument.
+> - A special allocator type that imbues enclosing classes as allocator aware
+>   - Fundamental type to avoid specifying customization interface.
+>   - Acts like a reference to a _pmr::memory_resource_
+> - all constructors all allocator aware types are implicitly allocator aware.
+>   - move constructor is special and split in two.
+> - _allocator_of_ implicit hidden friend function.
+> - implicit factory functions
+>   - support a _using_ when return type is allocator aware (what will this mean when calling from template?)
+>   - implicitly supply allocator to return value
+>   - when guaranteed (N)RVO applies, supply allocator to variable declerations.
 
 </details>
 
