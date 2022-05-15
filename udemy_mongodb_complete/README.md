@@ -8,7 +8,6 @@
 udemy course [Master MongoDB Development for Web & Mobile Apps. CRUD Operations, Indexes, Aggregation Framework - All about MongoDB!](https://www.udemy.com/course/mongodb-the-complete-developers-guidey/) by *Maximilian Schwarzmüller*. 
 
 
-
 ## Takeaways
 <details>
 <summary>
@@ -28,7 +27,7 @@ default port is 27017
 - Nested Documents Limits:
   - up 100 levels of nesting.
   - max size of the document is 16MB.
-- `db.patients.find({"history":{$elemMatch:{"disease":"cold"}}}).pretty()`
+
 - `db.dropDatabase()`
 - `db.myCollection.drop()`
 - `db.customers.aggregate([$lookup:{from: "books",localField: "favBooks",foreignField:"_id",as: "favBookData"}])` - merge documents.
@@ -46,6 +45,22 @@ default port is 27017
   - `-c` - collection to use
   - `--JsonArray` - when we have an array of elements, not just one document
   - `--drop` - if collection exists, drop it (clear contents) before importing, otherwise it's an append operation
+
+
+### Find Operators
+
+- `db.collection.find({"key":{$gt:1000}})` - find based on a criteria.
+- `db.collection.find({"array":{$elemMatch:{"key":"value"}}})` - find a document where the array contains an element with the properties given.
+- `db.collection.find({"array":"element"})` - find a document where the array **contains** the element.
+- `db.collection.find({"array":["element"]})` - find a document where the array **has only the element**.
+- `db.collection.find({key:{$in:["value1","value2"]}})` - all document where the key is one of the values.
+- `db.collection.find({key:{$nin:["value1","value2"]}})` - all document where the key is not one of the values.
+- `db.collection.find({$or:[{"criteria1":"value1"},{"criteria2:{$gt:1}}]})` -  match one of the filters.
+- `db.collection.find({$nor:[{"criteria1":"value1"},{"criteria2:{$gt:1}}]})` -  match none of the filters.
+- `db.collection.find({$and:[{"criteria1":"value1"},{"criteria2:{$gt:1}}]})` -  match all of the filters. required if we want conditions on the same field.
+- `db.collection.find({key: {$not:{$eq:value}}})` - inverse a query.
+- `db.collection.find({key: {$exists:true, $ne:null}})` - a field exists and has a non-null value.
+- `db.collection.find({"field.key": {$type:"number"}})` - a field has a certain type
 
 ### Additional Options Arguments
 
@@ -70,6 +85,7 @@ db.mycoll.insertMany([{_id:1,name:"a"},{_id:2, name:"b"}],
 
 
 ### Special types of objects
+
 - point: geospacial data
 ```
 {

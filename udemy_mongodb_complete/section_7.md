@@ -17,7 +17,7 @@ we will work with the movies database which we worked with in the previous modul
 
 ### Methods, Filters & Operators
 
-when we do a command, we have a specific structure of the syntax, we start by selectiog a daabase, then a collection, a method, and inside the method we pass data.\
+when we do a command, we have a specific structure of the syntax, we start by selecting a database, then a collection, a method, and inside the method we pass data.\
 `<db>.<collection>.<method>(<filter>)`
 
 for the `find` method, we pass a **filter** as data. the filter can be simple or complex, and can use operators such as `$gt`.
@@ -72,8 +72,10 @@ db.movies.find({}).pretty()
 db.movies.findOne({name:"The Last Ship"})
 db.movies.find({runtime:60}).pretty()
 ```
-by defaults, filter use equality
+by defaults, filter use equality.
+
 ### Working with Comparison Operators
+
 playing with comparison operators
 ```sh
 # equality same
@@ -90,19 +92,80 @@ db.movies.find({runtime:{$lte:40}}).count()
 
 ### Querying Embedded Fields & Arrays
 
-### Understanding `$in` and `$nin`
+when we have embedded fields (objects and arrays), we can also query them. we do this by specifying the path, in this case we must use quotation marks, other wise the dot is not recognized
 
-### `$or` and `$nor`
+```sh
+db.movies.find({"rating.average":{$gt:7}})
+```
 
-### Understanding the `$and` Operator
+we can also query the elements of an array, by default, mongo searchs for the existence of the element inside the array, it doesn't have to the only element. if we want to search for an exact match (an array with only the single element), we can specify an array as the searched element.
 
-### Using `$not`
+```sh
+db.movies.find({"genres": "Drama"}).pretty() # all documents where the array contains "Drama"
+db.movies.find({"genres": ["Drama"]}).pretty() # all documents where the array contains only "Drama"
+```
+
+#### Understanding `$in` and `$nin`
+
+`$in` and `$nin` have a sligtly different behavior, they allows us to match different cases. the arguments are passed in as an array, and we can match to one of them or document which don't match any.
+```sh
+db.movies.find({runtime: {$in:[30,42]}}) # all documents where the runtime is 30 or 42
+db.movies.find({runtime: {$nin:[30,42]}}) # all documents where the runtime is not 30 or 42
+```
+
+### Logical Operators
+
+#### `$or` and `$nor`
+
+matching elements based on combined criteria, multiple conditions, we start with the `$or` operator, and pass the filters as an array. we can also use `$nor`, to get documents which don' match any of the criteria.
+
+```sh
+db.movies.find({"rating.average":{$lt:5}}).count() #count matching elements
+db.movies.find({"rating.average":{$gt:9.3}}).count() #count matching elements
+db.movies.find({$or:[{"rating.average":{$lt:5}},{"rating.average":{$gt:9.3}}]}).count() #count matching elements
+db.movies.find({$nor:[{"rating.average":{$lt:5}},{"rating.average":{$gt:9.3}}]}).count() #count matching elements
+```
+
+#### Understanding the `$and` Operator
+
+find documents who match all of the conditions. this isn't required in basic cases, because we can put everything inside the regular documents. but it's used in some cases, as some mongo drivers don't support documents with a repeated field name and will only use the second defintion. this is very dangerous.
+
+```sh
+db.movies.find({$and:[{"rating.average":{$lt:5}},{genres:"Drama"}]}).count()
+db.movies.find({"rating.average":{$lt:5},genres:"Drama"}).count()
+#match on same field
+db.movies.find({genres:"Horror"}).count() # check
+db.movies.find({genres:"Drama",genres:"Horror"}).count() # same value not good!
+db.movies.find({$and:[{genres:"Drama"},{genres:"Horror"}]) # this works!
+```
+#### Using `$not`
+the `$not` operator inverts the result of a query, in many cases we can use `$neq`.
+
+```sh
+db.movies.find({runtime: {$not: {$eq:60}}}).count()
+db.movies.find({runtime: {$neq:60}}).count()
+```
 
 ### Diving Into Element Operators
 
-### Working with `$type`
+this operators match on fields, rather than values. we can check if a fields exits, and check that it has a type or a valid value.
 
-### Understanding Evaluation Operators - `$regex`
+```sh
+db.user.find({age:{$exists:true}}).pretty() # documents where the field exits
+db.user.find({age:{$exists:true, $gt:30}}).pretty() # documents where the field exits and matches a criteria.
+db.user.find({age:{$exists:true, $gt:30}}).pretty() # documents where the field exits and matches a criteria.
+db.user.find({age:{$exists:true,$ne:null}}) #field exists and is not null
+```
+
+#### Working with `$type`
+we can match for a specific data type for the field we query.
+```sh
+db.user.find({phone:{$type: "number"}}) #documents where the field is a number (double or integer)
+db.user.find({phone:{$type: "integer"}}) #documents where the field is an integer
+```
+
+
+### Understanding Evaluation Operators - `$regex` 
 
 ### Understanding Evaluation Operators - `$expr`
 
