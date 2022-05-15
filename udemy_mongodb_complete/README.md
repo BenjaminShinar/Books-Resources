@@ -60,7 +60,10 @@ default port is 27017
 - `db.collection.find({$and:[{"criteria1":"value1"},{"criteria2:{$gt:1}}]})` -  match all of the filters. required if we want conditions on the same field.
 - `db.collection.find({key: {$not:{$eq:value}}})` - inverse a query.
 - `db.collection.find({key: {$exists:true, $ne:null}})` - a field exists and has a non-null value.
-- `db.collection.find({"field.key": {$type:"number"}})` - a field has a certain type
+- `db.collection.find({"field.key": {$type:"number"}})` - a field has a certain type.
+- `db.collection.find({"field": {$regex:/pattern/}})` - match a regex pattern.
+- `db.collection.find({$expr:{$gt:["$field1","$field2"]}})` - find documents where the fields matchs an expression (boolean).
+- `db.collection.find({$expr: {$gt:[{$cond:{if:{$le:[$field",value]],then:"A", else:"B"}},"$value2"]}})` - create conditional value.
 
 ### Additional Options Arguments
 

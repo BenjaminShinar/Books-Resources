@@ -107,7 +107,7 @@ db.movies.find({"genres": ["Drama"]}).pretty() # all documents where the array c
 
 #### Understanding `$in` and `$nin`
 
-`$in` and `$nin` have a sligtly different behavior, they allows us to match different cases. the arguments are passed in as an array, and we can match to one of them or document which don't match any.
+`$in` and `$nin` have a slightly different behavior, they allows us to match different cases. the arguments are passed in as an array, and we can match to one of them or document which don't match any.
 ```sh
 db.movies.find({runtime: {$in:[30,42]}}) # all documents where the runtime is 30 or 42
 db.movies.find({runtime: {$nin:[30,42]}}) # all documents where the runtime is not 30 or 42
@@ -165,19 +165,52 @@ db.user.find({phone:{$type: "integer"}}) #documents where the field is an intege
 ```
 
 
-### Understanding Evaluation Operators - `$regex` 
+### Understanding Evaluation Operators - `$regex` and `$expr`
 
-### Understanding Evaluation Operators - `$expr`
+Evaluation operators
+- `$expr` - aggregation expressions within the query language.
+- `$jsonSchema` - validate document against the given JSON schema
+- `$mod` - modules division.
+- `$regex` - regular expression.
+- `$text` - perform text search
+- ~~`$where` - match documents against a javascripts expression~~ - **deprecated**
+ 
+if we want to search for a sub string inside a text field, we can use `$regex`, or the `$text` index operator, if we have it defined. regex expressions don't have quotes. and they are surrounded by `/` marks.
 
+```sh
+db.movies.find({summary: {$regex: /musical/}})
+```
+
+`$expr` allows us to match fields inside document.
+
+in this example, we want find documents where the "start" field is larger the the "end" field. we pass the operator and the fields as names, we pass the fields name with `$` symbol. We can also have more complex queries, for this we use `$cond`,`if`,`then` and `else`. we can choose which value to use as from a conditional computation.
+```sh
+use financialData
+db.sales.insertMany([{start:10,end:12},{start:12,end:7},{start:7, end:25}])
+db.sales.find({$expr: {$gt:["$start","$end"]}})
+db.sales.find({$expr: {$gt:
+[ 
+  {
+    $cond:{
+      if:{$gte:["$end",10]},
+      then:{$subtract: ["$end","$start"]},
+      else:"$end"}
+  },
+  5
+]
+  }})
+```
+
+this behavior leads us into the aggregation pipeline synax.
 ### Assignment 3: Time to Practice - Read Operations
 
 ### Diving Deeper Into Querying Arrays
 
-### Using Array Query Selectors - `$size`
+#### Using Array Query Selectors - `$size`
 
-### Using Array Query Selectors - `$all`
+#### Using Array Query Selectors - `$all`
 
-### Using Array Query Selectors - `$elemMatch`
+#### Using Array Query Selectors - `$elemMatch`
 
 ### Assignment 4: Time to Practice - Array Query Selectors
 
