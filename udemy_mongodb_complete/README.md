@@ -64,6 +64,21 @@ default port is 27017
 - `db.collection.find({"field": {$regex:/pattern/}})` - match a regex pattern.
 - `db.collection.find({$expr:{$gt:["$field1","$field2"]}})` - find documents where the fields matchs an expression (boolean).
 - `db.collection.find({$expr: {$gt:[{$cond:{if:{$le:[$field",value]],then:"A", else:"B"}},"$value2"]}})` - create conditional value.
+`db.collection.find({"arrayField.innerField":"value"})` - match an internal element of the array.
+`db.collection.find({arrayField:{$size:2}})` - exact match of size (can't compare and use operators here).
+`db.collection.find({arrayField:{$all:["value1","value2"]}})` - match documents which contain all the required values, without caring about order of if there are additional elements.
+`db.collection.find({arrayField:{$elemMatch:{"innerField1":"value1","innerField2":"value2"}}})` - match documents which have an elements in the array that matches all the required conditions.
+
+### Cursor Object
+
+- `const cursor = db.colllection.find()` - create cursor.
+- `cursor.hasNext()` - check if it was exhausted 
+- `cursor.next()` - get next batch, same as `it`
+- `cursor.count()` - count elements.
+- `cursor.sort({field1:1, field2:-1})` - sort elements.
+- `cursor.skip(50)` - move the cursor forward.
+- `cursor.limit(5)` - change the number of elements in each fetch.
+
 
 ### Additional Options Arguments
 
