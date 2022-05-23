@@ -181,7 +181,7 @@ if we want to search for a sub string inside a text field, we can use `$regex`, 
 db.movies.find({summary: {$regex: /musical/}})
 ```
 
-`$expr` allows us to match fields inside document.
+`$expr` allows us to match fields inside the queried document with itself.
 
 in this example, we want find documents where the "start" field is larger the the "end" field. we pass the operator and the fields as names, we pass the fields name with `$` symbol. We can also have more complex queries, for this we use `$cond`,`if`,`then` and `else`. we can choose which value to use as from a conditional computation.
 ```sh
@@ -201,7 +201,7 @@ db.sales.find({$expr: {$gt:
   }})
 ```
 
-this behavior leads us into the aggregation pipeline synax.
+this behavior leads us into the aggregation pipeline syntax.
 ### Assignment 3: Time to Practice - Read Operations
 
 ### Diving Deeper Into Querying Arrays

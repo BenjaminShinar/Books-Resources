@@ -391,7 +391,6 @@ are all comments simply signs that we didn't try hard enough to make the code cl
 </details>
 
 ## C++ Weekly - Ep 310 - Your Small Integer Operations Are Broken!
-
 <details>
 <summary>
 types that are promoted to integers are prone to weird conversion errors.
@@ -766,7 +765,7 @@ int main()
 
 this still isn't good enough, we still create two oject, a *std::array* and the *std::string_view*. there also a problem with having static variables in the *consteval* function.
 
-so now we try other crazy stuff, we have a function that returns a refernce to the template argument. and now we got something that the compiler can optimize.
+so now we try other crazy stuff, we have a function that returns a reference to the template argument. and now we got something that the compiler can optimize.
 
 > Class non template type parameter
 >
@@ -794,7 +793,7 @@ int main()
 - lambda that returns a string
 - we create an oversized array (which should be big enough for any reason) which is constant time value
 - then we use the oversized array as template argument to create a smaller array.
-- which we use as static refernce 
+- which we use as static reference 
 - and then we use it to create the string_view.
 
 
@@ -1211,7 +1210,7 @@ int main()
 }
 ```
 
-the problem is the copying, we don't handle forwarding. if we take references, we run into object lifetime issues. there might be a way to parametrize it (take copy of rvalue, refernce of lvalue), but it would probably quickly become a monsteroues code.
+the problem is the copying, we don't handle forwarding. if we take references, we run into object lifetime issues. there might be a way to parametrize it (take copy of rvalue, reference of lvalue), but it would probably quickly become a monsteroues code.
 </details>
 
 ## C++ Weekly - Ep 319 - A JSON To C++ Converter
@@ -1231,7 +1230,7 @@ everything is statically known at compile time, it creates a cpp class that is d
 ## C++ Weekly - Ep 320 - Using `inline namespace` To Save Your ABI
 <details>
 <summary>
-
+Another attempt to mend the ABI problem.
 </summary>
 
 [Using `inline namespace` To Save Your ABI](https://youtu.be/rUESOjhvLw0).
@@ -1541,7 +1540,7 @@ void erase_all_of_first(auto & container)
 }
 ```
 
-note: the same functionaliy can be acheieved with a short function`
+note: the same functionality can be achieved with a short function
 
 ```cpp
 auto copy (const auto & value)
@@ -1550,5 +1549,42 @@ auto copy (const auto & value)
 }
 ```
 
+</details>
+
+## C++ Weekly - Ep 324 - C++20's Feature Test Macros
+<details>
+<summary>
+Macros that allow us to check if we can use a feature in our current standard library implementation.
+</summary>
+
+[C++20's Feature Test Macros](https://youtu.be/4Bf8TmbibXw)
+
+c++20 standardized compile time behavior, it allows us to check at compile time if a feature exists in the standard. the value of the macro is the year and the month the feature was accepted, so if something was added in c++20, the value might be "201707L" - designating that it was accepted early on to the standard, back in july 2017.
+
+having this macros allow us to check if the library which we are using supports a feature
+
+```cpp
+#if __cpp_lib_constexpr_string >= 201907L
+constexpr std::string make_string()
+{
+    std::string result;
+    result = "Hello ";
+    result += "World"; 
+    result += " Test Long String"; 
+    return result;
+}
+
+TEST_CASE("to_string_view produces a std::string_view from std::string")
+{
+    constexpr static auto result = lefticus::tools::to_string_view([](){return make_string();});
+    static_assert(std::is_sam
+    e_v<decltype(result), const std::string_view>);
+    STATIC_REQUIRE(result == "Hello World Test Long String");
+}
+
+#endif
+```
+
+this allows us to check if we can use a specific version of implementation, in cases that the feature had changes over time, or if we are using a truncated compiler version and we want to make sure a feature from the next standard is supported.
 
 </details>
