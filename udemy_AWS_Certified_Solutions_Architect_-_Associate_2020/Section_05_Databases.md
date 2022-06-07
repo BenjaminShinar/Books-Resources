@@ -480,5 +480,5 @@ all the logs are stored in the master node "/mnt/var/log/", wo if we want the lo
 
 ##
 
-[next](Section_06_07_Advanced_IAM_Route53.md.md)\
+[next](Section_06_07_Advanced_IAM_Route53.md)\
 [main](README.md)

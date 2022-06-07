@@ -257,6 +257,8 @@ Select-String -Path .\regex22.txt -Pattern "^fooa+bar$"
 Markdown formatting tricks, tips, etc
 </summary>
 
+[cspell dictionaries](https://cspell.org/docs/dictionaries/)
+
 ### Tags
 
 Dialog Box - don't use

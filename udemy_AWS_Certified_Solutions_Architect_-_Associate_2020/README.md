@@ -2,7 +2,7 @@
 
 Udemy course [AWS Certified Solutions Architect - Associate 2020](https://www.udemy.com/course/draft/362328/). by _Ryan Kroonenburg_
 
-- [Section 1 - Introduction](Section_01_02_intro.md#section-1---introduction)
+- [Section 1 - Introduction](Section_01_02_Intro.md#section-1---introduction)
 - [Section 2 - 10,000 Foot Overview](Section_01_02_intro.md#section-2---aws---10000-foot-overview)
 - [Section 3 - IAM & S3](Section_03_IAM_S3.md)
 - [Section 4 - EC2](Section_04_EC2.md)

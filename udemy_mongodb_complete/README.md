@@ -69,6 +69,17 @@ default port is 27017
 `db.collection.find({arrayField:{$all:["value1","value2"]}})` - match documents which contain all the required values, without caring about order of if there are additional elements.
 `db.collection.find({arrayField:{$elemMatch:{"innerField1":"value1","innerField2":"value2"}}})` - match documents which have an elements in the array that matches all the required conditions.
 
+### Update Operators
+-`db.collection.updateOne({},{})` - update the first matching document.
+-`db.collection.updateMany({},{})` - update all matching documents
+-`db.collection.updateOne({},{$set:{field:value}})` - set the value of a field, not effecting other fields
+-`db.collection.updateOne({},{$inc:{field:value}})` - change a value from it's current value, either increment of decrement (by passing a negative value).
+-`db.collection.updateOne({},{$mul:{field:factor}})` - change a value from it's current value by a numeric factor. One being neutral and value lower than one making it smaller.
+-`db.collection.updateOne({},{$min:{field:value}})` - the value will be the minimum value between the existing value and the new value.
+-`db.collection.updateOne({},{$max:{field:value}})` - the value will be the maximum value between the existing value and the new value.
+-`db.collection.updateOne({},{$unset:{fieldName:""}})` - remove the field from the document, the `""` is a common value, but it doesn't matter what we pass.
+-`db.collection.updateMany({},{$rename:{oldName:newName}})` - change the name of the field. doesn't add the field to documents which didn't have it.
+
 ### Cursor Object
 
 - `const cursor = db.colllection.find()` - create cursor.
@@ -98,6 +109,15 @@ db.mycoll.insertMany([{_id:1,name:"a"},{_id:2, name:"b"}],
 		j: true,
 		wtimeout: 200
 	}
+})
+```
+
+updates:
+- upsert: update or insert, if document doesn't exists. create it.
+```js
+db.mycoll.updateOne({field:value},{$set:{field1:value1,field2:value2}},
+{
+	upsert:true
 })
 ```
 

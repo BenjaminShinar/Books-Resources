@@ -403,25 +403,163 @@ db.movies.find({"rating.average":{$gt:9}},{name:1,genres: {$slice:[1,2]}})
 
 </summary>
 
+Changing documents, applying different kinds of updates to data. changing the field, incrementing a value, and updating arrays.
 
-### Updating Fields with `updateOne()`, `updateMany` and `$set`
-### Updating Multiple Fields with `$set`
-### Incrementing & Decrementing Values
-### Using `$min`, `$max` and `$mul`
-### Getting Rid of Fields
-### Renaming Fields
+### Updating Fields
+
+<details>
+<summary>
+Operators that effect fields.
+</summary>
+
+#### Updating Fields with `updateOne()`, `updateMany` and `$set`
+
+we will use the 'user.json' file
+
+```sh
+`mongoimport users.json -d users -c users --jsonArray --drop`
+```
+
+```js
+use users
+db.users.find().pretty()
+```
+and now we want to update the document for Chris, which has a different form than the other documents.
+we can update one or many documents, and we can find the documents to change based on the same criteria we use in find commands. `updateOne()` updates the first matching documents, and the `updateMany()` will modify all documents.
+
+we use `{$set:{}}` to modify a document, without overwriting all of it.
+```js
+// replace field with empty array
+db.users.updateOne({name:"Chris"},{$set:{hobbies:[]}})
+// populate field
+db.users.updateOne({name:"Chris"},{$set:{hobbies:[
+  {title:"Sports", frequency:5},
+  {title:"Cooking", frequency:3},
+  {title:"Hiking", frequency:1},
+]}})
+```
+in the return value, we will see the number of matched documents and the number of modified documents. if we run the same command twice, we won't modify the field again, so the modified count value will be zero.
+
+we can also update all documents with the same criteria.
+```js
+db.users.find({"hobbies.title":"Sports"})
+db.users.updateMany({"hobbies.title":"Sports"},{$set:{isSporty:true}})
+db.user.find().pretty()
+```
+#### Updating Multiple Fields with `$set`
+
+we can we use `$set` to change more than one field, we can add fields or edit them (overwriting)
+```js
+db.users.updateOne({name:"Chris"},{$set:{age:40, phone:5551234}})
+```
+#### Incrementing & Decrementing Values
+
+we might want to increase a value, like an age. we have some builtin operators for such common actions. for this we use the `$inc` operator. the operator take document with the name of the field and the amount. if we want to decrement, we pass a negative value.
+
+```js
+db.users.updateOne({name:"Manual"},{$inc:{age:1}})
+```
+note: if we run the same command again, the modified count will change.
+
+we can combine both types of changes, 
+```js
+db.users.updateOne({name:"Manual"},{$inc:{age:-3},$set{likesToParty:false}})
+```
+
+if we try to both increment and set the same operator, we will get an error about the conflict.
+
+```js
+db.users.updateOne({name:"Manual"},{$inc:{age:-3},$set{age:25}})
+```
+
+#### Using `$min`, `$max` and `$mul`
+
+we can have conditional update, like updating a value only if it's higher than the current value.
+
+in our example, we will change "Chris"'s age (which is 40) with the `$min` to be the minimum of the current value and the given one. so if it will change from 40 to 35, but not from 35 to 38. we can also use `$max` to take the higher value.
+
+```js
+db.users.updateOne({name:"Chris"},{$set:{age:40}})
+db.users.updateOne({name:"Chris"},{$min:{age:35}})
+db.users.updateOne({name:"Chris"},{$min:{age:38}})
+db.users.updateOne({name:"Chris"},{$max:{age:38}})
+```
+
+like with `$inc`, we can also multiply or divide a value by a factor, with the value of 1 not changing the field at all.
+```js
+db.users.updateOne({name:"Chris"},{$mul:{age:1.2}})
+```
+#### Getting Rid of Fields
+we can update document to remove fields completely, this isn't the same as setting fields to null. we use `$unset` to remove the fields, with the name of the field as the key, and the value actually not mattering.
+
+```js
+db.user.updateMany({isSporty:true},{$set:{phone:null}}) //not, but existing.
+db.user.updateMany({isSporty:true},{$unset:{phone:""}}) //removed
+```
+#### Renaming Fields
+we rename fields with the `$rename` operator. this doesn't add the field if the original didn't exists.
+```js
+db.users.updateMany({},{$rename:{age:totalAge}})
+```
+
+</details>
+
 ### Understanding `upsert()`
-### Assignment
-### Updating Matched Array Elements
-### Updating All Array Elements
-### Finding & Updating Specific Fields
-### Adding Elements to Arrays
-### Removing Elements from Arrays
+
+`upsert` allows us to both update documents, or create them if they don't exists. it's the third argument to the update commands. the default value is false.
+
+```js
+db.users.updateOne({name:"Maria"},{$set:{age:29,hobbies:[{title:"Cooking",frequency:2}]}}) //nothing matches
+db.users.updateOne({name:"Maria"},{$set:{age:29,hobbies:[{title:"Cooking",frequency:2}]}},{upsert:true}) //create
+```
+
+any fields in the filtering conditions are also created.
+
+### Assignment 5: Time To Practice - Update Operatons
+
+> 1. Create a new Collection ("Sports") and **upsert** two new documents into it. (with these fields: "title", "requiresTeam").
+> 2. Update all document which do require a team by adding the minimum amount of players required.
+> 3. Update all documents that require a team by increasing the number of required players by 10.
+
+my solution
+
+```js
+use hobbies
+db.sports.updateOne({title:"Football"},{$set:{requiresTeam:true}},{upsert:true})
+db.sports.updateOne({title:"Tennis"},{$set:{requiresTeam:false}},{upsert:true})
+db.sports.updateMany({requiresTeam:true},{$set:{minimalPlayesr:2}})
+db.sports.updateMany({requiresTeam:true},{$inc:{minimalPlayesr:10}})
+db.dropDatabase()
+```
+
+
+### Updating Arrays
+<details>
+<summary>
+Update Array fields
+</summary>
+
+
+#### Updating Matched Array Elements
+#### Updating All Array Elements
+#### Finding & Updating Specific Fields
+#### Adding Elements to Arrays
+#### Removing Elements from Arrays
+
+</details>
+
 ### Understanding `$addToSet`
 ### Wrap Up
 ### Useful Resources & Links
 
 
+</details>
+
+## Section 9 - Understanding Delete Operations
+<details>
+<summary>
+
+</summary>
 </details>
 
 
