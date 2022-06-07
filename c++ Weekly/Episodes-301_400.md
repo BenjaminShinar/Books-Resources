@@ -1588,3 +1588,283 @@ TEST_CASE("to_string_view produces a std::string_view from std::string")
 this allows us to check if we can use a specific version of implementation, in cases that the feature had changes over time, or if we are using a truncated compiler version and we want to make sure a feature from the next standard is supported.
 
 </details>
+
+## C++ Weekly - Ep 325 - Why vector of bool is Weird
+<details>
+<summary>
+The special case of the vector of booleans.
+</summary>
+
+[Why vector of bool is Weird](https://youtu.be/OP9IDIeicZE)
+
+Vector of bool isn't a straight forward as a vector of other types. even thought a boolean can be represented in a single bit, it usually is stored as a single byte.
+
+```cpp
+int main()
+{
+    bool data[15]{};
+    return sizeof(data); //15
+}
+```
+
+vector of bool has a space optimized version
+
+```cpp
+#include <vector>
+#include <iostream>
+int main()
+{
+    std::vector<bool> data;
+    data.push_back(true);
+    std::cout << data.size() << '\n'; // 1
+    std::cout << data.capacity() << '\n'; // 64
+}
+```
+
+there is a problem, what if we want a reference to one of the elemtents? this doesn't make sense, we cant reference bits in the memory, only bytes.
+```cpp
+#include <vector>
+#include <iostream>
+int main()
+{
+    std::vector<bool> data;
+    data.push_back(true);
+    auto &front = data.front();
+
+}
+```
+
+we might try to create a bit field instead, but this is also not possible.
+
+```cpp
+struct Data{
+
+    bool b1:1;
+    bool b1:1;
+    bool b3:1;
+};
+
+void getRef()
+{
+    Data d{};
+    auto &b = d.b3; // error!
+}
+```
+
+in the case of *std::vector\<bool\>*, **a proxy object** is used instead, this object knows how to interact with the correct bit.
+```cpp
+#include <vector>
+#include <iostream>
+int main()
+{
+    std::vector<bool> data;
+    data.push_back(true);
+    auto front = data.front(); // proxy
+    front = false; // modify data through proxy
+    std::cout << data.front() << '\n'; // false
+}
+```
+this does get annoying, as we can't bind directly.
+
+
+```cpp
+#include <vector>
+int main()
+{
+    std::vector<bool> data;
+    data.push_back(true);
+    data.push_back(false);
+
+    for (auto & bit : data) //can't be done.
+    {
+        bit = 0; 
+    }
+}
+```
+the form of `for (const auto & bit : data)` works, but it can't modify the data. and the form `for (auto bit : data)` can modify the data, but doesn't look right. in any other case we wouldn't excpect to work.\
+one way to avoid this is to use forwarding references. `auto &&`, which works for both proxies and regular behavior, so if we see it, we should know that it's a proxy object and be careful
+
+
+```cpp
+#include <vector>
+int main()
+{
+    std::vector<bool> data;
+    data.push_back(true);
+    data.push_back(false);
+
+    for (auto && bit : data) //forewarding
+    {
+        bit = 0; 
+    }
+}
+```
+</details>
+
+## C++ Weekly - Ep 326 - C++23's Deducing `this`
+<details>
+<summary>
+Matrix use case
+</summary>
+
+[C++23's Deducing `this`](https://youtu.be/5EGw4_NKZlY)
+
+
+one use case is when we have const and non-const member functions, like the `at` function.
+```cpp
+#include <array>
+#include <cstddef>
+
+template <typename Contained,std::size_t Width, std::size_t Height>
+struct Matrix{
+    std::array<Contained,Width * Height> data;
+
+    Contained &d at(std::size_t X, std::size_t Y)
+    {
+        return data(Y * Width + X);
+    }
+    const Contained &d at(std::size_t X, std::size_t Y) const
+    {
+        return data(Y * Width + X);
+    }
+
+};
+
+int main()
+{
+    Matrix<int, 5,5> data{};
+    data.at(2,3) = 15;
+    return data.at(2,3);
+}
+```
+
+this is code duplication, can we get around this? we can have a shared function that makes use of the static deduction.
+```cpp
+
+template <typename Contained,std::size_t Width, std::size_t Height>
+struct Matrix{
+    std::array<Contained,Width * Height> data;
+
+    Contained &d at(std::size_t X, std::size_t Y)
+    {
+        return at (*this.X,Y):
+    }
+    const Contained &d at(std::size_t X, std::size_t Y) const
+    {
+        return at (*this.X,Y):
+    }
+
+    private:
+    static template <typename This>
+    auto& at(This &obj,std::size_t X, std::size_t Y)
+    {
+        return obj.data.at(Y* Width + X);
+    }
+
+};
+```
+
+
+and a simplified form will end up like this
+
+```cpp
+#include <array>
+#include <cstddef>
+
+template <typename Containesd,std::size_t Width, std::size_t Height>
+struct Matrix{
+
+    template<typename Self>
+    auto &at(this Self &&self, std::size_t X, std::size_t Y)
+    {
+        //data[0]; // can't access
+        return std::forward<Self>(self).data.at(Y * Width + X);
+    }
+
+};
+
+int main()
+{
+    const Matrix<int, 5,5> data{};
+    // data.at(2,3) = 15;
+    return data.at(2,3);
+}
+```
+
+however, inside this modified function, we can't access member never, even if it's not explicitly a static function. and it's also weird to get it. we cant do some work to recover it in a different way.
+
+```cpp
+int main()
+{
+    const Matrix<int, 5,5> data{};
+    //return Matrix<int,5,5>::at(data,2,3); // doesn't work;
+
+    //  form 2
+    using const_at = const int&(*)(const Matrix<int,5,5>&, std::size_t X, std::size_t Y);
+    auto func = Matrix<int,5,5>::at<const Matrix<int,5,5>&>;
+    return func(data,2,3);
+}
+```
+</details>
+
+## C++ Weekly - Ep 327 - C++23's Multidimensional Subscript Operator Support
+<details>
+<summary>
+multiple parameters in subscript operators.
+</summary>
+
+[C++23's Multidimensional Subscript Operator Support](https://youtu.be/g4aNGgLzVqw)
+
+in the previous video, we used tha the `at` operator, which should throw an exception if we try to access an element out of range. so we should be clear about the issue.
+```cpp
+#include <array>
+#include <cstddef>
+
+template <typename Contained,std::size_t Width, std::size_t Height>
+struct Matrix
+{
+
+    template<typename Self>
+    auto &at(this Self && self, std::size_t X, std::size_t Y)
+    {
+        if(X>= Width) throw std::range_error("X out of range");
+        if(Y>= Height) throw std::range_error("Y out of range");
+        return std::forward<Self>(self).data[Y * Width + X];
+        //return std::forward<Self>(self).data.at(Y * Width + X); //not relvent anymore
+    }
+
+};
+
+int main()
+{
+    const Matrix<int, 5,5> data{};
+    return data.at(9,3);
+}
+```
+
+C++23 introduced multi-dimensional subscript operators, meaning we can use more than one index inside the brackets.  we can't combine both forms until the compilers support both options, but for a simple example, we can use a const version of this.
+
+```cpp
+#include <array>
+#include <cstddef>
+
+template <typename Contained,std::size_t Width, std::size_t Height>
+struct Matrix
+{
+
+    const auto & operator[](std::size_t X, std::size_t Y)
+    {
+        return data [Y * Width + X];
+    }
+
+};
+
+int main()
+{
+    const Matrix<int, 5,5> data{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    return data[2,3]; // 13
+}
+```
+</details>
+
+
