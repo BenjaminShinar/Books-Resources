@@ -398,12 +398,15 @@ db.movies.find({"rating.average":{$gt:9}},{name:1,genres: {$slice:[1,2]}})
 
 ## Section 8 - Update Operations
 
-<!-- <details> -->
+<details>
 <summary>
-
+Change and modify Documents
 </summary>
 
 Changing documents, applying different kinds of updates to data. changing the field, incrementing a value, and updating arrays.
+
+[documentation](https://docs.mongodb.com/manual/tutorial/update-documents/)
+
 
 ### Updating Fields
 
@@ -532,26 +535,81 @@ db.sports.updateMany({requiresTeam:true},{$inc:{minimalPlayesr:10}})
 db.dropDatabase()
 ```
 
-
 ### Updating Arrays
 <details>
 <summary>
-Update Array fields
+Update Array fields.
 </summary>
 
+special operators to update existing arrays, and the internal elements.
 
 #### Updating Matched Array Elements
+
+like with the read operations, we don't want to match on any array which has matching elements. we want all the conditions to apply to the same elements.
+```js
+db.users.find({$and:[{"hobbies.title":"Sports"},{"hobbies.frequency":3}]}).pretty() // not what we wanted
+db.users.find({hobbies: {$elemMatch:{title:"Sports",frequency:3}}}).pretty() // conditions on the same element.
+```
+
+but now we want to update the element in the array, this is done with `$set` and the dollar sign `$`, which matches the element.
+
+```js
+db.users.updateMany({hobbies: {$elemMatch:{title:"Sports",frequency:3}}},{$set:{"hobbies.$.highFreqency:":true}})
+```
+
 #### Updating All Array Elements
+
+the same `$` placeholder matches a single element. the `$[]` matches all the elements in the array
+
+```js
+db.users.find({"hobbies.frequency":{$gt:2}})
+db.users.updateMany({"hobbies.frequency":{$gt:2}},{$set:{"hobbies.$.highFreqency":2}}) // effects only a single element in the array.
+
+db.users.updateMany({age:{$get:30}},{$inc:{"hobbies.$[].frequency":-1}})
+```
 #### Finding & Updating Specific Fields
-#### Adding Elements to Arrays
-#### Removing Elements from Arrays
+
+we can target different elements by using array filters,we use name filters
+```js
+db.users.find({"hobbies.frequency":{$gt:2}})
+db.users.updateMany({"hobbies.frequency":{$gt:2}}.{$set:{"hobbies.$[el].goodFreqency":true}},{arrayFilters:[
+  {"el.frequency":{$gt:2}}
+]})
+```
+#### Adding and Removing Elements to Arrays
+
+adding and removing elements to an array, the `$push`,`$pop` and `$pull` operators.for pushing elements we can use `$each` to push many elements.
+```js
+db.users.updateOne({name:"Maria"},{$push:{hobbies:{title:"Sports",frequency:3}}})
+db.users.updateOne({name:"Maria"},{$push:{hobbies:{$each:[{title:"Cooking",frequency:3},{title:"Smoking",frequency:5}],$sort:{frequency:-1}}}})
+
+db.users.updateOne({name:"Maria"},{$pull:{hobbies:{title:"Hiking"}}})
+db.users.updateOne({name:"Maria"},{$pop:{hobbies:1}}) //remove last element
+db.users.updateOne({name:"Maria"},{$pop:{hobbies:-1}}) //remove first element
+```
+
+#### Understanding `$addToSet`
+
+another form of adding elements to an array, but doesn't allow duplicates.
+```js
+db.users.updateOne({name:"Maria"},{$addToSet:{hobbies:{title:"Hiking",frequency:4}}})
+```
 
 </details>
 
-### Understanding `$addToSet`
-### Wrap Up
-### Useful Resources & Links
 
+### Wrap Up
+
+> - updateOne() and updateMany()
+>  - You can use `updateOne()` and `updateMany()` to update one or more documents in a collection.
+>  - You specify a filter (query selector) with the same operators you know from `find()`.
+>  - the second argument then describes the update (e.g. via `$set` or other update operators).
+> - Replacign Documents
+>   - Even though it was not covered again, you also learned about `replaceOne()` ear;oer ion the course - you can use that if you need to entirely replace a doc.
+> - Update Operators
+>   - You can update fields with a brand variety of field update operators like `$set`, `$inc`, `$min`, etc...
+> - If you need to work on arrays, take advantage of the shortcuts (`$`,`$[]` and `$[<identifier>]` + arrayFilters).
+> also use array update Operators like `$push` or `$pop` to efficiently add or remove elements to and from arrays.
 
 </details>
 

@@ -45,6 +45,9 @@ default port is 27017
   - `-c` - collection to use
   - `--JsonArray` - when we have an array of elements, not just one document
   - `--drop` - if collection exists, drop it (clear contents) before importing, otherwise it's an append operation
+- the `$` sign in an update refers to the first element matched by `$elemMatch`.
+- the `$[]` syntax in an update refers to all elements in the array.
+- the `$[<el>]` syntax in an update to target other elements in the array based on different conditions
 
 
 ### Find Operators
@@ -79,6 +82,13 @@ default port is 27017
 -`db.collection.updateOne({},{$max:{field:value}})` - the value will be the maximum value between the existing value and the new value.
 -`db.collection.updateOne({},{$unset:{fieldName:""}})` - remove the field from the document, the `""` is a common value, but it doesn't matter what we pass.
 -`db.collection.updateMany({},{$rename:{oldName:newName}})` - change the name of the field. doesn't add the field to documents which didn't have it.
+-`db.collection.updateMany({array:{$elemMatch:{}}},{$set:{"array.$.field":value}})` - change only the array element which was matched. 
+-`db.collection.updateMany({},{$set:{"array.$[el].field":value}},{arrayFilters:[{"el.field":value}]})` - target additional elements in the array based on a criteria.
+-`db.collection.updateOne({},{$addToSet:{arrayField:{field1:value1,field2:value2}}})` - add unique element to array, doesn't create duplications.
+-`db.collection.updateOne({},{$push:{arrayField:{$each:[{field1:value1,field2:value2},{field1:value1,field2:value2}]}})` - add multiple elements to array.
+-`db.collection.updateOne({},{$pop:{arrayField:1}})` - remove last element from array. 
+-`db.collection.updateOne({},{$pop:{arrayField:-1}})` - remove first element from 
+-`db.collection.updateOne({},{$pull:{arrayField:{criteriaField:value}}})` - remove elements from array based on conditions.
 
 ### Cursor Object
 
@@ -120,7 +130,10 @@ db.mycoll.updateOne({field:value},{$set:{field1:value1,field2:value2}},
 	upsert:true
 })
 ```
-
+- array filters: target other elements in the array
+```js
+db.mycoll.updateMany({field:value},{$set:"array.$[identifier].field":value},{arrayFilters:[{"identifier.field":value}]})
+```
 
 ### Special types of objects
 
