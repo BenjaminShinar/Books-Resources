@@ -65,6 +65,12 @@ default port is 27017
 - the `$` sign in an update refers to the first element matched by `$elemMatch`.
 - the `$[]` syntax in an update refers to all elements in the array.
 - the `$[<el>]` syntax in an update to target other elements in the array based on different conditions
+- `db.mycoll.getIndexes()` - view all indexes.
+- `db.mycoll.createIndex({"field.to.index":1})` - create an index based on the field, either ascending or descending.
+  - `db.mycoll.createIndex({"field1":1,"field2":-1})` - compounded index, the order matters!
+- `db.mycoll.dropIndex({"field.to.index":1})` - remove an index.
+- `db.mycoll.explain().find({})` - provide a detailed explainnation of how the operation was performed.
+  - `db.mycoll.explain("executionStats").find({})` - more verbose explainnation about the execution.
 
 
 ### Find Operators
