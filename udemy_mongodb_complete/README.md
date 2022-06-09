@@ -7,6 +7,24 @@
  
 udemy course [Master MongoDB Development for Web & Mobile Apps. CRUD Operations, Indexes, Aggregation Framework - All about MongoDB!](https://www.udemy.com/course/mongodb-the-complete-developers-guidey/) by *Maximilian Schwarzmüller*. 
 
+- Introduction
+- Understaning The Bascis and CRUD Operations
+- Schemas & Relations: How to Structure Documents
+- Exploring The Shell & The Server
+- Using The MongoDB Comapass To Explore Data Visually
+- Diving into Create Operations
+- Read Operations - A Closer Look
+- Update Operations
+- Understanding Delete Operations
+- Working With Indexes
+- Working With GeoSpatial Data
+- Understanding the Aggregation Framework
+- Working With Numeric Data
+- MongoDB & Security
+- Performance, Fault Tolerancy & Deployment
+- Transactions
+- From Shell To Driver
+- Introducing Stitch
 
 ## Takeaways
 <details>
@@ -39,7 +57,6 @@ default port is 27017
 - `db.products.insertOne()`
 - `db.products.find()`
 - `.pretty()`
-- 
 - `mongoimport <path/to/file.json>` - import a file into a database. [documentation](https://docs.mongodb.com/manual/reference/program/mongoimport/index.html)
   - `-d` - database to use
   - `-c` - collection to use
@@ -89,6 +106,49 @@ default port is 27017
 -`db.collection.updateOne({},{$pop:{arrayField:1}})` - remove last element from array. 
 -`db.collection.updateOne({},{$pop:{arrayField:-1}})` - remove first element from 
 -`db.collection.updateOne({},{$pull:{arrayField:{criteriaField:value}}})` - remove elements from array based on conditions.
+
+### Operators
+operator syntax | name | context | notes | sample
+---|-------|--------|-------|-------
+`$eq`, `$neq` | logical operators | find |
+`$gt`, `$gte` | logical operators | find |
+`$lt`, `$lte` | logical operators | find |
+`$in`, `$nin` | logical operators | find |
+`$or` | logical operators | find |
+`$nor` | logical operators | find |
+`$and` | logical operators | find |
+`$not` | logical operators | find |
+`$exists` | test existence | find |
+`$type` | test type of field | find |
+`$expr` | test type of field | find |
+`$jsonSchema` | | find |
+`$mod` | | find |
+`$regex` | | find |
+`$text` | | find |
+`$cond`,`if`,`then`,`else` | | find |
+`$` | field name specifier | find
+`$substract` | | find
+`$size` | array size | find
+`$all` | match all elements in array | find
+`$elemMatch` | match element in array | find |
+`$` | | projection
+`$slice` | | projection
+`$meta` | | projection
+`$set` | set field | update | new value to field
+`$unset` | unset field | update | remove field from document
+`$rename` | rename field | update | give new name to field
+`$inc` | increment field value | update | 
+`$min` |  | update | 
+`$max` |  | update | 
+`$mul` |  | update | 
+`$push` |  | update | 
+`$addToSet` |  | update | 
+`$pop` |  | update | 
+`$pull` |  | update | 
+`$each` |  | update | 
+`$` |  | update | 
+`$[]` |  | update | 
+`$[<identifier>]` |  | update | 
 
 ### Cursor Object
 

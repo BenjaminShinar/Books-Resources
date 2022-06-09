@@ -616,8 +616,31 @@ db.users.updateOne({name:"Maria"},{$addToSet:{hobbies:{title:"Hiking",frequency:
 ## Section 9 - Understanding Delete Operations
 <details>
 <summary>
-
+"Sometimes we have to get rid of data"
 </summary>
+
+[Documentation.](https://docs.mongodb.com/manual/tutorial/remove-documents/)
+
+### Understanding `deleteOne()` & `deleteMany()`
+
+like finding, we can delete one or many documents. we pass the same query selector to delete operation as we did with the find command.
+
+```js
+db.users.deleteOne({name:"Chris"})
+db.users.deleteMany({isSporty:true, totalAge:{$gt:30}})
+db.users.deleteMany({isSporty:true, totalAge:{$exists:false}})
+db.users.deleteMany()
+```
+
+### Deleting All Entries in a Collection
+to delete all documents, we can pass an empty filter (which matches everything), we can also use a special command to remove the entire collection.
+
+```js
+db.users.deleteMany()
+db.users.drop()
+db.dropDatabase()
+```
+
 </details>
 
 

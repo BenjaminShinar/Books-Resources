@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Okun Kube
+// cSpell:ignore Okun Kube fooa
 -->
 
 # Books-Resources
