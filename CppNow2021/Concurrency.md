@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq Nikunj Exascale randomizer kokkos hpx lcos Harel
+// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq Nikunj Exascale randomizer kokkos hpx lcos Harel lconcore luceto
  -->
 
 [Main](README.md)
@@ -1297,6 +1297,177 @@ the code is linear. `co_await` the threadpool is to request a reschedule for our
 - _`co_awaiting` a list of tasks_
 - _benchmarks and scaling_
 - _writing unit tests for coroutines_
+
+</details>
+
+## Designing Concurrent C++ Applications - Lucian Radu Teodorescu
+
+<details>
+<summary>
+High level abstraction without using low-level primitives.
+</summary>
+
+[Designing Concurrent C++ Applications](https://youtu.be/nGqE48_p6s4),[slides](http://lucteo.ro/content/pres/C++Now2021-Designing-Concurrent-C++-Applications-pres.pdf), [github code examples](https://github.com/lucteo/cppnow2021-examples), [No Locks Manifesto](http://nolocks.org/).
+
+a graph showing what people find frustrating, with concurrency safety issues being on top.
+
+the talk will try to build a high level concurrency framework, mostly without locks, that will be high performant.
+
+### Threads Considered Harmful
+
+a talk from earlier in the year [Threads Considered Harmful](https://youtu.be/_T1XjxXNSCs).
+
+threads in this context mean raw threads + synchronization (locks), the problems are: Performance, Understandability, Thread-Safety, and Composability. it's very likely to make a mistake and get it wrong and cause a problem with on of them.
+
+we want a general method, without locks, without safety issues (as much as possbile), with good performance, and have it being composobale and decomposable.\
+this will be done by using tasks(independent units of work), those tasks have all the dependencies explicitly stated. a unit of work is a series of instructions.
+
+there are article in "overload" journal showing the theoritcal results:
+
+> - all concurrent algorithms
+> - safety insured
+> - no need fo locks
+> - high efficiency for greedy algorithm
+> - high speedups
+> - easy composition and decomposition
+
+this doesn't include GPU, SIMD and c++20 coroutines.
+
+### Conccurent Design by Example
+
+concurrency without using locks.
+
+we start with an example, we use the _concore_ library, but we can use other libraries as well, we care about the design, not the implementation.
+
+```cpp
+#include <concore/spawn.hpp>
+
+int main() {
+    // Create a task and executes it
+    // The task can run in the same thread, or a different thread
+    concore::spawn_and_wait([] {
+        printf("Hello, concurrent world!\n");
+    });
+
+    return 0;
+}
+```
+
+a bit more serious example, creating task to run concurrently.
+
+```cpp
+#include <concore/spawn.hpp>
+
+#include "../common/utils.hpp"
+
+void print_message_task(const char* msg) {
+    CONCORE_PROFILING_SCOPE();
+    CONCORE_PROFILING_SET_TEXT(msg);
+
+    printf(" %s", msg);
+
+    sleep_for(100ms);
+}
+
+int main() {
+    profiling_sleep profiling_helper;
+    CONCORE_PROFILING_FUNCTION();
+
+    // Create a task group, so that we keep track of the running tasks
+    auto grp = concore::task_group::create();
+
+    // Create 9 tasks to be run concurrently
+    concore::spawn([=] { print_message_task("How"); }, grp);
+    concore::spawn([=] { print_message_task("did"); }, grp);
+    concore::spawn([=] { print_message_task("the"); }, grp);
+    concore::spawn([=] { print_message_task("multi-threaded"); }, grp);
+    concore::spawn([=] { print_message_task("chicken"); }, grp);
+    concore::spawn([=] { print_message_task("cross"); }, grp);
+    concore::spawn([=] { print_message_task("the"); }, grp);
+    concore::spawn([=] { print_message_task("road"); }, grp);
+    concore::spawn([=] { print_message_task("?"); }, grp);
+
+    // Ensure that all the tasks are completed
+    // This performs a BUSY WAIT -- it takes tasks and executes them
+    concore::wait(grp);
+
+    printf("\n");
+    return 0;
+}
+```
+
+- Tracy profiler
+- Spawning tasks & waiting for them
+- Task system
+
+we can rebuild the code above with the profing option enabled
+`clang++ -std=c++17 -DTRACY_ENABLE=1 -I/Users/luceto/work/other/tracy -stdlib=libc++ -lconcore -lconcore_profling -o out/02_fork 02_fork.cpp`. and now wee see the timeline of the threads.
+
+the number of threads created is equal to the number of cores in the macine, and then a thread can be reused.
+
+example 03.1: using a callback with tasks, in this example the task is executed on the same thread. example 03.2: using tasks vs using mutexes. example 03.3 uses a chain of async operations, makes use of templates.
+
+example 4 is about joining tasks (waiting for them to finish), and we have an option using a task group to set the order of execution.
+
+example 5 is _fork-join_, divide and conquer approach. we split the task into smaller chunks, each time creating a new task, either as new thread or the existing, and then we wait for the parts to finish.
+
+example 6 is _concurrent for_, which splits the work across threads, similar to `std::for_each(std::execution::par, int_iter{0}, int_iter{20},work)`.
+
+example 7 is _concurrent_reduce_, which tries to create a single value from multiple value.
+
+example 8 is _concurrent_scan_, each input produces an output, but each output requires knowledge of the previous inputs. in this case, we use a prefix-sun.
+
+example 9 is about _task graphs_, a series of tasks which depend on another in a known way, the number of threads used is determined by the depencies between the tasks.
+
+example 10 is _pipeline_, we can set the order and the concurrency model, so some tasks need to be called in a certain order, and some can be run together with others.
+
+example 11.2 is _serializers_, in this example we have a running window average, which for some reason cannot be used in a concurrent method, so the serializer is an executor that ensures the safety. the tasks can be run in different threads, but never concurrently. this is a way to avoid using mutexes.\
+example 11.2 is a _read-write serializer_, which replaces the read-write problem, so we no longer use mutexes. example 11.3 sets a limit on the number of parallel operations,so it replaces the semaphore.
+
+this concludes the first part, we now see that we can use tasks as high-level concurrency abstractions, and we have no need for low-level primitives.
+
+### C++23 Executors
+
+all the examples comply with the proposed executors of c++23.
+
+- executors
+- senders and receivers
+- senders algorithm
+
+example 1 shows how the abstractions work within the executor framework. executors are really simple.
+
+example 2.1 _senders and receivers_ demonstrate a connection between a sender and receiver, the scheduler from the thread pool creates the operation state. we skip example 2.2. in example 2.3 we show custom sender and receivers.
+
+example 3 is _sender algorithms_, as proposed in c++23.
+
+### Performance Topics
+
+> Targeting throughput. latency is also a concern, but not the main one.
+
+in a global pool of workers threads, we usually one thread per core, but if we know our tasks have large wait time, we can have more threads.\
+the important thing is to have more tasks than cores, we want to always have something running and getting work done. keep threads busy.
+
+there is a small overhead for the library, so the tasks should be big enough to make the process worth it.
+
+example 1 _cpu_intensive_, we try to keep the cpus busy, if there aren't doing work, we're wasting time and losing progress.
+
+example 2 _limit threads_. no example 3. example 4 shows the difference in speedup depending on the number of threads, the best performance is twice the number of cores (because of hyper-threading).
+
+example 5 shows how serializers compare to mutex. we see the times it takes and how mutexes prevent us from using all of our cpu. we skip example 6.
+
+### Building New Concurrency Abstractions
+
+> Extensibility is the key
+
+the standart won't ship with all we the need, we will have to create our own implementations for the first period of time.
+
+we have an example of composition and decomposition, the same as the earlier pipeline example. we can change the steps without effecting the pipeline and the concerns, we mix concurrent abstractions together.
+
+in example 2 we mix serializers, in example 3 we have a partial priority serializer, example 4 is matrix processing, example 5 is data streams, which reacts to a source in real-time.
+
+### Conclusions
+
+Concurrency without locks is possible. it's not complicated to write or to extend. the low level primitives exists in the framework level, not the user code. we even get good performance.
 
 </details>
 

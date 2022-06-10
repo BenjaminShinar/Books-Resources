@@ -17,6 +17,7 @@ all sorts of lectures, divided by field.
   - Parallelism on Ranges: Should We? - Giannis Gonidelis
   - Executors: The Art of Generating Composable APIs - Nikunj Gupta
   - Converting a State Machine to a C++ 20 Coroutine - Steve Downey
+  - Designing Concurrent C++ Applications - Lucian Radu Teodorescu
 - [Interfaces](Interfaces.md)
   - When Should You Give Two Things the Same Name? - Arthur O'Dwyer
   - Windows, MacOS and Web: Lessons from Cross-platform Development @ think-cell - Sebastian Theophil
@@ -63,7 +64,6 @@ all sorts of lectures, divided by field.
 
 ### real talks:
 
-- [ ] Designing Concurrent C++ Applications - Lucian Radu Teodorescu
 - [ ] Library Approaches for Strong Type Aliases - Anthony Williams
 - [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
 - [ ] Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy

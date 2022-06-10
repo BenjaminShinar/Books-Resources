@@ -3,7 +3,14 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": ["cpp"],
-  "words": ["Clonable", "initializable", "invokable", "Nemo", "nulllptr"],
+  "words": [
+    "Clonable",
+    "initializable",
+    "invokable",
+    "Nemo",
+    "nulllptr",
+    "serializers"
+  ],
   "ignoreWords": [
     "Adelstein",
     "Alisdair",
