@@ -11,7 +11,7 @@ Udemy course [AWS Certified Solutions Architect - Associate 2020](https://www.ud
 - [Section 7 - Route 53](Section_06_07_Advanced_IAM_Route53.md#section-7---route53)
 - [Section 8 - VPCs](Section_08_VPC.md)
 - [Section 9 - HA Architecture](Section_09_HA.md)
-- [Section 10 - Applications](Section_10_Apps.md)
+- [Section 10 - Applications](Section_10_Applications.md)
 - [Section 11 - Security](Section_11_Security.md)
 - [Section 12 - Serverless](Section_12_Serverless.md)
 
@@ -55,6 +55,8 @@ Aws services:
 - Managed Microsoft AD - Active Directory by AWS
 - RAM - Resources Access Manger - share resources across account
 - Route53 - Dns
+- CloudFormation - templates for provsioning aws resources.
+- Beanstalk - one click solution to provision resource, like CloudFormation for dummies.
 
 CloudWatch monitors resource usage, such as the number of EC2 instances we have, EBS volumes used, redirections from load balancers, etc... . CloudTrail Monitors aws actions such as API calls or other aws actions, the focus is how the users and services interact with AWS itself, not the metrics of the services themselves.
 
@@ -116,12 +118,14 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | SCT       | Schema Conversion Tool                | database migration                   |
 | SLA       | Service Level Agreement               |                                      | What AWS promises (rather than advertises)                                   |
 | SMB       | Server Message Block                  |                                      | FSx Windows                                                                  |
+| SMS       | Server Migration Service              |
 | SNS       | Simple Notification Service           | Push notification services           | used in the billing alarm                                                    |
 | SQS       |                                       | **AWS Service**                      |
 | SR-IOV    | Single Root I/O Virtualization        |
 | SSE       | Server Side Encryption                | S3                                   | SSE-S3                                                                       |
 | SSH       | Secure Shell                          | access to other machine              |
 | SWF       |
+| TCO       | Total Cost Of Ownership               | Application Discovery Service        | estimate                                                                     |
 | TTL       | Time to Live                          | CDN, CloudFront                      | Objects at cached location life time                                         |
 | VPC       | Virtual Private Cloud                 | **AWS Service**                      |
 | WAF       | Web Application Firewall              |

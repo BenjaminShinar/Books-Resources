@@ -4,6 +4,6 @@
   "dictionaryDefinitions": [],
   "dictionaries": [],
   "words": ["Alexa", "Mbps"],
-  "ignoreWords": ["Kroonenburg", "chkconfig"],
+  "ignoreWords": ["Kroonenburg", "chkconfig", "mysite"],
   "import": []
 }

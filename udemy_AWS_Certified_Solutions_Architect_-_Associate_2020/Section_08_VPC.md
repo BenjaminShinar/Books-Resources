@@ -599,8 +599,8 @@ Simplify VPN connections
 
 ### Quiz 6: VPCs Quiz
 
-> -"Having just created a new VPC and launching an instance into its public subnet, you realize that you have forgotten to assign a public IP to the instance during creation. What is the simplest way to make your instance reachable from the outside world?" _ANSWER: Create an Elastic IP address and associate it with your instance_
-> -"Are you permitted to conduct your own vulnerability scans on your own VPC without alerting AWS first?" _ANSWER: Depends_
+> - "Having just created a new VPC and launching an instance into its public subnet, you realize that you have forgotten to assign a public IP to the instance during creation. What is the simplest way to make your instance reachable from the outside world?" _ANSWER: Create an Elastic IP address and associate it with your instance_
+>   -"Are you permitted to conduct your own vulnerability scans on your own VPC without alerting AWS first?" _ANSWER: Depends_
 >
 > - "By default, instances in new subnets in a custom VPC can communicate with each other across Availability Zones?" _ANSWER: True_
 > - "How many internet gateways can I attach to my custom VPC?" _ANSWER: 1_
