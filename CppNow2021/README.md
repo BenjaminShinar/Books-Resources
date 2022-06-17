@@ -18,6 +18,7 @@ all sorts of lectures, divided by field.
   - Executors: The Art of Generating Composable APIs - Nikunj Gupta
   - Converting a State Machine to a C++ 20 Coroutine - Steve Downey
   - Designing Concurrent C++ Applications - Lucian Radu Teodorescu
+  - Taskflow: A Heterogeneous Task Graph Programming System with Control Flow - Tsung-Wei Huang
 - [Interfaces](Interfaces.md)
   - When Should You Give Two Things the Same Name? - Arthur O'Dwyer
   - Windows, MacOS and Web: Lessons from Cross-platform Development @ think-cell - Sebastian Theophil
@@ -67,7 +68,6 @@ all sorts of lectures, divided by field.
 - [ ] Library Approaches for Strong Type Aliases - Anthony Williams
 - [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
 - [ ] Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy
-- [ ] Taskflow: A Heterogeneous Task Graph Programming System with Control Flow: Tsung-Wei Huang
 
 ### lighting talks:
 

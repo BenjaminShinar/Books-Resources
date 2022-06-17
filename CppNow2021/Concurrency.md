@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq Nikunj Exascale randomizer kokkos hpx lcos Harel lconcore luceto
+// cSpell:ignore simd Steagall intrinsics cstdio immintrin loadu mmask storeu permutexvar permutex2var mmsetr maskz fmadd Giannis Gonidelis asynchrony KEWB unseq Nikunj Exascale randomizer kokkos hpx lcos Harel lconcore luceto cuda cudaflow sycl syclflow saxpy
  -->
 
 [Main](README.md)
@@ -1468,6 +1468,474 @@ in example 2 we mix serializers, in example 3 we have a partial priority seriali
 ### Conclusions
 
 Concurrency without locks is possible. it's not complicated to write or to extend. the low level primitives exists in the framework level, not the user code. we even get good performance.
+
+</details>
+
+## Taskflow: A Heterogeneous Task Graph Programming System with Control Flow - Tsung-Wei Huang
+
+<details>
+<summary>
+A lightweight framework to run tasks in parallel processing and create execution graphs.
+</summary>
+
+[Taskflow: A Heterogeneous Task Graph Programming System with Control Flow](https://youtu.be/4XhH0XN0zQQ),[slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/talk.pdf), [TaskFlow github](https://taskflow.github.io), [Proflier/Visualizer](https://taskflow.github.io/rfprof)
+
+Agenda:
+
+- Express your parallisem in the right way
+- Parallelize your applications using Taskflow
+- Understand our scheduing algorithm
+- Boost performance in real applications
+- Make C++ amenable to heterogenous parallelism
+
+parallel computing makes computation faster by several orders of magnitude, modern computers CPU have several cores. however, they are challenges to parallel computing
+
+- Debuging
+- Dependency constraints
+- Concurrency control
+- Scheduing efficiencies
+- Task and data race
+- Dynamic load balancing
+
+> How can we make it easier for C++ developers to quickly write parallel and heterogenous programs with _high performance and scalability_ and _simultaneous high productivity_?\
+> **Taskflow** offers a solution
+
+a simple example, we runt to run four tasks, A,B,C,D, where A must run first, D must run last, and B and C can run in either order or in parallel.
+
+```cpp
+#include <taskflow/taskflow.hpp> //Taskflow is header only
+
+int main()
+{
+  tf::Taskflow taskflow;
+  tf::Executor executor;
+
+  auto [A,B,C,D] = taskflow.emplace(
+    [] () { std::cout << "TaskA\n"},
+    [] () { std::cout << "TaskB\n"},
+    [] () { std::cout << "TaskC\n"},
+    [] () { std::cout << "TaskD\n"}
+  );
+
+  A.precede(B,C); // A runs before B and C
+  D.succeed(B,C); // D runs after B and C
+  executor.run(taskflow).wait() // submit the taskflow o the executor
+  return 0;
+}
+```
+
+to run the example we need to clone the repository and include the library. it's a header-only library, and doesn't require linking.
+
+```sh
+git clone htttps://github.com/taskflow/taskflow.git #clone once
+g++ -std=c++17 simple.cpp -I taskflow/taskflow -O2 -pthread -o simple
+./simple
+```
+
+also a built-in profiler/visualizer
+
+```sh
+TF_ENABLE_PROFILER=simple.json ./simple
+cat simple.json
+#paste the profiling json data to https://taskflow.github.io/tfprof/
+```
+
+### Express your Parallisem in the Right Way
+
+the motivation was - VLSI-CAD tools, designing chips.
+
+(a horbile looking graph)
+
+> "how can we write efficient C++ parallel programs for this monster computation task graph with **millios of CPU-GPU dependant tasks along with algoithmic control flow**?"
+
+the existing tools were not sufficent:
+
+1. complex task dependencies.
+   > existing tools are good at loop parallism, but weak in expressing heterogenous task graphs at this large scale.
+2. complex control flow - dynamic control flow(combinatorial optimization, analtical methods)
+   > existing tools are _directed acyclic graph_ (DAG)-based and do not anticipate cycles or conditional dependencies, lacking _end-to-end_ parallelism.
+
+an example of an **iterative optimizer**
+
+> 4 computation tasks with dynamic control flow:
+>
+> 1. starts with _init_ task
+> 2. enters the _optimizer_ task (e.g. GPU math solver)
+> 3. check if the optimization converged: if not, loop back, if yes, continue to the final stage
+> 4. output the results
+>
+> how can we easily descrive this workload of dynamic control flow using existing tools to acehive end-to-end parallelism?
+
+designing parallel programing is not trivial. we need a way (infrastructure, framework) to express the dependencies of heterogenous task in a parallel, multi-computation enviornment.
+
+### Parallelize your Applications using Taskflow
+
+task flow has five task types:
+
+1. static tasks - basic task on a callable object
+2. dynamic tasks - dynamic parallelism task
+3. cudaFlow/syclFlow task - gpu task
+4. condition task - control flow of the parallelism
+5. module task - composable tasks
+
+#### Static Tasks
+
+basic code example in OpenMP library:
+
+```cpp
+#include <omp.h> //OpenMP is a langauge extension to describe parallelism using compiler directives
+int main()
+{
+  #omp parallel num_thread(std::thread::hardware_concurrency())
+  {
+    int A_B ,A_C, B_D, C_D;
+
+    #pragma omp task depend(out: A_B,A_C) //task depedency clauses
+    {
+      std::cout<<"TaskA\n";
+    }
+    #pragma omp task depend(in: A_B,out: B_D) //task depedency clauses
+    {
+      std::cout<<"TaskB\n";
+    }
+    #pragma omp task depend(in: A_C,out: C_D) //task depedency clauses
+    {
+      std::cout<<"TaskC\n";
+    }
+    #pragma omp task depend(int: B_D,C_D) //task depedency clauses
+    {
+      std::cout<<"TaskD\n";
+    }
+  }
+  return 0;
+}
+```
+
+> in openMP, task clauses are static and explicit, programmers are responsible for the proper order of writing task consistent with sequential execution.
+
+the order of the code must be the same as the order of execution.
+
+example of TTB flow graph library by Intel,
+
+```cpp
+#include <tbb.h> // Intels's TBB is a general-purpose programming library in C++
+int main()
+{
+  using namespace tbb;
+  using namespace tbb::flow;
+  int n = task_scheduler init::default_num_threads();
+  task task_scheduler init(n);
+  graph g; // dependency flow graph
+
+  // declaring tasks as a continue_node
+  continue_node<continue_msg>A(g,[](const continu_msg &) {
+    std::cout<<"Task A\n";
+  });
+
+  continue_node<continue_msg>B(g,[](const continu_msg &) {
+    std::cout<<"Task BA\n";
+  });
+
+  continue_node<continue_msg>C(g,[](const continu_msg &) {
+    std::cout<<"Task C\n";
+  });
+
+  continue_node<continue_msg>D(g,[](const continu_msg &) {
+    std::cout<<"Task D\n";
+  });
+
+  make_edge(A,B);
+  make_edge(A,C);
+  make_edge(B,D);
+  make_edge(C,D);
+  A.try_put(continue_msg());
+  g.wait_for_all(;)
+}
+```
+
+> TBB has excellent performance in generic parallel computing. its drawback is mostly in the _ease-of-use_ standpoint (simplicity, expressivity and programmability).
+
+#### Dynamic Taskwing - subflow
+
+**TaskFlow**, a task that is compsed of inner tasking, its a new task dependecy graph that is spawned in exectuiton of another task.
+
+```cpp
+tf::task A = tf.emplace([](){}).name("A");
+tf::task C = tf.emplace([](){}).name("C");
+tf::task D = tf.emplace([](){}).name("D");
+
+
+// create a subflow graph (dynamic Tasking)
+tf::Task B = tf.emplace([](tf::Subflow& subflow)
+{
+  tf::task B1 = subflow.emplace([](){}).name("B1");
+  tf::task B2 = subflow.emplace([](){}).name("B2");
+  tf::task B3 = subflow.emplace([](){}).name("B3");
+
+  B1.preceded(B3);
+  B2.preceded(B3);
+}).name("B");
+
+A.precede(B); //B runs after A
+A.precede(C); //C runs after A
+B.precede(D); //D runs after B
+C.precede(D); //D runs after C
+```
+
+dynamic subflow can be nested of recursive, like fibonacci number computation, each task spawns a new subflow.
+
+#### Heterogenous Tasking (cudaFlow) - offloading a task to GPU
+
+> Single percision AX + Y ("SAXPY")
+>
+> - get x and y vectors on CPU (`allocate_x`, `allocate_y`)
+> - copy x and y to GPU (`g2d_x`, `h2d_y`)
+> - run saxpy kernel on x and y (`saxpy kernel`)
+> - copy x and y back to CPU (`d2h_x`,`d2h_y`)
+
+we
+
+```cpp
+const unsigned N = 1<<20;
+std::vector<float> hx(N,1.0f),hy(N,2.0f);
+float *dx{nullptr}, *dy{nullptr};
+auto allocate_x = taskflow.emplace([&](){cudaMalloc(&dx,4*N);});
+auto allocate_y = taskflow.emplace([&](){cudaMalloc(&dy,4*N);});
+
+auto cudaflow = taskflow.emplace([&](tf::cudaFlow& tf)
+{
+  auto h2d_x = cd.copy(dx, hx.data(),N); // CPU-GPU data Transfer
+  auto h2d_y = cd.copy(dy, hy.data(),N);
+
+  auto d2h_x = cf.copy(hx.data(),dx,N); // GPU-CPU data Transfer
+  auto d2h_y = cf.copy(hy.data(),dy,N);
+
+  auto kernel= cf.kernel((N+255)/256,256,0,saxpy,N, dx,dy);
+  kernel.succeed(h2d_x,h2d_y).precede(d2h_x,d2h_y);
+});
+
+cudaflow.succeed(allocate_x, allocate_y);
+executor.run(taskflow).wait();
+```
+
+> Key motivations
+>
+> - Our closure enables stateful interface
+>   - user capture data in reference to marshal data exchange between CPU and GPU tasks.
+> - Our closure hides implementation details judiciously
+>   - we use cudaGraph (since cuda 10) due to it's excellent performance, much faster than streams in large graphs.
+> - Our closure extendes to new accelerato types
+>   - syclFlow, openclFlow, coralFlow, tpuFlow, fpgaFlow, etc...)
+>
+> "We do not simplify kernel programming but **focus on CPU-GPU tasking that affects the performance to a large extent!** (same for data abstraction)
+
+(something about keeping things visible to make performance better)
+
+also **syclFlow**, logic as C++ code, associated with a SYCL queue.
+
+```cpp
+auto syclflow = taskflow.emplace([&](tf::syclFlow& sf)
+{
+  auto h2d_x = cd.copy(dx, hx.data(),N); // CPU-GPU data Transfer
+  auto h2d_y = cd.copy(dy, hy.data(),N);
+
+  auto d2h_x = cf.copy(hx.data(),dx,N); // GPU-CPU data Transfer
+  auto d2h_y = cf.copy(hy.data(),dy,N);
+
+  auto kernel = cf.parallel_for(sycl::range<1>(N),[=](sycl::id<1> id){
+    dx[id]=2.0f * dx[id]+dy[id];
+  });
+
+  kernel.succeed(h2d_x,h2d_y).precede(d2h_x,d2h_y);
+},queue); // create a syclFlow form a SYCL queue on a SYCL device
+```
+
+#### Conditional Tsking
+
+> condition tasks intgrate control flow into a task graph to form end-to-end parallelism.
+
+when a task return zero, it's a conditional task.
+
+simple `if-else` task
+
+```cpp
+auto init = taskflow.emplace([&]() {initialize_data_structure();}).name("init");
+auto optimizer = taskflow.emplace([&]() {matrix_solver();}).name("optimizer");
+auto converged = taskflow.emplace([&]() {return converged() ? 1 : 0;}).name("converged"); // conditional task
+auto output = taskflow.emplace([&]() {std::cout<<"Done!\n";}).name("output");
+
+init.precede(optimizer);
+optimizer.precede(converged);
+converged.precede(optimizer, output); // return 0 to the optimizer again
+```
+
+`while/for loop` task. some our static task and some a conditional tasks.
+
+```cpp
+tf::Taskflow taskflow;
+int i;
+auto [init,cond, body, back, done] = taskflow.emplace(
+  [&]() {std::cout<< "i=0"; i=0;},
+  [&]() {std::cout<< "while i<5\n"; return i<5 ? 0 : 1;},
+  [&]() {std::cout<< "i++=" << i++ <<'\n';},
+  [&]() {std::cout<< "back\n"; return 0;},
+  [&]() {std::cout<< "done\n";}
+);
+init.precede(cond);
+cond.precede(body, done);
+body.precede(back); // increment i
+back.precede(cond); // not actually needed in this case, depending on application
+```
+
+non deterministic loops. flip 5 coins until you get 5 heads.
+
+```cpp
+auto A = taskflow.emplace([&](){});
+
+auto B = taskflow.emplace([&](){ return rand()%2; });
+auto C = taskflow.emplace([&](){ return rand()%2; });
+auto D = taskflow.emplace([&](){ return rand()%2; });
+auto E = taskflow.emplace([&](){ return rand()%2; });
+auto F = taskflow.emplace([&](){ return rand()%2; });
+auto G = taskflow.emplace([&](){});
+
+A.precede(B).name("init");
+// on zero it goes to the next task, on 1 it goes back to task B
+B.precede(C,B).name("flip-coin-1");
+C.precede(D,B).name("flip-coin-2");
+D.precede(E,B).name("flip-coin-3");
+E.precede(F,B).name("flip-coin-4");
+F.precede(G,B).name("flip-coin-5");
+G.name("end");
+```
+
+switch case, task as a switch statement, the return value specifies which task is used.
+
+```cpp
+auto [source, swichCond, case1,case2,case3,target] = taskflow.emplace(
+[](){ std::cout << "source\n"; },
+[](){ std::cout << "switch\n"; return rand()%3; },
+[](){ std::cout << "case1\n"; return 0; },
+[](){ std::cout << "case2\n"; return 0; },
+[](){ std::cout << "case3\n"; return 0; },
+[](){ std::cout << "target\n" ;}
+);
+source.preced(swichCond);
+swichCond.precede(case1,case2,case3);
+target.succeed(case1,case2,case3);
+```
+
+> "Existing frameworks on expressing conditional tasking or dynamic control flow suffer from _exponential growth_ of code complexcity."
+
+#### Composable tasking
+
+allowing compsability, so it's easier to optimize them.
+
+```cpp
+tf::Taskflow f1,f2;
+
+auto [f1A, f1B]= f1.emplace(
+[]() { std::cout << "Task f1A\n";},
+[]() { std::cout << "Task f1B\n";}
+);
+
+
+auto [f2A, f2B,f2C]= f2.emplace(
+[]() { std::cout << "Task f2A\n";},
+[]() { std::cout << "Task f2B\n";},
+[]() { std::cout << "Task f2C\n";}
+);
+auto f1_module_task = f2.composed_of(f1);
+f1_module_task.succeed(f2A,f2B).precede(f2C);
+```
+
+> in Taskflow library, everthing is unified
+>
+> - Use `emplace` to create a task
+> - Use `precede` to add a task dependency
+> - No need to learned different sets of API
+> - You can create a really complex graph
+>   - Subflow(ConditionTask(cudaFlow))
+>   - ConditionTask(StaticTask(cudaFlow))
+>   - Composition(Subflow(ConditionTask))
+>   - Subflow(ConditionTask(cudaFlow))
+>   - ...
+> - Scheduler performs end-to-end optimization
+>   - Runtime, energy efficiency and throughput
+
+**K means Clustering Example**
+
+> - one cudaFlow for host-to-device data transfers.
+> - one cudaFlow for finding the _k_ centroids.
+> - one condition task to model iteration.
+> - one cudaFlow for device-to-host data transfers.
+
+### Understand our Scheduing Algorithm
+
+The executor manages a set of threads to run taskflows:
+
+- all execution methos are _non-blocking_
+- all execution methos are _thread-safe_
+
+submit taskflow to executor.
+
+```cpp
+tf::Taskflow taskflow1,taskflow2, taskflow3;
+tf::Executor executor;
+
+// create tasks and dependencies
+
+auto future1 = executor.run(taskflow1);
+auto future2 = executor.run_2(taskflow2,1000);
+auto future3 = executor.run_until(taskflow3,[1=0](){return i++>5; });
+
+executor.async([]() {std::cout << "async task\n"; });
+executor.wait_for_all(); // wait fo all the above task to finish
+```
+
+> Task level scheduling: decide how tasks are enqueued under control flow.
+>
+> - ensure a feasible path to carry out control flow
+> - avoids task race under cyclic and conditional execution
+> - maximizes the capability of conditional tasking
+>
+> Worker level scheduling: decide how task are executed by which workers.
+>
+> - adopts work stealing to dynamically balance load
+> - adapts workers to available task parallelism
+> - maximes performance, energy and throughput
+
+strong dependency and weak dependency. a weak dependency is "dependency" on a conditional task. a scheduler must start with a task without any depencides,
+
+it's easy to make mistakes with condition tasks. like starting with a conditional task, or having race conditions when combining strong a weak dependencies.
+
+work stealing allows threads to improve performance thorugh dynamic load balancing.
+
+### Boost Performance in Real Applications
+
+real life use cases:
+
+one example is optimizing cell locations on a chip (VLSI placement).dynamic control flow, cudaFlow tasks, conditional cycle and static tasks.\
+comparing against other libraries shows that taskFlow performs better in many case, and never worse.
+
+another example is a machine learning, computing a neural network.
+
+takeaway:
+
+> "Different model give different implementations. the parallel code/algorithm may run fast, ye the parallel computing infrastructure to soupport that algorithm may dominate the entrire performance."
+
+> Taskflow enables end-to-end expresion of CPU-GPU dependant tasks along with algorithmic control flow.
+
+### Make C++ Amenable to Heterogenous Parallelism
+
+parallelism is never standalone, it's a tool that we use to apply to our programs, no one tool could express all parallelisms.
+
+> - C++ parallelism is primitive (but in a good shape)
+>   - _std::thread_ is powerfull but very low level
+>   - _std::async_ leaves off handling task dependencies
+>   - No easy way to describe control flow in parallelism
+>     - C++17 parallel STL count on bulk synchronous parallelism
+> - C++ has no standard way to offload tasks to accelerators
 
 </details>
 
