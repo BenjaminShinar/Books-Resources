@@ -44,7 +44,8 @@ Aws services:
   - DataSync: Synchronize data between AWS and on-premises.
   - Snowball: physical data transfer
 - EC2 (Elastic Cloud Compute): Computing Instances
-- SQS :
+- SQS (Simple Queue Service):
+- SWF (Simple Work Flow service)
 - FSx (windows and Lustre) - native windows managed file system. Lustre is for compute intensive data.
 - RedShift - AWS data warehouse solution (BI).
 - ElastiCache - in memory "database".
@@ -57,6 +58,9 @@ Aws services:
 - Route53 - Dns
 - CloudFormation - templates for provsioning aws resources.
 - Beanstalk - one click solution to provision resource, like CloudFormation for dummies.
+- Elastic Transcoder - transcode (convert) media files between different formats.
+- Kinesis - Streaming Data platform (continuously generated data from multiple source, not video streaming)
+- Cognito - Web Identity Federation service.
 
 CloudWatch monitors resource usage, such as the number of EC2 instances we have, EBS volumes used, redirections from load balancers, etc... . CloudTrail Monitors aws actions such as API calls or other aws actions, the focus is how the users and services interact with AWS itself, not the metrics of the services themselves.
 
@@ -120,11 +124,11 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | SMB       | Server Message Block                  |                                      | FSx Windows                                                                  |
 | SMS       | Server Migration Service              |
 | SNS       | Simple Notification Service           | Push notification services           | used in the billing alarm                                                    |
-| SQS       |                                       | **AWS Service**                      |
+| SQS       | Simple Queue Service                  | **AWS Service**                      | pull-based, standard and fifo queues.                                        |
 | SR-IOV    | Single Root I/O Virtualization        |
 | SSE       | Server Side Encryption                | S3                                   | SSE-S3                                                                       |
 | SSH       | Secure Shell                          | access to other machine              |
-| SWF       |
+| SWF       | Simple WorkFlow Service               | **AWS Service**                      |
 | TCO       | Total Cost Of Ownership               | Application Discovery Service        | estimate                                                                     |
 | TTL       | Time to Live                          | CDN, CloudFront                      | Objects at cached location life time                                         |
 | VPC       | Virtual Private Cloud                 | **AWS Service**                      |
@@ -138,5 +142,7 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | SOA       | Start of Authority                    | Route53, DNS                         | record with information about domain access                                  |
 | VPN       | Virtual Private Network               | VPC                                  |
 | IGW       | Internet Gateways                     | VPC                                  |
+| XSS       | Cross-Site Scripting                  |                                      | security attack                                                              |
+| JWT       | JSON web Token                        | AWS Cognito                          | authenticaton form                                                           |
 
 </details>
