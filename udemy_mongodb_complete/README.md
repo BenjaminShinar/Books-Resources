@@ -25,9 +25,11 @@ udemy course [Master MongoDB Development for Web & Mobile Apps. CRUD Operations,
 - Transactions
 - From Shell To Driver
 - Introducing Stitch
+- Takeaways
+  - 
 
 ## Takeaways
-<details>
+<!-- <details> -->
 <summary>
 Things worth remembering
 </summary>
@@ -65,9 +67,18 @@ default port is 27017
 - the `$` sign in an update refers to the first element matched by `$elemMatch`.
 - the `$[]` syntax in an update refers to all elements in the array.
 - the `$[<el>]` syntax in an update to target other elements in the array based on different conditions
+
+### Indexes and Explain
+
 - `db.mycoll.getIndexes()` - view all indexes.
 - `db.mycoll.createIndex({"field.to.index":1})` - create an index based on the field, either ascending or descending.
   - `db.mycoll.createIndex({"field1":1,"field2":-1})` - compounded index, the order matters!
+  - `db.mycoll.createIndex({"field1":1},{unique:true})` - make an index that enforces uniqueness.
+  - `db.mycoll.createIndex({"field1":1},{partialFilterExpression:{"field":{$gt:value}}})` - partial filter, when we know we have a sub segment of relevant values in the field which are used most of the time, and other which are rarely used.
+  - `db.mycoll.createIndex({createdAt:1},{expireAfterSeconds:10})` - self destroying documents, will be removed after Time to Live expires.
+  - `db.mycoll.createIndex({field:1},{background:true})` - background index, doesn't lock up the collection.
+  - `db.mycoll.createIndex({textField:"text"})` - text field index, no stop words, one per collection.
+  - `db.mycoll.createIndex({textField:"text"},{default_langague:"langauge"})` - text field based on a differnet language.
 - `db.mycoll.dropIndex({"field.to.index":1})` - remove an index.
 - `db.mycoll.explain().find({})` - provide a detailed explainnation of how the operation was performed.
   - `db.mycoll.explain("executionStats").find({})` - more verbose explainnation about the execution.
@@ -90,28 +101,39 @@ default port is 27017
 - `db.collection.find({"field": {$regex:/pattern/}})` - match a regex pattern.
 - `db.collection.find({$expr:{$gt:["$field1","$field2"]}})` - find documents where the fields matchs an expression (boolean).
 - `db.collection.find({$expr: {$gt:[{$cond:{if:{$le:[$field",value]],then:"A", else:"B"}},"$value2"]}})` - create conditional value.
-`db.collection.find({"arrayField.innerField":"value"})` - match an internal element of the array.
-`db.collection.find({arrayField:{$size:2}})` - exact match of size (can't compare and use operators here).
-`db.collection.find({arrayField:{$all:["value1","value2"]}})` - match documents which contain all the required values, without caring about order of if there are additional elements.
-`db.collection.find({arrayField:{$elemMatch:{"innerField1":"value1","innerField2":"value2"}}})` - match documents which have an elements in the array that matches all the required conditions.
+- `db.collection.find({"arrayField.innerField":"value"})` - match an internal element of the array.
+- `db.collection.find({arrayField:{$size:2}})` - exact match of size (can't compare and use operators here).
+- `db.collection.find({arrayField:{$all:["value1","value2"]}})` - match documents which contain all the required values, without caring about order of if there are additional elements.
+- `db.collection.find({arrayField:{$elemMatch:{"innerField1":"value1","innerField2":"value2"}}})` - match documents which have an elements in the array that matches all the required conditions.
 
+#### Text Index Search
+
+- `db.collection.find({$text:{$search:"value"}})` - search using the text index of the collection.
+- `db.collection.find({$text:{$search:"value1 value2"}})` - match any of the values.
+- `db.collection.find({$text:{$search:"\"value1 value2\""}})` - exact match of both values.
+- `db.collection.find({$text:{$search:"value1 value2"}},{score:{$meta:"textScore}})` - text search match score.
+- `db.collection.find({$text:{$search:"value1 -value2"}})` - exclude words from search
+- `db.collection.find({$text:{$search:"value1", $language:"english"}})` - determine search language
+- `db.collection.find({$text:{$search:"value1", $caseSensitive:true}})` - force case sensitive search.
+- 
 ### Update Operators
--`db.collection.updateOne({},{})` - update the first matching document.
--`db.collection.updateMany({},{})` - update all matching documents
--`db.collection.updateOne({},{$set:{field:value}})` - set the value of a field, not effecting other fields
--`db.collection.updateOne({},{$inc:{field:value}})` - change a value from it's current value, either increment of decrement (by passing a negative value).
--`db.collection.updateOne({},{$mul:{field:factor}})` - change a value from it's current value by a numeric factor. One being neutral and value lower than one making it smaller.
--`db.collection.updateOne({},{$min:{field:value}})` - the value will be the minimum value between the existing value and the new value.
--`db.collection.updateOne({},{$max:{field:value}})` - the value will be the maximum value between the existing value and the new value.
--`db.collection.updateOne({},{$unset:{fieldName:""}})` - remove the field from the document, the `""` is a common value, but it doesn't matter what we pass.
--`db.collection.updateMany({},{$rename:{oldName:newName}})` - change the name of the field. doesn't add the field to documents which didn't have it.
--`db.collection.updateMany({array:{$elemMatch:{}}},{$set:{"array.$.field":value}})` - change only the array element which was matched. 
--`db.collection.updateMany({},{$set:{"array.$[el].field":value}},{arrayFilters:[{"el.field":value}]})` - target additional elements in the array based on a criteria.
--`db.collection.updateOne({},{$addToSet:{arrayField:{field1:value1,field2:value2}}})` - add unique element to array, doesn't create duplications.
--`db.collection.updateOne({},{$push:{arrayField:{$each:[{field1:value1,field2:value2},{field1:value1,field2:value2}]}})` - add multiple elements to array.
--`db.collection.updateOne({},{$pop:{arrayField:1}})` - remove last element from array. 
--`db.collection.updateOne({},{$pop:{arrayField:-1}})` - remove first element from 
--`db.collection.updateOne({},{$pull:{arrayField:{criteriaField:value}}})` - remove elements from array based on conditions.
+
+- `db.collection.updateOne({},{})` - update the first matching document.
+- `db.collection.updateMany({},{})` - update all matching documents
+- `db.collection.updateOne({},{$set:{field:value}})` - set the value of a field, not effecting other fields
+- `db.collection.updateOne({},{$inc:{field:value}})` - change a value from it's current value, either increment of decrement (by passing a negative value).
+- `db.collection.updateOne({},{$mul:{field:factor}})` - change a value from it's current value by a numeric factor. One being neutral and value lower than one making it smaller.
+- `db.collection.updateOne({},{$min:{field:value}})` - the value will be the minimum value between the existing value and the new value.
+- `db.collection.updateOne({},{$max:{field:value}})` - the value will be the maximum value between the existing value and the new value.
+- `db.collection.updateOne({},{$unset:{fieldName:""}})` - remove the field from the document, the `""` is a common value, but it doesn't matter what we pass.
+- `db.collection.updateMany({},{$rename:{oldName:newName}})` - change the name of the field. doesn't add the field to documents which didn't have it.
+- `db.collection.updateMany({array:{$elemMatch:{}}},{$set:{"array.$.field":value}})` - change only the array element which was matched. 
+- `db.collection.updateMany({},{$set:{"array.$[el].field":value}},{arrayFilters:[{"el.field":value}]})` - target additional elements in the array based on a criteria.
+- `db.collection.updateOne({},{$addToSet:{arrayField:{field1:value1,field2:value2}}})` - add unique element to array, doesn't create duplications.
+- `db.collection.updateOne({},{$push:{arrayField:{$each:[{field1:value1,field2:value2},{field1:value1,field2:value2}]}})` - add multiple elements to array.
+- `db.collection.updateOne({},{$pop:{arrayField:1}})` - remove last element from array. 
+- `db.collection.updateOne({},{$pop:{arrayField:-1}})` - remove first element from 
+- `db.collection.updateOne({},{$pull:{arrayField:{criteriaField:value}}})` - remove elements from array based on conditions.
 
 ### Operators
 operator syntax | name | context | notes | sample
@@ -199,6 +221,29 @@ db.mycoll.updateOne({field:value},{$set:{field1:value1,field2:value2}},
 - array filters: target other elements in the array
 ```js
 db.mycoll.updateMany({field:value},{$set:"array.$[identifier].field":value},{arrayFilters:[{"identifier.field":value}]})
+```
+
+  - `` - partial filter, when we know we have a sub segment of relevant values in the field which are used most of the time, and other which are rarely used.
+   
+index
+- unique
+- partialFilerExpression
+- unique + partialFilerExpression to allow multiple null values
+- expireAfterSecond
+- text index
+  - default language
+  - weights
+- background index
+```js
+db.mycoll.createIndex({"field1":1},{unique:true})
+db.mycoll.createIndex({"field1":1},{partialFilterExpression:{"field":{$gt:value}}})
+db.mycoll.createIndex({"field1":1},{unique:1,partialFilterExpression:{"field1":{$exists:true}}})
+db.mycoll.createIndex({createdAt:1},{expireAfterSeconds:10})
+db.mycoll.createIndex({textField:"text"})
+db.mycoll.createIndex({textField1:"text",textField2:"text"})
+db.mycoll.createIndex({textField:"text"},{default_language:"english"})
+db.mycoll.createIndex({textField1:"text",textField2:"text"},{weights:{textField1:1, textField2:3}})
+db.mycoll.createIndex({field:1},{background:true}})
 ```
 
 ### Special types of objects
@@ -289,4 +334,3 @@ Embedded Documents | nesting | {"a":{}}
 Array | list of values| {"b":[]}
 
 </details>
-
