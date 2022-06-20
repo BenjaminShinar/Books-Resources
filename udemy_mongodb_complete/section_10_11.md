@@ -207,6 +207,7 @@ there is always a default index based on the _id field.
 
 ### Configuring Indexes
 
+
 ### Understanding Partial Filters
 ### Applying the Partial Index
 ### Understanding the Time-To-Live (TTL) Index
