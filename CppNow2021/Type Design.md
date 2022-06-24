@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore fmodules Levehnstein cvref deducer psssint ultr defences moda unsynchronized
+// cSpell:ignore fmodules Levehnstein cvref deducer psssint ultr defences moda unsynchronized mdspan Eigen edsl kiwaku
  -->
 
 [Main](README.md)
@@ -3742,7 +3742,7 @@ Performance benefits:
 Two common strategies to improve locality:
 
 - The first is **allocation on the thread stack**, typically from a pre-sized memory buffer.
-- The second way is by **managing a pool of memory** to avoid system calls to the _memory manager_. this is the common implemenation of the `operator new`, but having a specific pool for each data structure is better for locality.
+- The second way is by **managing a pool of memory** to avoid system calls to the _memory manager_. this is the common implementation of the `operator new`, but having a specific pool for each data structure is better for locality.
 
 custom operators also have additional functionalies besides the main utility of handing out memory.
 
@@ -4071,7 +4071,7 @@ Object X{"Hello world"} using res;
 >   - Do not pay to store excess copies of the pointer.
 >   - Leaf nodes of data strucutres will always need a pointer.
 
-in most use cases, the awareness will be implicit, so it won't impact common users and will have low implemenation costs. implicit awarensscan be supported by c++11 containers, using an allocator-aware allocator object (the allocator template parameter). and implicit awareness implies the need for a new language feature.
+in most use cases, the awareness will be implicit, so it won't impact common users and will have low implementation costs. implicit awarensscan be supported by c++11 containers, using an allocator-aware allocator object (the allocator template parameter). and implicit awareness implies the need for a new language feature.
 
 > Allocator injection
 >
@@ -4185,6 +4185,383 @@ struct highlight{
 >   - support a _using_ when return type is allocator aware (what will this mean when calling from template?)
 >   - implicitly supply allocator to return value
 >   - when guaranteed (N)RVO applies, supply allocator to variable declerations.
+
+</details>
+
+## Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy
+
+<details>
+<summary>
+The "kiwaku" library implementing Opaque Types, keyword parameters and Non Type Template Parameters.
+</summary>
+
+[Taking Template Classes Further with Opaque Types & Generic NTTPs](https://youtu.be/sFSMzLVpe90), [slides](https://github.com/jfalcou/presentations/blob/conference/cpp-now/taking_template_further.pdf), [kiwaku github](https://github.com/jfalcou/kiwaku), [RABERU (keyword parameters) github](https://github.com/jfalcou/raberu).
+
+NTTP: Non Type Template Parameters
+
+simulations are replacing experimenting.
+
+arrays and matrixes (N-dimension arrays). an nD-array must bbe fast,easy to use and expressive. this means playing well with modern hardware (SIMD,GPU), having proper abstraction, and be intuitive for people with proper domain knowledge (numeric savvy users).
+
+existing solutions:
+
+- View/Container
+  - std::vector, std::array
+  - std::span,
+  - std::mdspan (future proposal)
+  - boost.QVMM
+  - std::valarray
+- Expression Templates
+  - Blitz++
+  - Eigen
+  - NT<sup>2</sup>
+  - Armadillo
+  - Blaze
+
+however, the solutions aren't adequate, there some concerns
+
+- lazy evaluation
+- nD array handliing
+- customization protocols
+- hardware support
+
+this lecture focuses on nD-array handling and customization.
+
+when we write a library, we want the compiler to make use of compile time optimizations, so we need to get high level informaiton. on the other hand, we want to avoid implementation leaks. ("anything that is exposed in the api, someone will write code that depends on")
+
+examples:
+
+- -1 as a dynamic size tag for _std::span_/_std::mdspan_.
+- _Eigen::Matrix<typename Scalar, int Rows, int Cols>_
+- passing allocator as type+value instead of pure type.
+
+> | Problem                      | Specification                                                                                                 | Kiwaku Solution                        |
+> | ---------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+> | Runtime Componenets handling | Full runtime should be handled at runtime. No need for type-based specification                               | **Opaque types**                       |
+> | Optimizations specifications | Array and view behavior must be trivial to setup. Users should have access to an intuitive option passing API | **Keyword Parameters**                 |
+> | Compile-time/Runtime Barrier | Compile-time options must have a rich semantic                                                                | **NTTP - Non Type Template Parametes** |
+
+### Opaque Types
+
+we start with the constructors part:
+
+```cpp
+// Dynamic array using the default allocator
+kwk::array<float, kwk::_2d>a1(kwk::of_shape(200,200));
+
+// Dynamic array using some other allocator
+kwk::array<float, kwk::_2d>a2(kwk::of_shape(10,50), some_allocator{});
+
+// Allocator and data are copied to a1
+a1=a2;
+```
+
+> Challenges:
+>
+> - How can we get rid of passing the allocator type as a template parameters?
+> - Can we ensure proper copy and move semantics?
+
+some defitions:
+
+> A type is **opaque** if you can't see through it.
+>
+> - the contents of its implementations are not accessible directly.
+> - often implemented using _type-erasure_.
+> - if users cant look at one type's internals, there are less oppertunity for abstraction leaks.
+>
+> State of the Art:
+>
+> - based on **Sean Parent**'s talk on Polymorphism.
+> - Use polymorphism as an implementation detail instead of as a first class property.
+> - Provides a full _Regular Type_ interface on top of the polymorphic behavior.
+> - Does not require intrusive adaption from user code.
+
+common example ares _FILE\*_ (pointer to file), _std::any_, _std::any_.
+
+For nd-Arrays, the arrays are often large (or even very large), but the allocation is often outside of the critical part, and there a few resizing and growth operations.\
+In the kiwaku library, allocators deal with block of _void\*_, this is based on _Alexandescu's Allocator_. The size of the allocation is known, and the allocators can be chained or selected based on arbitrary policies. The allocator must be simple, no CRTP, no polymorphic base class. allocator must be **SemiRegularType**, and are copied along with their tables.
+
+Basic block of memory and simple _malloc_ allocator. there isn't a _virtual_ interface or any complex CRTP-like defintion.
+
+```cpp
+struct block
+{
+  explicit operator bool () const {return length != 0;}
+
+  friend bool operator!=(block const & lhs, block const & rhs) noexcept;
+  friend bool operator==(block const & lhs, block const & rhs) noexcept
+  {
+    return lhs.data == rgs.data && lhs.length == rhs.length;
+  }
+
+
+  void reset() noexcept { *this= block{};}
+  void swap (block& other){/*...*/}
+  void* data = nullptr; // pointer to the allocated bock of memory
+  std::ptrdiff_t length = 0; // Size in bytes of he allocated block of memory
+};
+
+struct heap_allocator
+{
+  [[nodiscard]] block allocate(std::ptrdiff_t n) noexcept
+  {
+    return n!=0? block{malloc(n), n} : block{nullptr,n};
+  }
+
+  void deallocate (block & b) noexcept { if (b.data) free(b.date);}
+  void swap (heap_allocators &){}
+};
+```
+
+> Allocator Design in Kiwaku:\
+> the _any_allocator_:
+>
+> - Users Parent-style polymorphic object design.
+> - Distinct from _std::pmr::polymorphic_allocator_ (no _memory_resource_).
+> - Provides an associated concept: _kwk::concepts::allocator_.
+>
+> The Allocator Trifecta:
+>
+> 1. A virtual API object.
+> 1. A template adapter implementing said API.
+> 1. A _SemiRegularType_ wrapper.
+
+the allocator concept expands the _std::semiregular_ and _std::swappable_ concepts, and requires _allocate_ and _deallocate_ functions.
+
+```cpp
+template <typename A>
+concept allocator =
+std::semiregular<A> &&
+std::swappable<A> &&
+requires(A a, block& b, std::ptrdiff_t n)
+{
+  {a.allocate(n)} -> std::same_as<block>;
+  {a.deallocate(b)};
+};
+```
+
+the _any_allocator_ is the only polymorphic piece of the design, and is an internat type to _kwk::any_allocator_. there is an template adaptor that implements the api.
+
+```cpp
+struct api_t
+{
+  virtual ~api_t(){} //base virtual destructor
+
+  virtual block allocate(std::size_t) =0; // Actual allocator interface
+  virtual void deallocate(block &) =0; // Actual deallocator interface
+
+  virtual std::unique_ptr<api_t> clone() const = 0; // Helper for polymorphic copy
+};
+
+template<concepts::allocator T> struct model_t final: api_t
+{
+  model_t = default;
+  model_t(const T& t): object(t){}
+  model_t(T&& t): object(std::move(t)){}
+
+  block allocate(std::size_t n) override { return object.allocate(n); }
+  void allocate(block& b) override { object.deallocate(b);}
+  std::unique_ptr<api_t> clone() const override { return std::make_unique<model_t>(object);}
+
+  private:
+  T object;
+};
+```
+
+there is also the _any_allocator_ class, which is a _SemiRegularType_ Wrapper.
+
+```cpp
+class any_allocator
+{
+
+public:
+  any_allocator (any_allocator const & a): data(a.data->clone()){}
+
+  // ... All other obvious special members
+
+  template<typename T> any_allocator(T&& t): data(make_model(std::forward<T>(T))){}
+
+  void swap(any_allocator& other) noexcept {data.swap(other.data);}
+  [[nodiscard]] block allocate(std::size_t n) { return data->allocate(n);}
+  void deallocate(block & b) { data->deallocate(b);}
+
+private:
+  struct api_t {
+    /*...*/
+  };
+  template<concepts::allocator T>struct model_f final: api_t
+  {
+    /*...*/
+  };
+
+  std::unique_ptr<api_t> data;
+};
+```
+
+in a benchmark test, concrete allocation and opaque allocations are similar.
+
+the advantages is that we managed to remove allocator from the template part, we have a less rigid template API, and this might get benefits from pre-compilation (maybe LTO - link type optimization).
+
+### Key Word Parameters
+
+kiwaku containter constrctors
+
+```cpp
+using namespace kwk::literals;
+
+// Dynamic array using the default allocator
+kwk::array<float, kwk::_2D> a1(kwk::of_shape(200,200));
+
+// Dynamic array using some other allocator modeling concepts:allocator
+kwk::array<float, kwk::_2D> a2("allocator"_kw = some_allocator{}, "shape"_kw = kwk::of_shape(20,20));
+a1 = a2;
+```
+
+Keyword parameters are a syntax to pass argument to function based on the the parameter name. this is already part of python, C# and other languages. in C++ there are chalannges of name mangeling, which names count and others (see N4172 paper).
+
+in the kiwaku library, this will help to simplify the API. this has be done be using library for keyword parameters (RABERU), keywords aer designed locally as _constexpr_, retriving data from them is done using a lambda as a container, and the keywords can be restricted based on concepts.
+
+defining a keyword, using _rbr::keyword_ as keyword builder,
+
+```cpp
+namespace kwk::keyword
+{
+  // The rbr::keyword inline variable generate a new keyword_type
+  inline constexpr auto shape = rbr::keyword<struct shape_option>;
+
+  // The _kw UDL generate a new keyword from the list of character of the string
+  inline constexpr auto allocator = "allocator"_kw;
+
+  // Equivelent without UDL
+  inline constexpr auto allocator = rbr::keyword<id_<'a','l','l','o','c','a','t','o','r'>>;
+};
+```
+
+the _keyword_ has a generic assignment operator, returning _linked_value_ constructed from the keyword, which is initilazed with a lambda capturing the value of the parameter. this lambda accepts the keyword and returns the value.\
+
+all keyword/value pairs are gather in a _overload_-like structure, where every _operator()_ of each pair is put back into the interface, so fetching a value is done by calling the overload with the required keyword.
+
+```cpp
+some_function(sharep=extent[4][6]);
+```
+
+binding a value to a keyword, different behavior for lvalue and rvalue values:
+
+```cpp
+template <typename T>
+template <typename V>
+constexpr auto keyword_type<T>::operator=(V &&v) const noexcept
+{
+  using type = keyword_type<T>;
+  if constexpr(std::is_lvalue_reference_v<V>)
+  {
+    return linked_value(*this,[&v](type const &)->decltype(auto){return v;});
+  }
+  else
+  {
+    return linked_value(*this,[w=std::move(v)](type const &) -> V const & {return w;});
+  }
+}
+```
+
+retriving a value from the keyword is done by aggregating lambda,
+
+```cpp
+struct unknown_key{template<typename ... T> unknown_key(T&&....){}};
+
+template<typename ... Ts> struct aggregator: Ts...
+{
+  constexpr aggregator(Ts && ...t) noexcept TS:(RBR_FWD(t)) ... {}
+  using TS::operator()...;
+  template <typename K> constexpr auto operator()(keyword_type<K> const &) const noexcept
+  {
+    // If not found before, return the unkown_key value
+    return unknown_key{};
+  }
+};
+```
+
+for convience, there is a _settings_ helper which takes care of type deduction, validation, default values, keyword detection, and so on. in addition, there is _keyword_parameter_ and _match_ that allow proper constraints on functions with keyword parameters, and enable non trivial _requires_ clauses.
+
+```cpp
+template <typename P0, typename P1>
+auto replicate(P0 p0, P1 p1)
+{
+  using namespace rbr::literals;
+  auto const params = rbr::settings(p0,p1);
+  return std::string(params["replication"_kw],params["letter"_kw]);
+}
+
+std::cout << replicate("replication"_kw= 9, "letter"_kw='Z') << '\n';
+```
+
+or using template Params and have default values, the default value can also be a function
+
+```cpp
+template <typename ... Params>
+auto replicate(Params ... ps)
+{
+  using namespace rbr::literals;
+  auto const params = rbr::settings(ps);
+  return std::string(
+    params["replication"_kw | 5], // default 5
+    params["letter"_kw | '*'] // default '*'
+    );
+}
+
+std::cout << replicate("letter"_kw='Z') << '\n';
+```
+
+we can also provide concepts and require clauses to make sure the keywords match a patterns (like saying that at least one should have a non default value).
+
+this allows to isolate common use cases from power users concerns without having multiple apis. It future proofs and makes the API less likely to change, while keeping compile costs low with concepts and _if constexpr_.
+
+### Generic NTTP - Non Type Template Parameters
+
+non-type template parameters are:
+
+- an integral type
+- an enumeration type
+- a pointer type
+- a pointer a member type
+- _std::nullptr_t_
+- a lvalue reference type
+- a floating point type (added in c++20)
+- literal class type (with some restrictions) (added in c++20)
+
+we can now combine expression templated with NTTPS to create EDSL: Embedded Domain Specific Language. capture arbitrary constexpr expressions as NTTP and process them to generate a proper implementation.
+
+```cpp
+template <auto Value> class_type;
+template <auto Expression> edsl_compiler;
+```
+
+we can use this to define array shapes. while supporting runtime, compile time an combinations of.
+
+> Context:
+>
+> - Arrays gather data in a n-dimensional grid.
+> - The number of effective dimension is supposedly _known at compile time_.
+> - The number of elements along each dimension may vary.
+> - The number of elements along a given axis may be known at compile time.
+> - The inital ordering of those sizes is _domain specific_ and _arbitrary_.
+
+this is used in machine learning.
+
+currrently _std::mdspan_ faces a difficult situation: it can support dynamic types at the cost of very verbose template.
+
+```cpp
+using my_span= std::mdspan<double, extents<3,9,7>>;
+using other_span= std::mdspan<double, extents<3,std::dynamic_extent,7>>;
+```
+
+the prefferable option is to have compile time shape, using unified interface for both static and dynamic.
+
+> the main idea is to design an _extent_ type that only cares about runtime size storage, this type is usable as NTTP. and then helpes are provided to smooth the defintion.
+
+they define a _shaper_ struct that builds the array in a incremental way. there is _shape_ struct that defines the storage - it stores the dynamic dimensions, and has ways to minimize the size when dealing with static (compiler time known) dimensions.
+
+compraison of output code shows that there is no overhead. some compiler explorer demonstration.
 
 </details>
 

@@ -35,7 +35,7 @@ all sorts of lectures, divided by field.
   - The Worst Best Practices - Jason Turner
   - Surveying the C++ Community - Jens Weller
 - [OOP](OOP.md)
-  -[Keynote: SOLID, Revisited - Tony Van Eerd
+  - Keynote: SOLID, Revisited - Tony Van Eerd
   - Polymorphism À La Carte - Eduardo Madrid & Phil Nash
 - [Text](Text.md)
   - A Crash Course in Unicode for C++ Developers - Steve Downey
@@ -55,8 +55,9 @@ all sorts of lectures, divided by field.
   - Writing a C++20 Module - Steve Downey
   - Preconditions, Postconditions, Invariants: How They Help Write Robust Programs - Andrzej Krzemieński
   - Weak Interfaces --> Weak Defenses: The Bane of Implicit Conversion in Function Calls - Richárd Szalay
-  - hop: A Language to Design Function-Overload-Sets - Tobias Loew
+  - `hop`: A Language to Design Function-Overload-Sets - Tobias Loew
   - Frictionless Allocators - Alisdair Meredith
+  - Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy
 - [Lightning Talks](Lightning%20Talks.md)
   - Complecting Made Easy - Tony Van Eerd
   - Dashboards to the Rescue - Matthias Bilger
@@ -67,7 +68,6 @@ all sorts of lectures, divided by field.
 
 - [ ] Library Approaches for Strong Type Aliases - Anthony Williams
 - [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
-- [ ] Taking Template Classes Further with Opaque Types & Generic NTTPs - Joel Falcou & Vincent Reverdy
 
 ### lighting talks:
 
