@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore
+// cSpell:ignore fileb boto
 -->
 
 [main](README.md)
@@ -320,18 +320,250 @@ Cognito and Federation
 
 ## Section 11 - Security
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Different ways to reduce security risks.
 </summary>
 
 ### Reducing Security Threats [SAA-C02]
 
+there are some **Bad Actors**, clients (malicious software) that try to access the service in a way that they shouldn't. they might try to steal or scrape information, pretned to be someone else by sending fake data, and they can even try to shut down the service by flooding it with request (Denial of service).
+
+if we know the ip of the bad actor, we can use Network Access Control Lists and create an Inbound rule to deny access to that ip. we can also use host-based firewall services.
+
+if we have an application load balancer, we can put all the security operation on it, and terminate the connection at the load balancer level. this is one reason to have different security groups, one for the load balancer, and another for the EC2 service (which can only be accessed from the load balancer).
+
+when using Network Load Balancers,the traffic passes through it to the EC2 service, and the ip is visible across the entire connection, so it should be terminated at the EC2 level.
+
+A WAF (Web Application Firewall) can be attached to the load balancer and it monitors (blocks and filters) requests. it has presets for common attacks such as SQL injection.
+
+A WAF uses layer 7 - so it is applications aware, when we wish to block ip addresses ranges, we use level 4 protection, meaning NACL.
+
+we can also attach a WAF to a cloudFront edge, this is helpful because if we have a cloudfront connection, then the load balancer sees the ip from it, and not that of the original client.
+
 ### Key Management Service (KMS) [SAA-C02]
 
-### CloudHSM [SAA-C02]
+> - **Regional** secure key management, encryption and decryption.
+> - Manages **Customer Master Keys** (CMKs)
+> - Ideal for S3 object, database passwords and API keys stored in System Manager Parameter Store.
+> - Encrypt and decrypt data up to **4 kb** in size.
+> - Integrated with most AWS services.
+> - Pay per API call.
+> - Audit capability using ClouTrail - logs delivered to S3.
+> - FIPS 140-2 Level - a type of security standard.
+>   - Level 3 is supported in CloudHSM.
+
+three types of CMKS:
+
+> 1. Customer Managed CMK: allows key _rotation_. controlled via key policies and can be enabled/disabled.
+> 1. AWS Managed CMK: free. used by deafult if you pick encryption in most AWS service. only that service can use them directly.
+> 1. AWS owned CMK: used by AWS on a shared basis accross many accounts. uncommon.
+
+| Type             | User View | User Manage | Dedicated To Account |
+| ---------------- | --------- | ----------- | -------------------- |
+| Customer Managed | Yes       | Yes         | Yes                  |
+| AWS Managed CMK  | Yes       | No          | Yes                  |
+| AWS Owned CMK    | No        | Yes         | No                   |
+
+keys can be symmetric or asymmetric.
+
+Symmetric:
+
+- same key used for encrption an decryption.
+- AES-256.
+- Never leaves AWS un-encrypted.
+- Must call the KMS APIs to use.
+- AWS services which are integrated with KMS use symmetric CMKs.
+- Encrypt, decrypt and re-encrypt data.
+- Generate data keys, date key pairs and random byte strings.
+- **Import** your own key material.
+
+Asymmetric:
+
+- Mathemetically related public/private key pair (ssh uses this).
+  - the public key can be given to anyone.
+- **RSA** and **Elliptic-Curve Cryptography** (ECC).
+- Private key never leaves AWS un-encrypted.
+- Must call the KMS APIs to use the private key.
+- Download the public key and use outside AWS.
+- Used outside AWS by users who can't call KMS APIs.
+- AWS services which are integrated with KMS **do not support** asymmetric CMKs.
+- used to Sign messages and verify signatures.
+
+Default Key Policy - grant AWS account (root user) _full access_ to the CMK.
+
+```json
+{
+  "Sid": "Enable IAM User Permissions",
+  "Effect": "Allow",
+  "Principal": {
+    "AWS": "arn:aws:iam::111122223333:root"
+  },
+  "Action": "kms:*",
+  "Resource": "*"
+}
+```
+
+we can also give permissions to a specific role.
+
+```json
+{
+  "Sid": "Allow use of the key",
+  "Effect": "Allow",
+  "Principal": {
+    "AWS": "arn:aws:iam::111122223333:role/EncryptionApp"
+  },
+  "Action": [
+    "kms:DescribeKey",
+    "kms:GenerateDataKey",
+    "kms:Encrypt",
+    "kms:ReEncrypt",
+    "kms:Decrypt"
+  ],
+  "Resource": "*"
+}
+```
+
+CMKS are region specific, so if we want to move data between regions, it must be decrypted, moved, and enctypted again with a different key.
+
+in the console, we select the **KMS** service, and then choose the <kbd>AWS Managed Keys</kbd> option, when we integrate a service with KMS, a key with an alias is created automatically.\
+under <kbd>Customer Managed Keys</kbd>, we can see the keys which we created. we can rotate the key automatically.
+
+we create an EC2 machine and give it the Encryption Role. we can also create an alias, which points to the key, this facilitates key rotation, as it allows changing keys without changing the code itself (we simply point the alias to a different key). the name of the alias must be prefixed with "alias/".
+
+```sh
+aws kms create-key --description "Demo CMK"
+# we take the key id
+aws kms create-alias --target-key-id <keyId> --alias-name "alias/demoKey"
+aws kms list-keys
+# using the key
+echo "this is a secret message" > topsecret.txt
+cat topsecret.txt
+# now output a base64 blob
+aws kms encrypt --key-id "alias/demoKey" --plaintext file://topsecret.txt --output text --query CiphertextBlob
+# decode and push to a file
+aws kms encrypt --key-id "alias/demoKey" --plaintext file://topsecret.txt --output text --query CiphertextBlob | base64 --decode > topsecret.txt.encrypted
+cat topsecret.txt.encrypted
+# decrypt, fileb is for binary
+aws kms decrypt --ciphertext-blob fileb://topsecret.txt.encrypted --output text --query Plaintext | base64 --decode
+```
+
+we don't have to specify which key to use for decryption, as this data is part of the encryption metadata.
+
+for files above 4 KB, we can use a Data Encryption Key (DEK). it uses envelope encryption. this allows us to reduce the amount the date we use.
+
+```sh
+aws kms generate-data-key --key-id "alias/demoKey" --key-spec AES_256
+# we take the ciphertextBlob
+```
+
+### CloudHSM - Hardware Security Module [SAA-C02]
+
+HSM Hardware Security Module. a way to manage private keys, validated control on the key.
+
+> - **Dedicated** hardware security module.
+> - **FIPS 140-2 Level 3**.
+> - stronger than KMS level2.
+> - Manage your own Keys.
+> - **No access** to the AWS-managed component.
+> - Runs within a VPC in your Account
+> - Single tenant, multi-AZ, running on a cluster dedicated to the user.
+> - Industry standard APIs- no **AWS APIs**.
+> - _PKCS#11_, _Java Cryptography Extensions (JCE)_, > _Microsoft CryptoNG (CNG)_
+> - If the key is lost, it's irretrievable (even by AWS), so keys must be kept safe.
+
+the cluster runs in an existing or a new VPC, this cluster project ENI (elastic network interface) for the other vpc to communicate with. HSM isn't redundant by default, so we need to create HSMs in multiple AZ.
 
 ### Parameter Store [SAA-C02]
+
+a way to manage secret and configuration in aws services. passwords, connection strings, access keys, and so on.
+
+> - Component of the AWS System Manager (SSM)
+> - Secure, **serverless** storage for configuration and secrets:
+>   - Passwords
+>   - Database connection strings
+>   - License codes
+>   - API keys
+> - Values can be stored encrypted (KMS) or in plaintext
+> - Allows for separation of data from source control.
+> - Store parameters in **hierarchies**
+> - Track versions of values
+> - Set TTL to expire values such as passwords
+
+parameters can be stored in hierarchies. so data can be restored from the root or from a leaf. this also allows to restrict access based on hierarchies or path.
+
+to get all the parameters, we call the `GetParametersByPath` api and provide the path.
+
+Parameter Store is integrated with CloudFormation
+
+```yaml
+Parmeters:
+  LatestAmiId:
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image:Id>"
+    Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+
+Resources:
+  Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !Ref LatestAmiId
+```
+
+in the console
+
+we will create a lambda function to access the Parameter Store, but we first need a role to access it.
+
+under IAM, <kbd>policies</kbd>, we <kbd>Create Policy</kbd> and use this policy, we give it a name, like "lambda_parameter_store_policy".
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "ssm:GetParameter*",
+        "ssm:GetParametersByPath*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+now we create a role to use this policy, so <kbd>Role</kbd>, <kbd>Create Role</kbd>, and select a common use case "Lambda" and search for this policy, attach it, and give the role a name "lambda_parameter_store_role".
+
+next we create the lambda itself. Under **Lambda**, <kbd>Create Function</kbd>, provide a name, choose a runtime (such as python), and give the lambda the role.
+
+now we replace the boilerplate code with the following. we create an aws client (boto3).
+
+```py
+import json
+import os
+
+import boto3
+
+client = boto3.client("ssm")
+env = os.environ["ENV"]
+app_config_path = os.environ["APP_CONFIG_PATH"]
+full_config_path = "/" + env + "/" + app_config_path
+
+def lambda_handler(event, context):
+  print("Config Path: "+ full_config_path)
+  param_details = client.get_parameters_by_path(Path=full_config_path, Recursive=True, WithDecryption=True)
+  print(json.dumps(param_details, default=str))
+```
+
+we also need to set the environment variables for the lambda, so we click <kbd>Edit Environment variables</kbd>: "ENV":"prod", "APP_CONFIG_PATH":"acg". we will need them in the parameter store. all of our parameters will be under the path "prod/acg".
+
+we also want a key, so in the **KMS** service, we select <kbd>customer managed keys</kbd>, then <kbd>Create a key</kbd>, a symmetric key, give it a name. we need to define the key administrator, which a user/role that owns the key. we also set up who can access the key.
+
+under the **SSM** service, we select <kbd>Parameter store</kbd> and start creating parametesr, there are two tiers, depending on the number of parameters which we have (we choose standard key). we also select <kbd>SecureString</kbd>, and choose the KMS key we created. now we can start entering the value. the value can be up to 4096. we can create another parameters, this time a <kbd>StringList</kbd>, which isn't encrypted.
+
+to see the lambda in action, we configure a test event, with an event name, we don't care about the values. we click <kbd>Test</kbd> and then we se the log with the json containing all the parameters which we created.
 
 </details>
 

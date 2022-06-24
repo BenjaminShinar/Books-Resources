@@ -11,8 +11,8 @@ Udemy course [AWS Certified Solutions Architect - Associate 2020](https://www.ud
 - [Section 7 - Route 53](Section_06_07_Advanced_IAM_Route53.md#section-7---route53)
 - [Section 8 - VPCs](Section_08_VPC.md)
 - [Section 9 - HA Architecture](Section_09_HA.md)
-- [Section 10 - Applications](Section_10_Applications.md)
-- [Section 11 - Security](Section_11_Security.md)
+- [Section 10 - Applications](Section_10_11_Applications_Security.md#section-10---applications)
+- [Section 11 - Security](Section_10_11_Applications_Security.md#section-11---security)
 - [Section 12 - Serverless](Section_12_Serverless.md)
 
 ## Takeaways
@@ -78,6 +78,7 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | BI        | Business Intelligence                 |
 | CDN       | Content Delivery Network              | Cloud Front                          |                                                                              |
 | CIDR      | Classless Inter-Domain Routing        | security groups                      | `0.0.0.0/0` and `::/0` allow all access                                      |
+| CMK       | Customer Master Keys                  | KMS                                  |
 | DAX       | DynamoDB Accelerator                  | Aws DynamoDB                         | in memory-cache                                                              |
 | DFS       | Distributed File System               |
 | DMS       | Database Migration Service            | migrate from one database to another |
@@ -123,6 +124,7 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | SLA       | Service Level Agreement               |                                      | What AWS promises (rather than advertises)                                   |
 | SMB       | Server Message Block                  |                                      | FSx Windows                                                                  |
 | SMS       | Server Migration Service              |
+| SMPS      | System Manager Parameter Store        | KMS and others                       | parameters storage                                                           |
 | SNS       | Simple Notification Service           | Push notification services           | used in the billing alarm                                                    |
 | SQS       | Simple Queue Service                  | **AWS Service**                      | pull-based, standard and fifo queues.                                        |
 | SR-IOV    | Single Root I/O Virtualization        |
@@ -144,5 +146,8 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | IGW       | Internet Gateways                     | VPC                                  |
 | XSS       | Cross-Site Scripting                  |                                      | security attack                                                              |
 | JWT       | JSON web Token                        | AWS Cognito                          | authenticaton form                                                           |
+| ECC       | Elliptic-Curve Cryptography           | KMS                                  | A type of asymmetric Key                                                     |
+| DEK       | Data Encryption Key                   | KMS                                  | for file larger than 4kb                                                     |
+| HSM       | Hardware Security Module              |                                      | higher level of security than KMS                                            |
 
 </details>
