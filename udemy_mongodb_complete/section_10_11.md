@@ -1,11 +1,11 @@
 <!--
-// cSpell:ignore
+// cSpell:ignore IXSCAN
 -->
 
 [main](README.md)
 
 ## Section 10 - Working with Indexes
-<!-- <details> -->
+<details>
 <summary>
 Retriving Data Efficiently.
 </summary>
@@ -207,30 +207,308 @@ there is always a default index based on the _id field.
 
 ### Configuring Indexes
 
+we might want unique index, like the _id field, this guarantees that we have unique field without duplicates.
+```js
+db.contacts.findOne()
+db.contacts.createIndex({email:1},{unique:true})
+```
+
 ### Understanding Partial Filters
+
+if we know that some values of the index aren't used frequently, we can have a partial index, which ignores those values and is more performant. this means that we accept that if we do need those documents, we will have to perform a collection scan on them.
+
+```js
+db.contacts.createIndex({"dob.age":1},{partialFilterExpression:{"dob.age": {$gt:60}}})
+db.contacts.createIndex({"dob.age":1},{partialFilterExpression:{gender:"male"}})
+db.contacts.explain.find({"dob.age":{$gt:70}}).pretty()
+db.contacts.explain.find({"dob.age":{$gt:70}, gender:"male"}).pretty()
+```
+
+in a partial filter, the size of the index list is smaller, and we don't need to change it if we add a document with the non-indexed value.
+
 ### Applying the Partial Index
+
+we can have a use case of combing a partial index with unique index.
+
+```js
+db.users.insertMany([{name:"Max", email: "max@test.com"0},{name:"Manu"}])
+db.users.createIndex({email:1},{unique:true})
+db.users.insertOne({name:"Anna"}) // duplicate key - null vale is a value in the index
+```
+
+if we still want yo allow this behavior. we create a partial index that is created only when the field exists, so we can have multiple null values, but unique existing fields.
+
+```js
+db.users.dropIndex({email:1})
+db.users.createIndex({email:1},{unique:true, partialFilterExpression:{email:{$exists:true}}})
+```
+
 ### Understanding the Time-To-Live (TTL) Index
+
+an index for self-destroying data, we decide when data is removed from the collection.
+
+```js
+db.sessions.insertOne({data: "asa",createdAt: new Date()})
+db.sessions.find().pretty()
+db.sessions.createIndex({createdAt:1},{expireAfterSeconds:10})
+db.sessions.find().pretty()
+db.sessions.insertOne({data: "x",createdAt: new Date()})
+//now both will be deleted
+db.sessions.find().pretty()
+```
+
+this triggers when we have a new insertion, so if we add the index after we created the elements, it won't delete them until we trigger it.
+
+this works only for datetime fields, and is only for single field indexes.
+
 ### Query Diagnosis & Query Planning
+
+> - `explain("queryPlanner")` - default. Show summary for executed Query + Winning Plan.
+> - `explain("executionStats")` - Show **Detailed** Summary for executed query + Winning Plan + Possibly Rejected Plans.
+> - `explain("allPlansExecution")` - Show **Detailed** Summary for executed query + Winning Plan + Winning Plan Decision Process.
+
+things we should look at:
+- Milliseconds Process Time (**IXSCAN** typically beats **COLLSCAN**)
+- number of keys(in index) examind
+- number of documents examined (should be as close as possible to number of indexes, or zero)
+- number of documents returned
+
+the case of Zero documents is relevent in a covered Query.
+
 ### Understanding Covered Queries
+
+```js
+db.customers.insertMany([
+        {name:"Max", age:29,salary:3000},
+        {name:"Manu", age:30,salary:4000}
+])
+db.customers.createIndex({name:1})
+db.customers.explain("executionStats").find({name:"Max"})
+```
+
+the index holds a pointer to the document, but it also holds the key (which is the index), so if we just return the field in the index, te we get a covered query, where no documents were examined.
+
+```js
+db.customers.explain("executionStats").find({name:"Max"},{_id:0, name:1})
+```
+
+now the *stage* field is **"PROJECTION"**, and this query is very efficient and fast.
+
 ### How MongoDB Rejects a Plan
+
+MongoDb can reject plans
+
+```js
+db.customers.getIndexes() // id and name
+db.customers.CreateIndex({age:1,name:1}) // compound index - order matters
+db.customers.explain().find({age:"Max", name:30}) // order doesn't matter
+```
+
+the rejected plans now contains the Index Scan on the name alone. mongo can determine which plan to use. it first takes all the indexes which might be useful in the query. it then deides between them by using a subset of the data and running all the plans. then it takes the fastest to run on the entire data set, it then keeps a cache about this query. the cache is cleared after sufficient amount of writes, if the index is rebuilt of if indexes are added or removed, and of course, when the mongoDB server is restarted.
+
+```js
+db.customers.explain("allPlansExecution").find({age:"Max", name:30})
+```
+now we see detailed metrics for the rejected plans.
+
 ### Using Multi-Key Indexes
-### Understanding Text Indexes
-### Text Indexes & Sorting
-### Creating Combined Text Indexes
-### Using Text Indexes to Exclude Words
+
+indexes on on array fields,multi key indexes.
+
+```js
+db.contacts.dropCollection()
+db.contacts.insertOne({name:"Max",hobbies:["Cooking", "Sports",addresses:[{street:"first"},{street:"second"}]]})
+db.contacts.createIndex({hobbies:1})
+db.contacts.explain("executionStats").find({hobbies:"Sports"})
+```
+each value of the arrays is an entry in the index list, so if a collection has a total of 100 values in arrays over 30 documents, then the size of the index list will be 100, one for each element.
+
+
+```js
+db.contacts.createIndex({addresses:1})
+db.contacts.explain("executionStats").find({"addresses.street":"main street"})
+```
+this time a collection scan is used, because the indexes field is a nested document, so it indexes over the documents, not parts of it.
+
+```js
+db.contacts.explain("executionStats").find({addresses:{street:"main street"}}) // index Scan
+```
+we can create multikey field on elements of the arrays.
+```js
+db.contacts.createIndex({"addresses.street":1}) 
+db.contacts.explain("executionStats").find({"addresses.street":"main street"}) //index Scan again
+```
+
+we can't have compound indexes made of more than one multi-key index.
+```js
+db.contacts.createIndex({addresses:1,hobbies:1}) // won't work
+```
+
+### Text Indexes
+<details>
+<summary>
+Special Behaviors for text Indexes.
+</summary>
+
+we can create text indexes, which makes searching text much better performant. a text index is a basically a multi-key array index, where the text was tokensized, standardized and had the stop words removed (is, a, the, for) and the keywords should remain.
+
+```js
+db.prodcuts.insertMany([
+        {title:"A book", description: "Awesome book about a young artist"},
+        {title:"Red Shirt", description: "This t-shirt is read and prettry awesome"}
+])
+
+db.products.createIndex({description:1})//normal index
+db.products.createIndex({description:"text"})//text index index
+db.products.find({$text:{$search:"awesome"}}).pretty()
+db.products.find({$text:{$search:"red book"}}).pretty()
+```
+we can have only one text index per collection, so we don't need to specify which field we are searching on (we can combine them).
+
+when we search using the `$text:{$search:""}` syntax, the case doesn't matter, as the index words are stored in lower case, and if we search for multiple words, then it's treated as if we want matches to any of those words. if we want an exact match, we need to wrap the text in quotation marks, so we have to escape them.\
+this is faster than using regular expressions.
+
+```js
+db.products.find({$text:{$search:"\"red book\""}}).pretty() // no match
+db.products.find({$text:{$search:"\"awesome book\""}}).pretty() // match
+```
+
+#### Text Indexes & Sorting
+
+when we search by text index, some results are "better" than others, those who match more keywords in the search phrase are considered more relevant, so we can reflect this.
+```js
+db.products.find({$text:{$search:"awesome t-shirt"}}).pretty() // match 2
+db.products.find({$text:{$search:"awesome t-shirt"}},{score:{$meta:"textScore"}}).pretty() // show index matching score
+db.products.find({$text:{$search:"awesome t-shirt"}},{score:{$meta:"textScore"}}).sort({score:{$meta:"textScore"}}).pretty() // explicit sort
+```
+
+now we see how much each of the documents scored when matching against the text query, and the results are also sorted by this score!
+
+#### Creating Combined Text Indexes
+
+we can only have a single text index per collection, but we can combine multiple fields if we need.
+```js
+db.products.createIndex({title:"text"}) // fails because we already have a text index
+db.products.dropIndex({description:"text"}) // doesn't work
+db.product.getIndexes() // take index name
+db.products.dropIndex({description:"descrption_text"}) // this works
+db.products.createIndex({title:"text", descrption:"text"}) // compound index
+```
+#### Using Text Indexes to Exclude Words
+with text indexes, we can also exclude words from our search. this is done by prefixing the excluded word with the minus sign.
+
+```js
+db.products.find({$text:{$search: "awesome"}}).pretty() // match 2
+db.products.find({$text:{$search: "awesome -t-shirt"}}).pretty() // match 1
+```
 ### Setting the Default Language & Using Weights
+
+we can change the default language, which defines how words are tokenized (which stop words are removed). we pass the argument to both the index and the search field. we can also set the query to be case sensitive.
+we can also give weights for each field of the index, which determines how the score is calculated, maybe some fields are more important than other.
+
+```js
+db.products.getIndexes()
+db.products.dropIndex("title_text_descrption_text")
+db.products.createIndex({title:"text",descrption:"text"},{default_langague:"german", weights: {title:1, descrption:2}})
+db.products.find($text:{$search:"red",$language:"german"})
+db.products.find($text:{$search:"Red",$caseSensitive:true})
+```
+
+</details>
+
 ### Building Indexes
+
+Indexes can be added as the Foreground and the Background. until now, we added the indexes in the foreground. adding in the foreground is faster, but locks up the collection from other queries. adding an index in the background is slower, but doesn't lock the collection.
+
+we have a script that adds one million documents to a collection (this isn't an efficient code)
+```sh
+mongo resources/credit-rating.js
+```
+
+lets do some stuff
+```js
+show dbs
+suse credit
+show collections
+db.ratings.count()
+db.ratings.findOne()
+db.ratings.explain("executionStats").find({age:{$gt:80}})
+db.ratings.createIndex({age:1})
+db.ratings.explain("executionStats").find({age:{$gt:80}})
+db.ratings.dropIndex({age:1})
+```
+we can open a different shell and run a find command while we run the index creation command. the command will wait until the index creation is completed.
+
+```js
+//terminal 1
+db.ratings.createIndex({age:1})
+//terminal 2
+db.ratings.find({score:{$gt:3}})
+```
+
+in small collections, this doesn't matter, but for big collections with complex indexes, we can't lock the collection while it's being indexed. so a background index might be better
+
+```js
+db.ratings.dropIndex({age:1})
+db.ratings.createIndex({age:1},{background:true})
+```
+
 ### Wrap Up
+
+> What And Why?
+> - Indexes allow you to retrive data more efficiently (if used correctly) because your queries only have to look at a subset of all documents.
+> - You can use single-field, compound, multi-key(array) and text indexes.
+> - Indexes don't come for free, they will slow down your writes.
+> 
+> Queries & Sorting
+> - Indexes can be used for both queries and efficient sorting
+> - Compound indexes can be used as a whole or in a "left-to-right" (prefix) manner. (e.g. only consider the "name" part of the "name-age" compound index)
+> 
+> Queries Diagnosis Planning
+> - use `explain()` to understand how MongoDB will execute your queries.
+>   - "queryPlanner"
+>   - "executionStats"
+>   - "allPlansExecution"
+> - This allows to optimize both your queries and indexes.
+> 
+> Index Options
+> - you can create TTL, unique or partial indexes.
+> - for text indexes weights and default language can be assigned.
+
+- [Partial Indexes](https://docs.mongodb.com/manual/core/index-partial/)
+- [Supported Languages](https://docs.mongodb.com/manual/reference/text-search-languages/#text-search-languages)
+- [Different Langauges in the same Index](https://docs.mongodb.com/manual/tutorial/specify-language-for-text-index/#create-a-text-index-for-a-collection-in-multiple-languages)
+
 
 
 </details>
 
 ## Section 11 - Working with Geospatial Data
-<details>
+<!-- <details> -->
 <summary>
 
 </summary>
-</details>
+
+
+### Adding GeoJSON Data
+
+### Running Geo Queries
+
+### Adding a Geospatial Index to Track the Distance
+
+### Adding Additional Locations
+
+### Finding Places Inside a Certain Area
+
+### Finding Out If a User Is Inside a Specific Area
+
+### Finding Places Within a Certain Radius
+
+### Assignment 6: Time to Practice - Geospatial Data
+
+### Wrap Up
+
+<details>
 
 ##
 [main](README.md)
