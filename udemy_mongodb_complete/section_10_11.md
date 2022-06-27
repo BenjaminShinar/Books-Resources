@@ -484,31 +484,145 @@ db.ratings.createIndex({age:1},{background:true})
 </details>
 
 ## Section 11 - Working with Geospatial Data
-<!-- <details> -->
+<details>
 <summary>
-
+Querying locations
 </summary>
 
 
+mongoDB can use Geospatial Data and query on it. 
+
 ### Adding GeoJSON Data
+
+GeoJson is a special format of json.
+
+lets add some places, we can get the coordinates from google maps, we need latitude and longitude. we then insert them as a special document, which has the *type* property, and the *coordinates* as an array([\<longitude>,\<latitude>])
+
+
+```js
+use awesomePlaces
+db.places.insertOne({name:"California academy of sciences",locationKey:{type:"point", coordinates:{-122.4724356,37.7672544}}})
+db.places.findOne()
+```
+
+the supported types are: point, line, polygon
 
 ### Running Geo Queries
 
+maybe we want our application to tell us which elements in the collection is close to us, so lets take a location from google maps, we use `$near` and `$geometry`
+
+```js
+db.places.find({locationKey:{$near:{$geometry:{type:"Point", coordinates:[-122.471114,37.771104]}}}})
+```
+but this get us an error, saying that it can't find an index. so we must have a geospatial index in order to use `$near`.
+
 ### Adding a Geospatial Index to Track the Distance
 
-### Adding Additional Locations
+like with text indexes, we have a special type of geospatial index, the "2dsphere" type. once we create it, we can use the `$near` document. but we can also define the distance that counts as near. this is a distance in meters: `$minDistance` and `$maxDistance`
+```js
+db.places.createIndex({locationKey:"2dsphere"})
+db.places.find({locationKey:{$near:{$geometry:{type:"Point", coordinates:[-122.471114,37.771104]}}}})
+db.places.find({locationKey:{$near:{$geometry:{type:"Point", coordinates:[-122.471114,37.771104]},$maxDistance:40,$minDistance:10}}})
+```
 
 ### Finding Places Inside a Certain Area
 
+finding points inside a specified data.
+lets start by adding more documents and then we find location inside a polygon.
+```js
+db.places.insertOne({name: "Conservatory of Flowers",locationKey:{type:"Point",coordinates:[-122.4615748,37.7701756]}})
+db.places.insertOne({name: "Golden Gate Tennis Court",locationKey:{type:"Point",coordinates:[-122.4593702,37.7705046]}})
+db.places.insertOne({name: "Club Nop",locationKey:{type:"Point",coordinates:[-122.4389058,37.7747415]}})
+```
+
+we get the polyon coordinates by using a gogole maps, and store them in some javascript variables. we then use the `geoWithin` operator and pass a `$geometry` document with the type **"Polygon"**, and the coordinates as nested array of values, we need to pass the first point in the last position as well, so the polygon will be closed.
+```js
+const p1 = [-122.45470,37.77473]
+const p2 = [-122.45303,37.76641]
+const p3 = [-122.51026,37.76411]
+const p4 = [-122.51088,37.77131]
+db.places.find({locationKey:{$geoWithin:{$geometry:{type: "Polygon",coordinates:[[p1,p2,p3p,p4,p1]]}}}})
+```
+
 ### Finding Out If a User Is Inside a Specific Area
+
+the opposite case is trying to find if a user is in the vicinity of the area. like the previous query, but other way around. we use the `$geoIntersects` operator.
+
+```js
+db.areas.insertOne({name:"Golder Gate park", area:{type:"Polygon", coordinates:[[p1,p2,p3,p4,p1]]}})
+db.areas.find()
+db.areas.createIndex({area:"2dsphere"}) // must create an index
+db.areas.find({area:{$geoIntesects: {$geometry:{type:"Point",coordinates:[-122.49089,37.769992]}}}}) // match
+db.areas.find({area:{$geoIntesects: {$geometry:{type:"Point",coordinates:[-122.48446,37.77776]}}}}) // no match
+```
 
 ### Finding Places Within a Certain Radius
 
+Another geospatial action is finding location in a radius from some point. we use `$geoWithin` again, this time with `$centerSphere` operator, it takes an array of corridnates, and a radius value in *radians* units. the formula is the desired radius divided by the equatorial radius of the earth.
+
+
+miles:\
+$\frac{radius-in-miles}{3963.2}$\
+kilometers:\
+$\frac{radius-in-km}{6378.1}$
+
+```js
+db.places.find(locationKey:{$geoWithin: {$centerSphere:[-122.46203,37.77286],1/6738.1}})
+```
+
+the `$near` operator sorts the documents by proximity, while using `$geoWithin` and `$centerSphere` keeps tha original order of the documents.
+
 ### Assignment 6: Time to Practice - Geospatial Data
+
+> 1. Pick 3 points in Google Maps and store them in a collection.
+> 2. Pick a 4th point and find the nears points within a min a max distance.
+> 3. Pick an area and see which points (that are stored in your collection) it contains.
+> 4. Store at least one area in a different collection.
+> 5. Pick a point a find out which areas in your collection contain that point.
+
+```js
+use geoSpatial
+//1
+db.places.insertMany([
+        {name:"Museum of London",loc:{type:"Point",coordinates:[-0.1020399,51.5150566]}},
+        {name:"SmithField Market",loc:{type:"Point",coordinates:[-0.1028778,51.5191299]}},
+        {name:"Tower of London",loc:{type:"Point",coordinates:[-0.122178,51.5161625]}},
+])
+db.places.find()
+//2
+db.places.find({loc:{$near:{$geometry:{type:"Point",coordinates:[-0.1066466,51.5139945]},$minDistance:10, $maxDistance:1000}}}) // should fail without an index
+db.places.createIndex({loc:"2dsphere"})
+db.places.find({loc:{$near:{$geometry:{type:"Point",coordinates:[]},$minDistance:10, $maxDistance:1000}}}) // should work now
+//3
+db.places.find({loc:{$geoWithin:{$geometry:{type:"Polygon",coordinates:[[[-0.0945804,51.5187667],[-0.1028778,51.5191299],[-0.102359,51.5127805],[-0.0945804,51.5187667]]]}}}})
+//4
+db.areas.insertOne({name:"Some Cut of London",area:{type:"Polygon",coordinates:[[[-0.0945804,51.5187667],[-0.1028778,51.5191299],[-0.102359,51.5127805],[-0.0945804,51.5187667]]]}})
+
+db.areas.createIndex({area:"2dsphere"}) // actually not needed
+//5
+db.areas.find({area:{$geoIntersects: {$geometry:{type:"Point",coordinates:[-0.097715,51.516767]}}}})
+```
+
 
 ### Wrap Up
 
-<details>
+>Storing Geospatial Data:
+>- You store geospatial data next to your other data in you documents.
+>- Geospatial data has to follow the special GeoJSON format - and respect theytypes supported by MongoDB.
+>- Don't forget that the coordinates are [longitude, latitude], not the other way around!
+>
+> GeoSpatial Indexes:
+>- You can add an index to geospatial data: "2dsphere".
+>- Some Operations (`$near`) require such an index.
+>
+> GeoSpatial Queries:
+>- `$near`, `$geoWithin` and `$geoIntersects` get you very far.
+>- Geospatial queires work with GeoJSON data.
+
+
+[GeoJson documentation](https://www.mongodb.com/docs/manual/reference/geojson/)
+
+</details>
 
 ##
 [main](README.md)

@@ -79,6 +79,7 @@ default port is 27017
   - `db.mycoll.createIndex({field:1},{background:true})` - background index, doesn't lock up the collection.
   - `db.mycoll.createIndex({textField:"text"})` - text field index, no stop words, one per collection.
   - `db.mycoll.createIndex({textField:"text"},{default_langague:"langauge"})` - text field based on a differnet language.
+  - `db.places.createIndex({locationField:"2dsphere"})` - an geospatial index.
 - `db.mycoll.dropIndex({"field.to.index":1})` - remove an index.
 - `db.mycoll.explain().find({})` - provide a detailed explainnation of how the operation was performed.
   - `db.mycoll.explain("executionStats").find({})` - more verbose explainnation about the execution.
@@ -136,8 +137,8 @@ default port is 27017
 - `db.collection.updateOne({},{$pull:{arrayField:{criteriaField:value}}})` - remove elements from array based on conditions.
 
 ### Operators
-operator syntax | name | context | notes | sample
----|-------|--------|-------|-------
+operator syntax | name | context | notes |
+---|-------|--------|-------
 `$eq`, `$neq` | logical operators | find |
 `$gt`, `$gte` | logical operators | find |
 `$lt`, `$lte` | logical operators | find |
@@ -151,8 +152,12 @@ operator syntax | name | context | notes | sample
 `$expr` | test type of field | find |
 `$jsonSchema` | | find |
 `$mod` | | find |
-`$regex` | | find |
 `$text` | | find |
+`$regex` | | find |
+`$near`, `$geometry` | geospatial data | find |
+`$minDistance`, `$maxDistance` | geospatial data | find |
+`$geoWithin`, `$geoIntersect` | geospatial data | find |
+`$centerSphere` | geospatial data | find | coordinates of the center and radians distance
 `$cond`,`if`,`then`,`else` | | find |
 `$` | field name specifier | find
 `$substract` | | find
@@ -243,21 +248,30 @@ db.mycoll.createIndex({textField:"text"})
 db.mycoll.createIndex({textField1:"text",textField2:"text"})
 db.mycoll.createIndex({textField:"text"},{default_language:"english"})
 db.mycoll.createIndex({textField1:"text",textField2:"text"},{weights:{textField1:1, textField2:3}})
+db.places.createIndex({locationKey:"2dsphere"})
 db.mycoll.createIndex({field:1},{background:true}})
 ```
 
 ### Special types of objects
 
 - point: geospacial data
-```
+```js
 {
 	"location": 
 	{
-		type: "Point",
-		coordinates: [56.12,43.09]
+		"type": "Point",
+		"coordinates": [56.12,43.09],
 	}
+},
+{
+  "locationField":
+  {
+    "type": "Polygon",
+    "coordinates": [[[],[],[],[],[]]]
+  }
 }
 ```
+### 
 
 run mongodb as background service in windows
 ```cmd
@@ -332,5 +346,6 @@ ISODate | date | ISODate("2018-09-09")
 Timestamp| date time |Timestamp(11421532)
 Embedded Documents | nesting | {"a":{}}
 Array | list of values| {"b":[]}
+GeoJson | geospatial data | `{type:"point", coordinates:[]}`
 
 </details>
