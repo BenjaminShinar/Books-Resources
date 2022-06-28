@@ -1868,3 +1868,75 @@ int main()
 </details>
 
 
+
+## C++ Weekly - Ep 328 - Recursive Lambdas in C++23
+<details>
+<summary>
+
+</summary>
+
+[Recursive Lambdas in C++23](https://youtu.be/hwD06FNXndI)
+</details>
+
+## C++ Weekly - Ep 329 - How LTO Easily Makes Your Program Faster
+<details>
+<summary>
+
+</summary>
+
+[How LTO Easily Makes Your Program Faster](https://youtu.be/9nzT1AFprYM)
+</details>
+
+## C++ Weekly - Ep 330 - Faster Builds with `extern template` (And How It Relates to LTO)
+<details>
+<summary>
+extern templates are a way to instantiate templates in one file rather than recreate it each time.
+</summary>
+
+[Faster Builds with `extern template` (And How It Relates to LTO)](https://youtu.be/pyiKhRmvMF4)
+
+like the earlier video, we have an 'add' function in a differnet complication unit. this time we make it a template.
+
+since c++ there was a feature called `extern template`, which stops the compiler from creating the same template again and again. we need to declare the template type as `extern`, and then have one place file that instantiates it explicitly.
+
+
+```cpp
+#ifndef DECLERATIONS
+#define DECLERATIONS
+
+template<typename Type>
+Type add(Type lhs, Type rhs)
+{
+    return lhs+rhs;
+}
+
+extern template int add<int>(int, int);
+
+#endif
+```
+and in a separate cpp file
+
+```cpp
+#include "declerations.hpp"
+
+template int add<int>(int,int);
+```
+
+however, this prevents us from the optimizing, so we need the LTO again.
+
+```cmake
+project(test CXX)
+cmake_minimum_required(VERSION 3.18)
+include(CheckIPOSupported)
+
+add_executable(tst file1.cpp file2.cpp impl.cpp)
+set_property(TARGET test PROPERTY INTERPROCEDURAL_OPTIMIZATION)
+```
+
+> "we get to have our cpp template cake and eat it too."
+>
+> extern template saves us on build time in each cpp file of our large project. (assuming the function is expensive to compile).
+
+if the function is expensive, LTO probably wouldn't be able to inline it anyways.
+
+</details>
