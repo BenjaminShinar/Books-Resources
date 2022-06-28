@@ -194,6 +194,14 @@ operator syntax | name | context | notes |
 - `cursor.limit(5)` - change the number of elements in each fetch.
 
 
+### Aggregation Steps
+- `{$match:{field:value}}` - like `find` operations.
+- `{$group: {_id:{key:"$valueFromDocument"},newField: {$sum: 1}}}}` - group into a new document with a aggregation operator:
+  - `{$sum:1}` - sum - each value is 1 - basically count.
+  - `{$avf:"$fieldToAverage"}` - average of field.
+- `{$sort:{key:-1}}` - sort documents at any stage.
+
+
 ### Additional Options Arguments
 
 inserts:
