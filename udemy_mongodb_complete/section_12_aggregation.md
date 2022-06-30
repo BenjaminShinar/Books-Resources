@@ -79,9 +79,41 @@ db.persons.aggregate([
 ]).pretty()
 ```
 
-### Working with $project
+### Working with `$project`
+
+The `$project` stage allows us to transform documents into other forms.
+
+we also use the `$concat` operator to paste together fields.  we can also pass operators to each field, like `$toUpper`, `$substrCP` (which takes a string, start postion,number of elements), and then the `$subtract` with `$strLenCP`.
+```js
+db.persons.aggregate([
+    {$project:{_id:0, gender:1,fullName:{$concat:["$name.first"," ","$name.last"]}}}
+]).pretty()
+
+db.persons.aggregate([
+    {$project:{_id:0, gender:1,fullName:{$concat:[
+        {$toUpper:"$name.first"},
+        " ",
+        {$toUpper:{$substrCP:["$name.last",0,1]}},
+        {$substrCP:["$name.last",1,{$subtract:[{$strLenCP:"$name.last"},1]}]}
+    ]}}}
+]).pretty()
+
+```
 
 ### Turning the Location Into a geoJSON Object
+
+we will also tranform the location field into a geoJson object. for this we need to convert the string values into numeric data with `$convert`(input, to, onError, onNull).
+```js
+db.persons.aggregate([
+    {$project:{_id:0,email:1,date:"$dob.date", 
+    loc:{type:"Point",coordinates:
+    [
+        {$convert: {input:"$location.coordinates.longitude",to:"double",onError:0.0,onNull:0.0}},
+        {$convert: {input:"$location.coordinates.latitude", to:"double",onError:0.0,onNull:0.0}}
+    ]
+    }}}
+]).pretty()
+```
 
 ### Transforming the Birthdate
 
@@ -89,7 +121,7 @@ db.persons.aggregate([
 
 ### Understanding the $isoWeekYear Operator
 
-### group vs $project
+### group vs `$project`
 
 ### Pushing Elements Into Newly Created Arrays
 
