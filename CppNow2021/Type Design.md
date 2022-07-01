@@ -433,6 +433,371 @@ we might be able to use variant and std::visit() to get better de-virtualization
 
 </details>
 
+## Library Approaches for Strong Type Aliases - Anthony Williams
+
+<details>
+<summary>
+Getting The compiler to help us with type safety by creating strong type aliases.
+</summary>
+
+[Library Approaches for Strong Type Aliases](https://youtu.be/b1Gq9WABaRU), [slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/04/strong_type_aliases.pdf)ץ
+
+**Background** - why do we need strong type aliases?\
+**Solution** - how can we do this? without using compiler extensions.
+
+Strong type aliases mean that we want types that behave like other types, but that the compiler will still be able to say that those types are different from one another.
+
+- Correctness
+- Clarity
+- Extensibility
+
+built-in types and common library types are too common. even `typedef` and `using` declaretions don't help, as those types are still the same for the compiler. and we always have to worry about implicit conversions.
+
+an int can be an index, a count, an identifier, a timestamp, and many other things. each use of an integer can have specific intended behavior, but they are all the same for the compiler.
+
+### Problems With Basic Types
+
+**Confusion about the order of parameters**
+
+the _std::string_ has many constructors, we want to create a string with 5 '0' characters, but we got the order wrong. same with the Matrix type, each library might have a different order of rows and columns
+
+```cpp
+char const fillChar = '0';
+int const count = 5;
+std::string s (fillChar, count); // out of order
+
+int const rows = 3;
+int const columns = 4;
+Matrix m{columns, rows}; // which comes first, columns or rows?
+```
+
+**Confusion about the units of a value**
+
+units can have different scales, seconds and milliseconds, miles and kilometers, and different ratios.
+
+```cpp
+void sleep (int seconds);
+int const pause_milliseconds =5;
+sleep(pause_milliseconds);
+
+void accelerate_to(double meters_per_second);
+double const target_speed_mph(4.3);
+accelerate_to(target_speed_mph);
+```
+
+**Confusion over the meaning of a parameter**
+
+some libraries represent the type as basic type (the `socket` function returns a file handle), so we call the same constructor in both cases - in the first case we want to pass a port number, in the second case we want to use an existing port. the actual problem is that the port constructor expects a short, but we pass it an integer, which it assumes to be a file handle.\
+in the second example, _int8_t_ might be actually a _char_ class, so when we output it, the string will use the ascii code. which might be garbage data, might be a null terminator, a new line, or be a completely wrong number (if the count of elements happens to be the same as the code for a digit).
+
+```cpp
+int port = 1234;
+Socket s1{port}; // uses the file handle constructor
+Socket s2{socket(AF_INET,SOCK_STREAM,0)};
+
+int8_t count = get_count(); // is this a numeric type? or char?
+std::cout<< "There are " << count << "elements\n"; // can be interpetted as character
+```
+
+**Lack of extensibility**
+
+> Using a common type limit the interface to an exact set of operations. You cannot add additional domain-specific operation that apply to **only** your values.
+
+**Difficulty overloading operations**
+
+a compiler might decide that the two types are the same underlying type in one system, so this isn't overloading, it's a redefinition and ODR violation.
+
+```cpp
+void do_stuff(intfast16_t);
+void do_stuff(intfast32_t);
+```
+
+**Duplicate template instatations or specializations**
+
+the same issue with template instantiations and specializations, the two integer types have the same underlying type, so we again have duplications and ODR violations. this limits portability.
+
+```cpp
+template <typename T>
+class Stuff {};
+
+template class Stuff<intfast16_t>;
+template class Stuff<intfast32_t>;
+
+template<> class Stuff<intfast16_t>;
+template<> class Stuff<intfast32_t>;
+```
+
+**It is easy to use the wrong function**
+
+like with the order of parameters, if the two underlying types are the same, then we lose the option of having the compiler tell us about the errors.
+
+```cpp
+using name_type = std::string;
+using email_type = std::string;
+
+name_type name="Anthony";
+email_type email = "anthony@justAnEmail.co.uk";
+print_email(std::cout, email);
+print_email(std::cout, name); // oops!
+```
+
+### Solutions
+
+> The solution is to create a unique type for each distinct usage.\
+> This is the **Whole Value** idiom: the "whole value" of something includes the type and the units.
+>
+> - 4.32 &pound;, 5$, 6.5&euro;, 75&cent;, 1000&yen;
+> - 27.6km, 25mph;
+> - "Anthony" is a **name**
+> - "anthony@justAnEmail.co.uk" is an **email address**
+
+(side comment - cpp is a strongly typed language, because the compiler gives each object a type, even if the type is deduced, polymorphic, a variant type, etc... ).
+
+we want to use this strong typing capabilites of the langauge to make our types better. we can create a wrapper class, but it get tedious, and adding operations has to be done manually for each class. with just a wrapper, all we can do is pass it around.
+
+```cpp
+struct LengthInMeters {
+  double value;
+};
+```
+
+**Domain Values**
+
+> we can create a template for a specific domain of values, possibly with parametesr for the underlying type and units.
+>
+> - `std::duration<short, std::chronon::nano>`
+> - `length_t<int, std::kilo>`
+>
+> we can easily add appropiate domain operations.\
+> `kmh_t speed = 5_km / 2_h`;
+
+with this, we can get some help from the compiler, if we declare that we want to store a nanoseconds duration in a short , and we then we won't be able to pass a ration in seconds, because the amount of nano seconds in a second doesn't fit into a short. this also gives us protection from non-sensible operations, like multyplying speed values, which doesn't make since. and substracting time values from one another creates a period value, which has it's own logic.
+
+**One-off Values**
+
+however, there are values which aren't part of a larger domain, which still may have common operations.
+
+> - Names
+> - Email addresses
+> - Numeric IDs
+> - Row / Column counts
+
+a name and an email address aren't comparable, they don't create one another, but they do have common operations which we want to perform on them (sorting).
+
+**common operations**
+
+- Arithmetic operations for numeric values
+- Stream output
+- Conversion to a string
+- Comparisons - equality or ordering
+- Hashing - for use as a key to an _unordered_map_
+- User-defined conversions
+
+> implementing the common operations for every one-off type is tedious, time consuming and leads to duplicated code. We need a solution that eliminates this boilerplate.\
+> There are fundementally two general solutions in C++: **Macros** and **Templates**. \
+> We don't use macro in modern c++, so we have to use _templates_.
+
+we want the custom type declaration to be simple, and without boilder plate. it should be easy, readble, and short, otherwise it becomes easier to write a custom type manually.
+
+```cpp
+using MyType = strong_typedef</*something*/>;
+```
+
+each type should be unique (that's the whole purpose), and should have an underlying type. we use an incomplete tag, which is an empty struct inside the class, we do need to be careful with naming.
+
+```cpp
+using MyType = strong_typedef<
+struct my_type_tag, // a tag type for uniqueness, can be incomplete
+int, // the underlying type
+/*more args*/
+>;
+```
+
+we want this type to be easily _constructible_ from the underlying type, but **not** _implicitly convertable_ from it. we don't want to be able to accidentally pass the
+underlying type instead of the required type.
+
+```cpp
+MyType mt(42); // good
+void f(MyType mt); // function that takes a MyType object
+f(42); //shouldn't compile
+```
+
+adding operations (arithemtic, comparisons) can be done by supplying additional arguments to the template.
+
+```cpp
+using MyType = strong_typedef<
+struct my_type_tag, // a tag type for uniqueness, can be incomplete
+int, // the underlying type
+strong_typedef_properties::addble,
+strong_typedef_properties::equality_comparable,
+/*more args*/
+>;
+```
+
+**Casting**
+
+we can always access the underlying value with a member fuction, and we have only explicit conversions (using static cast) to the underlying value.
+
+```cpp
+MyInt mi{42};
+int i& = mi.underlying_value();
+i+99; //update internal value
+int j = mi; // error! implicit conversion
+int k = static_cast<int>(mi); // explict cast
+```
+
+**The basic defintion**
+
+this is the base case
+
+```cpp
+template <typename Tag, typename Type, typename ... Properties>
+class strong_typedef: /* bases */
+{
+  constexpr strong_typedef() noexcept; // constructor
+  explicit constexpr strong_typedef(Type value_); // constructor
+  explicit constexpr operator Type const &() const noexcept; // casting
+  constexpr const Type &underlying_value() const noexcept; //member access
+  constexpr Type &underlying_value() noexcept; // member access
+private:
+  Type value;
+};
+```
+
+> A property such as _pre_incrementable_ is a type with a member template _mixin_.
+
+in this example, the _noexcept_ takes the value of the same action on the underlying type.
+
+```cpp
+struct pre_incrementable
+{
+  template <typename Derived, typename ValueType>
+  struct mixin
+  {
+    friend Derived& operator++(Derived &self) noexcept(noexcept (++std::decalval<ValueType &>()))
+    {
+      ++self.underlying_value();
+      return self;
+    }
+  };
+};
+```
+
+and with this, our template can derive from those `mixin`. we use _pack expansions_ to create the base classes.
+
+```cpp
+template <typename Tag, typename Type, typename ... Properties>
+class strong_typedef:
+public Properties::template mixin <strong_typedef<Tag,ValueType, Properties...>,ValueType>...
+>
+{
+  /*as before*/
+};
+```
+
+with this, we can have granular control over which operations ara availble. in this example can be ordered, checked for equality, be printed to a stream, and post incrementable (id++), but not other operations.
+
+```cpp
+using SessionId = strong_typedef<
+  struct session_id_tag,
+  unsigned long long,
+  strong_typedef_properties::post_incrementable,
+  strong_typedef_properties::equality_comparable,
+  strong_typedef_properties::ordered,
+  strong_typedef_properties::streamable
+>;
+```
+
+we can also combing properties into a prefdefind type.
+
+```cpp
+struct comparable{
+  template <typename Derived, typename ValueType>
+  struct mixin:
+    ordered::template mixin<Derived,ValueType>,
+    equality_comparable::template mixin<Derived,ValueType>
+};
+```
+
+**Hashing**
+
+if we want the type to be used as a key for _std::unordered_map_, then it should support _std::hash_, this means that if the user has requested it, then we have to specialize the _std::hash_ function. the _std::hash_ doesn't have extension points. there is a problem with specialization with multiple properties.
+
+so we derived the hashable property from an empty base class
+
+```cpp
+struct hashable
+{
+  struct base{};
+  template <typename Derived, typename ValueType>
+  struct mixin : base{};
+};
+```
+
+and in the strong type defintion, we check the if we have somewhere a hashble base, and we use _SFINAE_. this a complicated code to parse, and in c++20 can be replaced with _concepts_.
+
+```cpp
+template <typename Tag, typename Type, typename ... Properties>
+struct hash<strong_typedef<Tag, Type, Properties...>>
+{
+  template <typename Arg>
+  typename std::enable_if<
+  std::is_base_of<
+  strong_typedef_properties::hashable::base,Arg>>::value, size_t>::type
+  operator() (Arg const & arg) const noexcept(noexcept(std::hash<Type>()(std::declval<Type const &>())))
+  {
+    return std::hash<Type>() (arg.underlying_value());
+  }
+};
+```
+
+we could also create custom properties, like having string operations: _c_str()_ and _substr()_. this substr function returns the same strong type. we could also return a different strong type.
+
+```cpp
+struct string_properties
+{
+  template<typename Derived,typename ValueType>
+  struct mixin
+  {
+    const char * c_str() const noexcept
+    {
+      return static_cast<const Derived&>(*this).underlying_value().c_str();
+    }
+
+    Derived substr(std::size_t pos, std::size_t length) const noexcept
+    {
+      return Derived(static_cast<const Derived&>(*this).underlying_value().substr(pos, length));
+    }
+  };
+};
+```
+
+**some examples**
+
+```cpp
+using SessionId = strong_typedef<
+  struct session_id_tag, unsigned long long,
+  stp::incrementable, stp::streamable,
+  stp::comparble, stp::hashable>;
+
+using UserName = strong_typedef<
+  struct username_tag, std::string,
+  stp::streamable, stp::comparble, stp::hashable>;
+
+using Password = strong_typedef<
+  struct password_tag, std::string>;
+```
+
+and if we wish to convert to a custom class, we simply replace the using statement to direct to class, and if the strong type used an operations which we didn't define, then our compilation won't complete.
+
+note about debugging, **gdb** displays empty base classes, which can become massive with strong type aliases as described here, so we might need to change the prettyprint option for the debugger to not displays them.
+
+we should also notice how the namespaces are pulled when using. there are also other libraries which provide strong type aliasing.
+
+(side question about static refelection - could probably help in the future)
+
+</details>
+
 ## Simplest Strong Typing Instead of Language Proposal ( P0109 ) - Peter Sommerlad
 
 <details>
@@ -1436,7 +1801,7 @@ Q&A
 
 </details>
 
-## Techniques for Overloading any_invocable - Filipp Gelman
+## Techniques for Overloading `any_invocable` - Filipp Gelman
 
 <details>
 <summary>
@@ -3083,7 +3448,7 @@ when we get those warnings, we find that we might have some strong types waiting
 
 </details>
 
-## hop: A Language to Design Function-Overload-Sets - Tobias Loew
+## `hop`: A Language to Design Function-Overload-Sets - Tobias Loew
 
 <details>
 <summary>

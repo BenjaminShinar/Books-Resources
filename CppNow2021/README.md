@@ -49,6 +49,7 @@ all sorts of lectures, divided by field.
 - [Type Design](Type%20Design.md)
   - How to: Colony - Matthew Bentley
   - Variations on variants - Roi Barkan
+  - Library Approaches for Strong Type Aliases - Anthony Williams
   - Simplest Strong Typing instead of Language Proposal ( P0109 ) - Peter Sommerlad
   - Simplest Safe Integers - Peter Sommerlad
   - Techniques for Overloading any_invocable - Filipp Gelman
@@ -66,7 +67,6 @@ all sorts of lectures, divided by field.
 
 ### real talks:
 
-- [ ] Library Approaches for Strong Type Aliases - Anthony Williams
 - [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
 
 ### lighting talks:
