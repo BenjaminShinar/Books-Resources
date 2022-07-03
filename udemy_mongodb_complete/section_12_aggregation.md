@@ -54,7 +54,7 @@ db.persons.aggregate([
 
 ### Diving Deeper Into the Group Stage
 
-with the aggreation framework, we can sort at any stage.
+with the aggregation framework, we can sort at any stage.
 
 ```js
 db.persons.aggregate([
@@ -117,37 +117,250 @@ db.persons.aggregate([
 
 ### Transforming the Birthdate
 
+we also want to bring out the birth data fields to another level, we will also like to convert it. we can also use many `$project` steps, if we want to make things easier to read.
+
+```js
+db.persons.aggregate([
+    {$project:{
+        _id:0,
+        email:1,
+        date:"$dob.date", 
+        birthdate: {$convert: {input:"$dob.date", to: "date"}}
+        age: "$dob.age"}}
+]).pretty()
+```
+
 ### Using Shortcuts for Transformations
 
-### Understanding the $isoWeekYear Operator
+if we want a simple conversion, without specifying the on.error and the on.null values, we could use `$toDate`, `$toLong`, etc...
 
-### group vs `$project`
+```js
+db.persons.aggregate([
+    {$project:{
+        _id:0,
+        email:1,
+        date:"$dob.date", 
+        birthdate: {$toDate: "$dob.date"}
+        age: "$dob.age"}}
+]).pretty()
+```
 
-### Pushing Elements Into Newly Created Arrays
+### Understanding the `$isoWeekYear` Operator
 
-### Understanding the $unwind Stage
+after we created all kinds of fields, we can use them as grouping variables, 
+```js
+db.persons.aggregate([
+    {$project:{
+        _id:0,
+        birthdate: {$toDate: "$dob.date"}}},
+        {$group: {_id: {birthYear: {$isoWeekYear: "$birthdate"}}, numPersons: {$sum:1}}},
+        {$sort: {numPersons:-1}}
+]).pretty()
+```
 
-### Eliminating Duplicate Values
+### `$group` vs `$project`
 
-### Using Projection with Arrays
+`$group` operations transform many documents into one, based on some criteria, then we create a value based on those documents, such as sum, count, average orn array of values.\
+`$project` operations operate on the document itself each documents producing a new document, we use then to include/exclude fields and to transform fields within the document.
 
-### Getting the Length of an Array
+### Array Aggregation Stages 
+<details>
+<summary>
+Special Aggregations on Arrays
+</summary>
 
-### Using the $filter Operator
+using the "array-data" file. storing it in the 'friends' collection.
 
-### Applying Multiple Operations to our Array
+#### Pushing Elements Into Newly Created Arrays
 
-### Understanding $bucket
+we can special things with arrays. we use the `$push` operator to elements into an array. in this example, we push the existing arrays into an array, creating an array of arrays
+```js
+db.friends.aggregate([
+    {$group: {_id: {age: "$age"}, allHobbies: {$push: "$hobbies" }}}
+]).pretty()
+```
+
+#### Understanding the `$unwind` Stage
+
+if we want to operate on elements of an array, rathen than the array itself, we can use the `$unwind` stage. in the base form, the `$unwind` operator creates one document for each value of the array, it creates many documents out of a single one.
+
+```js
+db.friends.aggregate([
+    {$unwind: "$hobbies"}
+    {$group: {_id: {age: "$age"}, allHobbies: {$push: "$hobbies" }}}
+]).pretty()
+```
+
+#### Eliminating Duplicate Values
+
+an alternative to `$push` is `addToSet`, which elimates duplications.
+
+```js
+db.friends.aggregate([
+    {$unwind: "$hobbies"}
+    {$group: {_id: {age: "$age"}, allHobbies: {$addToSet: "$hobbies" }}}
+]).pretty()
+```
+
+#### Using Projections with Arrays
+
+if we want to take a subset of an arrays, we can use the `$slice` operator.
+
+```js
+db.friends.aggregate([
+    {$project: {_id: 0, examScore: {$slice:["$examScores",1]}}} // first element
+]).pretty()
+db.friends.aggregate([
+    {$project: {_id: 0, examScore: {$slice:["$examScores",-2]}}} //last two element
+]).pretty()
+db.friends.aggregate([
+    {$project: {_id: 0, examScore: {$slice:["$examScores",2,1]}}} // start at the 2nd element, and take one.
+]).pretty()
+```
+
+#### Getting the Length of an Array
+
+getting the size (length) of an array.
+
+```js
+db.friends.aggregate([
+    {$project: {_id: 0, numScores: {$size: "$examScores"}}}
+]).pretty()
+```
+
+#### Using the `$filter` Operator
+
+we can get a subset of an array based on a condition, we use the `$filter` operation, we have a temporary value which we define by `as` to give it a temporary name, and we then use the `$cond` document, in which we use the double dollar syntax (`$$`) to refer to the local element.
+
+```js
+db.friends.aggregate([
+    {$project: {_id: 0, examScores: {$filter: {input: "$examScores", as: "sc", cond: {$gt: ["$$sc.score",60]}}}}}
+]).pretty()
+```
+
+#### Applying Multiple Operations to our Array
+
+lets take the highest score for each person!
+```js
+db.friends.aggregate([
+    {$unwind: "$examScores"},
+    {$project: {_id:1, name:1, age:1, score:"$examScores.score"}}
+    {$sort: {score:-1}},
+    {$group: {_id: "$_id",name:{$first:name},maxScore: {$max:"$score"}}},
+    {$sort:{maxScore:-1}}
+]).pretty()
+```
+
+</details>
+
+### Understanding `$bucket`
+
+we can use the `$bucket` operator to create bins of data points based on some criteria. this allows us to get an idea of how the data is distributed
+```js
+db.persons.aggregate([
+{$bucket: {groupBy: "$dob.age", boundaries:[0,18,30,50,80,120], output:
+{
+    //names: {$push: "$name.first"},
+    average: {$abg: "$dob.age"},
+    numPersons: {$sum:1}
+}}}
+]).pretty()
+```
+
+an alternative is to tell mongoDB to create the buckets by itself, without us defining the boundaries.
+```js
+db.persons.aggregate([
+{$bucketAuto: {
+    groupBy: "$dob.age",
+    buckets: 5,
+    output: {
+    average: {$abg: "$dob.age"},
+    numPersons: {$sum:1}}
+}}
+]).pretty()
+```
 
 ### Diving Into Additional Stages
 
-### How MongoDB Optimizes Your Aggregation Pipelines
+`$limit` stage to pull a number of results.
+```js
+db.persons.aggregate([
+    {$project:{
+        _id:0,
+        name:{$concat: ["$name.first", " ", "$name.last"]},
+        birthDate: {$toDate: "$dob.date"}
+    }},
+    {$sort: {birthDate: -1}},
+    {$limit: 10}
+]).pretty()
+```
+
+if we want the next bunch, we can use `$skip`, but unlike the **find** operator, now the order of the operations matter.
+```js
+db.persons.aggregate([
+    {match: {gender: "male"}},
+    {$project:{
+        _id:0,
+        name:{$concat: ["$name.first", " ", "$name.last"]},
+        birthDate: {$toDate: "$dob.date"}
+    }},
+    {$sort: {birthDate: -1}},
+    {$skip: 10},
+    {$limit: 10}
+]).pretty()
+```
+
+we need to be carefull with how we write the stages of the pipeline, this could effect performance.
 
 ### Writing Pipeline Results Into a New Collection
+if we have a complex pipeline operation (or a pipeline which produces geoData), we can write it into a different collection (where we could query it as any other collection). we add this as as `$out` stage.
 
-### Working with the $geoNear Stage
+(this is important for geoData because it usually requires indices, which we only have in the first stage of the pipeline, but not afterwards)
+```js
+db.persons.aggregate([
+    {$project:{_id:0, name:{$concat: ["$name.first", " ", "$name.last"]},
+    loc:{type:"Point",coordinates:
+    [
+        {$convert: {input:"$location.coordinates.longitude",to:"double",onError:0.0,onNull:0.0}},
+        {$convert: {input:"$location.coordinates.latitude", to:"double",onError:0.0,onNull:0.0}}
+    ]
+    }}},
+    {$out: "transformedCollection"}
+]).pretty()
+```
+### Working with the `$geoNear` Stage
 
+with our new collections, lets work on with `$geoNear` pipeline stage. **it has to be the first stage in the pipeline.**
+
+```js
+db.transformedCollection.createIndex({loc:"2dsphere"})
+db.transformedCollection.aggregate([
+    {$geoNear: {
+        near: {type: "Point", coordinates:[-18.4,-4.8]},
+        maxDistance: 100000.
+        num:10, //limit
+        query: {age:{$gt:30}}, //other filters,
+        distanceField: "distance" // new field name
+    }}
+]).pretty()
+```
 ### Wrap Up
+
+
+> Stage And Operators
+> - There are plenty of available stages and operators you can choose from.
+> - Stages define the different steps your data is funneled through.
+> - Each stage recives the output of the last stage as input. 
+>   - The first stage takes the original data, so it can use the indexes.
+> - Operators can be used inside of stage to tranform, limit or re-calculate date.
+> Important Stage
+> - The most important stages are `$match`, `$group`, `$project`, `$sort` and `$unwind` - you will work with these a lot.
+> - While the are some common behaviors between `find()` filters + projections and `$match` + `$project`, the aggregation stages are generally more flexible.
+> - 
+
+
+
+[documentation](https://www.mongodb.com/docs/manual/core/aggregation-pipeline-optimization/)
 
 </details>
 
