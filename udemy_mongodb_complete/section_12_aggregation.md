@@ -4,7 +4,7 @@
 
 [main](README.md)
 
-## Section 11 - Understanding The Aggregation Framework
+## Section 12 - Understanding The Aggregation Framework
 <!-- <details> -->
 <summary>
 Retriving Data Efficiently & In a Structured Way.
@@ -356,7 +356,7 @@ db.transformedCollection.aggregate([
 > Important Stage
 > - The most important stages are `$match`, `$group`, `$project`, `$sort` and `$unwind` - you will work with these a lot.
 > - While the are some common behaviors between `find()` filters + projections and `$match` + `$project`, the aggregation stages are generally more flexible.
-> - 
+
 
 
 
@@ -364,6 +364,109 @@ db.transformedCollection.aggregate([
 
 </details>
 
+
+
+## Section 13 - Working with Numeric Data
+
+<!-- <details> -->
+<summary>
+Differnet Numeric Types
+</summary>
+
+> More Complex Than You Might Think.
+
+### Number Types - An Overview
+
+
+Integers (int-32bit, long int-64bit) - full numbers.\
+Double (double-64bit, high precision double-128bit). the default type for numeric data is double.
+
+in regular double numbers, the decimal value is approximated,while with 128-bit doubles, we have high precision (34 decimal points).
+
+we can use integers if we know the number will never be fractional, and we would like to save some memory.
+
+**note: when using the mongo from the shell, all numbers are doubles, because that's how javascript works.**
+
+### Understanding Programming Language Defaults
+
+when using the mongo shell, numbers are double by default, this also happens with the nodeJs driver. 
+```js
+let x = 12 // actually 12.0
+let y = 12.0 // double 64-bit
+```
+this depends on the language, python uses integers by default, so the two values won't be the same.
+
+### Working with `int32`
+
+int32 - a 32 bits (four bytes) integer number.
+
+```js
+db.people.insertOne({age:14})
+db.people.stats()
+```
+the size of the objects is 35.
+```js
+db.people.deleteMany({})
+db.people.insertOne({age:NumberInt(15)})
+//db.people.insertOne({age:NumberInt("15")}) //also works
+db.people.stats()
+```
+
+now the size is 31, a bit smaller than before.
+
+
+### Working with `int64`
+
+```js
+db.companies.insertOne({valuation: NumberInt("5000000000")})
+db.companies.findOne()
+db.companies.insertOne({valuation: NumberInt(2147483647)}) // max value
+db.companies.insertOne({valuation: NumberInt(2147483648)}) // over flow to minimum number
+db.companies.insertOne({valuation: 2147483648}) // double type, can be stored
+db.companies.find().pretty()
+```
+
+we don't an error, we get a different number, there is an over/under flow of numbers.
+
+we can use `NumberLong` instead
+```js
+db.companies.insertOne({valuation: NumberLong(2147483648)}) // valid long
+db.companies.insertOne({valuation: NumberLong(9223372036854775807)}) // larger than max long
+```
+
+we should wrap the number in quation marks, because otherwise the shell won't be able to handle the number.
+```js
+db.companies.insertOne({valuation: NumberLong("9223372036854775807")}) // larger than max long
+```
+
+### Doing Maths with Floats `int32`s & `int64`s
+(some warning about not storing numeric data as text, for obvious reasons)
+
+```js
+db.accounts.insertOne({num: NumberInt(10)});
+db.accounts.updateOne({},{$inc: {num: 10}});
+db.accounts.findOne()
+```
+
+even though we started with Int32, because we add a double to it, the type changed to double. so if we want to keep the type, we need to make sure we update it with an integer32 value.\
+
+the same happens with long integers
+
+```js
+db.companies.deleteMany({})
+db.companies.insertOne({value: NumberLong("123456789123456789")})
+db.companies.updateOne({},{$inc: {value: 1}})
+db.companies.findOne()
+```
+we add a 1.0 to our long integer number, which converted it to a double and then it was out of the valid ranges for the double64 type.
+
+
+### What's Wrong with Normal Doubles?
+### Working with Decimal 128bit
+### Wrap Up
+
+
+</details>
 
 
 
