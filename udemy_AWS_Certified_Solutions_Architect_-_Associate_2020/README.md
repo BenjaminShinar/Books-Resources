@@ -14,6 +14,7 @@ Udemy course [AWS Certified Solutions Architect - Associate 2020](https://www.ud
 - [Section 10 - Applications](Section_10_11_Applications_Security.md#section-10---applications)
 - [Section 11 - Security](Section_10_11_Applications_Security.md#section-11---security)
 - [Section 12 - Serverless](Section_12_Serverless.md)
+- [Practice and Sample Exams](Practice.md)
 
 ## Takeaways
 

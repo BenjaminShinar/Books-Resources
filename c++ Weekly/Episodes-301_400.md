@@ -391,11 +391,11 @@ are all comments simply signs that we didn't try hard enough to make the code cl
 </details>
 
 ## C++ Weekly - Ep 310 - Your Small Integer Operations Are Broken!
+
 <details>
 <summary>
 types that are promoted to integers are prone to weird conversion errors.
 </summary>
-
 
 [Your Small Integer Operations Are Broken!](https://youtu.be/R6_PFqOSa_c)
 
@@ -411,12 +411,11 @@ int main()
 
     std::uint8_t result = value1-value2; //255 underflow
     auto result2 = value1-value2; //-1
-    return value1 - value2; //why zero and not 
+    return value1 - value2; //why zero and not
 }
 ```
 
 the result of substracting the two uint8_t variables is an int.
-
 
 ```cpp
 #include <cstdint>
@@ -435,7 +434,9 @@ int main()
     return 0;
 }
 ```
+
 shifting is also a huge mess, arithmetic shift right does sign extentsion.
+
 ```cpp
 std::uint8_t result1 = (value1-value2) >>1 ; //still 255
 std::uint8_t result2 = (value1-value2) >>3 ; //still 255
@@ -443,6 +444,7 @@ std::uint8_t result3 = static_cast<std::uint8_t>(value1-value2)) >>3 ; // now it
 ```
 
 shifting logic.
+
 ```
 //signed
 // 11000000 >> 1
@@ -452,6 +454,7 @@ shifting logic.
 // 11000000 >> 1
 // 01100000
 ```
+
 at other cases we might need casting over casting. we might decide to create a non_promoting type.
 
 </details>
@@ -480,6 +483,7 @@ int main()
 ```
 
 if we want to define them for our own struct, we need to differentiate between the two versions, one with a dummy value. the postfix increment needs to return a copy.
+
 ```cpp
 struct my_int
 {
@@ -507,6 +511,7 @@ int main(){
     return v.value;
 }
 ```
+
 the postfix version creates a copy, which is usually not what we wanted to do. if we have a complex object, this can cost us in performance.
 
 ```cpp
@@ -522,10 +527,12 @@ void sum_values(std::map<int,int>::const_iterator begin,std::map<int,int>::const
 }
 ```
 
-if we remove optimization, we can see the difference in the assembly code output. the difference is small because iterators are genrally cheap to create. 
+if we remove optimization, we can see the difference in the assembly code output. the difference is small because iterators are genrally cheap to create.
+
 </details>
 
 ## C++ Weekly - Ep 312 - Stop Using `constexpr` (And Use This Instead!)
+
 <details>
 <summary>
 Using `static constexpr` variables and not `constexpr`.
@@ -602,8 +609,7 @@ int main()
 }
 ```
 
-in clang O3 the value is what we expect (985*3), in gcc, we get an error for using an uninitialized value, if we add address sanitizer flag `--fsanitize=address` we see a warning about "stack-use-after-scope".
-
+in clang O3 the value is what we expect (985\*3), in gcc, we get an error for using an uninitialized value, if we add address sanitizer flag `--fsanitize=address` we see a warning about "stack-use-after-scope".
 
 1. must run all test with address sanitizer enabed
 2. must run both release and debug builds with address sanitizer
@@ -625,6 +631,7 @@ int main()
 this is part of the object life time puzzlers book!
 
 the storage duration types are:
+
 - static
 - thread
 - automatic
@@ -633,6 +640,7 @@ the storage duration types are:
 </details>
 
 ## C++ Weekly - Ep 313 - The `constexpr` Problem That Took Me 5 Years To Fix!
+
 <details>
 <summary>
 Getting compile time values to be usable in runtime.
@@ -641,7 +649,6 @@ Getting compile time values to be usable in runtime.
 [The `constexpr` Problem That Took Me 5 Years To Fix!](https://youtu.be/ABg4_EV5L3w)
 
 > (Compile-time views Into optimally sized comppile-time data. I'ts awesome, no really, trust me!)
-
 
 taking a standard string from compile time to runtime.
 
@@ -666,9 +673,11 @@ int main()
     fmt::print("{}",result2); //this fails
 }
 ```
+
 we can't let the constexpr string escape into a non-constexpr context.
 
 however, this does work, we get length at compile time and print it at runtime.
+
 ```cpp
 constexpr auto get_length(std::string_view base, const int repeat)
 {
@@ -684,6 +693,7 @@ int main()
 we can get the size, but not the string itself.
 
 (he does something with std::array, but it needs to call the make_string function twice)
+
 ```cpp
 template <std::size_t Len>
 constexpr auto get_array(const std::string& str)
@@ -701,13 +711,17 @@ int main()
 
 }
 ```
+
 it's impossible to do this
+
 ```cpp
 constexpr std::string value; //doesn't compile!
 ```
+
 it can be a bit nicer if we delegate the creation of the string to a lambda, but it's still the same issue.
 
 lets try this, use some buffer data. it works, but the size of the binary increases!
+
 ```cpp
 struct oversized_array
 {
@@ -732,7 +746,9 @@ int main()
     fmt::print("{}: {}", sv.size(), sv);
 }
 ```
+
 lets try to get the correct size: but this doesn't work. an input variable can't be an constant expression value.
+
 ```cpp
 constexpr auto to_right_size_array(const std::string & str)
 {
@@ -742,7 +758,9 @@ constexpr auto to_right_size_array(const std::string & str)
     return result;
 }
 ```
+
 but we can pass a lambda that creates a constant expression value. the function should actually be **consteval**, because we would never want to all it in runtime.
+
 ```cpp
 template<typename Callable>
 consteval auto to_right_size_array(Callable callable)
@@ -763,12 +781,12 @@ int main()
 }
 ```
 
-this still isn't good enough, we still create two oject, a *std::array* and the *std::string_view*. there also a problem with having static variables in the *consteval* function.
+this still isn't good enough, we still create two oject, a _std::array_ and the _std::string_view_. there also a problem with having static variables in the _consteval_ function.
 
 so now we try other crazy stuff, we have a function that returns a reference to the template argument. and now we got something that the compiler can optimize.
 
 > Class non template type parameter
->
+
 ```cpp
 template<auto Data>
 consteval auto & make_static()
@@ -793,15 +811,13 @@ int main()
 - lambda that returns a string
 - we create an oversized array (which should be big enough for any reason) which is constant time value
 - then we use the oversized array as template argument to create a smaller array.
-- which we use as static reference 
+- which we use as static reference
 - and then we use it to create the string_view.
-
-
-
 
 </details>
 
 ## C++ Weekly - Ep 314 - Every Possible Way To Force The Compiler To Do Work At Compile-Time in C++
+
 <details>
 <summary>
 Different ways to do compile-time calculations.
@@ -811,7 +827,7 @@ Different ways to do compile-time calculations.
 
 just making a value or function `constexpr` doesn't force the compiler to run it a compile time.
 
-we can make the value *static*, which forecs the compiler to compute the value at compile time, but also requires it to be const. 
+we can make the value _static_, which forecs the compiler to compute the value at compile time, but also requires it to be const.
 
 we can use `constinit`, but it also has to be static.
 
@@ -828,6 +844,7 @@ int main()
     constinit static auto value3 = get_value(4); //also must be static, but not const.
 }
 ```
+
 if we change the function to be `consteval`, then it must be done it compile time sense, but that's not always what we want.
 
 ```cpp
@@ -838,6 +855,7 @@ consteval int get_value_consteval(int value)
 ```
 
 in the previous episodes, we had some other tricks, like using a template parameter
+
 ```cpp
 template<auto Value>
 consteval const auto make_compile_time()
@@ -864,6 +882,7 @@ int main()
 ```
 
 and we want to generalize it to moveable stuff as well
+
 ```cpp
 template <typename ... Param>
 consteval decltype(auto) consteval_invoke(Param && ... param)
@@ -876,18 +895,21 @@ int main()
     auto value8 = consteval_invoke(get_value, 9);
 }
 ```
-type/keyword | compile-time calculation| const |static | example |notes
-----|----|----|---|---|---
-`constexpr` | up to the compiler | yes | no | `constexpr auto value = get_value(1);` 
-`constexpr static` | yes |yes | yes| `constexpr static auto value = get_value(1);` | must be static const
-`constinit static` | yes |no |yes | `constinit static auto value = get_value(1);` | must be static
-`consteval` function | yes |no |no | `auto value = get_value_consteval(5)` | argument must be compile time constants, function can't be used in run time.
-template parameter | yes |no |no | `auto value = make_compile_time<get_value(10)>()` | using templates
-wraping `consteval` function | yes | no | no | `auto value = as_constant(get_value(10))` |inner function can be reused
-`consteval invoke` wrapper | yes | no |no | with moveable and callable 
+
+| type/keyword                 | compile-time calculation | const | static | example                                           | notes                                                                        |
+| ---------------------------- | ------------------------ | ----- | ------ | ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `constexpr`                  | up to the compiler       | yes   | no     | `constexpr auto value = get_value(1);`            |
+| `constexpr static`           | yes                      | yes   | yes    | `constexpr static auto value = get_value(1);`     | must be static const                                                         |
+| `constinit static`           | yes                      | no    | yes    | `constinit static auto value = get_value(1);`     | must be static                                                               |
+| `consteval` function         | yes                      | no    | no     | `auto value = get_value_consteval(5)`             | argument must be compile time constants, function can't be used in run time. |
+| template parameter           | yes                      | no    | no     | `auto value = make_compile_time<get_value(10)>()` | using templates                                                              |
+| wraping `consteval` function | yes                      | no    | no     | `auto value = as_constant(get_value(10))`         | inner function can be reused                                                 |
+| `consteval invoke` wrapper   | yes                      | no    | no     | with moveable and callable                        |
+
 </details>
 
 ## C++ Weekly - Ep 315 - `constexpr` vs `static constexpr`
+
 <details>
 <summary>
 more comparison between constexpr and static constexpr. looking at benchmark numbers.
@@ -922,11 +944,13 @@ std::uint32_t to_ascii_base36_digit_static(std::uint32 digit)
     return base36_map[digit];
 }
 ```
+
 he plays with the numbers (data size) in the benchmark, and increases the map size to 72, then 144 and 2048. now the results are reversed, the static constexpr version is much faster. it's just a matter of copying data onto the stack vs accessing the global data. it also changes with the optimization level and the compiler (clang vs gcc vs visual studio).
 
 </details>
 
 ## C++ Weekly - Ep 316 - What Are `const` Member Functions?
+
 <details>
 <summary>
 The basics on `const` and non-`const` member functions.
@@ -947,7 +971,7 @@ struct string
 {
     std::size_t size(){ return m_size;}
     std::size_t const_size const (){ return m_size;}
-    private: 
+    private:
     std::size_t m_size{};
 };
 
@@ -957,16 +981,17 @@ int main()
 
     // fmt::print("string size: {}",my_const_str.size()); //fails
     fmt::print("string size: {}",my_const_str.const_size()); //ok
-    
+
     string my_str;
     [[maybe_unused]] const &str_ref_const = my_str; // no problem
     [[maybe_unused]] &my_const_str = my_str; // error!
 }
 ```
 
-continuing our string example, now supposedly we look at the *iterator*. we again need a const and non const version, and this is important if we want **for loops**.
+continuing our string example, now supposedly we look at the _iterator_. we again need a const and non const version, and this is important if we want **for loops**.
 
 luckily, const and non const functions acts as overloads, so we have both version and the correct one is chose as needed.
+
 ```cpp
 #include <fmt/format.h>
 
@@ -974,11 +999,11 @@ class string
 {
     public:
     std::size_t const size(){ return m_size;}
-    char * begin(); 
+    char * begin();
     char * end();
-    const char * begin() const; 
+    const char * begin() const;
     const char * end() const;
-    private: 
+    private:
     std::size_t m_size{};
 };
 
@@ -988,12 +1013,12 @@ int main()
 
     for (const auto character : my_str)
     {
-        fmt::print("character: {}\n",character); 
+        fmt::print("character: {}\n",character);
     }
 }
 ```
-</details>
 
+</details>
 
 ## C++ Best Practices Game Jam Info, Rules and Quick-Start
 
@@ -1008,7 +1033,6 @@ C++ game jam. starts April 1,2022.
 - must start from the provided template and compile all the actions.
 - run with no errors or address sanitizer warning.
 - try not to disable warnings.
-
 
 <kbd>Use this template</kbd>, then <kbd>Create Repository from template</kbd>.
 
@@ -1025,15 +1049,18 @@ c/c++ extension pack (from microsoft)
 configure to run with debug. launch target "intro" to compile the ftxui dependencies
 
 there are two demo
+
 ```sh
 ./intro turn_based
 ./intro loop_based
 ```
 
 we document disabling warning with `NOLINT`, for debugging we need a debug configuration.
+
 </details>
 
 ## C++ Weekly - Ep 317 - How Member Functions Work
+
 <details>
 <summary>
 continuing the previous video, this time understanding what the compiler does.
@@ -1043,7 +1070,7 @@ continuing the previous video, this time understanding what the compiler does.
 
 first of all, a function overload is happening at compile time, unlike virtual functions, which happen at runtime.
 
-if we play with compiler explorer and the optimizations, we can see that the compiler passes the *this* pointer as the first argument to the function, and if the member function is `const`, then the pointer is const.\
+if we play with compiler explorer and the optimizations, we can see that the compiler passes the _this_ pointer as the first argument to the function, and if the member function is `const`, then the pointer is const.\
 this parameter is sometimes passed in the registers.
 
 there is actually even another thing which is passed, the return type, according to the caller conventions.
@@ -1051,6 +1078,7 @@ there is actually even another thing which is passed, the return type, according
 </details>
 
 ## C++ Weekly - Ep 318 - My Meetup Got Nerd Sniped! A C++ Curry Function
+
 <details>
 <summary>
 Creating a `curry` function, which can either execute a function or return a new one.
@@ -1061,10 +1089,10 @@ Creating a `curry` function, which can either execute a function or return a new
 someone said that it's hard to create a currying function in c++.
 
 requirements:
+
 - be like `bind`
 - take the first N parameters
 - either return a function or execute it
-  
 
 ```cpp
 int add (int x, int y, int z){return x+y+z;}
@@ -1112,11 +1140,12 @@ int main()
 ```
 
 however, this will fail for trying to cascade the calls.
+
 ```cpp
 int main()
 {
     const auto bound = bind(add,1)(2)(3);
-    return bound; 
+    return bound;
 }
 ```
 
@@ -1142,20 +1171,22 @@ auto curry(Callable f, Param ... ps)
 int main()
 {
     const auto curried = curry(add,1)(2)(3);
-    return curried; 
+    return curried;
 }
 ```
 
 the paramaters are copied each time, which might be a problem, and more than that, the function doesn't work for the basic case.
+
 ```cpp
 int main()
 {
     const auto curried = curry(add,1,2,3);
-    return curried; 
+    return curried;
 }
 ```
 
 so the updated form is similar, but with a `if constexpr` check at the start.
+
 ```cpp
 template<typename Callable, typename ... Param>
 auto curry(Callable f, Param ... ps)
@@ -1202,18 +1233,21 @@ auto curry(Callable f, Param ... ps)
 ```
 
 it even works for weird cases, like passing it no parameters.
+
 ```cpp
 int main()
 {
     const auto curried = curry(add,1,2)()()(()(3);
-    return curried; 
+    return curried;
 }
 ```
 
 the problem is the copying, we don't handle forwarding. if we take references, we run into object lifetime issues. there might be a way to parametrize it (take copy of rvalue, reference of lvalue), but it would probably quickly become a monsteroues code.
+
 </details>
 
 ## C++ Weekly - Ep 319 - A JSON To C++ Converter
+
 <details>
 <summary>
 A zero runtime library that allows using Json resources at compile time.
@@ -1228,6 +1262,7 @@ everything is statically known at compile time, it creates a cpp class that is d
 </details>
 
 ## C++ Weekly - Ep 320 - Using `inline namespace` To Save Your ABI
+
 <details>
 <summary>
 Another attempt to mend the ABI problem.
@@ -1238,6 +1273,7 @@ Another attempt to mend the ABI problem.
 avoid problems with ABI (application binary interface) breaking.
 
 imagine that we start with this code:
+
 ```cpp
 namespace lefticus{
     struct Data{
@@ -1257,7 +1293,6 @@ int main()
 ```
 
 but now we want to change the order of the arguments in the struct. but this is breaking ABI. the layout changed, the size changed. We want to be able to safely change the ABI, in c++11 there was a new feature called **inline namespaces**
-
 
 ```cpp
 namespace lefticus{
@@ -1331,9 +1366,11 @@ Game Jam conclusion
 the topic of the gameJam was "round", some problems were encountered, etc...
 
 (going over some games - not much of an episode)
+
 </details>
 
 ## C++ Weekly - Ep 322 - Top 4 Places To Never Use `const`
+
 <details>
 <summary>
 Cases where declaring const is not the preferred behavior.
@@ -1343,9 +1380,7 @@ Cases where declaring const is not the preferred behavior.
 
 a list episode!
 
-
 > On a non-reference return type
-
 
 ```cpp
 std::string make_value();
@@ -1358,6 +1393,7 @@ int main()
     s= make_value_const();
 }
 ```
+
 this behavior stops us from performing move operatons, as we can't move from const, so we must perform a copy/assignment operator, which is a performance issue.
 
 > Don't `const` local values that need to take advantage of implicit moe-on-return operations
@@ -1384,7 +1420,7 @@ int main()
 
 we have a techincally true but actually pointless warning about a move constructor.
 
-*std::optional* has an implicit conversion, because it's a value type, rather than a pointer type.
+_std::optional_ has an implicit conversion, because it's a value type, rather than a pointer type.
 
 ```cpp
 inline std::optional<S> make_value_5()
@@ -1396,8 +1432,8 @@ inline std::optional<S> make_value_5()
 
 > if you have multiple different objects that might be returned, then you are also relying on implicit move-on-return (aka automatic move).
 
-
 in the following case we have two constructors and a copy, because both options are initiliazed, if we would move the objects into the inner scopes, we could create just one and get move operations and return value optimization.
+
 ```cpp
 inline S make_value_multiple(bool option)
 {
@@ -1417,12 +1453,11 @@ inline S make_value_multiple(bool option)
 int main(int argc, const char*[])
 {
     auto s = make_value_multiple(argc==1); // can't optimize return value
-   
+
 }
 ```
 
 > don't `const' non-trivial value parameters that you might need to return directly from the function.
-
 
 ```cpp
 
@@ -1438,10 +1473,11 @@ inline S make_value_from_arg_move(S s)
 
 int main([[maybe_unused]] int argc, const char*[])
 {
-    auto s1 = make_value_from_arg_const(s{}); // no move 
+    auto s1 = make_value_from_arg_const(s{}); // no move
     auto s2 = make_value_from_arg_move(s{}); // move
 }
 ```
+
 > Don't `const` any **member** data!\
 > It breaks implicit and explicit moves\
 > It breaks common use cases
@@ -1460,6 +1496,7 @@ int main()
 
 }
 ```
+
 this behavior is seen when we use data containers, this prevents us from efficiently resizing containers.
 
 ```cpp
@@ -1478,10 +1515,10 @@ int main()
 
 if we have an invarient data member which we can't change without breaking other stuff, then we should simply write an accessor/mutator.
 
-
 </details>
 
 ## C++ Weekly - Ep 323 - C++23's `auto{}` and `auto()`
+
 <details>
 <summary>
 explicitly copy a value.
@@ -1499,7 +1536,9 @@ int main()
     return auto{4}; //explicitly make a copy
 }
 ```
-this comes into use in templates and when we use *auto* type parameters.
+
+this comes into use in templates and when we use _auto_ type parameters.
+
 ```cpp
 void use (const auto &);
 void function(const auto &something)
@@ -1509,9 +1548,11 @@ void function(const auto &something)
     use(std::decay_t<decltype(somthing)>{something});
 }
 ```
+
 this is the motivating example. we want to erase all the elements which are like the first one.\
 but the output of the code also removes all additional instances of the second unique element.
 this is because we use swapping internally in (`std::erase_if`).
+
 ```cpp
 void erase_all_of_first(auto & container)
 {
@@ -1531,7 +1572,9 @@ int main()
     // "hello there world","bob", "test"
 }
 ```
+
 to fix this, we take a copy.
+
 ```cpp
 void erase_all_of_first(auto & container)
 {
@@ -1552,6 +1595,7 @@ auto copy (const auto & value)
 </details>
 
 ## C++ Weekly - Ep 324 - C++20's Feature Test Macros
+
 <details>
 <summary>
 Macros that allow us to check if we can use a feature in our current standard library implementation.
@@ -1569,8 +1613,8 @@ constexpr std::string make_string()
 {
     std::string result;
     result = "Hello ";
-    result += "World"; 
-    result += " Test Long String"; 
+    result += "World";
+    result += " Test Long String";
     return result;
 }
 
@@ -1590,6 +1634,7 @@ this allows us to check if we can use a specific version of implementation, in c
 </details>
 
 ## C++ Weekly - Ep 325 - Why vector of bool is Weird
+
 <details>
 <summary>
 The special case of the vector of booleans.
@@ -1622,6 +1667,7 @@ int main()
 ```
 
 there is a problem, what if we want a reference to one of the elemtents? this doesn't make sense, we cant reference bits in the memory, only bytes.
+
 ```cpp
 #include <vector>
 #include <iostream>
@@ -1651,7 +1697,8 @@ void getRef()
 }
 ```
 
-in the case of *std::vector\<bool\>*, **a proxy object** is used instead, this object knows how to interact with the correct bit.
+in the case of _std::vector\<bool\>_, **a proxy object** is used instead, this object knows how to interact with the correct bit.
+
 ```cpp
 #include <vector>
 #include <iostream>
@@ -1664,8 +1711,8 @@ int main()
     std::cout << data.front() << '\n'; // false
 }
 ```
-this does get annoying, as we can't bind directly.
 
+this does get annoying, as we can't bind directly.
 
 ```cpp
 #include <vector>
@@ -1677,13 +1724,13 @@ int main()
 
     for (auto & bit : data) //can't be done.
     {
-        bit = 0; 
+        bit = 0;
     }
 }
 ```
+
 the form of `for (const auto & bit : data)` works, but it can't modify the data. and the form `for (auto bit : data)` can modify the data, but doesn't look right. in any other case we wouldn't excpect to work.\
 one way to avoid this is to use forwarding references. `auto &&`, which works for both proxies and regular behavior, so if we see it, we should know that it's a proxy object and be careful
-
 
 ```cpp
 #include <vector>
@@ -1695,13 +1742,15 @@ int main()
 
     for (auto && bit : data) //forewarding
     {
-        bit = 0; 
+        bit = 0;
     }
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 326 - C++23's Deducing `this`
+
 <details>
 <summary>
 Matrix use case
@@ -1709,8 +1758,8 @@ Matrix use case
 
 [C++23's Deducing `this`](https://youtu.be/5EGw4_NKZlY)
 
-
 one use case is when we have const and non-const member functions, like the `at` function.
+
 ```cpp
 #include <array>
 #include <cstddef>
@@ -1739,6 +1788,7 @@ int main()
 ```
 
 this is code duplication, can we get around this? we can have a shared function that makes use of the static deduction.
+
 ```cpp
 
 template <typename Contained,std::size_t Width, std::size_t Height>
@@ -1763,7 +1813,6 @@ struct Matrix{
 
 };
 ```
-
 
 and a simplified form will end up like this
 
@@ -1805,9 +1854,11 @@ int main()
     return func(data,2,3);
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 327 - C++23's Multidimensional Subscript Operator Support
+
 <details>
 <summary>
 multiple parameters in subscript operators.
@@ -1816,6 +1867,7 @@ multiple parameters in subscript operators.
 [C++23's Multidimensional Subscript Operator Support](https://youtu.be/g4aNGgLzVqw)
 
 in the previous video, we used tha the `at` operator, which should throw an exception if we try to access an element out of range. so we should be clear about the issue.
+
 ```cpp
 #include <array>
 #include <cstddef>
@@ -1842,7 +1894,7 @@ int main()
 }
 ```
 
-C++23 introduced multi-dimensional subscript operators, meaning we can use more than one index inside the brackets.  we can't combine both forms until the compilers support both options, but for a simple example, we can use a const version of this.
+C++23 introduced multi-dimensional subscript operators, meaning we can use more than one index inside the brackets. we can't combine both forms until the compilers support both options, but for a simple example, we can use a const version of this.
 
 ```cpp
 #include <array>
@@ -1865,29 +1917,33 @@ int main()
     return data[2,3]; // 13
 }
 ```
+
 </details>
 
-
-
 ## C++ Weekly - Ep 328 - Recursive Lambdas in C++23
+
 <details>
 <summary>
 
 </summary>
 
 [Recursive Lambdas in C++23](https://youtu.be/hwD06FNXndI)
+
 </details>
 
 ## C++ Weekly - Ep 329 - How LTO Easily Makes Your Program Faster
+
 <details>
 <summary>
 
 </summary>
 
 [How LTO Easily Makes Your Program Faster](https://youtu.be/9nzT1AFprYM)
+
 </details>
 
 ## C++ Weekly - Ep 330 - Faster Builds with `extern template` (And How It Relates to LTO)
+
 <details>
 <summary>
 extern templates are a way to instantiate templates in one file rather than recreate it each time.
@@ -1898,7 +1954,6 @@ extern templates are a way to instantiate templates in one file rather than recr
 like the earlier video, we have an 'add' function in a differnet complication unit. this time we make it a template.
 
 since c++ there was a feature called `extern template`, which stops the compiler from creating the same template again and again. we need to declare the template type as `extern`, and then have one place file that instantiates it explicitly.
-
 
 ```cpp
 #ifndef DECLERATIONS
@@ -1914,6 +1969,7 @@ extern template int add<int>(int, int);
 
 #endif
 ```
+
 and in a separate cpp file
 
 ```cpp
@@ -1927,7 +1983,7 @@ however, this prevents us from the optimizing, so we need the LTO again.
 ```cmake
 project(test CXX)
 cmake_minimum_required(VERSION 3.18)
-include(CheckIPOSupported)
+include(CheckIPOSsupported)
 
 add_executable(tst file1.cpp file2.cpp impl.cpp)
 set_property(TARGET test PROPERTY INTERPROCEDURAL_OPTIMIZATION)
@@ -1938,5 +1994,22 @@ set_property(TARGET test PROPERTY INTERPROCEDURAL_OPTIMIZATION)
 > extern template saves us on build time in each cpp file of our large project. (assuming the function is expensive to compile).
 
 if the function is expensive, LTO probably wouldn't be able to inline it anyways.
+
+</details>
+
+### C++ Weekly - Ep 331 - This Game Teaches C++!
+
+<details>
+<summary>
+Making C++ Fun and accessable.
+</summary>
+
+[This Game Teaches C++!](https://youtu.be/snQhhWE1xR4), [best practices githun](https://github.com/cpp-best-practices).
+
+a shell script to install all sorts of stuff to run on a new machine. we clone the game repo. let it run conan and cmake, compile whatever it needs. we can start the game.
+
+We need to modify the code, to make the lesson start rather than the game. the 'game' tells us to change the source code, and we launch the game again. each time we get another lesson we are told what to look at in the code.
+
+the game can run on computers, and even on raspberry pie (even if vscode struggles a bit)
 
 </details>
