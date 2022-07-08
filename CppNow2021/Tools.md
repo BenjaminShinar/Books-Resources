@@ -2266,6 +2266,428 @@ the datatype will have a native handle (just like the standard thread has),will 
 
 </details>
 
+## UT - C++20 Unit Testing Framework - Kris Jusiak
+
+<details>
+<summary>
+A simple implementation of a unit testing framework in c++20.
+</summary>
+
+[UT - C++20 Unit Testing Framework](https://youtu.be/kn2b9QjesAg), [slides](https://cppnow.digital-medium.co.uk/wp-content/uploads/2021/05/ut-cpp20_unit_testing_framework-kris_jusiak-cppnow2021.pdf), [UT- github](https://github.com/boost-ext/ut), [compiler explorer header impelmentation](https://godbolt.org/z/a7Mses)
+
+### Motivation
+
+what's the benefits of a unit testing framework?
+
+we want to be able to verify behavior. in cpp we don't have testing as first class citizen, but we can do asserts (which go away in non-DEBUG builds)
+
+```cpp
+constexpr auto sum(auto... args){return (args + ...);}
+int main()
+{
+  {
+    assert(3 == sum(1,2));
+  }
+}
+```
+
+> Problems:
+>
+> - No ability to list/run specific tests
+> - No useful information when the test failed
+> - Hard to scale/integrate/debug
+> - Easy to make mistakes (implicit conversions, ...)
+> - Hard to follow good practices such as TDD/BDD (tests/ behavior driven design)
+>
+> Existing Solutions
+>
+> - GoogleTest
+> - Boost.Test
+> - Catch2
+> - DocTest
+> - and others...
+
+however, even the existing solutions still have problems:
+
+- Macro based - as a community, the c++ world is moving away from macro
+- Lots of Boilerplate code
+- Can be slow to compile
+- Integration Issues - another library to link
+
+we want the c++20 future testing to have no Macros, minimal boiler plate, minimal learning curve, easy to integrate (header-only / c++20 module), flexble and scaleble, and fast (compile and execute)
+
+the goal it to have something like this:
+
+simple import to get the library, a simple use of the equality operator (and not special assertion function with expected values), and having a simple way to declare tests.
+
+```cpp
+import ut;  // c++20 module
+constexpr auto sum(auto args...) {return (0 + ... + args);}
+
+int main()
+{
+  "sum"_test = []{
+      sum(1,2) == 42_i; // this fails
+  };
+}
+```
+
+and as a test suite, we put them together and use the `expect` syntax to better clarify ourselves.
+
+```cpp
+import ut;
+
+suite sums = [] {
+  "sum with no args"_test = [] { expect(sum() == 0_i); };
+  "sum with single args"_test = [] { expect(sum(42) == 42_i); };
+  "sum with multiple args"_test = [] { expect(sum(1,2) == 3_i); };
+};
+```
+
+### Implementation (Simplified/ C++20)
+
+the simplified syntax is around 200 lines of code.
+
+the ut module.
+
+[the hpp file](https://github.com/boost-ext/ut/blob/master/include/boost/ut.hpp)
+
+```cpp
+export module ut; // module interface unit
+import std; // module import
+export namespace ut::inline v1 {
+
+}
+```
+
+and compiling stuff, using pre-compiled modules (.pcm)
+
+```sh
+$CXX $CXXFLAGS -emit-module-interface -c ut.hpp -o ut.pcm
+$CXX $CXXFLAG main.cpp ut.pcm -o main
+```
+
+we want the "\_test" literal, it's a concept. we use concepts to create type constrains, to have better error messages (at the point of instantiation), and they can be faster than SFINAE in terms of compilation time
+
+```cpp
+template<class T> concept printable = // define printable concept
+  requires(std::ostream &os, T t) {
+    os << t;
+  };
+
+template<class T, auto expr =[]{}> concept test =
+  requires(T test){
+    { test.name } -> printable; // another concept
+    { test = expr } -> std::same_as<void>; // we can assing a lambda to this thing
+  };
+```
+
+some conepts syntax reminders
+
+```cpp
+template<class T> concept AutoConcept = true; // least contraint concept
+
+// all of these are equivlents
+auto foo(auto arg);
+template<class T> requires AutoConcept<T> auto foo(T arg);
+template<class T> auto foo(T arg) requires AutoConcept<T>;
+template<AutoConcept T> auto foo(T arg);
+auto foo (AutoConcept auto arg);
+```
+
+defining the "test" struct
+
+```cpp
+struct test
+{
+  std::string_view name{}; // test case name
+
+  auto operator=(std::invocable auto test) -> void {
+    std::clog << "Running... " << name << '\n';
+    test();
+  }
+};
+```
+
+defining the literal
+
+```cpp
+[[nodiscard]] constexpr concepts::test auto operator""_test (const char* name, std::size_t size)
+{
+  return test{.name={name, size}}; //initialize string_view
+}
+```
+
+so back to the driver code
+
+```cpp
+import ut;
+int main()
+{
+  "sum"_test = []{
+  };
+}
+```
+
+this will result in test running and writing <samp>Running... sum</samp> to the log/console. the test itself (the lambda) is run the moment we assign it to the 'test' struct.
+
+the next step is to have the assetion.
+
+```cpp
+import ut;
+int main()
+{
+  "sum"_test = []{
+    sum(1,2) == 3_i;
+  };
+}
+```
+
+we can't overload operators of primitives, but we can create a workaround, which is needed to have the test actually produce a usable result.
+
+```cpp
+// this fails
+constexpr auto operator==(int,int)->bool {return {};}
+
+// this is possible
+template< auto N > constexpr auto operator==(std::integral_constant< int, N>, int ) -> bool{
+  return {};
+}
+```
+
+here's how, we create an 'op' concept, which needs to be printable, and either be a constant value or be converable to a boolean. we use "Design by introspection" to define the behavior of stuff - different branches in compile time.
+
+```cpp
+template <class TOp> concept op =
+  requires printable<TOp> and (
+    requires (TOp op)
+    {
+      op.lhs;
+      op.rhs;
+      requires std::convertible_to<TOp, bool>;
+    }
+    or requires(TOP op)
+    {
+      typename TOp::value_type;
+      op.value;
+    }
+  );
+
+// simple way to report error
+auto error(const auto& expr) -> void
+{
+  std::cerr << "Failed: " <<  expr << '\n';
+}
+
+// get the value, or use the thing itself
+constexpr auto value (auto op)
+{
+  if constexpr (requires {op.value;})
+  {
+    return op.value;
+  }
+  else
+  {
+    return op;
+  }
+}
+
+template <class TLhs, class TRhs> struct eq final
+{
+  TLhs lhs{}; // satisfy concept
+  TRhs rhs{}; // satisfy concept
+
+  ~eq() noexcept{
+    if (not *this) {error(*this);} // convert to bool, if false then 'error'
+  }
+
+  // allow implicit conversion to bool - used in the destructor
+  [[nodiscard]] constexpr explicit(false) operator bool() const
+  {
+    return value(lhs) == value(rhs);
+  }
+
+  // define stream output operator
+  friend auto& operator<<(auto& os, const &eq op)
+  {
+    retrun (os << value(op.lhs) << " == " << value(op.rhs));
+  }
+
+};
+
+template <class TLhs, class TRhs> eq(TLhs, TRhs) -> eq<TLhs, TRhs>;
+
+template <class TLhs, class TRhs>
+  requires concepts::op<TLhs> or concepts::op<TRhs>
+  constexpr auto concepts::op auto operator==(TLhs lhs, TRhs rhs)
+  {
+    return eq{lhs,rhs};
+  }
+```
+
+we are still missing the assetion and the user_defined literals (the "\_i"). again, we can't define everything, so we trick the compiler into reading the text as characters, which we then convert internally (all at compile time). this is a fold expresion. we use Immediately-invoked function expression.
+
+```cpp
+//this fails
+constexpr auto operator""_i(int) -> int;
+
+//this is okay, some weird fold expression
+template <char... Cs>
+[[nodiscard]] constexpr auto operator""_i { //int
+  return []<auto... Ns>(std::index_sequence<Ns...>){
+    return std::integral_constant<int,
+    ((std::pow(10, sizeof...(Ns) - Ns - 1)) * (Cs -'0' ) + ...)>{};
+  } (std::make_index_sequence<sizeof...(Cs)>{});
+}
+```
+
+next thing missing is the file and function names,essentially, we want to replace the `__FILE__`, `__LINE__` and `__FUNCTION__` macros. we the c++20 _source_location_ struct instead. there is a problem that we can't add default arguments to overloaded operators.
+
+```cpp
+// this isn't allowed
+constexpr auto operator== (auto, auto, const std::source_location& location = std::source_location::current()) -> bool
+{
+  return {};
+}
+```
+
+so we need to be creative, we try push the default argument into the _eq_ struct which we created earlier, but then the file name and location are the wrong place. so we create another struct which inherits from the regular _eq_ but is created at the correct location.
+
+```cpp
+
+auto error(const auto& expr, const auto& location) -> void{
+  std::cerr << location.file_name() << ':' << location.line() << ":FAILED: " << expr << '\n';
+}
+
+// this isn't enough on it's own
+template <class TLhs, class TRhs> struct eq final
+{
+  TLhs lhs{}; // satisfy concept
+  TRhs rhs{}; // satisfy concept
+  std::source_location location_{};
+
+  constexpr eq(TLhs lhs, TRhs rhs, std::source_location& location = std::source_location::current());
+
+  ~eq() noexcept{
+    if (not *this) {error(*this, location_);} // convert to bool, if false then 'error'
+  }
+/* other stuff*/
+};
+
+template <class TValue> struct value_location
+{
+
+  constexpr explicit(false) value_location(TValue value, const std::source_location& location = std::source_location::current()) : value{value}, location{location}{}
+
+  TValue value{};
+  std::source_location location{};
+}
+
+template <op T>
+constexpr auto operator==(value_location<typename T::value_type>,T rhs)
+{
+  struct eq : detail::eq<decltype(lhs),decltype(rhs)>
+  {
+    ~eq() noexcept
+    {
+      if (not *this)
+      {
+          error(*this, lhs.location);
+      }
+    }
+  };
+  return eq{lhs,rhs};
+}
+```
+
+the next part is the `expect` - which allows us to add a message to each test, it's fairly simple, as it takes an expression, and uses it to return an output stream where the message is printed to, with additional source location data. we also want the test suite, which holds several tests together, it's another lambda expression
+
+with just those things, we can have a basic, simple, working unit test framework.
+
+### UT - Unit Testing Framework
+
+going beyond the simplified implementation, we can use the complete library for more.
+
+> - Uses C++20 features (concepts, modules).
+> - Single header (or module), with no external dependencies other than the C++ Standard Library.
+> - Macro-free
+> - Features the usual capabilites of unit testing frameworks:
+>   - Assertions
+>   - Suites
+>   - Test
+>   - Section
+>   - BDD
+>   - Matchers
+>   - Logging
+> - Not part of the official boost library for now.
+
+usage: [hello world example](https://godbolt.org/z/Y43Mxz)
+
+```cpp
+import boost.ut;
+// #include <boost/ut.hpp>
+
+auto sum (auto... args) {return (args + ...);}
+
+int main()
+{
+  using namespace boost::ut;
+  "sum"_test = []
+  {
+    sum(0) == 0_i;
+    sum(1,2) == 3_i;
+    sum(1,2) > 0_i and 41_i == sum(40,2);
+  };
+}
+```
+
+which results in this output:
+
+> <samp>
+> Running "sum"... <br>
+> sum.cpp:11:FAILED [(3>0 abd 41 == 42)]<br>
+> FAILED <br>
+> =============================<br>
+> test:   1 | 1 failed <br>
+> asserts: 3 | 2 passed | 1 failed
+> </samp>
+
+(There is not built in support for mocking, but it can be combined with mocking frameworks)
+
+We can have some filtering capabilites based on configuration, running some tests or suites and not others. we can assign tags to tests, skip tests, and the usual behaviors. matchers, fatal assertions which fail the test and prevent the test from continuing. floating point precession specification is based on the input or user defined. we can define where the logging goes.
+
+- [Sections](https://godbolt.org/z/y9m5vf) have a setup stage, and then subsections with 'should' keyword, which is similar to '\_test', and a teardown stage.
+- [Suites](https://godbolt.org/z/7P3Ph1), with examples of expecting errors and exceptions.
+- [Parameterized](https://godbolt.org/z/6FHtpq) test by using for loops, or by piping the test into a tuple.
+- [Template metaprgramming](https://godbolt.org/z/9oh97x) - for constant expressions.
+- [Sec](https://godbolt.org/z/6jKKzT) - a different way to design, like ruby-on-rails.
+- [Behavior Driven Development](https://godbolt.org/z/4Mdo3k) - behavior driven syntax: scenario, given, when, then.
+- [Gherkin](https://godbolt.org/z/jb1d8P) - another syntax, using steps.
+- [Parallel execution](https://godbolt.org/z/M7z1qv) - using parallel runners, based on configuration.
+- [Benchmarking](https://godbolt.org/z/WqznMn) - performance
+
+### Summary - Wrap Up
+
+**benchmarks:**\
+comparing the UT framework to other frameworks, the results are in favor to UT, it's fast, builds quickly, binary size. it's faster to use the module/pre-compiled-header than including the header as it is.
+
+**summary:**
+
+- C++20 enables a cleaner design and implementation
+- UT is an example of cutting edge Unit Testing Framework
+- Possible standardization of Unit Testing primitives?
+- Macro-based Frameworks can be built on top of Unit Testing primitives
+
+[implementing catch2 over UT](https://godbolt.org/z/jfb7jk) - we can use the existing tests which were written for a different framework in UT very simply.
+
+```cpp
+#define REQUIRE(...)  ut::expect(that % __VA_ARGS__)
+#define TEST_CASE(...)  ut::test{"test", __VA_ARGS__} = [=]() mutable
+#define SECTION(name)  ut::test{"section", name} = [=]() mutable
+```
+
+</details>
+
 ##
 
 [Main](README.md)

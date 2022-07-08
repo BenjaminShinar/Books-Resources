@@ -46,6 +46,7 @@ all sorts of lectures, divided by field.
   - C++ Insights: How Stuff Works, Lambdas and More! - Andreas Fertig
   - Interactive C++ in a Jupyter Notebook Using Modules for Incremental Compilation - Steven R. Brandt
   - The Quest For A Better Crash - Victor Ciura
+  - UT - C++20 Unit Testing Framework - Kris Jusiak
 - [Type Design](Type%20Design.md)
   - How to: Colony - Matthew Bentley
   - Variations on variants - Roi Barkan
@@ -64,10 +65,6 @@ all sorts of lectures, divided by field.
   - Dashboards to the Rescue - Matthias Bilger
   - Universal Function Call Syntax in C++20 - Devon Richards
   - Don't `constexpr` All the Things - David Sankel
-
-### real talks:
-
-- [ ] UT - C++20 Unit Testing Framework - Kris Jusiak
 
 ### lighting talks:
 
