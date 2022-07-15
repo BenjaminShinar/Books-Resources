@@ -34,6 +34,7 @@ all sorts of lectures, divided by field.
   - The Complete Guide to `return x;` - Arthur O'Dwyer
   - The Worst Best Practices - Jason Turner
   - Surveying the C++ Community - Jens Weller
+  - Don't `constexpr` All the Things - David Sankel
 - [OOP](OOP.md)
   - Keynote: SOLID, Revisited - Tony Van Eerd
   - Polymorphism À La Carte - Eduardo Madrid & Phil Nash
@@ -64,22 +65,18 @@ all sorts of lectures, divided by field.
   - Complecting Made Easy - Tony Van Eerd
   - Dashboards to the Rescue - Matthias Bilger
   - Universal Function Call Syntax in C++20 - Devon Richards
-  - Don't `constexpr` All the Things - David Sankel
-
-### lighting talks:
-
-- [ ] A Few Gentle Rules (\*) but One in Particular - Chris Uzdavinis
-- [ ] A Simple GUI Programming Setup for Beginners - Jussi Pakkanen
-- [ ] Answering a Question From My Talk… - Jens Weller
-- [ ] Classes With Many Fields - Stanisław J. Dobrowolski
-- [ ] Cyclomatic Complexity pmccabe as a Refactor Aid - Michael Wells
-- [ ] Designated Initializers: Remembering Every Struct Member in Declaration Order Is Hard - Brian Ruth
-- [ ] Exhuming "Castlequest" - Arthur O'Dwyer
-- [ ] Finding Nemo, or Evolution of a for Loop - Arseniy Zaostrovnykh
-- [ ] FourCCs Done Right - Ben Deane
-- [ ] Homogenous Variadic Functions - A Lightning-Library Approach in ~11.54 sec/LOC - Tobias Loew
-- [ ] Numerical Differentiation ++ - Ian Bell
-- [ ] One Friend Ain't Enough - Jody Hagins
-- [ ] Stdfwd - Forward Declarations for C++ Standard Library - Oleh Fedorenko
-- [ ] Surveying the Community – What Could Possibly Go Wrong - Anastasia Kazakova
-- [ ] When Paradigms Collide - Ben Deane
+  - When Paradigms Collide - Ben Deane
+  - A Few Gentle Rules (\*) but One in Particular - Chris Uzdavinis
+  - A Simple GUI Programming Setup for Beginners - Jussi Pakkanen
+  - Answering a Question From My Talk… - Jens Weller
+  - Classes With Many Fields - Stanisław J. Dobrowolski
+  - Cyclomatic Complexity pmccabe as a Refactor Aid - Michael Wells
+  - Designated Initializers: Remembering Every Struct Member in Declaration Order Is Hard - Brian Ruth
+  - Exhuming "Castlequest" - Arthur O'Dwyer
+  - Finding Nemo, or Evolution of a for Loop - Arseniy Zaostrovnykh
+  - FourCCs Done Right - Ben Deane
+  - Homogenous Variadic Functions - A Lightning-Library Approach in ~11.54 sec/LOC - Tobias Loew
+  - Numerical Differentiation ++ - Ian Bell
+  - One Friend Ain't Enough - Jody Hagins
+  - Stdfwd - Forward Declarations for C++ Standard Library - Oleh Fedorenko
+  - Surveying the Community – What Could Possibly Go Wrong - Anastasia Kazakova

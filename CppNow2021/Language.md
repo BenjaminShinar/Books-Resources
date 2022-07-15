@@ -1274,7 +1274,7 @@ bias in the data, most respondents are from europe.
 
 ## Don't constexpr All the Things - David Sankel
 
-<!-- <details> -->
+<details>
 <summary>
 Circle metaprogramming as an alternative to constexpr
 </summary>
