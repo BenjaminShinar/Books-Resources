@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Postgre
+// cSpell:ignore Postgre Magento
  -->
 
 [main](README.md)
@@ -824,6 +824,550 @@ To read up on:
 exam 2 from the course
 </summary>
 
+#### Question 4
+
+Question
+
+> What is the purpose of an Egress-Only Internet Gateway? [Select 2]
+
+Answer
+
+> - Allows VPC based IPv6 traffic to communicate to the internet.
+> - Preven IPv6 based interned resources initiating a connection into a VPC.
+
+Explanation
+
+> The purpose of an "Egress-Only Internet Gateway" is to allow IPv6 based traffic within a VPC to access the Internet, whilst denying any Internet based resources the possibility of initiating a connection back into the VPC.
+
+To read up on:
+
+- Egress Only
+- VPC
+
+#### Question 7
+
+Question
+
+> What does the common term 'Serverless' mean according to AWS [Select 2]
+
+Answer
+
+> - A Native Cloud Architecture that allows customers to shift more operational responsability to AWS.
+> - The Ability to run applications and services without thinking about servers or capacity provisioning.
+
+Explanation
+
+> 'Serverless' computing is not about eliminating servers, but shifting most of the responsibility for infrastructure and operation of the infrastructure to a vendor so that you can focus more on the business services, not how to manage the infrastructure that they run on. Billing does tend to be based on simple units, but the choice of services, intended usage pattern (RIs), and amount of capacity needed also influences the pricing.
+
+To read up on:
+
+- Serverless principals
+
+#### Question 10
+
+Question
+
+> Following advice from your consultant, you have configured your VPC to use Dedicated hosting tenancy. A subsequent change to your application has rendered the performance gains from dedicated tenancy superfluous, and you would now like to recoup some of these greater costs. How do you revert to Default hosting tenancy?​
+
+Answer
+
+> Use the AWS CLI to modify the instance placement attribute of each instance and the vpc tenancy attribute of the VPC.
+
+Explanation
+
+> Once a VPC is set to Dedicated hosting, it can be changed back to default hosting via the CLI, SDK or API. Note that this will not change hosting settings for existing instances, only future ones. Existing instances can be changed via CLI, SDK or API but need to be in a stopped state to do so
+
+To read up on:
+
+- Dedicated Hostings
+
+#### Question 13
+
+Question
+
+> The risk with spot instances is that you are not guaranteed use of the resource for as long as you might want. Which of the following are scenarios under which AWS might execute a forced shutdown? [Select 4]
+
+Answer
+
+> - AWS sends a notification of termination but you do not receive it within the 120 seconds and the instance is shutdown.
+> - AWS sends a notification of termination and you receive it 120 seconds before the intended forced shutdown.
+> - AWS sends a notification of termination and you receive it 120 seconds before the intended forced shutdown, but AWS do not action the shutdown.
+> - AWS sends a notification of termination and you receive it 120 seconds before the intended forced shutdown, but the normal lease expired before the forces shutdown.
+
+Explanation
+
+> notification of spot termination
+
+To read up on:
+
+- Spot and on-Demand instances
+
+#### Question 15
+
+Question
+
+> AWS S3 has four different URLs styles that it can be used to access content in S3. The Virtual Hosted Style URL, the Path-Style Access URL, the Static web site URL, and the Legacy Global Endpoint URL. Which of these represents a correct formatting of the Path-Style Access URL style.
+
+Answer
+
+> "https://s3.us-west-2.amazonaws.com/my-bucket/slowpuppy.tar"
+
+Explanation
+
+> Virtual style puts your bucket name 1st, s3 2nd, and the region 3rd. Path style puts s3 1st and your bucket as a sub domain. Legacy Global endpoint has no region. S3 static hosting can be your own URL or your bucket name 1st, s3-website 2nd, followed by the region. AWS are in the process of phasing out Path style, and support for Legacy Global Endpoint format is limited and discouraged. However it is still useful to be able to recognize them should they show up in logs.
+>
+> - https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html
+>
+> - https://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html
+>
+> - https://docs.aws.amazon.com/general/latest/gr/s3.html
+>
+> - https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html
+>
+> - https://docs.aws.amazon.com/AmazonS3/latest/dev/HostingWebsiteOnS3Setup.html
+>
+> - https://aws.amazon.com/blogs/aws/amazon-s3-path-deprecation-plan-the-rest-of-the-story/
+
+To read up on:
+
+- S3 buckets name styles
+
+#### Question 17
+
+Question
+
+> You have a database-style application that frequently has multiple reads and writes across the data set. Which of the following AWS storage services are capable of hosting this application? [Select 2]
+
+Answer
+
+> - Elastic File Service (EFS)
+> - Elastic Block Store (EBS)
+
+Explanation
+
+> You would either user EBS or EFS. S3 is for object storage, not applications; and Glacier is for data archiving.
+
+To read up on:
+
+- storage services types and usages
+
+#### Question 19
+
+Question
+
+> With which AWS orchestration service can you implement Chef recipes?
+
+Answer
+
+> Opsworks
+
+To read up on:
+
+- OpsWorks
+
+#### Question 20
+
+Question
+
+> A product manager walks into your office and advises that the simple single node MySQL RDS instance that has been used for a pilot needs to be upgraded for production. She also advises that they may need to alter the size of the instance once they see how many people use the system during peak periods. The key concern is that there can not be any outages of more than a few seconds during the go-live period. Which of the following might you recommend, [Select 2]
+
+Answer
+
+> - Convert the RDS Instance to a multi-AZ implementation.
+> - Consider replacing it with Aurora before going live.
+
+Explanation
+
+> There are two issues to be addressed in this question. Minimizing outages, whether due to required maintenance or unplanned failures. Plus the possibility of needing to scale up or down.
+> Read-replicas can help you with high read loads, but are not intended to be a solution to system outages.
+> Multi-AZ implementations will increase availability because in the event of a instance outage one of the instances in another AZs will pick up the load with minimal delay.
+> Aurora provided the same capability with potentially higher availability and faster response.
+
+To read up on:
+
+- HA database
+
+#### Question 25
+
+Question
+
+> You work for a famous bakery that is deploying a hybrid cloud approach. Their legacy IBM AS400 servers will remain on-premise within their own datacenter. However, they will need to be able to communicate to the AWS environment over a site-to-site VPN connection. What do you need to do to establish the VPN connection?
+
+Answer
+
+> Set an ASN for the virtual private gateway
+
+Explanation
+
+> The termination IP address on the AWS side is not at the gateway. It is defined as part of the AWS VPN configuration process. Direct Connect could be a carrier, but is not a VPN its self.
+
+To read up on:
+
+- Virtual private gateway
+
+#### Question 27
+
+Question
+
+> Which AWS services allow you to natively run Docker containers? [Select 3]
+
+Answer
+
+> - Elastic Beanstalk
+> - Fargate
+> - ECS
+
+Explanation
+
+> Although it is possible to run Docker containers on all of the above AWS services, only ECS, Elastic Beanstalk and Fargate allow containers to run natively. EC2 instances can run Docker containers, but Docker has to be installed separately before a container can be deployed.
+
+To read up on:
+
+- Elastic BeanStalk
+
+#### Question 34
+
+Question
+
+> Your Security Manager has hired a security contractor to audit your firewall implementation. When the consultant asks for the login details for the firewall appliance, which of the following might you do? [Select 2]
+
+Answer
+
+> - Create an IAM User with a policy that can read security groups and NACL setting.
+> - Explain that AWS implements network security differently and that there is no such thing as a firewall appliance. you might then suggest that the consultant take the **A Cloud Guru** AWS CSA-A course in preperation for the audit.
+
+Explanation
+
+> AWS has removed the Firewall appliance from the hub of the network and implemented the firewall functionality as stateful Security Groups, and stateless subnet NACLs. This is not a new concept in networking, but rarely implemented at this scale.
+> In this case an IAM role by itself will not be enough to gain access to the AWS infrastructure - an IAM user will also be required.
+
+To read up on:
+
+- Security
+
+#### Question 35
+
+Question
+
+> Your company likes the idea of storing files on AWS. However, low-latency service of the last few days of files is important to customer service. Which Storage Gateway configuration would you use to achieve both of these ends? [Select 2]
+
+Answer
+
+> - Gateway-Cached
+> - File Gateways
+
+Explanation
+
+> Gateway-Cached and File Gateway volumes retain a copy of frequently accessed data subsets locally. Cached volumes offer a substantial cost savings on primary storage and minimize the need to scale your storage on-premises. Note that AWS recently changed the naming. You should know both forms for the exam.
+
+To read up on:
+
+- Gateway types
+- File gateways
+
+#### Question 38
+
+Question
+
+> You work for a busy real estate company, and you need to protect your data stored on S3 from accidental deletion. Which of the following actions might you take to achieve this? [Select 2]
+
+Answer
+
+> - Enable protected access using Multi-Factor Authentication (MFA).
+> - Enable Versioning on the bucket. If a file is accidentally deleted, delete the delete marker.
+
+Explanation
+
+> The best answers are to allow versioning on the bucket and to protect the objects by enabling protected access using Multi-Factor Authentication
+
+To read up on:
+
+- S3 policies
+
+#### Question 39
+
+Question
+
+> You are reviewing Change Control requests and you note that there is a proposed change designed to reduce errors due to SQS Eventual Consistency by updating the "DelaySeconds" attribute. What does this mean?
+
+Answer
+
+> When a new message is added to SQS queue, it will be hidden from consumer instances for a fixed period.
+
+Explanation
+
+> Poor timing of SQS processes can significantly impact the cost effectiveness of the solution.
+
+To read up on:
+
+- SQS attributes
+
+#### Question 42
+
+Question
+
+> You have been engaged by a company to design and lead the migration to an AWS environment. An argument has broken out about how to meet future Backup & Archive requirements and how to transition. The Security Manager and CTO are concerned about backup continuity and the ability to continue to access old archives. The Senior engineer is adamant that there is no way to retain the old backup solution in the AWS environment, and that they will lose access to all the current archives. What information can you share that will satisfy both parties in a cost-effective manner? [Select 2]
+
+Answer
+
+> - Meet with both parties and brief them on the AWS storage VTL solution. Explain that it can initially be installed in the on-oremuses environment utilizing the existing enterprise backup product to start the transition without losing access to the existing backups and archives, over the duration of the migration, most (if not all) all the backup cycles will be replaced bt the new VTL & VTS Tapes.
+> - Suggest that during transition, a second AWS storage gateway VTL solution could be commissioned in the customers new VPPC and integrated with existing VTS. at the same time, the existing Enterprise backup solution could be used to perform tape-to-tape copies to migrate the archives from tapes to VTL/VTS virtual tape.
+
+Explanation
+
+> Any migration project needs to consider how to manage legacy data and data formats. This includes backup and archives. A 3rd party archive service is viable, but would be an ongoing expense. Storage Gateway can be used to efficiently move data into AWS. Old tapes could either be restored to the Storage Gateway volume, or migrated to Virtual tapes inside AWS using Tape Gateway.
+
+To read up on:
+
+- Tape gateway
+- migration
+
+#### Question 43
+
+Question
+
+> To establish a successful site-to-site VPN connection from your on-premise network to an AWS Virtual Private Cloud, which of the following might be combined & configured? [Select 4]
+
+Answer
+
+> - An on premises Customer Gateway
+> - A private subnet in your VPC
+> - A virtual private Gateway
+> - A VPC with hardware VPN Access
+
+Explanation
+
+> There are a number of ways to set up a VPN. Based on the options provided, AWS have a standard solution that makes use of a VPC with; a private subnet, Hardware VPN Access, a VPG, and an on-premise Customer Gateway.
+
+To read up on:
+
+- VPN
+
+#### Question 45
+
+Question
+
+> Lambda pricing is based on which of these measurements? [Select 2]
+
+Answer
+
+> - The amount of memory assigned
+> - Duration of execution billed in fractions of seconds
+
+Explanation
+
+> Lambda billing is based on both The MB of RAM reserved and the execution duration in 100ms units.
+
+To read up on:
+
+- Lambda pricing
+
+#### Question 50
+
+Question
+
+> When copying an AMI, which of the following types of information must be manually copied to the new instance? [Select 3]
+
+Answer
+
+> - S3 Bucket permissions
+> - User Defined tags
+> - Launch permissions
+
+Explanation
+
+> Launch permissions, S3 bucket permissions, and user-defined tags must be copied manually to an instance based on an AMI. User data is part of the AMI, itself, and does not need to be copied manually.
+
+To read up on:
+
+- AMI
+
+#### Question 51
+
+Question
+
+> Which of the following are true for Security Groups? [Select 3]
+
+Answer
+
+> - Security Groups evaluate all rules before deciding whether to allow traffic.
+> - Security Groups Support "allow" rules only
+> - Security Groups operate at the instance level
+
+Explanation
+
+> Security Groups operate at the instance level, they support "allow" rules only, and they evaluate all rules before deciding whether to allow traffic.
+
+To read up on:
+
+- Security Groups vs ACL
+
+#### Question 54
+
+Question
+
+> When you create a custom VPC, which of the following are created automatically? [Select 3]
+
+Answer
+
+> - Route Table
+> - Access Control lists
+> - Security group
+
+Explanation
+
+> When you create a custom VPC, a default Security Group, Access control List, and Route Table are created automatically. You must create your own subnets, Internet Gateway, and NAT Gateway (if you need one.)
+
+To read up on:
+
+- VPC
+
+#### Question 55
+
+Question
+
+> Which of the following services can invoke Lambda function directly? [Select 3]
+
+Answer
+
+> - Elastic Load Balancer
+> - Kinesis Data Firehose
+> - API Gateway
+
+Explanation
+
+> API Gateway, Elastic Load Balancer, and Kinesis Data Firehose are all valid ways to directly trigger lambda.
+
+To read up on:
+
+- triggering lambdas
+
+#### Question 56
+
+Question
+
+> You work for a construction company that has their production environment in AWS. The production environment consists of 3 identical web servers that are launched from a standard Amazon Linux AMI using Auto Scaling. The web servers are launched into the same public subnet and belong to the same security group. They also sit behind the same ELB. You decide to do some testing: you launch a 4th EC2 instance in to the same subnet and same security group. Annoyingly, your 4th instance does not appear to have internet connectivity. What could be the cause of this?
+
+Answer
+
+> You have not assigned an elastic IP address to this instance.
+
+To read up on:
+
+- Networking
+
+#### Question 58
+
+Question
+
+> You've been commissioned to develop a high-availability application with a stateless web tier. Identify the most cost-effective means of reaching this end.
+
+Answer
+
+> Use an Elastic Load Balancer, a multi-AZ deployment of an auto-scaling group of EC2 Spot instances (primary) running in tandem with an auto Scaling group of EC2 on-demand instances (secondary), DynamoDb.
+
+Explanation
+
+> With proper scripting and scaling policies, the On-demand instances behind the Spot instances will deliver the most cost-effective solution because the on-demand will only spin up if the spot instances are not available.
+> DynamoDB is a regional service, there is no need to explicitly create a multi-AZ deployment. RDS could be used, but DynamoDB lends itself better to supporting stateless web/app installations.
+
+To read up on:
+
+- Autoscaling, spot instances
+
+#### Question 59
+
+Question
+
+> You need to store some easily-replaceable objects on S3. With quick retrieval times and cost-effectiveness in mind, which S3 storage class should you consider?
+
+Answer
+
+> S3 - OneZone-IA
+
+Explanation
+
+> S3 - OneZone-IA has replaced RRS as the recommended storage for when you want cheaper storage for infrequently accessed objects. It has the same durability but less availability. Plus there can be cost implications if you use it frequently or use it for short lived storage. Glacier is cheaper, but has a long retrieval time, and there is no such thing as S3 - Provisioned IOPS.
+
+#### Question 60
+
+Question
+
+> ​Your company has just purchased another company. As part of the merger, your team has been instructed to cross-connect the corporate networks. You run all your confidential corporate services in a VPC and use Route 53 for your Internal DNS. The merged company has all their confidential corporate services and Internal DNS on-premises. After establishing a Direct Connect service between your VPC and their on-premise network, and confirming all the routing, firewalls, and authentication, you find that while you can resolve names against their DNS, the services in the other company are unable to resolve names of your AWS services. Why might this be happening?​
+
+Answer
+
+> By design, the AWS DNS service does not respond to request originating outside the VPC.
+
+Explanation
+
+> Route 53 has a security feature that prevents internal DNS from being read by external sources. The work around is to create a EC2 hosted DNS instance that does zone transfers from the internal DNS, and allows itself to be queried by external servers.
+
+To read up on:
+
+- Route53 and DNS
+
+#### Question 61
+
+Question
+
+> A VPN connection consists of which of the following components? [Select 2]
+
+Answer
+
+> - Virtual Private Gateway
+> - Customer Gateway
+
+Explanation
+
+> The correct answers are "Customer Gateway" and "Virtual Private Gateway".
+> When connecting a VPN between AWS and a third party site, the Customer Gateway is created within AWS, but it contains information about the third party site e.g. the external IP address and type of routing.
+> The Virtual Private Gateway has the information regarding the AWS side of the VPN and connects a specified VPC to the VPN
+> "Direct Connect Gateway" and "Cross Connect" are both Direct Connect related terminology and have nothing to do with VPNs.
+
+To read up on:
+
+- Customer gatways
+
+#### Question 64
+
+Question
+
+> You are a solutions architect working for a cosmetics company. Your company has a busy Magento online store that consists of a two-tier architecture. The webservers are behind an Auto Scaling Group and the database is on a Large MySQL instance. Your store is having a Black Friday sale at the end of the week, and having reviewed the performance for the last sale you expect the site to start running very slowly during the peak load. You investigate and you determine that the database was struggling to keep up with the number of reads that the store was generating. How can you successfully scale this environment out so as to increase the speed of the site? [Select 2]
+
+Answer
+
+> - Place the RDS instance behind an ElasticCache instance, then update the connection string.
+> - Migrate the database from MySQL to Aurora for better performance, then update the connection string.
+
+Explanation
+
+> Adding a read replica on its own won't solve your problem, you would need to alter the code for Magento to use the read replica (which was not in the offered options). Multi-AZ is a reliability technique not a performance technique. The best answer available is to migrate the database to Aurora which has superior Read performance due to its design. Implementing ElastiCache, is relatively easy and will also offload some of the Read traffic.
+
+To read up on:
+
+- HA RDS
+
+#### Question 65
+
+Question
+
+> On Friday morning your marketing manager calls an urgent meeting to celebrate that they have secured a deal to run a coordinated national promotion on TV, radio, and social media over the next 10 days. They anticipate a 500x increase on site visits and trial registrations. After the meeting you throw some ideas around with your team about how to ensure that your current 1 server web site will survive. Which of these best embody the AWS design strategy for this situation. [Select 2]
+
+Answer
+
+> - Create a duplicate sign-up page that stores registration details in DynamoDB for asynchronous processing using SQS and lambda.
+> - Work with your web design team to create some web pages with embedded javascript to emulate your 5 most popular information web pages and sign-up web pages.
+
+Explanation
+
+> A 500x increase is beyond the scope of a well designed single server system to absorb unless it is already hugely overspecialized to accommodate this sort of burst load. An AWS solution for this situation might include S3 static web pages with client side scripting to meet high demand of information pages. Plus use of a noSQL database to collect customer registration for asynchronous processing, and SQS backed by scalable compute to keep up with the requests.
+> Lightsail does provide a scalable provisioned service solutions, but these still need to be designed an planned by you and so offer no significant advantage in this situation. A standby server is a good idea, but will not help with the anticipated 500x load increase.
+
+To read up on:
+
+- HA
+
 </details>
 
 ### AWS Sample Question
@@ -921,6 +1465,8 @@ from the aws Website
 
 </details>
 
+##
+
 #### Question XXXX
 
 Question
@@ -937,6 +1483,13 @@ Explanation
 
 To read up on:
 
-##
+- OPsworks?
+- ASN
+- ProvisionedThroughputExceededException
+- Change Control Requests
+- NAT source destination check
+- SQS - delay seconds
+- VPC vs VPG vs VCG
+- LightSail?
 
 [main](README.md)
