@@ -2013,3 +2013,47 @@ We need to modify the code, to make the lesson start rather than the game. the '
 the game can run on computers, and even on raspberry pie (even if vscode struggles a bit)
 
 </details>
+
+## C++ Weekly - Ep 332 - C++ Lambda vs `std::function` vs Function Pointer
+
+<details>
+<summary>
+The differences between lambda, function pointers and `std::function`.
+</summary>
+
+[C++ Lambda vs `std::function` vs Function Pointer](https://youtu.be/aC-aAiS5Wuc)
+
+the three are similar but not the same. a lambda is not a `std::function`.
+
+```cpp
+#include <functional>
+
+int add(int x, int y)
+{
+    return x+y;
+}
+
+int call (int (f*)(int,int))
+{
+    return f(2,3);
+}
+int call (const std::function<int(int,int)> &f)
+{
+    return f(10,11);
+}
+
+int main ()
+{
+    auto add_lambda = [](const int x,const int y){return x+yl};
+    std::function<int(const int, const int)> func{add};
+
+    call(add);
+
+}
+```
+
+a lambda is an annoymous struct. std::function is a function holder, a type-erased wrapper around a callable. it's an abstraction
+
+note: a capture-less lambda is implicitly convertable to function pointer. but a std::function can be construced from either a lambda (with or without a capture), a function pointer or anything else with the same format.
+
+</details>
