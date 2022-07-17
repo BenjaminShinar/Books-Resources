@@ -1,17 +1,21 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Eerd adjacens plecto Bilger maat jfif fourcc gemi blarg bippity
+// cSpell:ignore adjacens plecto maat jfif fourcc gemi blarg bippity
 -->
 
 [Main](README.md)
 
 Lightning Talks
 
-### Complecting Made Easy - Tony Van Eerd
+## Complecting Made Easy - Tony Van Eerd
+
+<details>
+<summary>
+'simple made easy' is hard.
+
+</summary>
 
 [Complecting Made Easy](https://youtu.be/jSIMzirLJKE)
-
-'simple made easy' is hard.
 
 the word "easy" comes from the latin "adjacens", which means "close at hand", things that are easy are "close to us".
 
@@ -36,7 +40,15 @@ complecting is easy, make code intertwined:(bad code!)
   - "classes are made of Velcro"
   - naming files is hard... (utils is a bad name)
 
+</details>
+
 ## Dashboards to the Rescue - Matthias Bilger
+
+<details>
+<summary>
+Can Dashboards solve our problems? probably not
+</summary>
+
 
 [Dashboards to the Rescue](https://youtu.be/eOMqO0OKsCw)
 
@@ -48,13 +60,20 @@ if we remove the assert statements, we can make the test pass! we can also count
 > - making a metric a target is bad
 > - dashboards will not save us.
 
+</details>
+
 ## Universal Function Call Syntax in C++20 - Devon Richards
+<details>
+<summary>
+New syntax for calling functions.
+</summary>
 
 [Universal Function Call Syntax in C++20](https://youtu.be/uT1ZJHM8DkE)
 
 calling a free function and a member function with the same syntax, like `std::size` on containers, which uses the member function `size` from the container.
 
 but it also lets us write function from left to right, like the pipe operator for ranges. he has a macro that allows it in compiler explorer, and the performance hit is really small, the macro does a hack to allow templates somehow.
+</details>
 
 ## When Paradigms Collide - Ben Deane
 

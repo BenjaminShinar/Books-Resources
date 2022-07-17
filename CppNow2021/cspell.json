@@ -9,7 +9,9 @@
     "invokable",
     "Nemo",
     "nulllptr",
-    "serializers"
+    "serializers",
+    "Cyclomatic",
+    "CRTP"
   ],
   "ignoreWords": [
     "Adelstein",
