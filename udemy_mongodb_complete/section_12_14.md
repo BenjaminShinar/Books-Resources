@@ -5,7 +5,7 @@
 [main](README.md)
 
 ## Section 12 - Understanding The Aggregation Framework
-<!-- <details> -->
+<details>
 <summary>
 Retriving Data Efficiently & In a Structured Way.
 </summary>
@@ -368,7 +368,7 @@ db.transformedCollection.aggregate([
 
 ## Section 13 - Working with Numeric Data
 
-<!-- <details> -->
+<details>
 <summary>
 Differnet Numeric Types
 </summary>
@@ -462,12 +462,97 @@ we add a 1.0 to our long integer number, which converted it to a double and then
 
 
 ### What's Wrong with Normal Doubles?
+
+we can use int32 and int64 (`NumberInt` and `NumberLong`) as query operators, just like other numbers.
+
+the normal double is a floating point, so we get some weird results of mathematical operations.
+```js
+db.science.insertOne({a:0.3, b:0.1})
+db.science.find().pretty()
+db.science.aggregate([$project:{result: {$subtract: ["$a","$b"]}}])
+```
+the result will be some weird number, and sometimes it's fine (if we're just displaying the data), but if we are using them for more calculations, our data might drift away and away from the true result.
+
 ### Working with Decimal 128bit
+
+`NumberDecimal` is the builder for double128 bit. we should pass the value as a string, to avoid the original problem of having floating point issues. 
+```js
+db.science.insertOne({a:NumberDecimal("0.3"), b:NumberDecimal("0.1")})
+db.science.find().pretty()
+db.science.aggregate([$project:{result: {$subtract: ["$a","$b"]}}])
+```
+
+now the value is as expected.
+
+however, like before, if we try to modify the data, it will default back into a normal double. so we should be using the NumberDecimal instead.
+
+```js
+db.science.updateOne({},{$inc:{a:0.1}}) // imprecision
+db.science.updateOne({},{$inc:{a:NumberDecimal("0.1")}}) // correct
+db.science.find().pretty()
+```
+
+of course, using double64 does take a larger amount of memory.
+
 ### Wrap Up
 
+when we hav monetary data, we should be careful with our numbers, there is the old 'scaled approach', which uses integer numbers by scaling up the numbers with a factor. this is like using 100 cents to represent a dollar, and 150 cents instead of 1.5$ dollars.
 
 </details>
 
+
+## Section 14 - MongoDB & Security
+
+<!-- <details> -->
+<summary>
+Lock Down Your Data
+</summary>
+
+Security should always matter. even if it's usually the role of the database manager rather than the developer.
+
+Security Checklist
+- Authentication and Authorization - the database will user-aware.
+- Transport Encryption - Data sent between the app and the database is enctyped to avoid someone spoofing the data when it's passed.
+- Encryption at Rest - the data inside the database is encrypted, not just plain text files.
+- Auditing - track changes and actions
+- Server & Network Config and Setup - security of the server/instance holding the database.
+- Backups & Software update.
+
+in this module, we focus on authentication/authorization, Transport encryption, and encryption at Rest.
+
+
+### Understanding Role Based Access Control
+
+* authentication - identify valid users of the database.
+* authorization - identify what these users may actually do in the database.
+
+who can connect to the database, and what they can do in the database, which actions? which resources?
+
+users can be actual people, or applications. like a database analyst, or the website that fetches data.
+
+RBAC - Role Based Access Control
+
+each mongoDB server has a special "Admin Database", in addition to whatever collections we use to store the data.
+
+if we have authentication enabled, a user will have to login, and then the allowed operations are determined by privileges: a privilege is a combination of a resource and actions. resources are collections or databases, and actions are verbs that operate on the data. we usually store the privileges in a Role, and then we assign users roles as needed.
+
+granting the minimal needed privileges protects us from malicious actors and from accidental. so it's the favorable approach in the industry.
+
+Roles allow us to seprate between different types of database users, we have administrative roles, a developer role (which is the application actions), and we also have a role for a data scientists or analyst
+
+### Creating a User
+### Built-In Roles - An Overview
+### Assigning Roles to Users & Databases
+### Updating & Extending Roles to Other Databases
+### Assignment 8: Time to Practice - Security
+### Adding SSL Transport Encryption
+### Encryption at REST
+### Wrap Up
+
+
+
+
+</details>
 
 
 ##

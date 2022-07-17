@@ -345,10 +345,10 @@ DataType | Notes | Example
 ---|---|---
 Text | always quotes | "Max"
 Boolean | true of false | true
+double | floating point, default| 12.25
 Integer | int32 | 55, `NumberInt(11)`
-NumberLong | int64 | 1000000000, `NumberLong(1000000000)`
-double | floating point| 12.25
-NumberDecimal | High precision | 12.99, `NumberDecimal(11.95)`
+NumberLong | int64, use "" for large numbers | 1000000000, `NumberLong("1000000000")`
+NumberDecimal | High precision, use the "" to be precise | 12.99, `NumberDecimal("11.95")`
 ObjectId | automatically generated, has a timestamp internally | ObjectId("text")
 ISODate | date | ISODate("2018-09-09")
 Timestamp| date time |Timestamp(11421532)
