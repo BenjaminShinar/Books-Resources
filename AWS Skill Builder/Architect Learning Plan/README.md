@@ -193,9 +193,91 @@ understand operationa readiness - know what we can do know and what we don't kno
 using multiple environment, infrastructure as code, having environment increasingly similar to production, with configurations and security and scale increasing at each level.
 
 #### Operate
+understanding the health of the workload and operations health. we need to know the health of the workload, and also know the operations metrics. we need to make the metrics and the data visible. we should also have metrics for changes like failing deployments, to know if we are operating successfully.
+
+- Events - observation of intrest
+- Incident - an event that requires a respone
+- Problem - an incident that either recurs or cannot be currently be resolved.
+
+when we have an alert - some event that we care about, we should have a defined "playbook" - what happened, who is responsible, what steps can be taken, and what escalations are possible. we should also inform affected stakeholders when alerts are raised and when they are resolved and everything is back to normal.
+
+
 #### Evolve
-  
+
+learn from experience, make improvements, share leaning and lessons across the team.
+
+feedback loops - a way to identify areas for improvements, should come from the team, they can be periodically meetings to go over metrics and determine if a change is needed. they can also be used to recognize improvement.
+
+#### Summary
+- Understand business priority
+- Design for operations
+- evaluate operations readiness
+- understand workload and operation health
+- prepare for, and respond to, events
+- learn from experience, share learning and make improvements.
+
+
 ### Security Pillar
+
+> The ability to protect information, systems, and assets while deliever business value through risk assessments and mitigation strategies
+
+security is applied all laters, having strong identity foundations, fine grained access control and be prepared to handle security events and automate it.
+
+- aws accounts
+- aws organization
+- aws control tower
+
+#### (IAM) Identity and Access Management
+
+managing human and machine identities with IAM. granular permissions, sign-in mechanisms, centeralized identity provider. using secrets in a secure matter with aws services.
+
+using the principle of least privilege, use groups and roles rather than user policy. limit public and cross-account access. continually reduce permissions.
+
+**Amazon Cognito**
+
+identity broker. supports multiple login providers, manage users/device, no matter which identity provider they use. provide outside identities with access to aws resources.
+
+#### Detection Control
+detecting and identifying security events.
+
+lifecycle controls, internal auding, automated alerting and responses.
+
+we can use AWS Config Service to run code when there is a change to aws resource, we can set up rules that validate the behavior, and can run code automatically.
+
+
+#### Infrastructure Protection
+systems and services in the workload are protected.
+
+trust boundariessystem security configuration, policy enforcement points.
+
+controling traffic at all layer - protect against external access from the internet, (amazon WAF - web application firewall), in a vpc, use subnets and security groups.
+
+managed services also reduce maintenance tasks, such as provioning and patching.
+
+#### data Protection
+
+Identifying and classifying data, keep it protected at rest and at transit.
+
+PII - personally identifiable information
+
+amazon MACIE can help with classifying data.
+Key management service, keep people away from the data, use dashboards rather than allow direct access, and use protection in transit.
+
+integrating aws services with encryption options. even when users have access to data, prefer to have them operate through other venues to investigate data in normal use-cases.
+
+#### Incident Response
+how to respond to security events, have the correct tools, such as as a clean room, simulate security events and prepare your response.
+
+we can use AWS cloudFormation to spin up an clean environment with the right tools and security, use ebs snapshot to investigate in an isolated environment.
+
+#### Summary
+
+- Protect information, system and assets
+- keep root account credentials protected
+- enctyp data at rest and at transit
+- ensure only authorized and authenticated users are able to access your resources
+- using detective controls to identify security breaches.
+
 ### Reliability Pillar
 ### Performance Efficiency
 ### Cost Pillar
