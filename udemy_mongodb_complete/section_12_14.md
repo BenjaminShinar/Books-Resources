@@ -503,7 +503,7 @@ when we hav monetary data, we should be careful with our numbers, there is the o
 
 ## Section 14 - MongoDB & Security
 
-<!-- <details> -->
+<details>
 <summary>
 Lock Down Your Data
 </summary>
@@ -538,18 +538,195 @@ if we have authentication enabled, a user will have to login, and then the allow
 
 granting the minimal needed privileges protects us from malicious actors and from accidental. so it's the favorable approach in the industry.
 
-Roles allow us to seprate between different types of database users, we have administrative roles, a developer role (which is the application actions), and we also have a role for a data scientists or analyst
+Roles allow us to seprate between different types of database users, we have administrative roles, a developer role (which is the application actions), and we also have a role for a data scientists or analyst.
 
 ### Creating a User
+
+`createUser()` the command to create a user, must have at least one role.
+the user document is created on a database, which is authenticates against, it can authenticate against one database, and still have access to other databases. there is also `updateUser()`
+
+we run the mongod server and tell it to require authentication
+```sh
+sudo mongod --auth #// require authentication
+```
+
+`db.auth(username, password)` -  authenticate from inside the shell.\
+`mongo -u <username> -p <password>` - authenticate from the commandline, when connecting the client to the server.
+
+when we connect to a database that doesn't have any users, this is a special case, where we can create a special to start our process. this is called **localhost exception**.
+
+```js
+use admin
+db.createUser({user: "max", pwd:"max", roles:["userAdminAnyDatabase"]})
+db.auth('max','max')
+```
+
 ### Built-In Roles - An Overview
+
+mongoDB ships with some built-in roles, which should cover most use-cases.
+
+- Database User
+  - read
+  - readWrite
+- Database Admin
+  - dbAdmin
+  - userAdmin
+  - dbOwner
+- All Database Roles
+  - readAnyDatbase
+  - readWriteAnyDatbase
+  - userAdminAnyDatbase
+  - dbAdminAnyDatbase
+- Cluster Admin
+  - clusterManager
+  - clusterMonitor
+  - hostManager
+  - clusterAdmint
+- Backup / Restore
+  - backup
+  - restore
+- Superuser
+  - dbOwner (admin)
+  - userAdmin (admin)
+  - userAdminAnyDatabase
+  - root
+
 ### Assigning Roles to Users & Databases
+
+we login again to the mongod client, so we need to specify the collection we are authenticating against.
+
+```sh
+mongo -u <user> -p <password> --authenticationDatabase admin
+```
+
+we can now add users to a specific database. we need to log out of the previous user before we start running commands from the new user.
+
+```js
+use shop
+db.createUser({user:'dev', pwf:'aaaaa', roles["readWrite"]})
+db.logout() 
+db.auth('dev','aaaa')
+```
+
+because we created the user on the shop database, the roles are scoped by default to the specific database.
+
 ### Updating & Extending Roles to Other Databases
+
+we want to add another role to the user, so the user could work on more than one database. we must be logged in as a user with enough permissions to create users.
+when we log out of a user, we should do so from the database that the user is attached to.
+```js
+db.lougout()
+use admin
+db.auth("max","max")
+use shop
+db.updateUser('dev',{roles: ["readWrite", {role:"readWrite",db:"blog"}]})
+db.getUser("dev")
+```
 ### Assignment 8: Time to Practice - Security
+
+> 1. new mongodb environment - delete everything in mongo (drop all user and database)
+> 2. create three users - remember the localthost exception
+>    1. Database Admin - works on database, create collection, create indexes.
+>    2. User Admin - manage admin
+>    3. Developer - Read and write Data in "Customer" and "Sales" Databases.
+
+//clean database
+
+```js
+use admin
+db.createUser({user:"testAdmin",pwd:"admin", roles:["userAdminAnyDatabase"]})
+db.auth('testAdmin','admin')
+use dbTest
+// db admin
+db.createUser({user:"dbTestAdmin",pwd:"testDbAdmin", roles:["dbAdmin"]})
+// user admin
+db.createUser({user:"userTestAdmin",pwd:"testUserAdmin", roles:["userAdmin"]})
+use Sales
+db.createUser({user:"devTest",pwd:"test", roles:[{role:"readWrite",db:"Sales"},{role:"readWrite",db:"Customers"}]})
+```
+
+> solutuion
+>
+> starting a mongo server
+> ```sh
+> mongod --auth
+> ```
+> adding roles
+> ```js
+> use admin
+> db.createUser({user: 'max', pwd:'max', roles:["userAdminAnyDatabase"]})
+> db.auth('max', 'max')
+> db.createUser({user:'globalAdmin', pwd:'admin',roles:["dbAdminAnyDatabase"]})
+> dv.createUser({user:'dev',pwd:'dev',roles:[{role:"readWrite", db: "customers"},{role:"readWrite",db:"sales"}]})
+> 
+> db.logout()
+> ```
+> verifying that we can connect to the newly created users
+> ```sh
+> mongo -u max -p max --authenticationDatabase admin
+> mongo -u globalAdmin -p admin --authenticationDatabase admin
+> mongo -u dev -p dev --authenticationDatabase admin
+> ```
+
 ### Adding SSL Transport Encryption
+
+[creating a self-signed ssl certificate](https://stackoverflow.com/questions/10175812/how-to-generate-a-self-signed-ssl-certificate-using-openssl)
+
+securing the data which is being transferred between mongo and mongoDB. we want to encrypt the data while it's being transmitted.
+
+mongo uses TLS/SSL, making use of a private and public keys.
+
+for linux and mac, we can simply run this command. for windows we can use an executable to install the openssl library for windows, and run the same commands.
+```sh
+
+cd /etc/ssl
+# create the certificate
+openssl req -newkey ras:2048 -new -x509 -days 365 -nodes -out mongodb-cert.crt -keyout mongodb-cert.key
+
+#make a .pem file - linux
+cat mongodb-cert.key mongodb-cert.cr > mongodb.pem
+#make a .pem file - windows
+type mongodb-cert.key mongodb-cert.cr > mongodb.pem
+```
+
+we get prompted to fill in some data, most of it doesn't matter, but when we are asked about 
+> "Common Name (e.g. server FQDN or YOUR name)[]:"
+
+we should fill out **"localhost"**, or the address of the webserver (in production).
+
+we then crete the .pem file, which we use to encrypt the data at Transit. so we start the mongodb server, we can add an SSL certificate, and also use a certificate authority file.
+
+```sh
+mongod --sslMode requireSSL --sslPemKeyFile mongodb.pem
+```
+
+when we connect with the mongo client, we also pass the pem file
+```sh
+mongo --ssl -sslCAFile mongodb.pem --host localhost
+```
+
 ### Encryption at REST
+
+Encryption at Rest means that the data is encrypted at the database, this can either be encrypting the files themselves, or encrypt specific data in the collections (like user passwords, social security numbers).
+
+mongoDB enterprise version come with built in options to encrypt files.
+
 ### Wrap Up
 
+> Users And Roles:
+> - MongoDb users a Role Based Access Control  Approach (RBAC).
+> - You create users on databases and you then log > in with your credentials (against those databases).
+> - Users have no right by default, you need to add roles to allow certain operations.
+> - Permission are granted by roles ("Privileges") are only granted for the database the user was added to, unless you explicitly grant access to other databases.
+> - You can use "AnyDatabase" roles for cross-databae access.
+> 
+> Encryption:
+> - You can encrypt data during transportation and at rest.
+> - During transportation, you use TLS/SSL to encrypt data.
+> - For production, you should use SSL certificates issued by a certificate authority (Not self-sigend certificates)
+> - For encryption at rest, you can encrypt both the files that hold your data (made simple with "MongoDB Enterprise") and the values inside your documents.
 
+[builtIn Roles](https://www.mongodb.com/docs/manual/reference/built-in-roles/)
 
 
 </details>

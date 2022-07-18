@@ -116,7 +116,7 @@ default port is 27017
 - `db.collection.find({$text:{$search:"value1 -value2"}})` - exclude words from search
 - `db.collection.find({$text:{$search:"value1", $language:"english"}})` - determine search language
 - `db.collection.find({$text:{$search:"value1", $caseSensitive:true}})` - force case sensitive search.
-- 
+
 ### Update Operators
 
 - `db.collection.updateOne({},{})` - update the first matching document.
@@ -199,8 +199,34 @@ operator syntax | name | context | notes |
 - `{$group: {_id:{key:"$valueFromDocument"},newField: {$sum: 1}}}}` - group into a new document with a aggregation operator:
   - `{$sum:1}` - sum - each value is 1 - basically count.
   - `{$avf:"$fieldToAverage"}` - average of field.
+  - `$push` - into an array
 - `{$sort:{key:-1}}` - sort documents at any stage.
+- `{project}` - create new documents based on existing stage.
+  - `$toUpper`,`$toLower`
+  - `$substrCP` - substring (string, start, number of element)
+  - `$concat` - concatenation string
+  - `$convert` - convert to other type(input, to, onError, onNull)
+    - `$toDate`, `$toLong` - 
+  - `isoWeekYear`
+  - `$filter` -  condition on array, (`input`,`as`,uses `$cond` document, with `$$` syntax)
+  - `$slice` - take sub array
+- `{$lookup}` - match against values from another collection
+- `{$unwind}` - split array into documents
+- `{$bucket}` - group into bins
+- `{$bucketAuto}` - let mongo choose the bins
+- `{$limit}` - limit number of results
+- `{$skip}` - skip documents
+- `{$out}` - pipe into other collection
+- `{$geoNear}` - geolocation, must be first stage in pipeline
 
+### Security
+- `db.auth(name,password)`
+- `db.logout()`
+- `db.createUser({name,password, roles:[]})`
+- `db.updateUser({name,{roles:[{role, db}]}})`
+- `db.getUser(name)`
+- `db.dropUser(name)`
+- `db.getUsers()`
 
 ### Additional Options Arguments
 
@@ -295,6 +321,7 @@ db.shutdownServer()
 
 ### CLI flags
 
+**Mongo Server**\
 when running `mongod` - [documentation](https://www.mongodb.com/docs/manual/reference/program/mongod/)
 
 - `--port` - port to run the service on
@@ -306,7 +333,11 @@ when running `mongod` - [documentation](https://www.mongodb.com/docs/manual/refe
 - `--fork` - only for mac and linux. run as a background process, as a service. must have a log path (can't log to the terminal).
 - `--storageEngine <engine>` - default is wiredTiger
 - `--config` (or `-f`) - pass a mongod configuration file
+- `--auth` - require authentication
+- `--sslMode` - ssl option (disable, allowSSL, prefer, require)
+  - `--sslPemKeyFile` - where the pem file is.
 
+**mongo Client**\
 when running `mongosh` or `mongo` - [documentation](https://www.mongodb.com/docs/manual/reference/program/mongo/)
 
 - `mongo --help` - get help for shell
@@ -315,8 +346,13 @@ when running `mongosh` or `mongo` - [documentation](https://www.mongodb.com/docs
 - `--verbose` - more verbose
 - `--port` - which port to connect, default is local host 27017
 - `--host` - which host to connect
-- `-u` - authentication, username
-- `-p` - authentication, password
+- Authentication
+  - `-u` - authentication, username
+  - `-p` - authentication, password
+  - `--authenticationDatabase` - authentication, which database the user is authenticating against
+- `--ssl` - connect with ssl (encryption at transit) 
+  - `--sslCAFile` - pass the pem file
+  - we might need to also pass the same `--host` as the one specified in the certificate, localhost and "127.0.0.1" won't be the same.
 
 
 ### Mongo Shell Commands
