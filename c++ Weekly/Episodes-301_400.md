@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -2056,4 +2056,96 @@ a lambda is an annoymous struct. std::function is a function holder, a type-eras
 
 note: a capture-less lambda is implicitly convertable to function pointer. but a std::function can be construced from either a lambda (with or without a capture), a function pointer or anything else with the same format.
 
+</details>
+
+## C++ Weekly - Ep 333 - A Simplified `std::function` Implementation
+<details>
+<summary>
+trying to make an implemnation of std::function in c++20.
+</summary>
+
+[A Simplified `std::function` Implementation](https://youtu.be/xJSKk_q25oQ)
+
+
+remember, *std::function* is not a lambda or function pointer.
+
+we start with a foreward template decleration, and then we specialize on it. we want to make sure the signature is correct, is that the template arguments are the same. we want the compiler to throw an error if we pass something which isn't a valid function signature (and return type).
+```cpp
+template <typename T>
+class function;
+
+template <typename T, typename ... Param>
+class function<Ret (Param....)>
+{
+
+};
+
+int main()
+{
+    function<int> func1; // shouldn't compile
+    function<int(int, int)> func2; // should compile
+}
+```
+
+next, we want to overload the operator(), to make sure this is a callable. we need a contstrctor, and to somehow store the thing which we got, in a type erasure format. don't forget the rule of five.
+
+```cpp
+#include <memory>
+
+template <typename T, typename ... Param>
+class function<Ret (Param....)>
+{   
+    public:
+    function(Ret (*f)(Param...)) : callable{std::make_unique<callable_impl<Ret (*)(Param....)>>(f)}; //constructor
+    
+    Ret operator()(Param... param) {
+        return callable->call(param...); // unpack parameters
+    }
+    private:
+    struct callable_interface {
+        virtual Ret(Param....) = 0; // pure virtual
+        virtual ~callable_interface = default;
+    };
+    std:::unique_ptr<callable_interface> callable;
+
+    template<typename Callable>
+    struct callable_impl : callable_interface {
+        callable_impl(Callable callable_): callable{std::move(callable_)}
+
+        Callable callable;
+        Ret call (Param... param)
+        {
+            retrun callable(param...)
+        }
+
+    };
+
+};
+
+int f(int x, int y){
+    return x+y;
+}
+
+int main()
+{
+    function<int(int, int)> func{f}; // should compile
+    auto x = func(1); // should fail
+    auto y = func(1,2); // should work
+}
+```
+
+
+we might need to add many more ctors, like one for function objects.
+```cpp
+template <typename T, typename ... Param>
+class function<Ret (Param....)>
+{   
+    public:
+    function(Ret (*f)(Param...)) : callable{std::make_unique<callable_impl<Ret (*)(Param....)>>(f)}; //constructor for function pointers
+
+    template<typename FunctionObject>
+    function(FunctionObject fo) : callable{std::make_unique<callable_impl<FunctionObject>>(std::move(fo))}; //constructor for function object
+};
+```
+we could also use `std::invoke` instead. we might need a *Clone* method,  also forewarding and unwrapping references.
 </details>

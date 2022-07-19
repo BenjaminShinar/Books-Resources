@@ -67,6 +67,8 @@ default port is 27017
 - the `$` sign in an update refers to the first element matched by `$elemMatch`.
 - the `$[]` syntax in an update refers to all elements in the array.
 - the `$[<el>]` syntax in an update to target other elements in the array based on different conditions
+- `db.createCollection("name",{capped:true, size:10000, max:3})` - create a capped collection with size limit of 10000 bytes, and document limit of three.
+- `db.collection.sort({$natural:1})` - sort elements by the default order of the collection (important for capped collections)
 
 ### Indexes and Explain
 
