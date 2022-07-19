@@ -73,7 +73,7 @@ aws is audited by many companies.
 </details>
 
 ## AWS Well-Architected
-<details>
+<!-- <details> -->
 <summary>
 Dive deep into the Well-Architected Framework
 </summary>
@@ -279,7 +279,97 @@ we can use AWS cloudFormation to spin up an clean environment with the right too
 - using detective controls to identify security breaches.
 
 ### Reliability Pillar
-### Performance Efficiency
+
+>"Relability is the ability of a workload to perform its intended function correctly and consistently when it's expected to. This includes the ability to operate and test the workload through its total lifecycle"
+>
+Resiliency:
+- recover from infrastructure or service disruptions
+- dynamically acquire computing resources to meet demand
+- mitigate disruptions
+
+recover from failures
+- Foundations - setup and cross project
+- Workload architecture
+- Change Management
+- Failure Managements
+
+in a traditional environment, we test during production and test performance, but we don't tend to test the failure situation, so when failure happens we handle it manually. and when needed, we write down instructions for the future, but we don't make this part of the flow. and since there are many points of failure, and failure is so time consuming, we tend to be over cautious and over-estimate our capacity needs, just to avoid the failure case.
+
+in the cloud native, we can have recovery procedures, we can test the recovery procedures, and if needed, we can scale horizontally to increase capacity.
+
+#### Foundations
+
+Foundational requirements are beyond the scope of a single project or workload. this can be the bandwidth of the data server, or other constraints. in traditional environments, these requirements are constraints and can't be easily changed or even observed.
+
+for cloud based architecture, there are service limits, which both protect the user from over provisioning, and prevents over usage of apis. some of these limits can be changed by the normal flow of work (scaling up the disk size), and some require active work against AWS to increase the limits per account.
+
+network topology.
+
+#### Workload Architecture
+
+SOA - service oriented architecture, microservice oriented architecture. we want to have distributed systems with services and micro-services, which can operate with one another, without effecting one another.
+
+we use loosly coupling, and we design to prevent failures, to limit the failures from effecting other components, and so on.
+
+#### Change Management
+
+knowing how changes effect the system, monitoring services and seeing audits with aws tools - like monitoring how many restarts occur, and keeping track of provisioned resources.
+
+(AWS CloudWatch, AWS SNS).
+
+one example is automatic scaling to meet demands for a service that has peaks and vallies in it's usage.
+
+having a pipeline for changes is one kind of change management, this can include integration testing, immutable infrastructure (green-blue deployment) and a manual / checklist of how to deploy.
+
+#### Failure Managements
+
+failure will occur, we need to know that they happen, be able to anticipate them, and know how to respond.
+
+we can use 'fault isolation' boundaries - keeping the problem contained. 
+- multiple availability zones and region
+- bulkhead (partitons, shards, cells) architecture
+
+we should have a backup and recovery (distaster recovery) chains, we want to be able to recover automatically, and we want to monitor how effective this DR process is, in terms of speed, reliability, etc.
+
+we should also document how we identify failures, what we look for. we should have tests that inject 'chaos' and failures to the system to make sure it's resilient.
+
+### Performance Efficiency Pillar
+
+using resources effectively
+
+in a traditional environment, we usually use the same technology stack, it was hard to get new resources, even if it's just for an experiment.
+
+in the cloud, we can try new technologies quickly, and use server from all around the globe.
+
+#### Selection
+we need to select the appropriate resource types, and sometimes have multiple solutions for a same task.
+
+
+Compute, Storage, Database and Networking resources.
+
+benchmarking, load testing.
+
+#### Review
+
+things change fast in the cloud, so there are new things all the time, maybe in the time since we've made our decision about the resources, a new option was released?
+
+using AWS CloudFormation to define architecture as code. so we can always try out new things.
+
+#### Monitoring
+
+monitor performance. use automation and alarms (when thresholds are exceeded)
+
+CloudWatch, Kinesis, SQS, Lambda
+
+#### Trade-offs
+
+there are tradeoff, we can trade space (memory/storage) and usually get speed, and we can trade scale (increase cost) to get better performance in many cases.
+
+Proximity and Caching
+- CloudFront - content distributuion network
+- ElasticCache - cache layer
+- RDS - read replicas
+
 ### Cost Pillar
 
 ##
