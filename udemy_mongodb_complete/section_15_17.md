@@ -247,8 +247,73 @@ there is no react driver, we never connect from the client code to the database.
 
 ### Connecting Node.js & the MongoDB Cluster
 
+connecting to mongoDB, in the cluster page in atlas, we click <kbd>Connect</kbd>, choose the driver, and copy a connection string value.
+
+now in the app.js and products.js files, we can see the dummy date.
+
+we first connect the app to the database when we start the application. just to make sure we are doing things right
+
+connection_string is a combination of
+- mongodb+srv://
+- user
+- password
+- :@cluster.mongodb.net
+- /database
+- ?retryWrites=true
+
+
+```js
+const mongodb = require('mongodb').MongoClient;
+
+
+/*all the code*/
+
+mongodb.connect(connection_string)
+.then(client => { 
+    //function that executes when connection is successful
+    console.log('Connected!');
+    client.close();
+})
+.catch(err=>{
+    console.log(err);
+});
+```
 
 ### Storing Products in the Database
+
+now we want to store new products in the database.
+
+we take the same code from the app file, and go to the products.js file
+
+```js
+const mongodb = require('mongodb'); //top level
+const MongoClient = mongodb.MongoClient;
+
+// Add new product
+// Requires logged in user
+router.post('', (req, res, next) => {
+  const newProduct = {
+    name: req.body.name,
+    description: req.body.description,
+    price: parseFloat(req.body.price), // store this as 128bit decimal in MongoDB
+    image: req.body.image
+  };
+  //console.log(newProduct);
+
+  MongoClient.connect(connection_string)
+.then(client => { 
+    //function that executes when connection is successful
+    client.db.collection('products').insertOe(newProduct);
+    client.close();
+})
+.catch(err=>{
+    console.log(err);
+});
+
+  res.status(201).json({ message: 'Product added', productId: 'DUMMY' });
+});
+
+```
 ### Storing the Price as 128bit Decimal
 ### Fetching Data From the Database
 ### Creating a More Realistic Setup

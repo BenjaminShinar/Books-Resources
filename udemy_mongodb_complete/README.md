@@ -69,6 +69,11 @@ default port is 27017
 - the `$[<el>]` syntax in an update to target other elements in the array based on different conditions
 - `db.createCollection("name",{capped:true, size:10000, max:3})` - create a capped collection with size limit of 10000 bytes, and document limit of three.
 - `db.collection.sort({$natural:1})` - sort elements by the default order of the collection (important for capped collections)
+- `db.getMongo()` - get server object
+  - `db.getMongo().startSession()` - get session
+  - `session.startTransaction()`
+  - `session.commitTransaction()`
+  - `session.abortTransaction()`
 
 ### Indexes and Explain
 
@@ -367,6 +372,7 @@ command | action
 `rs.help()` | replica set helpers
 `db.dropDatabase()` | clear current database
 `db.shutdownServer()` | shut down
+`db.getMongo()` | get mongoServer object
 `show dbs`| list databases
 `show collections`| list collections in current database
 `show users`| list users
