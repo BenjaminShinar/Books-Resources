@@ -80,12 +80,17 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | CDN       | Content Delivery Network              | Cloud Front                                       |                                                                              |
 | CIDR      | Classless Inter-Domain Routing        | security groups                                   | `0.0.0.0/0` and `::/0` allow all access                                      |
 | CMK       | Customer Master Keys                  | KMS                                               |
+| CSE       | Client Side Encryption                |                                                   |
 | DAX       | DynamoDB Accelerator                  | Aws DynamoDB                                      | in memory-cache                                                              |
+| DC        | Domain Controller                     | AWS Managed Microsoft AD                          | running windows Server                                                       |
+| DEK       | Data Encryption Key                   | KMS                                               | for file larger than 4kb                                                     |
 | DFS       | Distributed File System               |
 | DMS       | Database Migration Service            | migrate from one database to another              |
+| DNS       | Domain Name Service                   |
 | DX        | Direct Connect                        | **AWS Service**                                   | Connect customer DataCenter directly to AWS and bypass internet connections. |
 | EBS       | Elastic Block Store                   |
 | EC2       | Elastic Compute Cloud                 | **AWS Service**                                   | Virtual machine                                                              |
+| ECC       | Elliptic-Curve Cryptography           | KMS                                               | A type of asymmetric Key                                                     |
 | ECS       | Elastic Container Services            | **AWS Service**                                   |
 | EDA       | Electronic Design Automation          |
 | EFA       | Elastic Fabric Adaptor                |
@@ -98,11 +103,15 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | FPGA      | Field Programmable Gate Array         |
 | HDFS      | Hadoop Distributed File System        | Amazon EMR                                        |
 | HPC       | High Performance Computing            |
+| HSM       | Hardware Security Module              |                                                   | higher level of security than KMS                                            |
 | HSM       | Hardware Security Module              |                                                   | key managements                                                              |
 | IA        | Infrequent Access                     | S3                                                | IA tiers                                                                     |
 | IAM       | Identity Access Management            | **AWS Service**                                   | always global                                                                |
+| IGW       | Internet Gateways                     | VPC                                               |
 | IOPS      | Input-Output Per Second               |                                                   | a metric for hard disk                                                       |
+| JWT       | JSON web Token                        | AWS Cognito                                       | authenticaton form                                                           |
 | KMS       | Key Management Service                | **AWS Service**                                   | SSE-KMS                                                                      |
+| LDAP      | Lightweight Directory Access Protocol |
 | MAC       | Media Access Control (address)        |                                                   | networking                                                                   |
 | MFA       | Multi Factor Authentication           | IAM                                               |
 | MMP       | Massively Parallel Processing         | Redshift                                          |
@@ -116,40 +125,35 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | PII       | Personally Identifiable Information   |
 | PITR      | Point in Time Recovery                | DynamoDB backup                                   | protects against accidental writes or deletes                                |
 | PPS       | Packets Per Second                    |                                                   | networking metric                                                            |
+| RAM       | Resource Access Manager               | **AWS Service**                                   | Share resource between AWS accounts                                          |
 | RDS       | Relational Database                   |                                                   | mariadb, Aurora                                                              |
+| RPO       | Recovery Point Objective              |                                                   | backups interval, the delta between backups                                  |
 | RTC       | Replication Time Control              |                                                   | S3 buckets replication                                                       |
-| S3        | Simple Storage Service                | storage                                           | globally unique names                                                        |
+| RTO       | Recovery Time Objective               |                                                   | time to recover from backup, how long it takes us to restore.                |
+| S3        | Simple Storage Service                | **AWS Service**                                   | globally unique names                                                        |
 | SAM       | Serverless Application Model          | CloudFormation Extention, Serverless Applications | Framework to build serverless applications                                   |
+| SAML      | Security Assertion Markup Langauge    | IAM access                                        | single sign on                                                               |
 | SAN       | Storage Area Network                  |
 | SCP       | Service Control Policies              | IAM                                               | Manage access on accounts within AWS organization                            |
 | SCT       | Schema Conversion Tool                | database migration                                |
 | SLA       | Service Level Agreement               |                                                   | What AWS promises (rather than advertises)                                   |
 | SMB       | Server Message Block                  |                                                   | FSx Windows                                                                  |
-| SMS       | Server Migration Service              |
 | SMPS      | System Manager Parameter Store        | KMS and others                                    | parameters storage                                                           |
+| SMS       | Server Migration Service              |
 | SNS       | Simple Notification Service           | Push notification services                        | used in the billing alarm                                                    |
+| SOA       | Start of Authority                    | Route53, DNS                                      | record with information about domain access                                  |
 | SQS       | Simple Queue Service                  | **AWS Service**                                   | pull-based, standard and fifo queues.                                        |
 | SR-IOV    | Single Root I/O Virtualization        |
 | SSE       | Server Side Encryption                | S3                                                | SSE-S3                                                                       |
 | SSH       | Secure Shell                          | access to other machine                           |
+| STS       | Security Token Service                | **IAM**                                           | users with web Identities from OpenID providers                              |
 | SWF       | Simple WorkFlow Service               | **AWS Service**                                   |
 | TCO       | Total Cost Of Ownership               | Application Discovery Service                     | estimate                                                                     |
 | TTL       | Time to Live                          | CDN, CloudFront                                   | Objects at cached location life time                                         |
 | VPC       | Virtual Private Cloud                 | **AWS Service**                                   |
+| VPN       | Virtual Private Network               | VPC                                               |
 | WAF       | Web Application Firewall              |
 | WORM      | Write Once, Read Many                 | S3                                                |
-| LDAP      | Lightweight Directory Access Protocol |
-| DNS       | Domain Name Service                   |
-| DC        | Domain Controller                     | AWS Managed Microsoft AD                          | running windows Server                                                       |
-| RAM       | Resource Access Manager               | **AWS Service**                                   | Share resource between AWS accounts                                          |
-| SAML      | Security Assertion Markup Langauge    | IAM access                                        | single sign on                                                               |
-| SOA       | Start of Authority                    | Route53, DNS                                      | record with information about domain access                                  |
-| VPN       | Virtual Private Network               | VPC                                               |
-| IGW       | Internet Gateways                     | VPC                                               |
 | XSS       | Cross-Site Scripting                  |                                                   | security attack                                                              |
-| JWT       | JSON web Token                        | AWS Cognito                                       | authenticaton form                                                           |
-| ECC       | Elliptic-Curve Cryptography           | KMS                                               | A type of asymmetric Key                                                     |
-| DEK       | Data Encryption Key                   | KMS                                               | for file larger than 4kb                                                     |
-| HSM       | Hardware Security Module              |                                                   | higher level of security than KMS                                            |
 
 </details>
