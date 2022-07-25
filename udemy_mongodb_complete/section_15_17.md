@@ -303,7 +303,7 @@ router.post('', (req, res, next) => {
   MongoClient.connect(connection_string)
 .then(client => { 
     //function that executes when connection is successful
-    client.db.collection('products').insertOe(newProduct);
+    client.db.collection('products').insertOne(newProduct);
     client.close();
 })
 .catch(err=>{
@@ -315,11 +315,337 @@ router.post('', (req, res, next) => {
 
 ```
 ### Storing the Price as 128bit Decimal
+
+we need to store data as a decimal, so we look at the documentation.
+
+we import the type from mongo library and use the from string constructor, and we also add `then` and `catch` blocks.
+
+```js
+const mongodb = require('mongodb'); //top level
+const MongoClient = mongodb.MongoClient;
+const Decimal128 = mongodb.Decimal128;
+
+// Add new product
+// Requires logged in user
+router.post('', (req, res, next) => {
+  const newProduct = {
+    name: req.body.name,
+    description: req.body.description,
+    price: Decimal128.fromString(req.body.price.toString()), // store this as 128bit decimal in MongoDB
+    image: req.body.image
+  };
+  //console.log(newProduct);
+    MongoClient.connect(connection_string)
+.then(client => { 
+    //function that executes when connection is successful
+    client
+    .db()
+    .collection('products')
+    .insertOne(newProduct)
+    .then(result=> 
+    {
+      console.log(result);
+      client.close();
+        res.status(201).json({ message: 'Product added', productId: result.insertedId });
+    })
+    .catch(err=> 
+    {
+      console.log(err);
+      client.close();
+      res.status(500).json({ message: "an error occurred"});
+    });
+})
+.catch(err=>{
+    console.log(err);
+});
+});
+```
+
+now our code should work, in the app we can enter any product data (with price in decimal) and it should be store in the db.
+
+
 ### Fetching Data From the Database
+
+now we modify the 'get' method. we comment out the existing code and copy in the same code from the insertion method, which we will now modify.
+
+a `find` method returns a cursor, so we need cursor object function, and we need to store the returning values.
+
+```js
+// Get list of products products
+router.get('/', (req, res, next) => {
+    MongoClient.connect(connection_string)
+.then(client => { 
+    //function that executes when connection is successful
+    const products = [];
+    client
+    .db()
+    .collection('products')
+    .find()
+    .forEach(productDoc => {
+      //console.log(productDoc);
+      //return productDoc;
+      productDoc.price = productDoc.price.toString();
+      products.push(productDoc);
+    })
+    .then(result=> 
+    {
+      console.log(result);
+      client.close();
+        res.status(201).json(products);
+    })
+    .catch(err=> 
+    {
+      console.log(err);
+      client.close();
+      res.status(500).json({ message: "an error occurred"});
+    });
+  })
+  .catch(err=>{
+      console.log(err);
+  })
+});
+```
+
+we shouldn't store images in the database, only the path. 
+
 ### Creating a More Realistic Setup
+
+our code works, but looks really messy and repeats itself, so let's clean it up.
+
+we create a new file "db.s"
+```js
+const mongodb = require('mongodb'); //top level
+const mongoClient = mongodb.MongoClient;
+
+const mongoDbUrl = "connectionString";
+let _db;
+const initDb = callback=>{
+  if (_db) {
+    console.log('Database is already initiliazed');
+    return callback(null, _db);
+  }
+  mongoClient.connect(mongoDbUrl)
+  .then(client=>{
+    _db = client;
+    callback(null, _db);
+  })
+  .catch(err=>{
+    callback(err);
+  });
+};
+
+const getDb = () => {
+  if(!_db)
+  {
+    throw Error('Database not initialized');
+  }
+  return _db;
+}
+
+module.exports= {
+  initDb,
+  getDb
+};
+```
+
+in the app.js file, we import the new file module and use it.
+
+```js
+db.initDb((err,db)=>{
+  if (err) {
+    console.log(err);
+  }
+  else
+  {
+    app.listen(3100);
+  }
+});
+```
+
+and in the products.js file, we can get the database object without connecting each time. we need to clean up some code, but that's just trial and error.
+
+```js
+const db = require('../db');
+```
+
+a note: mongoDb provides us a connection pool, a shared connection that can handle multiple requests.
+
 ### Getting a Single Product
+
+in the products.js file. we modify the current code like earlier, and we don't forget to modify the price value back to string.
+```js
+
+const ObjectId = mongodb.ObjectId;
+
+// Get single product
+router.get('/:id', (req, res, next) => {
+  db.getDb()
+  .db()
+  .collection('products')
+  .findOne({_id: new ObjectId(req.params.id)})
+  .then(productDoc=> {
+    productDoc.price = productDoc.price.toString();
+    res.status(200).json(productDoc);
+  })
+  .catch(err=>
+  {
+    console.log(err);
+    res.status(500).json({ message: "an error occurred"});
+  });
+});
+```
+
 ### Editing & Deleting Products
+
+as before, we modify the code to allow updating.
+
+we need to make sure we update correctly, not just to add a field
+```js
+// Edit existing product
+// Requires logged in user
+router.patch('/:id', (req, res, next) => {
+  const updatedProduct = {
+    name: req.body.name,
+    description: req.body.description,
+    price: Decimal12.fromString(req.body.price.toString()), // store this as 128bit decimal in MongoDB
+    image: req.body.image
+  };
+  db.getDb()
+  .db()
+  .collection('products')
+  .updateOne({_id: new ObjectId(req.params.id)},{$set:updatedProduct}) //update, not add field
+  .then(updatedProduct=> {
+  res.status(200).json({ message: 'Product updated', productId: req.params.id });
+
+  })
+  .catch(err=>
+  {
+    console.log(err);
+    res.status(500).json({ message: "an error occurred"});
+  });
+});
+```
+deleting is also simple
+
+```js
+// Delete a product
+// Requires logged in user
+router.delete('/:id', (req, res, next) => {
+
+  db.getDb()
+  .db()
+  .collection('products')
+  .deleteOne({_id: new ObjectId(req.params.id)})
+  .then(updatedProduct=> {
+    res.status(200).json({ message: 'Product deleted' });
+  })
+  .catch(err=> {
+    console.log(err);
+    res.status(500).json({ message: "an error occurred"});
+  });
+});
+```
+
+we also need to update the react code code.
+
+```js
+import React, { Component } from 'react';
+import axios from 'axios';
+
+import './Product.css';
+
+class ProductPage extends Component {
+  state = { isLoading: true, product: null };
+
+  componentDidMount() {
+    this.fetchData();
+  };
+
+  productDeleteHandler = productId => {
+    axios
+      .delete('http://localhost:3100/products/' + productId)
+      .then(result => {
+        console.log(result);
+        this.fetchData();
+      })
+      .catch(err => {
+        this.props.onError(
+          'Deleting the product failed. Please try again later'
+        );
+        console.log(err);
+      });
+  };
+
+  fetchData = ()=> {
+      axios
+      .get('http://localhost:3100/products/' + this.props.match.params.id)
+      .then(productResponse => {
+        this.setState({ isLoading: false, product: productResponse.data });
+      })
+      .catch(err => {
+        this.setState({ isLoading: false });
+        console.log(err);
+        this.props.onError('Loading the product failed. Please try again later');
+      });
+  };
+```
+
+
 ### Implementing Pagination
+
+next is adding pagination, we need some more products data to make this viable.
+
+back in the `get` method, we now work on the cursor objects, we skip some pages and limits another.
+
+```js
+// Get list of products products
+router.get('/', (req, res, next) => {
+
+    const queryPage =req.query.page;
+    const querySize = 2;
+    const products = [];
+    db.getDb()
+    .db()
+    .collection('products')
+    .find()
+    .sort({price:-1}).
+    .skip((queryPage-1)*querySize)
+    .limit(querySize)
+    .forEach(productDoc => {
+      //console.log(productDoc);
+      //return productDoc;
+      productDoc.price = productDoc.price.toString();
+      products.push(productDoc);
+    })
+    .then(result=> 
+    {
+      console.log(result);
+        res.status(201).json(products);
+    })
+    .catch(err=> 
+    {
+      console.log(err);
+
+      res.status(500).json({ message: "an error occurred"});
+    });
+  });
+```
+
+we also need some react code changes to add the page number.
+```js
+fetchData = ()=> {
+      axios
+      .get('http://localhost:3100/products?page=1' + this.props.match.params.id)
+      .then(productResponse => {
+        this.setState({ isLoading: false, product: productResponse.data });
+      })
+      .catch(err => {
+        this.setState({ isLoading: false });
+        console.log(err);
+        this.props.onError('Loading the product failed. Please try again later');
+      });
+  };
+```
 ### Adding an Index
 ### Signing Users Up
 ### Adding an Index to Make the Email Unique
