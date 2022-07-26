@@ -2149,3 +2149,76 @@ class function<Ret (Param....)>
 ```
 we could also use `std::invoke` instead. we might need a *Clone* method,  also forewarding and unwrapping references.
 </details>
+
+## C++ Weekly - Ep 334 - How to Put a Lambda in a Container
+<details>
+<summary>
+Three Ways to put lambdas in a container
+</summary>
+
+[How to Put a Lambda in a Container](https://youtu.be/qmd_yxSOsAE)
+
+it's actually possible to put a lambda in a container, but it's not straight foreward.
+
+pushing only a single lambda, even if another lambda has a similar structure
+```cpp
+#include <vector>
+
+int main()
+{
+    auto l = [](){return 42;};
+    std::vector<decltype(l)> data;
+    data.push_back(l);
+    //data.push_back([](){return 43;}); fails
+}
+```
+
+converting to a std::function,  has some massive overhead.
+```cpp
+#include <vector>
+#include <functional>
+
+int main()
+{
+    auto l = [](auto j){return j+ 42;};
+    std::vector<std::funcion<int(int)>> data;
+    data.push_back(l);
+    data.push_back([](auto k){return k;});
+    
+}
+```
+
+converting to a function pointer, doesn't allow a capture.
+
+```cpp
+#include <vector>
+
+int main()
+{
+    auto l = [](auto j){return 42+j;};
+    std::vector<int(*)(int)> data;
+    data.push_back(l);
+}
+```
+
+back to the first case, we can move the lambda creation to a function, so all the lambdas have the same type.
+
+```cpp
+#include <vector>
+
+auto make_lambda(int value)
+{
+    return [value](int i){ return i+value;};
+}
+
+
+int main()
+{
+    std::vector<decltype(make_lambda(42))> data;
+    data.push_back(make_lambda(2));
+    data.push_back(make_lambda(5));
+}
+```
+
+there is a danger of ODR (one defintion rule) violation, so it's probably better to create a callable directly.
+</details>
