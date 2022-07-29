@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore ntrwp
+// cSpell:ignore ntrwp signup
 -->
 
 [main](README.md)
@@ -201,7 +201,7 @@ transactions give us atomicity on an operational level, rather than just a docum
 </details>
 
 ## Section 17 - From Shell To Driver
-<!-- <details> -->
+<details>
 <summary>
 Writing Application Code
 </summary>
@@ -647,10 +647,107 @@ fetchData = ()=> {
   };
 ```
 ### Adding an Index
+
+in the earlier section, we sorted on the price fields, if we do this kind of operation often, we should create an index
+
+```js
+db.products.createIndex({price:1})
+```
+
 ### Signing Users Up
+
+we want to add authentication to our application, which is unrelated to the mongoDB authentication.
+
+the users data is stored in the database, but is completely separated.
+
+in the 'auth.js' file, we have *sign-up* and *log-in* routes
+
+we start with the sign-up, we hash the password before pushing it to the database.
+
+we use a token based approach, which isn't covered by this course.
+```js
+const db = require('../db');
+
+router.post('/signup', (req, res, next) => {
+  const email = req.body.email;
+  const pw = req.body.password;
+  // Hash password before storing it in database => Encryption at Rest
+  bcrypt
+    .hash(pw, 12)
+    .then(hashedPW => {
+      // Store hashedPW in database
+      console.log(hashedPW);
+
+      db.getDb().db()
+      .collection("users")
+      .insertOne(
+        {email:email,
+        password:hashedPW}
+      )
+      .then(result=>{
+        console.log(result);
+        const token = createToken();
+        res.status(201)
+          .json({ token: token, user: { email: email } });
+      })
+      .catch(err=>{
+      console.log(err);
+      res.status(500).json({ message: 'Inserting the user failed.' });
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ message: 'Creating the user failed.' });
+    });
+  // Add user to database
+});
+```
+with this code changed, we can try creating a user from the front-end app. we use a dummy email and password, and we can see how the password is hashed in the database.
+
 ### Adding an Index to Make the Email Unique
+the problem is that we can create two users with the same email, so we need to ensure that it's unique.
+
+this is done by adding an index to make the email unique.
+
+```js
+db.users.createIndex({email:1},{unique:true})
+```
+this will prevent us from using the same twice.
+
 ### Adding User Sign In
+
+the final part is having the user log-in, we query the database, compare the hashed value, and return a token.\
+because this it javascript code, we need to make sure everything is either a promise or an error.
+
+```js
+router.post('/login', (req, res, next) => {
+  const email = req.body.email;
+  const pw = req.body.password;
+    
+  db.getDb().db().collection('users').findOne({email:email})
+  .then(userDoc=>{
+    // Check if user login is valid  
+    // If yes, create token and return it to client  
+    return bcrypt.compare(pw,userDoc.password)
+  })
+  .then((result)=>  {
+    console.log(result); // boolean value
+    if (!result) throw Error; // throw error
+    const token = createToken();
+      res.status(200).json({ token: token, user: { email: email } });
+  })
+  .catch(err=>{
+    res.status(401)
+    .json({ message: 'Authentication failed, invalid username or password.' });
+  });
+});
+```
+
 ### Wrap Up
+
+we created a demo application that interacts with mongo by using a driver. it is very similar to using the shell, so the main concern is handling the connection to the database, and dividing the responsibilities in a matter which makes sense.
+
+[YouTube Series on Building Restful API](https://academind.com/tutorials/building-a-restful-api-with-nodejs)
 
 </details>
 
