@@ -1,12 +1,13 @@
 <!--
-// cSpell:ignore 
+// cSpell:ignore capex opex
 -->
 
 https://wwww.udemy.com/course/aws-question-banks
 
 ## Quiz 1
-<!-- <details> -->
+<details>
 <summary>
+65 questions
 </summary>
 
 ### Q01
@@ -847,74 +848,887 @@ The AWS Elastic Block Storage is used to attach storage to EC2 Instances. You ca
 ## Quiz 2
 <details>
 <summary>
-
+65 questions
 </summary>
 
 ### Q01
+> You are going through the Shared Responsibility Model provided by AWS.\
+> Which of the following comes under the umbrella as the responsibility of the AWS Customer?
+> - Physical Storage of devices
+> - Data encryption
+> - Purchasing hardware
+> - Decommissioning of storage devices
+
+> **Explanation**:\
+It is the responsibility of the AWS Customer to ensure that all data stored by the customer is encrypted. So if there is a requirement for data to be encrypted , it needs to be carried out by the customer.
+
+**Data Encryption**
+
 ### Q02
+> Which of the following is the responsibility of the customer when it comes to safety of EBS volumes?
+> - Creating snapshot of EBS Volumes to protect Data
+> - Destroying the EBS volumes once it is no longer required
+> - Decommissioning of older device drivers
+> - Ensuring the volume is plugged into the physical server
+
+> **Explanation**:\
+In order to keep your data safe incase the EBS volume becomes unavailable , one can opt to create a snapshot of the volume. This is like creating a copy of your volume.
+**Creating Snapshots**
+
 ### Q03
+
+> Which of the following is an AWS managed compute service?
+> - AWS Lambda
+> - AWS EC2
+> - AWS API Gateway
+> - AWS VPC
+
+**Lambda**
+> **Explanation**:\
+The AWS Lambda service is a fully managed AWS managed service. Here you just add your function code and AWS will create the infrastructure in the background which will be used to run the function code.
+
 ### Q04
+
+> You want to get detailed reports as to which service is consuming a large part of your AWS expenditure.\
+> In which of the following would you be able to get these detailed level reports?
+> - AWS Consolidated Billing
+> - AWS Cost Explorer
+> - AWS Personal Health Dashboard
+> - AWS Support Plans
+
+> **Explanation**:\
+Cost Explorer is a free tool that you can use to view your costs. Here you can get the present view for the month on your spending. You can also get a forecast of your future possible spending and also see detailed breakdown of your current and past spending.
+**AWS Cost Explorer**
+
 ### Q05
+
+> You are trying to understand the different advantages that could come from consolidated billing. \
+> Which of the following is an advantage of Consolidated billing?
+> - Ability to merge free-tier accounts to get a bigger discount on AWS services
+> - Ability for each account holder to pay their bill separately
+> - Ability to segregate resources based on the billing
+> - Ability to pay the bills for multiple accounts under one account
+
+
+~~Should be about volume discounts, but the option isn't there exactly...~~\
+*Paying for multiple accounts*
+
+> **Explanation**:\
+One of the advantages of consolidated billing , as the name suggests is that you get one bill for all accounts that are part of the master account.
+
 ### Q06
+
+> You are looking at hosting your database on the AWS Cloud.\
+> Which of the following are database services provided by AWS?\
+> Choose 2 answers from the options given below
+> - AWS Aurora
+> - AWS RedShift
+> - AWS VPC
+> - AWS SQS
+
+**Aurora** is RDS, **Redshift** is data warehouse...
+
+> **Explanation**:\
+Amazon Aurora is a MySQL and PostgreSQL compatible relational database engine that combines the speed and availability of high-end commercial databases with the simplicity and cost-effectiveness of open source databases. Amazon Redshift is a fully managed, petabyte-scale data warehouse service in the cloud. You can start with just a few hundred gigabytes of data and scale to a petabyte or more.
+
 ### Q07
+
+> Which of the following is used for comparison analysis when it comes to moving on-premise infrastructure to the AWS Cloud?
+> - AWS Trusted Advisor
+> - TCO Calculator
+> - AWS Inspector
+> - AWS Personal health dashboard
+
+**TCO Calculator**
+
+> **Explanation**:\
+You can use the TCO Calculator to do the cost benefit analysis of hosting resources on the AWS Cloud.
+
 ### Q08
+
+> You are looking at the core benefits of moving to the AWS.\
+> Which of the following is an advantage when it comes to the AWS Cloud?
+> - Higher upfront costs and higher variable costs
+> - Higher upfront costs and lower variable costs
+> - Lower upfront costs and higher variable costs
+> - Lower upfront costs and lower variable costs
+
+
+**lower upfront and lower variable** costs...
+
+> **Explanation**:\
+In AWS , you have lower to almost no upfront costs for hosting resources. Also with on-premise you always have to consider maintenance , employee costing when considering the operating costing for resources. And this always starts varying with complexity in the costing model. But with AWS , the costing model is pretty consistent and only lowers with time.
+
 ### Q09
+
+> Which of the following is the concept of agility of the AWS Cloud?\
+> Choose 2 answers from the options given below.
+> - Pay as you Go
+> - Use resources base on demand
+> - Pay an upfront cost
+> - Request AWS prior to creating resources
+
+**Pay as you go** and **resources an demand**
+
+> **Explanation**:\
+The biggest advantage of using the AWS Cloud is that you have the ability to create and terminate resources whenever required. You also have the ability to only pay for what you use.
+
 ### Q10
+
+> Which of the following is an important design principle that should be consider? This design principle is important for business-critical applications.
+> - Design with failure in mind
+> - Design with knowing that the application will always be available
+> - Design with tightly coupled components
+> - Design with Cloud components only
+
+only the **Failure in mind** option seems relevent.
+
+> **Explanation**:\
+When designing applications , always look at bottlenecks and different ways the application can fail You then build different design strategies around how you can avoid such failures. It’s not necessary that all components should reside only on the cloud. Sometimes you can even have the scenario where you have a disaster recovery strategy which routes all the application traffic to an on-premise location.
+
 ### Q11
+
+> A company has an application that is made up of several components. Every time a change is made to one component , the entire application fails.\
+> What design change should be made to ensure such issues don’t occur for the application?
+> - You need to ensure that tight coupling is incorporated amongst the distributed componenets
+> - You need to ensure that loose coupling is incorporated amongst the distributed componenets
+> - You need to ensure that componenets are distributed across regions
+> - You need to ensure that componenets are distributed across multiple data centers
+
+**Loose coupling**
+
+> **Explanation**:\
+One of the most important design concepts for applications is to ensure that components of a system are lightly coupled , which means they don’t have too much of a dependency on each other. If you have a tightly coupled system , then failure in one component could cause a failure in other components.
+
 ### Q12
+
+> You need to check for the configuration of resources and also see the history of all configuration changes.\
+> Which AWS service would you use for this purpose?
+> - AWS Personal Health Dashboars
+> - AWS X-Ray
+> - AWS Config
+> - AWS CodeDeploy
+
+Guessing that it's AWS **Config**
+
+> **Explanation**:\
+The AWS Config service can be used to track the configuration for all of your resources. It can also provide you with a history of all your resources.
+
 ### Q13
+
+> Which of the following can be used to ensure that secure API calls can be made from EC2 Instances?
+> - AWS Users
+> - AWS Groups
+> - AWS IAM Roles
+> - AWS IAM Policies
+
+probably **IAM Roles**, because EC2 instances get a role assigned to them..
+
+> **Explanation**:\
+AWS IAM Roles can be assigned to EC2 Instances. This would allow secure access from the EC2 Instances to your resources. Instead of embedding IAM Access keys , you can use IAM Roles instead for your EC2 Instances.
+
 ### Q14
+> Which of the following can be enforced for IAM users for securing IAM credentials?\
+> Choose 2 answers from the options given below.
+> - Enable IAM Groups
+> - Enable MFA
+> - Use password expiry
+> - Enable IAM Users
+
+**Multi factor authentication** and **password expiry**
+
+> **Explanation**:\
+In IAM , you can use the password policy to define the password expiry time period . It always good to provide a facility that makes sure users change their password after regular intervals. This provides for better security. The MFA is known as Multi-Factor Authentication. This can be used to add an additional device that can be used to authenticate the user after the user has enter the password.
+
 ### Q15
+
+> Which of the following service can be used to create a self-hosted database?
+> - AWS DynamoDB
+> - AWS RDS
+> - AWS EC2 instance
+> - AWS Aurora
+
+dynamoDB and aurora are managed databases, but i'm not clear on the question wording. will go With **EC2** because of 'self hosting'
+
+> **Explanation**:\
+If you want a self-hosted database that means you want to host and manage the database instance. In such a case you need to spin up an EC2 Instance , install the database software and then manage the database instance.
+
 ### Q16
+> Which of the following service can be used to create a customer managed database?
+> - AWS DynamoDB
+> - AWS RDS
+> - AWS EC2 instance
+> - AWS Aurora
+
+~~now it seems to be **RDS**, but it can be the other way around.~~\
+*ALSO EC2*
+
+
 ### Q17
+
+> You are planning on developing an application that will make use of AWS services. You need to carry out optimization for your application and see ways for improvement.\
+> Which of the below service can help in this regard?
+> - AWS X-Ray
+> - AWS Code Inspector
+> - AWS Code Deploy
+> - AWS Code Commit
+
+Guessing that **X-Ray** (not sure if the others are real things)
+
+> **Explanation**:\
+The AWS X-Ray service can be used to collect data about requests that your application serves, and provides tools you can use to view, filter, and gain insights into that data to identify issues and opportunities for optimization
+
 ### Q18
+
+> Your IT Security team has notified of suspicious activity in the AWS account. You need to check and see what API calls were made in the last week.\
+> Which of the below service can help fulfil this requirement?
+> - AWS CloudWatch Metrics
+> - AWS Cloud Trail
+> - AWS CloudWatch Logs
+> - AWS VPC Flow Logs
+
+**Cloud Trail** is for auditing.
+
+> **Explanation**:\
+The AWS Cloud Trail service logs all API calls and can be used to track all activities made within the week. Every API call that gets triggered in AWS gets recorded in AWS Cloudtrail.
+
 ### Q19
+> Which of the following is an advantage of moving from on-premise to AWS when it comes to costing?
+> - Lower capex costs + variable opex costs
+> - Higher capex costs + variable opex costs
+> - Lower capex costs + fixed opex costs
+> - Higher capex costs + fixed opex costs
+
+~~(repeating question) **lower and fixed**.~~\
+*Lower and vairable*?
+
+> **Explanation**:\
+When it comes to moving to the AWS Cloud , you can take advantage of the lower initial capital investment. Also you have the option of variable operational costs.
+
 ### Q20
+
+> Which of the following is available across all AWS support plans?\
+> Choose 2 answers from the options given below.
+> - Access to all checks in the Trusted Advisor
+> - 24x7 access to cloud support engineers
+> - AWS Support Forums
+> - Personal Health Dashboard
+
+
+probably the **forums** and the **Personal Health Dashboard**
+
+> **Explanation**:\
+As part of the AWS Support plans , all plans get access to 24x7 access to customer service, documentation, whitepapers, and support forums. You also get access to the Personal Health Dashboard.
+
 ### Q21
+
+> You have a Hybrid IT architecture.\
+> Which of the following can help create a secure connection between on-premise and AWS?
+> - AWS Direct Connect
+> - AWS Virtual Private Gateway
+> - AWS Virtual Private Connection
+> - AWS Virtual Private Cloud
+
+~~**Direct Connect**~~\
+*Virtual private connection, *
+
+> **Explanation**:\
+The AWS Virtual Private connection is used to establish a secure connection between AWS and your on-premise infrastructure. AWS Direct Connect can for hybrid IT architectures. This connection provides low latency , but not security.
 ### Q22
+
+> You are planning on using the Autoscaling Service.\
+> What feature does Autoscaling provide to you to create a more scalable architecture?
+> - Scale up resources based on the demand
+> - Distribute traffic to multiple resources in different regions
+> - Distribute traffic to multiple resources in Avalability zones
+> - Create a secure cloud architecture
+
+**Scaling up resources**
+
+> **Explanation**:\
+The Autoscaling service can be used to scale your architecture based on demand. So here when the demand goes high, you can use the service to create more EC2 Instances. And then the demand goes down , the Instances can be terminated.
+
 ### Q23
+
+> A company has many departments that use AWS resources. They need a way to segregate the costing aspect for each of these accounts.\
+> How can you accomplish this?
+> - Create separate accounts for each department
+> - Create separate reports in the cost explorer
+> - Create separate VPC for each department
+> - Create separate user for each department
+
+~~**Cost explorer**~~\
+*Separate accounts for each departmen*
+
+> **Explanation**:\
+Nowadays a lot of companies create multiple accounts. Each account can be used for separate departments. And if you need one department to be the master account , you can opt for Consolidating billing.
+
 ### Q24
+
+> Which of the following services makes use of edge locations?\
+> Choose 2 answers from the options given below?
+> - AWS CloudFront
+> - AWS Shield
+> - AWS VPC
+> - AWS Elastic Load Balancer
+
+defiantly **Cloud Front**, maybe also **Shield**.
+
+> **Explanation**:\
+AWS Cloudfront consists of Edge locations located across the world which are used to cache content and deliver content to users across the world. Content is sent from the Origin to the edge location that is closes to the user. AWS Regions is a geographical location that is used to host a resource. AWS Shield is also used at the edge locations as a security measure for the incoming traffic.
+
 ### Q25
+> You want to have the ability to distribute content across the world with the least amount of latency.\
+> Which of the following services would you use?
+> - AWS CloudFront
+> - AWS Elastic Load Balancer
+> - AWS WAF
+> - AWS Shield
+
+**Cloud Front**
+
+> **Explanation**:\
+AWS Cloudfront consists of Edge locations located across the world which are used to cache content and deliver content to users across the world. Content is sent from the Origin to the edge location that is closes to the user. AWS Regions is a geographical location that is used to host a resource. AWS Shield is also used at the edge locations as a security measure for the incoming traffic.
+
 ### Q26
+
+> You have an application hosted on EC2 Instances that is globally mission critical and users are located globally. You need to ensure the highest level of fault tolerance.\
+> How would you design the application?
+> - EC2 Instance in a single availability Zone in a single Region
+> - EC2 Instance in multiple availability Zone in a single Region
+> - EC2 Instance in a single availability Zone in 2 Regions
+> - EC2 Instance in multiple availability Zone in 2 Regions
+
+**Multi Region,multi AZ**
+
+> **Explanation**:\
+The maximum level of fault tolerance is having your application distributed across multiple availability zones in 2 regions. So here even if one region were to go down , the other one would still be available.
+
 ### Q27
+
+> You need to create a snapshot of an EBS volume in another geographic location.\
+> Where would you store the snapshot?
+> - In another Data center
+> - In another Availability Zone
+> - In another Edge Location
+> - In another Region
+
+
+probably **Region**
+
+> **Explanation**:\
+A region corresponds to a separate geographic location. So you need to have the snapshot created in another region.
+
 ### Q28
+
+> You need to have a development and test environment for 3 months.\
+> which of the following Instance pricing would you choose?
+> - On-Demand Instances
+> - Reserved Instances
+> - Spot Instance
+> - Dedicated Hosts
+
+~~**Reserved instances** allow for discounts on bulk and long time~~\
+*Three months isn't a long enough time?*
+
+> **Explanation**:\
+On-Demand instances are the most flexible. Here you can spin up and terminate resources as required. Reserved Instances are beneficial for production workloads where you know that you are going to be utilizing resources for a longer period of time. Spot Instances are good for scenarios where you have batch processing needs. In a test environment , let’s say you host a web server and choose a spot instance. If you loose the Spot Instance , then you would need to spin up the Instance all over again.
 ### Q29
+> You have an application that needs to be available 24 by 7 , 365 days in the year.\
+> Which of the following Instance pricing would you choose?
+> - On-Demand Instances
+> - Reserved Instances
+> - Spot Instance
+> - Dedicated Hosts
+
+Not sure about the difference from the previous question, probably **Reserved Instances**, dedicated hosts are for hardware?
+
+> **Explanation**:\
+Since you have a constant requirement for the running of the instance , you can save on cost by choosing a Reserved instance pricing.
 ### Q30
+
+> Which of the following are examples of agility of the AWS Cloud?\
+> Choose 2 answers from the options given below.
+> - infrastructure scalability
+> - Less time to promote application
+> - hardware scalability
+> - More security
+
+Probably **Infrastructure** ~~and **hardware scalability**.~~\
+*now it's about less time to get to market*
+
+> **Explanation**:\
+With the AWS Cloud you can easily scale your infrastructure based on demand. You don’t have to worry about the underlying hardware which gives you more time to focus on your application development.
+
 ### Q31
+> Which of the following methods can be used to put objects into Glacier?
+> Choose 2 answers from the options given below.
+> - Glacier API
+> - S3 lifecycle policies
+> - AWS Console
+> - Glacier Console
+
+**Lifecycle Policies** is for sure, ~~maybe the **AWS Console**~~\
+*Actually there is a glacier API*
+
+> **Explanation**:\
+The only way you can get objects into Amazon Glacier is via the Application Programming Interface or via the lifecycle policies which are available with S3.
+
 ### Q32
+> You are responsible for creating IAM users and also providing the required access permissions.\
+Which of the following is the principle that should be followed when providing the required access?
+> - Highest privilege access
+> - Least privilege access
+> - Most privilege access
+> - Easiest privilege access
+
+**Least privilege access**
+
+> **Explanation**:\
+When assigning permissions to IAM users , you should only grant the required permissions that is required for them to carry out the task. Start with a minimum set of permissions and grant additional permissions as necessary.
+
+
 ### Q33
+
+> There is a requirement for storage of objects. The objects should be able to be downloaded via a URL.\
+> Which storage option would you choose?
+> - Amazon S3
+> - Amazon Glacier
+> - Amazon EBS Volumes
+> - Amazon EBS Snapshots
+
+**Amazon S3**
+
+> **Explanation**:\
+When you upload objects to S3 , each and every object will get a URL which can be used to download the object.
+
 ### Q34
+
+> You want to find custom solutions which can be deployed to the AWS Cloud.\
+> Which of the following places can be used to search for custom software’s which can be deployed to AWS?
+> - AWS Config
+> - AWS Market Place
+> - AWS CloudFormation
+> - AWS SDK
+
+the **MarketPlace** has AMIs, maybe that's the answer
+
+> **Explanation**:\
+The AWS Marketplace is an online store that helps customers find, buy, and immediately start using the software and services they need to build products and run their businesses
+
+
 ### Q35
+> Which of the following service can be used to create the equivalent of a data center in the cloud?
+> - AWS EC2
+> - AWS Opswork
+> - AWS VPC
+> - AWS Market Place
+
+**VPC - virtual private cloud**
+
+> **Explanation**:\
+The AWS Virtual Private cloud can be used to create the equivalent of the data center on the AWS Cloud.
+
 ### Q36
+
+> You want to migrate an existing database from your on-premise location to the AWS Cloud.\
+> Which of the following can assist in this requirement?
+> - AWS Database Migration Service
+> - AWS Storage Gateway
+> - AWS VM Migration Service
+> - AWS Data Migration Service
+
+**Database Migration Service**
+
+> **Explanation**:\
+AWS Database Migration Service helps you migrate databases to AWS quickly and securely. The source database remains fully operational during the migration, minimizing downtime to applications that rely on the database. The AWS Database Migration Service can migrate your data to and from most widely used commercial and open-source databases.
+
 ### Q37
+
+> Which of the following services can be used to configure alerts that can be sent based on Cloud watch alarms?
+> - SQS
+> - SNS
+> - Cloud Trail
+> - Trusted Advisor
+
+**SNS - simple notification service**
+
+> **Explanation**:\
+The Simple Notification Service can be used to send alerts. These alerts can be configured whenever an alarm is triggered in Cloudwatch.
+
 ### Q38
+> What is the main benefit of decoupling an application?
+> - It helps in reducing inter-depencides between components of the applications, This can lead to less application failures
+> - It helps in creating better tightly coupled components, this can help ensure tha coomunication between the components is faster.
+> - It helps in better data synchronization across various layers of the application
+> - It helps to ensure that software components can be installed easily
+
+**reducing inter-dependencies**
+
+> **Explanation**:\
+The entire design idea behind decoupling is to create components which are independent of each other. This helps in ensuring that even if one component fails , the other components don’t get affected.
+
 ### Q39
+> You need to get details of the expenditure of EC2 Instances which occurred 3 months ago.\
+> Which of the following can help you achieve this?
+> - EC2 Dashboard
+> - Trusted Advisor
+> - Cost and Usage Reports
+> - Cloud Trail Logs
+
+**Cost and Usage Reports**
+
+> **Explanation**:\
+Using the AWS Cost and Usage reports , you can see past data for your resource usage. All resources and the details of their costing is given in these reports.
+
 ### Q40
+
+> Which AWS service provides a manged service for an analytical data warehousing system?
+> - Redshift
+> - DynamoDB
+> - ElasticCache
+> - Aurora
+
+**Redshift**, dynamo and aurora are databases, elasticCache is a caching layer.
+
+> **Explanation**:\
+Amazon Redshift is a fully managed, petabyte-scale data warehouse service in the cloud. You can start with just a few hundred gigabytes of data and scale to a petabyte or more.
+
 ### Q41
+> Which of the following is the benefit of running an application off 2 availability zones?
+> - It increases the performance of an application as opposed to running off one availability zone
+> - It increases the availability of an application as opposed to running off one availability zone
+> - It reduces the total cost of ownership of the application
+> - It increses the security of the application
+
+
+**Higher availability**
+
+> **Explanation**:\
+By running your application off 2 availability zones , you can have better availability. So even if one availability zones goes down , since your application is running off another availability zone , the application would still be up and running.
+
 ### Q42
+
+> Which of the following examples supports the cloud design principle of “design for failure and nothing will fail”?
+> - Deploying multiple EBS volumes for EC2 Instances
+> - Deploying an application across multiple availability zones
+> - Reducing the costs for your solution
+> - Adding a load balancer in front of a single EC2 Instace
+
+**Deploying across multiple availability zones**
+
+> **Explanation**:\
+By running your application off multiple availability zones , you can have better availability. So even if one availability zones goes down , since your application is running off another availability zone , the application would still be up and running.
+
 ### Q43
+> Which of the following is one of the major benefits of using Elastic Cloud Compute over your traditional on-premise physical servers?
+> - You have the facility of automated backups
+> - You get root access to the server
+> - You can choose the hardware vendor
+> - You only pay for what you use
+
+**Pay only for what you use**
+
+> **Explanation**:\
+With EC2 Instances , you have the option of not paying any upfront costs. All you need to do is pay for the usage of the EC2 Instance.
+
 ### Q44
+> Which service allows an administrator to work with AWS user permissions?
+> - AWS IAM
+> - AWS Config
+> - AWS KMS
+> - AWS CloudTrail
+
+**IAM**
+
+> **Explanation**:\
+In AWS IAM (Identity and Access Management) , one can define users , groups , roles. One can also assign permissions via policies to the users in IAM.
+
 ### Q45
+> Which of the following is the responsibility of the AWS customer as per the Shared Responsibility Model?
+> - Securing the edge locations
+> - Managing users via AWS IAM
+> - Monitoring the security of the underlying physical devices
+> - Implementing Service Organization Control Standards
+
+
+**Managing IAM**
+
+> **Explanation**:\
+The responsibility of the AWS Customer is to ensure that users are managed via AWS Identity and Access Management. In AWS IAM (Identity and Access Management) , one can define users , groups , roles. One can also assign permissions via policies to the users in IAM.
+
 ### Q46
+> Which of the following is the responsibility of AWS?\
+> Choose 3 answers from the options given below
+> - Password Policies
+> - User permissions
+> - Physical security
+> - Disk Disposal
+> - Hardware Patching
+
+
+**Physical security**,**Disk Disposal**,**Hardware Patching**,
+
+> **Explanation**:\
+Maintaining Password Policies and Users permissions is the responsibility of the AWS Customer. The remaining are responsibilities of AWS.
+
 ### Q47
+
+> Your architect is advising that all components in an application being developed on AWS use serverless components.\
+> Which of the following can be part of the design?\
+> Choose 2 answers from the options given below.
+> - Simple Storage Service
+> - EC2
+> - RDS
+> - Lambda
+
+defiantly **Lambda**, maybe **S3** (or rds)
+
+> **Explanation**:\
+The Simple Storage Service is used to store objects. Here you don’t need to maintain the underlying infrastructure. AWS Lambda can be used to run your code without any infrastructure.
+
 ### Q48
+> You need to design the architecture for an application on the AWS Cloud. The application needs to be fault tolerant.\
+> Which of the following would you include in your design?\
+> Choose 2 answers.
+> - Multiple Availability Zones
+> - Multiple Physical Devices
+> - Elastic Load Balancer
+> - Single EC2 instance
+
+**multi Az** together with **ELB**.
+
+> **Explanation**:\
+If you have an architecture which requires fault tolerance, consider deploying EC2 Instances in multiple availability zones. Also use an Elastic Load balancer to distribute traffic to the underlying EC2 Instances.
+
 ### Q49
+> Your web application is currently hosted in the us-west region in AWS. You need to ensure users all across the world get a seamless user experience when accessing the application.\
+> Which of the following service can help achieve this?
+> - AWS Route 53
+> - AWS Elastic Load Balancer
+> - AWS Cloud Front
+> - AWS Cloud Trail
+
+probably **Cloud Front**
+
+> **Explanation**:\
+AWS Cloudfront consists of Edge locations located across the world which are used to cache content and deliver content to users across the world. Content is sent from the Origin to the edge location that is closes to the user.
+
 ### Q50
+> Which of the following storage devices would you attach to an EC2 Instance to store data?
+> - AWS Simple Storage
+> - AWS EBS
+> - AWS Glacier
+> - AWS Data Store
+
+**EBS - elastic block storage**
+
+> **Explanation**:\
+When working with EC2 Instances , you can create and attach EBS volumes to the EC2 Instance. This can be used to store the data.
+
 ### Q51
+
+> A company wants to start using a data storage facility on AWS. The data is NoSQL based. They want to have the least amount of administrative burden when working with the data store.\
+> Which one of the following would be the ideal data store solution?
+> - AWS Simple Storage Service
+> - AWS Aurora
+> - AWS DynamoDB
+> - AWS RDS
+
+**DynamoDB** is servereless noSql option.
+
+> **Explanation**:\
+AWS DynamoDB is a fully managed NoSQL database on the AWS Cloud. By using this solution, the company does need to worry about aspects such as managing the infrastructure or scaling it to meet demand.
+
 ### Q52
+> You need to provision development environments on AWS in the quickest way possible.\
+> Which of the following service can be used for quickly building development environments on the AWS Cloud?
+> - AWS EC2
+> - AWS ELB
+> - AWS Elastic Beanstalk
+> - AWS Autoscaling
+
+**AWS Elastic Beanstalk**
+
+> **Explanation**:\
+The AWS Elastic Beanstalk can be used to quickly provision different types of development environments. All the developers have to do is to upload their code to the provisioned environments in AWS Elastic beanstalk.
+
 ### Q53
+> Your company has multiple AWS Accounts. They want to manage all of these accounts in the most secure way.\
+> Which of the following can be used to manage multiple AWS Accounts?
+> - AWS Organizations
+> - AWS Trusted Advisor
+> - AWS VPC
+> - AWS Personal Health Dashboard
+
+**AWS Organizations**
+
+> **Explanation**:\
+With AWS Organizations ,you can manage multiple accounts into different organizational units. You can then create security policies which can be assigned to these multiple accounts.
+
 ### Q54
+> Your company currently has a Microsoft SQL Server database on their on-premise environment. There is a need to migrate this to AWS.\
+> Which of the following service can be used to host the migrated SQL Server database?
+> - AWS RDS
+> - AWS DynamoDB
+> - AWS Aurora
+> - AWS Redshift
+
+**RDS** can use the SQL server engine.
+
+> **Explanation**:\
+The AWS Relational database service has the ability to also create and maintain Microsoft SQL Server database. Just choose the edition of the database you want and then use either the AWS Database migration service or any other migration utility to migrate the database.
+
 ### Q55
+> Your company currently has a MySQL database hosted in the AWS RDS service. They want to add fault tolerance to the database.\
+> How could they achieve this in the easiest way possible?
+> - Create an EC2 Instance to store the backup database
+> - Enable multi-AZ for the database
+> - Create an auto scaling group for the database
+> - Create an elastic load balancer for thedatabase
+
+**Multi AZ** proably means secondary databases.
+
+> **Explanation**:\
+With AWS RDS Multi-AZ , the service will create a replica in another availability zone and then sync the data. If the primary database goes down , the service will then switch over to the secondary backup database.
+
 ### Q56
+
+> You are planning on creating an application that will be hosted on the AWS Cloud. You need to have durable storage in place which can be used to store video files.\
+> Which of the following data stores would you use for this purpose?
+> - S3
+> - S3 Glacier
+> - EBS Volumes
+> - EBS Snapshots
+
+**S3** for durable storage (glacier is for archives)
+
+> **Explanation**:\
+Amazon S3 is the ideal place for storage of objects such as files , videos and pictures. For each object you also get a URL which would allow access to the video.
+
 ### Q57
+> Which of the following aspects when creating an EC2 Instance defines the underlying CPU and Memory allocated to the instance?
+> - Instance Size
+> - Instance Type
+> - AMI
+> - Private Key
+
+probably **Instance Type**
+
+> **Explanation**:\
+The Instance Type determines the amount of CPU and Memory which is allocated to the Instance.
+
 ### Q58
+
+> Which of the following is required to securely log into a Linux based EC2 Instance?
+> - AMI
+> - User name and password
+> - Private Key
+> - Security Groups
+
+**Private Key**
+
+> **Explanation**:\
+The Private Key needs to be generated when you create any type of instance. The key is then used to log into the instance. For Windows based instances , the private key file can be used to generate a password.
+
 ### Q59
+
+> Your system administrator wants to create scripts which can be used to carry out housekeeping jobs for AWS based resources.\
+> Which of the following utilities would the system administrator use?
+> - AWS Console
+> - AWS Command Line Interface
+> - AWS Trusted Advisor
+> - AWS Personal Health Dashboard
+
+**AWS Command Line Interface**
+
+> **Explanation**:\
+The AWS Command Line Interface is a tool which can be used from the command line itself. Here you can create scripts which can be used to work with your AWS resources.
+
 ### Q60
+
+> Your company needs to create one single dedicated connection from their on-premise network to AWS. The connection should have high bandwidth and low latency.\
+> Which of the following would you use for this purpose?
+> - AWS Direct Connect
+> - AWS VPN
+> - AWS Storage gateway
+> - AWS Lambda
+
+~~probably **VPN**, but not sure~~\
+
+> **Explanation**:\
+AWS Direct Connect makes it easy to establish a dedicated network connection from your premises to AWS.Using AWS Direct Connect, you can establish private connectivity between AWS and your data center, office, or co-location environment, which in many cases can reduce your network costs, increase bandwidth throughput, and provide a more consistent network experience than Internet-based connections.
+
+
 ### Q61
+> Which of the following is a configuration management service on the AWS Platform? 
+> - AWS Opswork
+> - AWS Elastic Beanstalk
+> - AWS EC2
+> - AWS VPC
+
+Maybe **OPSwork**
+
+> **Explanation**:\
+AWS OpsWorks is a configuration management service that uses Chef, an automation platform that treats server configurations as code.
+
 ### Q62
+> Which of the following can help in the disaster recovery for the RDS service?
+> - RDS Snapshots
+> - RDS Cross Region Read Replicas
+> - RDS Multi-AZ Deployments
+> - DB subnet groups
+
+~~probably **snapshots**, but it's a guess~~\
+*Read replicas in another region*
+
+> **Explanation**:\
+You can create a Read Replica of the RDS database in another region. So this can help in a disaster recovery incase the primary region fails for any reason.
 ### Q63
+
+> Your IT Manager is creating a business case for moving resources from on-premise to the AWS Cloud. Which of the following should be considered in the TCO Analysis?\
+> Choose 2 answers from the options give below.
+> - Software licensing
+> - Database Instance size
+> - Number of security groups
+> - Number of routers
+
+**Instance size** for sure, maybe **software licenses**?
+
+> **Explanation**:\
+When moving resources to the AWS Cloud , If you custom software that need licensing , you need to also consider the cost of licensing them for the cloud. If you are migrating a database , then you need to see the current capacity of the instance on your on-premise environment. And ensure a similar environment is created on the AWS Cloud.
+
+
 ### Q64
+> Which of the following allows for defining templates , parameters for automatic creation on resources on the AWS Cloud?
+> - Code Deploy
+> - Code Commit
+> - Code Pipeling
+> - Cloud Formation
+
+**Cloud Formation**
+
+> **Explanation**:\
+The AWS Cloudformation service is used to define templates which is equivalent to Infrastructure as code. Using this you can make templates run which in turn would create resources in the AWS Cloud.
+
 ### Q65
+
+> You need to check for whether you are following the most secure practices for your AWS Infrastructure before you move it to the cloud.\
+> Which of the following tools can help in this regard?
+> - AWS Trusted Advisor
+> - AWS Personal Health Dashboard
+> - AWS VPC FLow Logs
+> - AWS Cloud Watch
+
+**AWS Trusted Advisor** 
+
+
+> **Explanation**:\
+The AWS Trusted Advisor gives you security recommendations and can help you improve the overall way you utilize resources in your AWS Account.
+
+
+
+
 
 </details>
 
