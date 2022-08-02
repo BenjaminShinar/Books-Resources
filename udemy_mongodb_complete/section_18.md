@@ -5,7 +5,7 @@
 [main](README.md)
 
 ## Section 18 - Introducing Stitch (MongoDB Realm)
-<!-- <details> -->
+<details>
 <summary>
 Beyond Data Storage. Serverless platform for building applications.
 </summary>
@@ -174,7 +174,13 @@ we can also set a schema for the data under the <kbd>Schema</kbd> tab.
 
 we hav to fix our code again, because we need to parse the Decimal128 price (and the object ID) back to a string value, which we previously did in the backend.
 
-### Fetching & Converting Data
+### CRUD operations
+<details>
+<summary>
+updating the rest API
+</summary>
+
+#### Fetching & Converting Data
 we need to transform the mongoDB objects into something which we can render in the front-end.
 
 
@@ -206,7 +212,7 @@ we need to transform the mongoDB objects into something which we can render in t
 
 we don't have the images anymore, because we removed the backend.
 
-### Deleting Products
+#### Deleting Products
 
 we next modify the delete handler to use Stitch. we need to transform the string id into ObjectId. we need the bson package. 
 
@@ -237,17 +243,267 @@ import BSON from 'bson';
     })
   };
 ```
-### Finding a Single Product
-### Adding Products
-### Updating Products
-### Switching to User Email & Password Authentication
-### Adding User Sign Up & Confirmation
-### Adding User Login
-### Rules & Real Users
-### The Current State of Authentication
-### Functions & Triggers
-### Wrap Up
+#### Finding a Single Product
 
+just like deleting, when we fetch a single object, we need to convert the id. in the "product.js" file
+we add the imports. (and remove 'axios')
+
+```js
+import {Stitch, RemoteMongoClient} from 'mongodb-stitch-browser-sdk';
+import BSON from 'bson';
+
+
+import React, { Component } from 'react';
+import axios from 'axios';
+
+import './Product.css';
+
+class ProductPage extends Component {
+  state = { isLoading: true, product: null };
+
+  componentDidMount() {
+    const mongodb = Stitch.defaultAppClient().getServiceClient(RemoteMongoClient.factory,'mongodb-atlas');
+    
+    mongodb
+    .db('shop').collection('products')
+    .find({_id:new BSON.ObjectId(this.props.match.params.id)})
+    asArray()
+    .then(productResponse=>{
+      const product = productResponse[0];
+      product._id=product._id.toString();
+      product.price=product.price.toString();
+        this.setState({isLoading:false, product: product})
+    })
+    .catch(err=>{
+        this.setState({isLoading:false});
+        this.props.onError(
+            'Loading the product failed. Please try again later'
+        );
+        console.log(err);
+    })
+  }
+  // more code
+}
+```
+#### Adding Products
+
+now we want to add new products, under the "EditProduct.js" file. we take the same imports, and we play around with the types some more.
+
+```js
+class ProductEditPage extends Component {
+  state = {
+    isLoading: true,
+    title: '',
+    price: '',
+    imageUrl: '',
+    description: ''
+  };
+
+  //more code
+  editProductHandler = event => {
+
+    const mongodb = Stitch.defaultAppClient().getServiceClient(RemoteMongoClient.factory,'mongodb-atlas');
+    let requests;
+    event.preventDefault();
+    if (
+      this.state.title.trim() === '' ||
+      this.state.price.trim() === '' ||
+      this.state.imageUrl.trim() === '' ||
+      this.state.description.trim() === ''
+    ) {
+      return;
+    }
+    
+    this.setState({ isLoading: true });
+    const productData = {
+      name: this.state.title,
+      price: BSON.Decimal128.fromString(this.state.price.toString()),
+      image: this.state.imageUrl,
+      description: this.state.description
+    };
+    let request;
+    if (this.props.match.params.mode === 'edit') {
+      request = axios.patch(
+        'http://localhost:3100/products/' + this.props.match.params.id,
+        productData
+      );
+    } else {
+      requests = mongodb
+      .db('shop').collection('products')
+      .insertOne(productData);
+    }
+    request
+      .then(result => {
+        this.setState({ isLoading: false });
+        this.props.history.replace('/products');
+      })
+      .catch(err => {
+        this.setState({ isLoading: false });
+        console.log(err);
+        this.props.onError(
+          'Editing or adding the product failed. Please try again later'
+        );
+      });
+  };
+  // more code
+}
+```
+
+but we get an error, because we aren't authorized to add products yet!
+
+we need to go back to the stitch console and add 'write' permissions.
+
+#### Updating Products
+
+same as inserting... we need to first get the product from the DB, then we use the id from the component as a mongodb Selector.
+
+</details>
+
+### Authentication
+<details>
+<summary>
+Switch to using real users
+</summary>
+
+
+#### Switching to User Email & Password Authentication
+
+stitch gives us built in user authentication. rather than use acronymous authentication, we use password-email authentication. we just change some field.
+
+#### Adding User Sign Up & Confirmation
+
+
+we remove the anonymousAuthentication imports, and we import instead
+
+```js
+import {Stitch, UserPasswordAuthProviderClient} from 'mongodb-stitch-browser-sdk';
+```
+
+in auth handler. we change the code a bit
+```js
+//... imports
+import {Stitch,UserPasswordAuthProviderClient} from 'mongodb-stitch-browser-sdk';
+
+class App extends Component {
+  state = {
+    isAuth: true,
+    authMode: 'login',
+    error: null
+  };
+
+  constructor() {
+    super();
+    this.client = Stitch.initializeDefaultAppClient('app-client-id');
+    //this.client.auth().loginWithCredential(new AnonymousCredintails()); 
+  }
+  //... more code
+    authHandler = (event, authData) => {
+    event.preventDefault();
+    if (authData.email.trim() === '' || authData.password.trim() === '') {
+      return;
+    }
+    const emailPassClient = this.client.auth.getProviderClient(UserPasswordAuthProviderClient.factory)
+    emailPassClient.registerWithEmail(authData.email, authData.password);
+    .then(res=>{
+      console.log(res);
+    })
+    .catch(err=>{
+      this.errorHandler("An error occurred");
+      console.log(res);
+      this.setState({isAuth:false});
+    })
+    }
+}
+```
+
+we need to try this with a real email, as Stitch is really creating users.
+
+
+in the "confirmAccount.js" file, we add the Stitch import
+```js
+import React, { Component } from 'react';
+import {Stitch, UserPasswordAuthProviderClient} from 'mongodb-stitch-browser-sdk';
+
+import './ConfirmAccount.css';
+
+class AuthPage extends Component {
+  componentDidMount() {
+    const queryUrl = window.location.search;
+    const queryParams = new URLSearchParams(queryUrl);
+    const token = queryParams.get('token');
+    const tokenId = queryParams.get('tokenId');
+    console.log('Account confirmed');
+    const emailPassClient = Stitch.defaultAppClient.auth.getProviderClient(UserPasswordAuthProviderClient.factory);
+    emailPassClient.confirmUser(token, tokenId);
+    .then(()=>{
+      this.props.history.replace('/')l //redirect
+    })
+    .catch(err=>{
+      console.log (err);
+    })
+    
+  }
+  //more code
+}
+```
+#### Adding User Login
+
+now that we have users signing up, we want to log-in the users. Stitch manages the sessions and toekn
+
+
+in the app.js file
+
+```js
+
+import {Stitch, UserPasswordAuthProviderClient,UserPasswordCredential} from 'mongodb-stitch-browser-sdk';
+
+
+  authHandler = (event, authData) => {
+    event.preventDefault();
+    if (authData.email.trim() === '' || authData.password.trim() === '') {
+      return;
+    }
+    const emailPassClient = this.client.auth.getProviderClient(UserPasswordAuthProviderClient.factory);
+    
+    let request;
+
+    if (this.state.authMode === 'login') {
+      const credential = new UserPasswordCredential(auth.data.email, auth.data.password);
+      request = this.client.auth.loginWIthCredeintails(credentials);
+    } else {
+         request= emailPassClient.registerWithEmail(authData.email, authData.password);
+    }
+    request
+      .then(results => {
+          console.log(token);
+          if (result) {
+            this.setState({ isAuth: true });
+
+          }
+        })
+      .catch(err => {
+        this.errorHandler("an error Occurred");
+        console.log(err);
+        this.setState({ isAuth: false });
+      });
+  };
+```
+#### Rules & Real Users
+
+
+making it so that only logged-in users can interact with products.
+
+in the stitch Console, under the permissions tab, we can modify the rules again, in this example we don't take advantage of everything stitch has to offer.
+
+</details>
+
+### Functions & Triggers
+
+functions and triggers are important features of Stitch. we can write our custom functions in javascript code. they can access databases, write logs to database and anything else.
+
+once we write the function, we can access it from the frontend code via the Stitch client Object. each function call is logged in the backend. the function code isn't visible from the client side code.
+
+we can also execute function based on triggers, which we can set to events in the backend, like database actions. this helps us write backend code, even without having a 'proper' backend service running.
 
 </details>
 

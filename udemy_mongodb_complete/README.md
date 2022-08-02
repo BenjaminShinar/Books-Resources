@@ -7,29 +7,28 @@
  
 udemy course [Master MongoDB Development for Web & Mobile Apps. CRUD Operations, Indexes, Aggregation Framework - All about MongoDB!](https://www.udemy.com/course/mongodb-the-complete-developers-guidey/) by *Maximilian Schwarzmüller*. 
 
-- Introduction
-- Understaning The Bascis and CRUD Operations
-- Schemas & Relations: How to Structure Documents
-- Exploring The Shell & The Server
-- Using The MongoDB Comapass To Explore Data Visually
-- Diving into Create Operations
-- Read Operations - A Closer Look
-- Update Operations
-- Understanding Delete Operations
-- Working With Indexes
-- Working With GeoSpatial Data
-- Understanding the Aggregation Framework
-- Working With Numeric Data
-- MongoDB & Security
-- Performance, Fault Tolerancy & Deployment
-- Transactions
-- From Shell To Driver
-- Introducing Stitch
-- Takeaways
-  - 
+1. [Introduction](section_01_02.md#section-1---introduction)
+1. [Understaning The Bascis and CRUD Operations](section_01_02.md#section-2---understaning-the-bascis-and-crud-operations)
+1. [Schemas & Relations: How to Structure Documents](section_03_06.md#section-3---schemas--relations-how-to-structure-documents)
+1. [Exploring The Shell & The Server](section_03_06.md#section-4-exploring-the-shell-and-the-server)
+1. [Using The MongoDB Comapass To Explore Data Visually](section_03_06.md#section-5--using-mongodb-compass-to-explore-data-visually)
+1. [Diving into Create Operations](section_03_06.md#section-6-diving-into-create-options)
+1. [Read Operations - A Closer Look](section_07_09.md#section-7---read-operations-a-closer-look)
+1. [Update Operations](section_07_09.md#section-8---update-operations)
+1. [Understanding Delete Operations](section_07_09.md#section-9---understanding-delete-operations)
+1. [Working With Indexes](section_10_11.md#section-10---working-with-indexes)
+1. [Working With GeoSpatial Data](section_10_11.md#section-11---working-with-geospatial-data)
+1. [Understanding the Aggregation Framework](section_12_14.md#section-13---working-with-numeric-data)
+1. [Working With Numeric Data](section_12_14.md#section-13---working-with-numeric-data)
+1. [MongoDB & Security](section_12_14.md#section-14---mongodb--security)
+1. [Performance, Fault Tolerancy & Deployment](section_15_17.md#section-15---performance-fault-tolerancy--deployment)
+1. [Transactions](section_15_17.md#section-16---transactions)
+1. [From Shell To Driver](section_15_17.md#section-17---from-shell-to-driver)
+1. [Introducing Stitch](section_18.md#section-18---introducing-stitch-mongodb-realm)
+
 
 ## Takeaways
-<!-- <details> -->
+<details>
 <summary>
 Things worth remembering
 </summary>
@@ -268,8 +267,7 @@ db.mycoll.updateOne({field:value},{$set:{field1:value1,field2:value2}},
 ```js
 db.mycoll.updateMany({field:value},{$set:"array.$[identifier].field":value},{arrayFilters:[{"identifier.field":value}]})
 ```
-
-  - `` - partial filter, when we know we have a sub segment of relevant values in the field which are used most of the time, and other which are rarely used.
+- `` - partial filter, when we know we have a sub segment of relevant values in the field which are used most of the time, and other which are rarely used.
    
 index
 - unique
@@ -385,6 +383,7 @@ command | action
 `help mr` | mapreduce
 
 ### Data Types
+
 DataType | Notes | Example
 ---|---|---
 Text | always quotes | "Max"
