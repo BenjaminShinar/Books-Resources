@@ -2222,3 +2222,20 @@ int main()
 
 there is a danger of ODR (one defintion rule) violation, so it's probably better to create a callable directly.
 </details>
+
+## C++ Weekly - Ep 335 - Projects That Need Your Help! - Channel News and Updates
+<details>
+<summary>
+Some updates and general information.
+</summary>
+
+[Projects That Need Your Help! - Channel News and Updates](https://youtu.be/Xu1O-44ikso)
+
+Describing what Microsoft MVP is, what on-site training is. the [second channel](https://www.youtube.com/channel/UCADySP7Hy8TxgfDEe2GZQyw) was re-branded from "The Retro Programmer" to "The [Fill in the Blank] Programmer".
+Going over the Repositories and the Best Practice book. There will be a workshop before CppCon 2022.
+
+1. The CPP tutorial game was renamed into "Travels", requires ideas about which lessons to create, and help with trying to create those lessons.
+2. Cpp weekly project - all future ideas, what topics we would like to see in he future?
+3. he's still looking for sponsorships.
+
+</details>
