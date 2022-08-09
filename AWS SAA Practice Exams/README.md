@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore
+// cSpell:ignore RTMP MPLS ISCSI
 -->
 
 Practice exams from Different Sources:
@@ -41,6 +41,7 @@ Practice exams from Different Sources:
 - [CloudWatch](https://digitalcloud.training/amazon-cloudwatch/) - monitoring tool
 - [CloudTrail](https://digitalcloud.training/aws-cloudtrail/) - auditing
 - [AWS Config](https://digitalcloud.training/aws-config/) - history of configuration changes - similar to cloud watch, but about changes, not actions.
+- [BeanStalk cheatSheet](https://digitalcloud.training/aws-elastic-beanstalk/) - deploy applications
 - [Kinesis](https://digitalcloud.training/amazon-kinesis/) - high performance real time data entry point.
 - Managerial Services
   - [IAM](https://digitalcloud.training/aws-iam/) - identity access, policies
@@ -71,7 +72,7 @@ Open Questions:
 14. FSx -
 15. Active MQ - standalone message broker queue, 
 16. AMAZON MQ - message broker queue, but for existing (not aws native) applications.
-17. Resource Access manager?
+17. Resource Access manager? - share resources with other accounts
 18. SCP - service control policy - under AWS organization.
 19. OAI - origin access policy - sits on the objects (like S3 bucket) and controls who can access it.
 20. DynamoDAX - Caching Layer on top of dynamoDB
@@ -87,9 +88,9 @@ Open Questions:
 29. Macie - "Amazon Macie is a fully managed data security and data privacy service that uses machine learning and pattern matching to discover and protect your sensitive data in AWS." - can't be used in RDS?
 30. Cognito - "Amazon Cognito lets you add user sign-up, sign-in, and access control to your web and mobile apps quickly and easily. Amazon Cognito scales to millions of users and supports sign-in with social identity providers, such as Apple, Facebook, Google, and Amazon, and enterprise identity providers via SAML 2.0 and OpenID Connect."
 31. CNAME vs ALIAS?
-32. SSE-S3 keys, how are they different than other keys?
+32. SSE-S3 keys, how are they different than other keys? when to use SSE-S3 and when to use KMS?
 33. event bridge rules?
-34. S3 transfer acceleration
+34. S3 transfer acceleration?
 35. cross region replication vs cross region resource sharing (CORS)
 36. CloudWatch in EKS?
 37. Auto Scaling groups
@@ -101,11 +102,38 @@ Open Questions:
 40. DynamoDB streams? - "DynamoDB Streams captures a time-ordered sequence of item-level modifications in any DynamoDB table and stores this information in a log for up to 24 hours." auditing of dynamoDB events.
 41. Redshift spectrum? - "Amazon RedShift Spectrum is a feature of Amazon Redshift that enables you to run queries against exabytes of unstructured data in Amazon S3, with no loading or ETL required."
 42. Step functions?
+43. RDS replication types?
+    1.  synchronous
+    2.  scheduled
+    3.  asynchronous
+    4.  continues
+44. CodeCommit
+45. CodeStar
+46. Cacheing over a method/stage? - API gateway caches over a stage.
+47. CodeDeploy - "AWS CodeDeploy is a fully managed deployment service that automates software deployments to a variety of compute services such as Amazon EC2, AWS Fargate, AWS Lambda, and your on-premises servers. AWS CodeDeploy makes it easier for you to rapidly release new features, helps you avoid downtime during application deployment, and handles the complexity of updating your applications. You can use AWS CodeDeploy to automate software deployments, eliminating the need for error-prone manual operations. The service scales to match your deployment needs."
+48. System Manager - "Amazon Systems Manager is a management service that helps you automatically collect software inventory, apply OS patches, create system images, and configure Windows and Linux operating systems. These capabilities help you define and track system configurations, prevent drift, and maintain software compliance of your EC2 and on-premises configurations. By providing a management approach that is designed for the scale and agility of the cloud but extends into your on-premises data center, Systems Manager makes it easier for you to seamlessly bridge your existing infrastructure with Amazon Web Services."
+49. what does dashboard display?
+50. Virtual Private Gateway?
+51. What Are SQS auto scaling queues?
+52. CloudWatch metrics per service
+53. When is server migration service used?
+54. MPLS?
+55. RTMP?
+56. MetaData querying tool?
+57. Dedicated Instance vs dedicated hosts - dedicated instances are seperated from other accounts at physical level (pay per instance). dedicated hosts is more 'stringent' and more 'separated', it's a real physical machine solely dedicated to you (per per host).
+58. When to use cognito and when SAML\tokens?
  
 
 
 
 ## Tips:
+
+Service limits are seen in the trusted advisor.
+
+
+transit gateway isn't only used in DX, it can connect many VPCs together (instead of peering), and just brings together VPC and other connection points like VPN or DX.
+
+RTMP must be stored in S3.
 
 ### Storage transitions: 
 move from instance Store to EBS (persistnancy), and from EBS to EFS (multiple attachments, only multi-attached nitro EBS can be attached to multiple instances), and then maybe to FSx (fully managed?, works with SMB, VPNs).
@@ -116,6 +144,13 @@ EFS has lifecycle policies as well.
 
 RAID 0 is for performance, RAID1 is for fault tolerance.
 
+all EBS families support encryption
+
+Ebs snapshots are incremental, but deletion will make sure the recent one contains all the data.
+
+### Redshift
+
+normal redshift is managed and serverless, but redshift spectrum isn't serverless, it requires a redshift cluster.
 
 ### Direct Connect (DX)
 - Gateways:
@@ -125,22 +160,89 @@ RAID 0 is for performance, RAID1 is for fault tolerance.
 - Encryption requires a VPN tunnel (VPG)
 Transit gateway can connect one DX through a transit virtual interface to many VPC.
 
+New Name	| Old Name|	Interface	|Use Case
+---|---|---|---
+File Gateway	|None	|NFS, SMB	|Allow on-prem or EC2 instances to store objects in S3 via NFS or SMB mount points
+Volume Gateway Stored Mode	|Gateway-Stored Volumes|	iSCSI	|Asynchronous replication of on-prem data to S3
+Volume Gateway Cached Mode|	Gateway-Cached Volumes|	iSCSI	|Primary data stored in S3 with frequently accessed data cached locally on-prem
+Tape Gateway|	Gateway-Virtual Tape Library|	ISCSI|	Virtual media changer and tape library for use with existing backup software
 
-Route53:
+### Route53:
 - geolocation is more specific than geoProximity.
 
 
-internet Gateway - vpc
+Alias records are used to map resource record sets in your hosted zone to:
+- Amazon Elastic Load Balancing load balancers 
+- API Gateway custom regional APIs and edge-optimized APIs
+- CloudFront Distributions
+- AWS Elastic Beanstalk environments
+- Amazon S3 buckets that are configured as website endpoints
+- Amazon VPC interface endpoints
+- other records in the same Hosted Zone.
+
+### internet Gateway - vpc
 - private connection requires interface VPC endpoint (privateLink)
 - interface endpoints are for resources like vpc, elb. gateway resources are for S3 and dynamoDB
 
-elasticCache
+### elasticCache
 - Redis has more features than memcached
 
-Aurora can be instance based or serverless.
+
 
 ### Compute
 
 Batch jobs are run across several EC2 instances, for parallel jobs.
 
 EMR - Elastic map reduce - same as hadoop - big data
+
+### API Gateway
+[CheatSheet](https://digitalcloud.training/amazon-api-gateway)
+
+Caching is per stage
+
+throteling can be done per client or per method.
+
+#### Endpoints
+limited access 
+- edge optimized - from cloudfront
+- regional endpoint - services in the same region.
+- private endpoint - from the same vpc
+
+### RDS
+
+Aurora can be instance based or serverless.
+
+Multi-AZ uses synchronously replication.
+
+Action |Multi-AZ Deployments |	Read Replicas
+---|---|---
+Replication|Synchronous Replication – highly durable	|Asynchronous replication – highly scalable
+Active engines |Only database engine on primary instance is active | All read replicas are accessible and can be used for read scaling
+backups | Automated backups are taken from standby| No backups configured by default
+Availability |Always span two availability zones within a single region |	Can be within an Availability Zone, Cross-AZ, or Cross-Region
+versioning | Database engine version upgrades happen on primary|Database engine version upgrade is independent from source instance
+fault tolerance |Automatic failover to standby when a problem is detected | Can be manually promoted to a standalone database instance
+
+
+there is a special aws authentication plugin to MySQL.
+
+### DynamoDB
+[DynamoDB cheatsheet](https://digitalcloud.training/amazon-dynamodb/)
+
+max object size is 400Kb
+
+read/write units on a partiton key. max 3000RCU (reads) or 1000WCU (writes)
+
+a best practices is to store more frequently and less frequently accessed data in separate tables
+
+### Beanstalk
+[BeanStalk cheatSheet](https://digitalcloud.training/aws-elastic-beanstalk/)
+
+because beanstalk creates entire application stacks (like a wordpress site), we can point an Alias record to them.
+
+### ElasticCache
+
+Redis is usually stronger, except that it's not multithreaded! memCacheD supports multicore!
+
+### SQS
+Fifo sqs ensures order and ensures that there a no duplicates.

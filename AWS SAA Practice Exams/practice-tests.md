@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore DFSR Referer SATA CIFS OCSP Mbps Gbps Caffe2
+// cSpell:ignore DFSR Referer SATA CIFS OCSP Mbps Gbps Caffe2 SDLC DFSN RTMP OIDC
 -->
 
 - https://www.udemy.com/course/aws-certified-solutions-architect-associate-practice-tests-k
@@ -9,7 +9,6 @@
 <summary>
 65 questions
 </summary>
-
 
 ### Q01
 
@@ -2449,7 +2448,8 @@ maybe cloudTrail container insights in EKS?
 </details>
 
 ## Exam 4
-<!-- <details> -->
+
+<details>
 <summary>
 65 questions
 </summary>
@@ -3231,409 +3231,819 @@ maybe automatically associated with the default one...
 65 questions
 </summary>
 
-
-
 ### Q01
+> A client has requested a design for a fault tolerant database that can failover between AZs. You have decided to use RDS in a multi-AZ configuration.\
+> What type of replication will the primary database use to replicate to the standby instance?
+
+~~probably asynchronous~~, but who knows
+
+> **Explanation:**\
+> Multi-AZ RDS creates a replica in another AZ and synchronously replicates to it (DR only). Multi-AZ deployments for the MySQL, MariaDB, Oracle and PostgreSQL engines utilize synchronous physical replication. Multi-AZ deployments for the SQL Server engine use synchronous logical replication (SQL Server-native Mirroring technology).
+> 
+> ![Q1 replication](https://img-c.udemycdn.com/redactor/raw/2020-06-28_19-59-49-4aeaf1017517ceea6f5e5216d8b1e6de.png)
 
 
 ### Q02
+> A Solutions Architect created a new subnet in an Amazon VPC and launched an Amazon EC2 instance into it. The Solutions Architect needs to directly access the EC2 instance from the Internet and cannot connect.\
+> Which steps should be undertaken to troubleshoot the issue? (choose 2)
 
+probably route table and public IP address. i think that NAT gateway isn't mandatory (NAT instance?)
 
+> **Explanation:**\
+> A public subnet is a subnet that's associated with a route table that has a route to an Internet gateway.\
+> Public subnets are subnets that have:
+> - “Auto-assign public IPv4 address” set to “Yes”.
+> - The subnet route table has an attached Internet Gateway.
 ### Q03
+> The development team in a media organization is moving their SDLC processes into the AWS Cloud.\
+> Which AWS service can a Solutions Architect recommend that is primarily used for software version control?
+
+probably CodeCommit
+
+> **Explanation:**\
+> AWS CodeCommit is a fully-managed source control service that hosts secure Git-based repositories. It makes it easy for teams to collaborate on code in a secure and highly scalable ecosystem. CodeCommit eliminates the need to operate your own source control system or worry about scaling its infrastructure. You can use CodeCommit to securely store anything from source code to binaries, and it works seamlessly with your existing Git tools.
 
 
 ### Q04
+> Encrypted Amazon Elastic Block Store (EBS) volumes are attached to some Amazon EC2 instances.\
+> Which statements are correct about using encryption with Amazon EBS volumes? (choose 2)
 
+~~I think that it's only encrypted at rest~~, and maybe all types can be encrypted?
 
+> **Explanation:**\
+> Some facts about Amazon EBS encrypted volumes and snapshots:
+> - All EBS types support encryption and all instance families now support encryption.
+> - Not all instance types support encryption.
+> - Data in transit between an instance and an encrypted volume is also encrypted (data is encrypted in trans.
+> - You can have encrypted an unencrypted EBS volumes attached to an instance at the same time.
+> - Snapshots of encrypted volumes are encrypted automatically.
+> - EBS volumes restored from encrypted snapshots are encrypted automatically.
+
+- EBS volumes created from encrypted snapshots are also encrypted.
 ### Q05
+> A Solutions Architect just completed the implementation of a 2-tier web application for a client. The application uses Amazon EC2 instances, Amazon ELB and Auto Scaling across two subnets. After deployment the Solutions Architect noticed that only one subnet has EC2 instances running in it.\
+> What might be the cause of this situation?
+
+probably the auto scaling group wasn't configured properly?
+
+> **Explanation:**\
+> You can specify which subnets Auto Scaling will launch new instances into. Auto Scaling will try to distribute EC2 instances evenly across AZs. If only one subnet has EC2 instances running in it the first thing to check is that you have added all relevant subnets to the configuration.
 
 
 ### Q06
+> A Solutions Architect needs to create a file system that can be concurrently accessed by multiple Amazon EC2 instances across multiple availability zones. The file system needs to support high throughput and the ability to burst. As the data that will be stored on the file system will be sensitive, it must be encrypted at rest and in transit.\
+> Which storage solution should the Solutions Architect use for the shared file system?
+
+file system means EFS
+
+> **Explanation:**\
+> EFS is a fully-managed service that makes it easy to set up and scale file storage in the Amazon Cloud. EFS file systems are mounted using the NFSv4.1 protocol. EFS is designed to burst to allow high throughput levels for periods of time. EFS also offers the ability to encrypt data at rest and in transit.
 
 
 ### Q07
+> An application that is being installed on an Amazon EC2 instance requires a persistent block storage volume. The data must be encrypted at rest and regular volume-level backups must be automated.\
+> Which solution options should be used?
+
+persistent block storage means EBS
+
+> **Explanation:**\
+> For block storage the Solutions Architect should use either Amazon EBS or EC2 instance store. However, the instance store is non-persistent so EBS must be used. With EBS you can encrypt your volume and automate volume-level backups using snapshots that are run by Data Lifecycle Manager.
 
 
 ### Q08
+> A company has deployed an API using Amazon API Gateway. There are many repeat requests and a solutions architect has been asked to implement measures to reduce request latency and the number of calls to the Amazon EC2 endpoint.\
+> How can this be most easily achieved?
+
+cacheing, ~~over a method?~~
+
+> **Explanation:**\
+> You can enable API caching in Amazon API Gateway to cache your endpoint's responses. With caching, you can reduce the number of calls made to your endpoint and also improve the latency of requests to your API.\
+> When you enable caching for a stage, API Gateway caches responses from your endpoint for a specified time-to-live (TTL) period, in seconds. API Gateway then responds to the request by looking up the endpoint response from the cache instead of making a request to your endpoint. The default TTL value for API caching is 300 seconds. The maximum TTL value is 3600 seconds. TTL=0 means caching is disabled.
+> 
+> ![Q8 api gateway cacheing](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-14-50-ea00cfb6679c3d0035a50e9c28b4e682.png)
 
 
 ### Q09
 
+> A Solutions Architect is designing an application for processing and extracting data from log files. The log files are generated by an application and the number and frequency of updates varies. The files are up to 1 GB in size and processing will take around 40 seconds for each file.\
+> Which solution is the most cost-effective?
+
+files are saved to S3, processing done by lambda.
+
+> **Explanation:**\
+> The question asks for the most cost-effective solution and therefor a serverless and automated solution will be the best choice.\
+> AWS Lambda can run custom code in response to Amazon S3 bucket events. You upload your custom code to AWS Lambda and create a function. When Amazon S3 detects an event of a specific type (for example, an object created event), it can publish the event to AWS Lambda and invoke your function in Lambda. In response, AWS Lambda executes your function.
+> ![Q9 lambda and S3 bucket](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-12-32-5693ddd5be6f40334bb8d981a4099fbd.png)
+
 
 ### Q10
+> An organization is planning their disaster recovery solution. They plan to run a scaled down version of a fully functional environment. In a DR situation the recovery time must be minimized.\
+> Which DR strategy should a Solutions Architect recommend?
+
+scaled down version is "warm standby"
+
+> **Explanation:**\
+> The term warm standby is used to describe a DR scenario in which a scaled-down version of a fully functional environment is always running in the cloud. A warm standby solution extends the pilot light elements and preparation.\
+> It further decreases the recovery time because some services are always running. By identifying your business-critical systems, you can fully duplicate these systems on AWS and have them always on.
 
 
 ### Q11
+> A company runs an application on-premises that must consume a REST API running on Amazon API Gateway. The company has an AWS Direct Connect connection to their Amazon VPC. The solutions architect wants all API calls to use private addressing only and avoid the internet.\
+> How can this be achieved?
+
+private virtual interface, vpc endpoint?
+
+> **Explanation:**\
+> The requirements are to avoid the internet and use private IP addresses only. The best solution is to use a private virtual interface across the Direct Connect connection to connect to the VPC using private IP addresses. A VPC endpoint for Amazon API Gateway can be created and this will provide access to API Gateway using private IP addresses and avoids the internet completely.
 
 
 ### Q12
+> A Solutions Architect regularly deploys and manages infrastructure services for customers on AWS. The SysOps team are facing challenges in tracking changes that are made to the infrastructure services and rolling back when problems occur.\
+> How can a Solutions Architect BEST assist the SysOps team?
+
+probably cloudFormation templates? but maybe codeDeploy?
+
+> **Explanation:**\
+> When you provision your infrastructure with AWS CloudFormation, the AWS CloudFormation template describes exactly what resources are provisioned and their settings. Because these templates are text files, you simply track differences in your templates to track changes to your infrastructure, similar to the way developers control revisions to source code.\
+> For example, you can use a version control system with your templates so that you know exactly what changes were made, who made them, and when. If at any point you need to reverse changes to your infrastructure, you can use a previous version of your template.
 
 
 ### Q13
+> A manager is concerned that the default service limits my soon be reached for several AWS services.\
+> Which AWS tool can a Solutions Architect use to display current usage and limits?
+
+~~cloudWatch? maybe dashboard?~~
+
+> **Explanation:**\
+> Trusted Advisor is an online resource to help you reduce cost, increase performance, and improve security by optimizing your AWS environment. Trusted Advisor provides real time guidance to help you provision your resources following AWS best practices.\
+> AWS Trusted Advisor offers a Service Limits check (in the Performance category) that displays your usage and limits for some aspects of some services.
 
 
 ### Q14
+> A Solutions Architect is building a small web application running on Amazon EC2 that will be serving static content. The user base is spread out globally and speed is important.\
+> Which AWS service can deliver the best user experience cost-effectively and reduce the load on the web server?
+
+cloudFront
+
+> **Explanation:**\
+> This is a good use case for Amazon CloudFront as the user base is spread out globally and CloudFront can cache the content closer to users and also reduce the load on the web server running on EC2.
 
 
 ### Q15
+> A Solutions Architect has deployed a number of AWS resources using CloudFormation. Some changes must be made to a couple of resources within the stack. Due to recent failed updates, the Solutions Architect is a little concerned about the effects that implementing updates to the resources might have on other resources in the stack.\
+> What is the easiest way to proceed cautiously?
+
+~~maybe creating a new stack?~~
+> **Explanation:**\
+> AWS CloudFormation provides two methods for updating stacks: direct update or creating and executing change sets. When you directly update a stack, you submit changes and AWS CloudFormation immediately deploys them.\
+> Use direct updates when you want to quickly deploy your updates. With change sets, you can preview the changes AWS CloudFormation will make to your stack, and then decide whether to apply those changes.
 
 
 ### Q16
+> A company has several AWS accounts each with multiple Amazon VPCs. The company must establish routing between all private subnets. The architecture should be simple and allow transitive routing to occur.\
+> How should the network connectivity be configured?
+
+~~i think that transit gateway is for DX. vpc peering isn't transitive, so maybe hub-and-spoke?~~
+
+> **Explanation:**\
+> You can build a hub-and-spoke topology with AWS Transit Gateway that supports transitive routing. This simplifies the network topology and adds additional features over VPC peering. AWS Resource Access Manager can be used to share the connection with the other AWS accounts.
+> 
+> ![Q16 transit gateway](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-10-15-06b3dc1b26269bff9b93a25c89727620.png)
 
 
 ### Q17
+> A company has over 2000 users and is planning to migrate data into the AWS Cloud. Some of the data is user’s home folders on an existing file share and the plan is to move this data to Amazon S3. Each user will have a folder in a shared bucket under the folder structure: bucket/home/%username%.\
+> What steps should a Solutions Architect take to ensure that each user can access their own home folder and no one else’s? (choose 2)
+
+IAM policy (folder level) ~~and bucket policy~~
+
+> **Explanation:**\
+> The [AWS blog URL ](https://aws.amazon.com/blogs/security/writing-iam-policies-grant-access-to-user-specific-folders-in-an-amazon-s3-bucket/)explains how to construct an IAM policy for a similar scenario. Please refer to the article for detailed instructions.
 
 
 ### Q18
+> An existing Auto Scaling group is running with eight Amazon EC2 instances. A Solutions Architect has attached an Elastic Load Balancer (ELB) to the Auto Scaling group by connecting a Target Group. The ELB is in the same region and already has ten EC2 instances running in the Target Group.\
+> When attempting to attach the ELB the request immediately fails, what is the MOST likely cause?
+
+~~probably that you can't attach existing EC2 instances to ASG, they must be created by it?~~
+
+> **Explanation:**\
+> You can attach one or more Target Groups to your ASG to include instances behind an ALB and the ELBs must be in the same region. Once you do this any EC2 instance existing or added by the ASG will be automatically registered with the ASG defined ELBs. If adding an instance to an ASG would result in exceeding the maximum capacity of the ASG the request will fail.
 
 
 ### Q19
+> A Solutions Architect has deployed an API using Amazon API Gateway and created usage plans and API keys for several customers. Requests from one particular customer have been excessive and the solutions architect needs to limit the rate of requests. Other customers should not be affected.\
+> How should the solutions architect proceed?
+
+I'm guessing the 'per-client' throttling.
+
+> **Explanation:**\
+> Per-client throttling limits are applied to clients that use API keys associated with your usage policy as client identifier. This can be applied to the single customer that is issuing excessive API requests. This is the best option to ensure that only one customer is affected.\
+> In the diagram below, per-client throttling limits are set in a usage plan:
+> 
+> ![Q19 API gateway throtelling](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-13-18-dca547aabda672e802edb7d89cd98c7c.png)
 
 
 ### Q20
+> The database layer of an on-premises web application is being migrated to AWS. The database uses a multi-threaded, in-memory caching layer to improve performance for repeated queries.\
+> Which service would be the most suitable replacement for the database cache?
+
+~~Redis is the stronger option from the two caching engines.~~
+
+> **Explanation:**\
+> Amazon ElastiCache with the Memcached engine is an in-memory database that can be used as a database caching layer. The memached engine supports multiple cores and threads and large nodes.
+> 
+> ![Q20 elasticCache options](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-11-45-0d3bdca18464fbf41521677922bfcec8.png)
 
 
 ### Q21
+> An application is running in a private subnet of an Amazon VPC and must have outbound internet access for downloading updates. The Solutions Architect does not want the application exposed to inbound connection attempts.\
+> Which steps should be taken?
+
+internet gateway ~~but without a NAT gateway?~~
+
+> **Explanation:**\
+> To enable outbound connectivity for instances in private subnets a NAT gateway can be created. The NAT gateway is created in a public subnet and a route must be created in the private subnet pointing to the NAT gateway for internet-bound traffic. An internet gateway must be attached to the VPC to facilitate outbound connections.\
+> You cannot directly connect to an instance in a private subnet from the internet. You would need to use a bastion/jump host. Therefore, the application will not be exposed to inbound connection attempts.
+> 
+> ![Q21 internet gateway](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-07-43-70afcd404db57b167e180b7ee7fee9d7.png)
 
 
 ### Q22
+> An application regularly uploads files from an Amazon EC2 instance to an Amazon S3 bucket. The files can be a couple of gigabytes in size and sometimes the uploads are slower than desired.\
+> What method can be used to increase throughput and reduce upload times?
+
+probably multi-part upload
+
+> **Explanation:**\
+> Multipart upload can be used to speed up uploads to S3. Multipart upload uploads objects in parts independently, in parallel and in any order. It is performed using the S3 Multipart upload API and is recommended for objects of 100MB or larger. It can be used for objects from 5MB up to 5TB and must be used for objects larger than 5GB.
 
 
 ### Q23
+> A Solutions Architect is designing the messaging and streaming layers of a serverless application. The messaging layer will manage communications between components and the streaming layer will manage real-time analysis and processing of streaming data.\
+> The Architect needs to select the most appropriate AWS services for these functions.\
+> Which services should be used for the messaging and streaming layers? (choose 2)
+
+Kinesis for the streaming data, SNS for the communication and messaging.
+
+> **Explanation:**\
+> Amazon Kinesis makes it easy to collect, process, and analyze real-time streaming data. With Amazon Kinesis Analytics, you can run standard SQL or build entire streaming applications using SQL.\
+> Amazon Simple Notification Service (Amazon SNS) provides a fully managed messaging service for pub/sub patterns using asynchronous event notifications and mobile push notifications for microservices, distributed systems, and serverless applications.
 
 
 ### Q24
+> A customer runs an application on-premise that stores large media files. The data is mounted to different servers using either the SMB or NFS protocols. The customer is having issues with scaling the storage infrastructure on-premise and is looking for a way to offload the data set into the cloud whilst retaining a local cache for frequently accessed content.\
+> Which of the following is the best solution?
+
+I think that NFS means file gateway, but maybe SMB is volume (with cached)?
+
+> **Explanation:**\
+> File gateway provides a virtual on-premises file server, which enables you to store and retrieve files as objects in Amazon S3. It can be used for on-premises applications, and for Amazon EC2-resident applications that need file storage in S3 for object based workloads. Used for flat files only, stored directly on S3. File gateway offers SMB or NFS-based access to data in Amazon S3 with local caching.
+> ![Q24 file gateway](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-01-33-c38df2adc575ee7ed2b27d0d67d08e2f.png)
 
 
 ### Q25
+> A Solutions Architect is designing a migration strategy for a company moving to the AWS Cloud. The company use a shared Microsoft filesystem that uses Distributed File System Namespaces (DFSN).\
+> What will be the MOST suitable migration strategy for the filesystem?
+
+probably FSx windows.
+
+> **Explanation:**\
+> The destination filesystem should be Amazon FSx for Windows File Server. This supports DFSN and is the most suitable storage solution for Microsoft filesystems. AWS DataSync supports migrating to the Amazon FSx and automates the process.
 
 
 ### Q26
+> An application has been migrated from on-premises to an Amazon EC2 instance. The migration has failed due to an unknown dependency that the application must communicate with an on-premises server using private IP addresses.\
+> Which action should a solutions architect take to quickly provision the necessary connectivity?
+
+maybe virtual private gateway? DX takes time to establish.
+
+> **Explanation:**\
+> A virtual private gateway is a logical, fully redundant distributed edge routing function that sits at the edge of your VPC. You must create a VPG in your VPC before you can establish an AWS Managed site-to-site VPN connection. The other end of the connection is the customer gateway which must be established on the customer side of the connection.
+> ![Q26 virtual private gateway](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-08-32-b6eebdb5a8f23f26677a1be7da633443.png)
 
 
 ### Q27
+> An application stack is being created which needs a message bus to decouple the application components from each other. The application will generate up to 300 messages per second without using batching. A Solutions Architect needs to ensure that a message is delivered only once and duplicates are not introduced into the queue. It is not necessary to maintain the order of the messages.\
+> Which SQS queue type should be used?
+
+~~SQS standard~~
+> **Explanation:**\
+> The key fact you need to consider here is that duplicate messages cannot be introduced into the queue. For this reason alone you must use a FIFO queue. The statement about it not being necessary to maintain the order of the messages is meant to confuse you, as that might lead you to think you can use a standard queue, but standard queues don’t guarantee that duplicates are not introduced into the queue.\
+> FIFO (first-in-first-out) queues preserve the exact order in which messages are sent and received – note that this is not required in the question but exactly once processing is. FIFO queues provide exactly-once processing, which means that each message is delivered once and remains available until a consumer processes it and deletes it.
 
 
 ### Q28
+> Amazon CloudWatch is being used to monitor the performance of AWS Lambda.
+> Which metrics does Lambda track? (choose 2)
 
+probably number of request and latency per request.
 
+> **Explanation:**\
+> AWS Lambda automatically monitors Lambda functions and reports metrics through Amazon CloudWatch. Lambda tracks the number of requests, the latency per request, and the number of requests resulting in an error. You can view the request rates and error rates using the AWS Lambda Console, the CloudWatch console, and other AWS resources.
 ### Q29
+> There is new requirement for a database that will store a large number of records for an online store. You are evaluating the use of DynamoDB.\
+> Which of the following are AWS best practices for DynamoDB? (choose 2)
 
+400kb data limit. ~~maybe separate local secondary index?~~
+
+> **Explanation:**\
+> DynamoDB best practices include:
+> - Keep item sizes small.
+> - If you are storing serial data in DynamoDB that will require actions based on data/time use separate tables for days, weeks, months.
+> - Store more frequently and less frequently accessed data in separate tables.
+> - If possible compress larger attribute values.
+> - Store objects larger than 400KB in S3 and use pointers (S3 Object ID) in DynamoDB.
 
 ### Q30
+> An Amazon VPC contains a mixture of Amazon EC2 instances in production and non-production environments. A Solutions Architect needs to devise a way to segregate access permissions to different sets of users for instances in different environments.\
+> How can this be achieved? (choose 2)
+
+use tagging and IAM policy
+
+> **Explanation:**\
+> You can use the condition checking in IAM policies to look for a specific tag. IAM checks that the tag attached to the principal making the request matches the specified key name and value.
 
 
 ### Q31
+> The application development team in a company have created a new application written in .NET. A Solutions Architect is looking for a way to easily deploy the application whilst maintaining full control of the underlying resources.\
+> Which PaaS service provided by AWS would BEST suit this requirement?
+
+i think that CloudFormation is for managing the cloud resources (like iam policies, subnets, etc..) so maybe beanstalk?
+
+> **Explanation:**\
+> AWS Elastic Beanstalk can be used to quickly deploy and manage applications in the AWS Cloud. Developers upload applications and Elastic Beanstalk handles the deployment details of capacity provisioning, load balancing, auto-scaling, and application health monitoring. It is considered to be a Platform as a Service (PaaS) solution and allows full control of the underlying resources.
 
 
 ### Q32
+> A Solutions Architect needs to migrate an Oracle database running on RDS onto Amazon RedShift to improve performance and reduce cost.\
+> Which combination of tasks using AWS services should be used to execute the migration? (choose 2)
+
+probably schema conversion and database migration
+
+> **Explanation:**\
+> Convert the data warehouse schema and code from the Oracle database running on RDS using the AWS Schema Conversion Tool (AWS SCT) then migrate data from the Oracle database to Amazon Redshift using the AWS Database Migration Service (AWS DMS).
 
 
 ### Q33
+> A new application runs on Amazon EC2 instances and uses API Gateway and AWS Lambda. The company is planning on running an advertising campaign that will likely result in significant hits to the application after each ad is run.\
+> A Solutions Architect is concerned about the impact this may have on the application and would like to put in place some controls to limit the number of requests per second that hit the application.\
+> What controls should the Solutions Architect implement?
+
+maybe throtelling rules on the API? lambdas scale, but gateway can have too many requests.
+
+> **Explanation:**\
+> The key requirement is to limit the number of requests per second that hit the application. This can only be done by implementing throttling rules on the API Gateway. Throttling enables you to throttle the number of requests to your API which in turn means less traffic will be forwarded to your application server.
 
 
 ### Q34
+> An Amazon ElastiCache for Redis cluster runs across multiple Availability Zones. A solutions architect is concerned about the security of sensitive data as it is replicated between nodes.\
+> How can the solutions architect protect the sensitive data?
+
+maybe in-transit encryption?
+
+
+> **Explanation:**\
+> Amazon ElastiCache in-transit encryption is an optional feature that allows you to increase the security of your data at its most vulnerable points—when it is in transit from one location to another. Because there is some processing needed to encrypt and decrypt the data at the endpoints, enabling in-transit encryption can have some performance impact. You should benchmark your data with and without in-transit encryption to determine the performance impact for your use cases.\
+> ElastiCache in-transit encryption implements the following features:
+> - Encrypted connections—both the server and client connections are Secure Socket Layer (SSL) encrypted.
+> - Encrypted replication—data moving between a primary node and replica nodes is encrypted.
+> - Server authentication—clients can authenticate that they are connecting to the right server.
+> - Client authentication—using the Redis AUTH feature, the server can authenticate the clients.
 
 
 ### Q35
+> An application analyzes images of people that are uploaded to an Amazon S3 bucket. The application determines demographic data which is then saved to a .CSV file in another S3 bucket. The data must be encrypted at rest and then queried using SQL. The solution should be fully serverless.\
+> Which actions should a Solutions Architect take to encrypt and query the data?
+
+redshift spectrum is for unstructured data on S3...  but probably KMS + athena
+
+> **Explanation:**\
+> Amazon Athena is an interactive query service that makes it easy to analyze data in Amazon S3 using standard SQL. Athena is serverless, so there is no infrastructure to manage, and you pay only for the queries that you run. Amazon Athena supports encrypted data for both the source data and query results, for example, using Amazon S3 with AWS KMS.
 
 
 ### Q36
+> A three-tier web application that is deployed in an Amazon VPC has been experiencing heavy load on the database layer. The database layer uses an Amazon RDS MySQL instance in a multi-AZ configuration. Customers have been complaining about poor response times. During troubleshooting it has been noted that the database layer is experiencing high read contention during peak hours of the day.\
+> What are two possible options that could be used to offload some of the read traffic from the database to resolve the performance issues? (choose 2)
+
+add elasticCache or read replicas.
+
+> **Explanation:**\
+> Amazon ElastiCache is a web service that makes it easy to deploy and run Memcached or Redis protocol-compliant server nodes in the cloud. The in-memory caching provided by ElastiCache can be used to significantly improve latency and throughput for many read-heavy application workloads or compute-intensive workloads.\
+> Read replicas are used for read heavy DBs and replication is asynchronous. They are for workload sharing and offloading and are created from a snapshot of the master instance.
 
 
 ### Q37
+> A Solutions Architect is creating a design for a two-tier application with a MySQL RDS back-end. The performance requirements of the database tier are hard to quantify until the application is running and the Architect is concerned about right-sizing the database.\
+> What methods of scaling are possible after the MySQL RDS database is deployed? (choose 2)
 
+horizontal scaling for reads with read replicas. ~~maybe horizontal with multi-master RDS?~~ can the instance size be changed after deployment ~~(probably not...)~~
+
+> **Explanation:**\
+> To handle a higher load in your database, you can vertically scale up your master database with a simple push of a button. In addition to scaling your master database vertically, you can also improve the performance of a read-heavy database by using read replicas to horizontally scale your database.
 
 ### Q38
+> An event in CloudTrail is the record of an activity in an AWS account.\
+> What are the two types of events that can be logged in CloudTrail? (choose 2)
+
+data events and managements events (control plane)
+
+> **Explanation:**\
+> Trails can be configured to log Data events and management events:
+> - Data events: These events provide insight into the resource operations performed on or within a resource. These are also known as data plane operations.
+> - Management events: Management events provide insight into management operations that are performed on resources in your AWS account. These are also known as control plane operations. Management events can also include non-API events that occur in your account.
 
 
 ### Q39
+> A large quantity of data is stored on a NAS device on-premises and accessed using the SMB protocol. The company require a managed service for hosting the filesystem and a tool to automate the migration.\
+> Which actions should a Solutions Architect take?
+
+FSx with aws DataSync?
+
+> **Explanation:**\
+> Amazon FSx for Windows File Server provides fully managed, highly reliable, and scalable file storage that is accessible over the industry-standard Server Message Block (SMB) protocol. This is the most suitable destination for this use case.\
+> AWS DataSync can be used to move large amounts of data online between on-premises storage and Amazon S3, Amazon EFS, or Amazon FSx for Windows File Server. The source datastore can be Server Message Block (SMB) file servers.
+> 
+> ![Q39 DataSync](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-11-07-d909de298264e2e376a88159790c0be1.png)
 
 
 ### Q40
+> A large multinational retail company has a presence in AWS in multiple regions. The company has established a new office and needs to implement a high-bandwidth, low-latency connection to multiple VPCs in multiple regions within the same account. The VPCs each have unique CIDR ranges.\
+> What would be the optimum solution design using AWS technology? (choose 2)
 
+it's suggested to have more than one DX,~~so one to each region?~~ or maybe on DX and a gateway?
+
+> **Explanation:**\
+> The company should implement an AWS Direct Connect connection to the closest region. A Direct Connect gateway can then be used to create private virtual interfaces (VIFs) to each AWS region.\
+> Direct Connect gateway provides a grouping of Virtual Private Gateways (VGWs) and Private Virtual Interfaces (VIFs) that belong to the same AWS account and enables you to interface with VPCs in any AWS Region (except AWS China Region).\
+> You can share a private virtual interface to interface with more than one Virtual Private Cloud (VPC) reducing the number of BGP sessions required.
 
 ### Q41
+> The AWS Acceptable Use Policy describes permitted and prohibited behavior on AWS and includes descriptions of prohibited security violations and network abuse.\
+> According to the policy, what is AWS’s position on penetration testing?
+
+~~**no penetration testing without approval!**~~
+
+> **Explanation:**\
+> AWS customers are welcome to carry out security assessments or penetration tests against their AWS infrastructure without prior approval for 8 services.
 
 
 ### Q42
+> A Solutions Architect is designing the compute layer of a serverless application. The compute layer will manage requests from external systems, orchestrate serverless workflows, and execute the business logic.\
+> The Architect needs to select the most appropriate AWS services for these functions. Which services should be used for the compute layer? (choose 2)
+
+amazon gateway API and lambda for business logic, SWS step functions for workflows?
+
+> **Explanation:**\
+> With Amazon API Gateway, you can run a fully managed REST API that integrates with Lambda to execute your business logic and includes traffic management, authorization and access control, monitoring, and API versioning.\
+> AWS Step Functions orchestrates serverless workflows including coordination, state, and function chaining as well as combining long-running executions not supported within Lambda execution limits by breaking into multiple steps or by calling workers running on Amazon Elastic Compute Cloud (Amazon EC2) instances or on-premises.
 
 
 ### Q43
+> A new financial platform has been re-architected to use Docker containers in a micro-services architecture. The new architecture will be implemented on AWS and a Solutions Architect must recommend the solution configuration. For operational reasons, it will be necessary to access the operating system of the instances on which the containers run.\
+> Which solution delivery option should the Architect select?
+
+probably ECS with EC2
+
+> **Explanation:**\
+> Amazon Elastic Container Service (ECS) is a highly scalable, high performance container management service that supports Docker containers and allows you to easily run applications on a managed cluster of Amazon EC2 instances.\
+> The EC2 Launch Type allows you to run containers on EC2 instances that you manage so you will be able to access the operating system instances.
 
 
 ### Q44
+> A Solutions Architect must enable an application to download software updates from the internet. The application runs on a series of EC2 instances in an Auto Scaling group running in a private subnet. The solution must involve minimal ongoing systems management effort.\
+> How should the Solutions Architect proceed?
+
+NAT gateway is much more 'managed' than NAT instance.
+
+> **Explanation:**\
+> Both a NAT gateway or a NAT instance can be used for this use case. Both services enable internet access for instances in private subnets. However, the NAT instance runs on an EC2 instance you must launch, configure and manage and therefore involves more ongoing systems management effort.
 
 
 ### Q45
+> A company has an eCommerce application that runs from multiple AWS Regions. Each region has a separate database running on Amazon EC2 instances. The company plans to consolidate the data to a columnar database and run analytics queries.\
+> Which approach should the company take?
+
+COPY into redshift warehouse and run the analytics there.
+
+> **Explanation:**\
+> Amazon Redshift is an enterprise-level, petabyte scale, fully managed data warehousing service. It uses columnar storage to improve the performance of complex queries.\
+> You can use the COPY command to load data in parallel from one or more remote hosts, such Amazon EC2 instances or other computers. COPY connects to the remote hosts using SSH and executes commands on the remote hosts to generate text output.
 
 
 ### Q46
+> An Amazon EC2 instance running a video on demand web application has been experiencing high CPU utilization. A Solutions Architect needs to take steps to reduce the impact on the EC2 instance and improve performance for consumers.\
+> Which of the steps below would help?
+
+~~maybe RTMP distribution?~~
+
+> **Explanation:**\
+> This is a good use case for CloudFront which is a content delivery network (CDN) that caches content to improve performance for users who are consuming the content. This will take the load off of the EC2 instances as CloudFront has a cached copy of the video files.\
+> An origin is the origin of the files that the CDN will distribute. Origins can be either an S3 bucket, an EC2 instance, and Elastic Load Balancer, or Route 53 – can also be external (non-AWS).
 
 
 ### Q47
+> A client has made some updates to their web application. The application uses an Auto Scaling Group to maintain a group of several EC2 instances. The application has been modified and a new AMI must be used for launching any new instances.\
+> What does a Solutions Architect need to do to add the new AMI?
+
+modify the asg to a new launch configuration
+
+> **Explanation:**\
+> A launch configuration is the template used to create new EC2 instances and includes parameters such as instance family, instance type, AMI, key pair and security groups.\
+> You cannot edit a launch configuration once defined. In this case you can create a new launch configuration that uses the new AMI and any new instances that are launched by the ASG will use the new AMI.
 
 
 ### Q48
+> A Solutions Architect is creating a multi-tier application that includes loosely-coupled, distributed application components and needs to determine a method of sending notifications instantaneously.\
+> Using Amazon SNS which transport protocols are supported? (choose 2)
+
+probably email and HTTPS?
+
+> **Explanation:**\
+> Note that the questions asks you which transport protocols are supported, NOT which subscribers – therefore AWS Lambda is not supported.\
+> Amazon SNS supports notifications over multiple transport protocols:
+> - HTTP/HTTPS – subscribers specify a URL as part of the subscription registration.
+> - Email/Email-JSON – messages are sent to registered addresses as email (text-based or JSON-object).
+> - SQS – users can specify an SQS standard queue as the endpoint.
+> - SMS – messages are sent to registered phone numbers as SMS text messages.
 
 
 ### Q49
+> An application running in an on-premise data center writes data to a MySQL database. A Solutions Architect is re-architecting the application and plans to move the database layer into the AWS cloud on Amazon RDS. The application layer will run in the on-premise data center.\
+> What must be done to connect the application to the RDS database via the Internet? (choose 2)
+
+public subnet for the RDS and a security group?
+
+> **Explanation:**\
+> When you create the RDS instance, you need to select the option to make it publicly accessible. A security group will need to be created and assigned to the RDS instance to allow access from the public IP address of your application (or firewall).
 
 
 ### Q50
+> There has been an increase in traffic to an application that writes data to an Amazon DynamoDB database. Thousands of random tables reads occur per second and low-latency is required.\
+> What can a Solutions Architect do to improve performance for the reads without negatively impacting the rest of the application?
+
+DynamoDB accelerator - it's another cacheing layer.
+
+> **Explanation:**\
+> DAX is a DynamoDB-compatible caching service that enables you to benefit from fast in-memory performance for demanding applications. DAX addresses three core scenarios:
+> 1. As an in-memory cache, DAX reduces the response times of eventually consistent read workloads by an order of magnitude from single-digit milliseconds to microseconds.
+> 2. DAX reduces operational and application complexity by providing a managed service that is API-compatible with DynamoDB. Therefore, it requires only minimal functional changes to use with an existing application.
+> 3. For read-heavy or bursty workloads, DAX provides increased throughput and potential operational cost savings by reducing the need to overprovision read capacity units. This is especially beneficial for applications that require repeated reads for individual keys.
+> 
+> DynamoDB accelerator is the best solution for caching the reads and delivering them at extremely low latency.
 
 
 ### Q51
+> A company has multiple AWS accounts for several environments (Prod, Dev, Test etc.). A Solutions Architect would like to copy an Amazon EBS snapshot from DEV to PROD. The snapshot is from an EBS volume that was encrypted with a custom key.\
+> What steps must be performed to share the encrypted EBS snapshot with the Prod account? (choose 2)
+
+share the custom key, modify permissions?
+
+> **Explanation:**\
+> When an EBS volume is encrypted with a custom key you must share the custom key with the PROD account. You also need to modify the permissions on the snapshot to share it with the PROD account. The PROD account must copy the snapshot before they can then create volumes from the snapshot.\
+> Note that you cannot share encrypted volumes created using a default CMK key and you cannot change the CMK key that is used to encrypt a volume.
 
 
 ### Q52
+> A Solutions Architect is deploying a high performance computing (HPC) application on Amazon EC2 instances. The application requires extremely low inter-instance latency.\
+> How should the instances be deployed for BEST performance?
+
+EFA adapter and a cluster placement group.
+
+> **Explanation:**\
+> It is recommended to use either enhanced networking or an Elastic Fabric Adapter (EFA) for the nodes of an HPC application. This will assist with decreasing latency. Additionally, a cluster placement group packs instances close together inside an Availability Zone.\
+> Using a cluster placement group enables workloads to achieve the low-latency network performance necessary for tightly-coupled node-to-node communication that is typical of HPC applications.\
+> The table below helps you to understand the key differences between the different placement group options:
+> 
+> ![Q52 placement groups options](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-14-01-817a833ddcb4d86fdaff2f66faee59f2.png)
 
 
 ### Q53
+> A new department will begin using AWS services an AWS account and a Solutions Architect needs to create an authentication and authorization strategy.
+> Select the correct statements regarding IAM groups? (choose 2)
+
+an IAM group is not an identity, but it can be used to assign permissions to users.
+
+> **Explanation:**\
+> An IAM group is a collection of IAM users. Groups let you specify permissions for multiple users, which can make it easier to manage the permissions for those users.\
+> The following facts apply to IAM Groups:
+> - Groups are collections of users and have policies attached to them.
+> - A group is not an identity and cannot be identified as a principal in an IAM policy.
+> - Use groups to assign permissions to users.
+> - IAM groups cannot be used to group EC2 instances.
+> - Only users and services can assume a role to take on permissions (not groups).
 
 
 ### Q54
+> An operations team would like to be notified if an RDS database exceeds certain metric thresholds.\
+> How can a Solutions Architect automate this process for the operations team?
+
+CloudWatch and SNS to send an e-mail.
+
+> **Explanation:**\
+> You can create a CloudWatch alarm that watches a single CloudWatch metric or the result of a math expression based on CloudWatch metrics. The alarm performs one or more actions based on the value of the metric or expression relative to a threshold over a number of time periods.\
+> The action can be an Amazon EC2 action, an Amazon EC2 Auto Scaling action, or a notification sent to an Amazon SNS topic. SNS can be configured to send an email notification.
 
 
 ### Q55
+> A Solutions Architect is creating an application design with several components that will be publicly addressable. The Architect would like to use Alias records.\
+> Using Route 53 Alias records what targets can you specify? (choose 2)
+
+probably a cloudfront distribution, ~~maybe EFS file system?~~
+
+> **Explanation:**\
+> Alias records are used to map resource record sets in your hosted zone to Amazon Elastic Load Balancing load balancers, API Gateway custom regional APIs and edge-optimized APIs, CloudFront Distributions, AWS Elastic Beanstalk environments, Amazon S3 buckets that are configured as website endpoints, Amazon VPC interface endpoints, and to other records in the same Hosted Zone.
 
 
 ### Q56
+> A Solutions Architect is conducting an audit and needs to query several properties of EC2 instances in a VPC.\
+> What two methods are available for accessing and querying the properties of an EC2 instance such as instance ID, public keys and network interfaces? (choose 2)
+
+querying 'latest/meta-data' from inside the EC2. maybe meta-data query tool?
+
+> **Explanation:**\
+> This information is stored in the instance metadata on the instance. You can access the instance metadata through a URI or by using the Instance Metadata Query tool.\
+> The instance metadata is available at http://169.254.169.254/latest/meta-data.\
+> The Instance Metadata Query tool allows you to query the instance metadata without having to type out the full URI or category names.
 
 
 ### Q57
+> An application is running on EC2 instances in a private subnet of an Amazon VPC. A Solutions Architect would like to connect the application to Amazon API Gateway. For security reasons, it is necessary to ensure that no traffic traverses the Internet and to ensure all traffic uses private IP addresses only.\
+> How can this be achieved?
+
+interface VPC endpoint?
+
+> **Explanation:**\
+> An Interface endpoint uses AWS PrivateLink and is an elastic network interface (ENI) with a private IP address that serves as an entry point for traffic destined to a supported service. Using PrivateLink you can connect your VPC to supported AWS services, services hosted by other AWS accounts (VPC endpoint services), and supported AWS Marketplace partner services.
 
 
 ### Q58
+> A Solutions Architect needs a storage solution for a fleet of Linux web application servers. The solution should provide a file system interface and be able to support millions of files.\
+> Which AWS service should the Architect choose?
+
+EFS
+
+> **Explanation:**\
+> The Amazon Elastic File System (EFS) is the only storage solution in the list that provides a file system interface. It also supports millions of files as requested.
 
 
 ### Q59
+> A Solutions Architect is creating a solution for an application that must be deployed on Amazon EC2 hosts that are dedicated to the client. Instance placement must be automatic and billing should be per instance.\
+> Which type of EC2 deployment model should be used?
+
+~~Dedicated host?~~
+
+> **Explanation:**\
+> Dedicated Instances are Amazon EC2 instances that run in a VPC on hardware that’s dedicated to a single customer. Your Dedicated instances are physically isolated at the host hardware level from instances that belong to other AWS accounts. Dedicated instances allow automatic instance placement and billing is per instance.
 
 
 ### Q60
+> An application you manage runs a number of components using a micro-services architecture. Several ECS container instances in your ECS cluster are displaying as disconnected. The ECS instances were created from the Amazon ECS-Optimized AMI.\
+> What steps might you take to troubleshoot the issue? (choose 2) 
+
+~~fargate~~ +  IAM instance profile permissions?
+
+> **Explanation:**\
+> The ECS container agent is included in the Amazon ECS optimized AMI and can also be installed on any EC2 instance that supports the ECS specification (only supported on EC2 instances). Therefore, you don’t need to verify that the agent is installed.\
+> You need to verify that the installed agent is running and that the IAM instance profile has the necessary permissions applied.
+> Troubleshooting steps for containers include:
+> - Verify that the Docker daemon is running on the container instance.
+> - Verify that the Docker Container daemon is running on the container instance.
+> - Verify that the container agent is running on the container instance.
+> - Verify that the IAM instance profile has the necessary permissions.
 
 
 ### Q61
+> A Solutions Architect is writing some code that uses an AWS Lambda function and would like to enable the function to connect to an Amazon ElastiCache cluster within an Amazon VPC in the same AWS account.\
+> What VPC-specific information must be included in the function to enable this configuration? (choose 2)
+
+~~peering id + route table id?~~
+
+> **Explanation:**\
+> To enable your Lambda function to access resources inside your private VPC, you must provide additional VPC-specific configuration information that includes VPC subnet IDs and security group IDs. AWS Lambda uses this information to set up elastic network interfaces (ENIs) that enable your function.
 
 
 ### Q62
+> A Solutions Architect is attempting to clean up unused EBS volumes and snapshots to save some space and cost.\
+> How many of the most recent snapshots of an EBS volume need to be maintained to guarantee that you can recreate the full EBS volume from the snapshot?
+
+the most recent, let AWS handle combining the snapshots.
+
+> **Explanation:**\
+> Snapshots capture a point-in-time state of an instance. If you make periodic snapshots of a volume, the snapshots are incremental, which means that only the blocks on the device that have changed after your last snapshot are saved in the new snapshot.\
+> Even though snapshots are saved incrementally, the snapshot deletion process is designed so that you need to retain only the most recent snapshot in order to restore the volume.
 
 
 ### Q63
+> A company runs an API on a Linux server in their on-premises data center. The company are planning to migrate the API to the AWS cloud. The company require a highly available, scalable and cost-effective solution.\
+> What should a Solutions Architect recommend?
+
+API gateway + lambda.
+
+> **Explanation:**\
+> The best option is to use a fully serverless solution. This will provide high availability, scalability and be cost-effective. The components for this would be Amazon API Gateway for hosting the API and AWS Lambda for running the backend.\
+> As you can see in the image below, API Gateway can be the frontend for multiple backend services:
+> 
+> ![Q63 Api gateway](https://img-c.udemycdn.com/redactor/raw/2020-06-28_20-09-23-7dad959e9a620f37463b0048341769bc.png)
 
 
 ### Q64
+> A Solutions Architect manages multiple Amazon RDS MySQL databases. To improve security, the Solutions Architect wants to enable secure user access with short-lived credentials.\
+> How can these requirements be met?
+
+~~maybe Security Token service?~~
+
+> **Explanation:**\
+> With MySQL, authentication is handled by AWSAuthenticationPlugin—an AWS-provided plugin that works seamlessly with IAM to authenticate your IAM users. Connect to the DB instance and issue the CREATE USER statement, as shown in the following example.\
+> `CREATE USER jane_doe IDENTIFIED WITH AWSAuthenticationPlugin AS 'RDS';`\
+> The IDENTIFIED WITH clause allows MySQL to use the AWSAuthenticationPlugin to authenticate the database account (jane_doe). The AS 'RDS' clause refers to the authentication method, and the specified database account should have the same name as the IAM user or role. In this example, both the database account and the IAM user or role are named jane_doe.
 
 
 ### Q65
+> A Python application is currently running on Amazon ECS containers using the Fargate launch type. An ALB has been created with a Target Group that routes incoming connections to the ECS-based application. The application will be used by consumers who will authenticate using federated OIDC compliant Identity Providers such as Google and Facebook. The users must be securely authenticated on the front-end before they access the secured portions of the application.\
+> How can this be configured using an ALB?
 
+Use Cognito
+
+> **Explanation:**\
+> ALB supports authentication from OIDC compliant identity providers such as Google, Facebook and Amazon. It is implemented through an authentication action on a listener rule that integrates with Amazon Cognito to create user pools.\
+> SAML can be used with Amazon Cognito but this is not the only option.
 
 
 </details>
 
 ## Exam 6
-<details>
+<!-- <details> -->
 <summary>
 65 questions
 </summary>
 
 
-
 ### Q01
-
-
 ### Q02
-
-
 ### Q03
-
-
 ### Q04
-
-
 ### Q05
-
-
 ### Q06
-
-
 ### Q07
-
-
 ### Q08
-
-
 ### Q09
-
-
 ### Q10
-
-
 ### Q11
-
-
 ### Q12
-
-
 ### Q13
-
-
 ### Q14
-
-
 ### Q15
-
-
 ### Q16
-
-
 ### Q17
-
-
 ### Q18
-
-
 ### Q19
-
-
 ### Q20
-
-
 ### Q21
-
-
 ### Q22
-
-
 ### Q23
-
-
 ### Q24
-
-
 ### Q25
-
-
 ### Q26
-
-
 ### Q27
-
-
 ### Q28
-
-
 ### Q29
-
-
 ### Q30
-
-
 ### Q31
-
-
 ### Q32
-
-
 ### Q33
-
-
 ### Q34
-
-
 ### Q35
-
-
 ### Q36
-
-
 ### Q37
-
-
 ### Q38
-
-
 ### Q39
-
-
 ### Q40
-
-
 ### Q41
-
-
 ### Q42
-
-
 ### Q43
-
-
 ### Q44
-
-
 ### Q45
-
-
 ### Q46
-
-
 ### Q47
-
-
 ### Q48
-
-
 ### Q49
-
-
 ### Q50
-
-
 ### Q51
-
-
 ### Q52
-
-
 ### Q53
-
-
 ### Q54
-
-
 ### Q55
-
-
 ### Q56
-
-
 ### Q57
-
-
 ### Q58
-
-
 ### Q59
-
-
 ### Q60
-
-
 ### Q61
-
-
 ### Q62
-
-
 ### Q63
-
-
 ### Q64
-
-
 ### Q65
-
-
 
 </details>
 
