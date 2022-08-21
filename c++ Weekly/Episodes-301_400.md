@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -2237,5 +2237,77 @@ Going over the Repositories and the Best Practice book. There will be a workshop
 1. The CPP tutorial game was renamed into "Travels", requires ideas about which lessons to create, and help with trying to create those lessons.
 2. Cpp weekly project - all future ideas, what topics we would like to see in he future?
 3. he's still looking for sponsorships.
+
+</details>
+
+## C++ Weekly - Ep 336 - C++23's Awesome std::stacktrace Library
+<details>
+<summary>
+A new library in c++23, able to show the stacktrace in runtime.
+</summary>
+
+[C++23's Awesome std::stacktrace Library](https://youtu.be/9IcxniCxKlQ)
+
+in compiler explorer with `-std=c++2b --lstdc++_libbacktrace` and all debug symbols enabled
+```cpp
+#include <stacktrace>
+#include <string>
+#include <iostream>
+
+int main()
+{
+    auto trace = std::stacktrace::current();
+    std::cout << std::to_string(trace) <<'\n';
+}
+```
+the output isn't perfect, some levels are are empty, the function name isn't shown properly, etc...
+
+if we add a function call, it seems that there is no inlining (the library might prevent them in some way). we can put the stack trace print into a strcut
+
+```cpp
+struct S{
+    S() {
+        auto trace = std::stacktrace::current();
+        std::cout << std::to_string(trace) <<'\n';
+    }
+};
+```
+
+we can't currently do a stacktrace from a compile time context. but if we make it part of the function default value, then it's called outside of the function initiation
+```cpp
+void func3 ([[maybe_unused]] S s =S{})
+{
+
+}
+
+int main()
+{
+    func3();
+}
+```
+next is playing with lambda.
+
+if we look at the API, the class allocator aware (we can use polymorphic allocators), it has many of the characteristics of a container. it uses a class called 'stacktrace_entry' which is similar, but not exactly like 'source_location' class.
+
+this class will probably change until c++23 is released.
+
+</details>
+
+## C++ Weekly - Ep 337 - C23 Features That Affect C++ Programmers
+<details>
+<summary>
+C23 changes which can be usefull to c++ programmers.
+</summary>
+
+[C23 Features That Affect C++ Programmers](https://youtu.be/jOFrKN54M5g)
+
+a new version of **C**, which will have changes which can be usefull for c++ programmers who need to combine code between c and c++.
+
+- `#embed` - pull a text file, compile time (using `#include` doesn't work well).
+- `constexpr` - values, but not functions.
+- attributes - such as `[[nodiscard]]`, `[[maybe_unused]]`.
+- unnamed parameters in function defintion.
+- typed enumeration - `enum myEnum: int {ONE, TWO};`.
+- `__has_include` - compile time check if a file can be included.
 
 </details>
