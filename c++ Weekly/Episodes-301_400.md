@@ -2311,3 +2311,24 @@ a new version of **C**, which will have changes which can be usefull for c++ pro
 - `__has_include` - compile time check if a file can be included.
 
 </details>
+
+
+## C++ Weekly - Ep 338 - Analyzing and Improving Build Times
+<details>
+<summary>
+Tools and tips to optimize build time.
+</summary>
+
+[Analyzing and Improving Build Times](https://youtu.be/Iybb9wnpF00)
+
+
+Cmake options, `-ftime-trace` clang compile time trace flag, a json file is created. we go to "chrome://tracing" and load the file. we see a graph.
+
+1. Expensive header includes to move to PCH (pre compiled header)
+2. Template instantiatons (reduce or eliminate)
+3. Function templates to `extern` for our users
+
+the example in the video is chai-script, so not all of those options are viable.
+
+
+</details>
