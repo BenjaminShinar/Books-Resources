@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Schwarzmüller 
+// cSpell:ignore Schwarzmüller mdkir
  -->
 
 # Learn Git & GitHub and master working with commits, branches, the stash, cherry picking, rebasing, pull requests & more!
@@ -146,7 +146,7 @@ a branch is a way to have parallel development path, like having a copy of the p
 </details>
 
 ### Installing Git and Vscode
-<!-- <details> -->
+<details>
 <summary>
 Getting Git and vscode
 </summary>
@@ -241,20 +241,117 @@ if we have new file (untracked), we can run `git clean` to remove files, we can 
 
 #### Undoing Staged Changes
 
-if we staged a file and we want to undo those changes
+if we staged a file and we want to undo those changes, we can use the new command `git restore --staged <file>`, but in the past we had to use two commands. simply checking out the file wouldn't work. we first need to run `git reset <file>`  which copies the latest committed changes, into the staging area, and then run `git checkout`
 
 #### Deleting Commits with `git reset`
+
+`git reset` also allows us to reset the heads of our branches, thereby undoing commits. we can run `git reset --soft HEAD~1` to go back one step and delete the commit, but not the data. the default behavior also removes the changes from the stagin area.
+
+using the `--hard` flag removes the commit, from the staging area and from the tracked files.
+
 #### Deleting Branches
+
+we can remove branches with `git branch` and adding either `-d` or `-D` and the branch name, the `-D` option allows us to delete branches even if they weren't merged into the main branch. we can remove multiple branches at once by passing more than one branch name.
+
 
 </details>
 
 ### Committing "detached HEAD" Changes
 
+if we checkout a commit from an earlier stage of the branch, we might want to make stages there.
+
+when we make changes from a detached mode, and we commit it, we have a detached commit, and we can lose it. if we move to another branch, we will see a warning about having a detached head commit floating without branches.
+
+To preserve it, we need to create a branch from this commit. `git branch new-branch-name <commit id>`, we can now merge this branch into the main branch if needed.
+
 ### Understanding .gitignore
 
-### Wrap Up & Basic Commands Overview
+some files shouldn't be shared and tracked, such as log files, or specific IDE configurations. we can control this by using the ".gitignore" file, which specifies which files shouldn't be tracked by git.
+
+we do need to add this file and track it, of course.
+
+if we want to ignore files we can add the complete path to the .gitignore file, or use wildcard `*` as a pattern, and then override the rule by with `!`. we can ignore folders completely
+
+```
+test.log
+*.log
+!important.log
+ignoredFolder/*
+```
+
+there is a way to create a global ".gitignore" file.
 
 ### Assignment 1 - Practicing the Git Basics
+
+> Git Basics Assignment - Your Instructions
+> 
+> 1. Create a new folder and initialize the repository
+> 2. Paste the "instructions.txt" file into this folder
+> 3. Add a .txt file named "file-1" containing any text of your choice to the working directory
+> 4. Create a second .txt file named "file-2"
+> 5. Add "file-1" and "file-2" to the staging area - don't add "instructions.txt"
+> 6. Change the initial text you added to "file-1"
+> 7. Now add all working directory files to the staging area
+> 8. Create the first commit
+> 9. Create a second branch named "feature" (two commands are possible)
+> 10. Add a third .txt file ("file-3.txt") to this branch
+> 11. Create a new commit
+> 12. Add the following text to "file-3": "I will be deleted"
+> 13. Add the updated file to the staging area
+> 14. Undo the staged change
+> 15. Add the following text: "Please add me to the master/main branch"
+> 16. Commit this latest change
+> 17. Merge the "master" (or "main") branch with "feature"
+> 18. Delete the "feature" branch
+> 
+> And most importantly: Have fun with the assignment :)
+
+my solution:
+```sh
+#1
+mdkir assignment
+cd assignment
+git init
+#2
+cp ./instructions.txt ./
+#3
+echo "text" > file1.txt
+#4
+echo "other text"> file2.txt
+#5
+git add file1.txt file2.txt
+#6
+echo "different text" > file1.txt
+#7
+git add .
+#8
+git commit -m "first commit"
+#9
+git switch -c feature
+#10
+echo "feature" > file3.txt
+#11
+git add file3.txt
+git commit -m "feature commit"
+#12
+echo "I'll be deleted" > file3.txt
+#13
+git add file3.txt
+#14
+git restore --staged file3.txt
+#15
+echo "please add me to main branch" > file2.txt
+#16
+git add file2.txt
+git commit -m "from branch"
+#17
+git switch master
+git merge feature
+#18
+git branch -d feature
+```
+
+I forgot to run `git checkout` after restoring file from staged area. i simply got the file out of the staged area, but i didn't reset the contents.
 
 ### Useful Resources & Links
 
@@ -264,15 +361,350 @@ if we staged a file and we want to undo those changes
 ## Section 4 - Diving Deeper Into Git
 <details>
 <summary>
-
+managing different branches, different kinds of merging branches. stashing and retriving deleted data.
 </summary>
+
+Diving Deeper into commit, managing and combining different branches, resolving merge conflicts.
+
+### Understanding the Stash (`git stash`)
+
+the `git stash` command is a way to preserve progress without a commit. the stash is an internal memory that holds uncomitted / upstaged changes.
+
+running `git stash` takes all of our changes and stashes them away. `git stash apply` retrives the changes.
+
+each call to `git stash` creates a stash, which we can see with `git stash list`, we can get specific version by the index `git stash apply 1`.
+
+if we want to better track our stash, we can use the full command `git stash push -m "msg"` to store a message connected to this stash.
+
+`git stash pop` takes the changes off the stash and into the project. it's similar to `git stash apply`, but it also removes the stash from the store.
+
+to remove a stash without applying it, we can use `git stash drop` for one entry, or `git stash clear` for all entries.
+
+### Bringing Lost Data Back with `git reflog`
+
+if we deleted something, like a branch, then we can also get them back with `git reflog`.
+
+if we we use `git reset --hard HEAD~1`, we move the head back, but if we use `git reflog`, we can see a log of our past actions, with this we can grab lost commits and reset back to them.
+
+this can also help us when we delete branches,
+we can see the lost commits on the deleted branch. we need to create a new branch for the commit to exists on.
+
+```sh
+git checkout <commit>
+# we are now on a detached head
+git checkout -b new-feature <commit>
+```
+
+### Combining Branches - What & Why?
+
+we usually have a main branch (master, development, trunk, etc), and we create feature branches based on it. 
+
+we sometimes need to combine the branches, we might need to get the latest changes from the master branch into the feature, or bring our changes from the feature branch into the master branch by merging.
+
+### Understanding Merge Types
+
+there are two types of merging branches
+- **fast-foreward**
+- non fast-forward:
+  - **recursive** (this is the common one)
+  - ours
+  - octopus
+  - subtree
+
+
+when we have a main branch and feature branch, if we just worked on the feature branch and the main branch stayed the same, then we can use the *fast-forward* merge. the master HEAD is set to the HEAD of the feature branch, and no new commits are created.
+
+### Applying the Fast-Forward Merge
+
+lets start in a new environment and create a fast-forward merge. as long as the target branch doesn't change, we can use fast-forward merging, without creating new commits.
+
+```sh
+git init
+
+#working on main branch
+mkdir master
+echo "first" > master/m1.txt
+git add .
+git commit -m "m1"
+echo "second" > master/m2.txt
+git add .
+git commit -m "m2"
+
+# work on feature branch
+git switch -c feature
+mkdir feature
+echo "feature" > feature/f1.txt
+git add .
+git commit -m "f1"
+echo "feature-next" > feature/f2.txt
+git add .
+git commit -m "f2"
+
+# merge
+git branch -v
+git switch master
+
+git merge feature
+git log
+
+# undo merging
+git reset --hard HEAD~2
+git log
+git switch feature
+git log
+```
+we might want to have single commit of all the changes from the feature branch, rather than carry around individual commits in the main branch. this is done with the `--squash` flag. this means a new commit.
+
+```sh
+git switch master
+git merge --squash
+git status
+git add .
+git commit -m "squashed"
+git log
+```
+
+lets go back
+```sh
+git reset --hard HEAD~1
+```
+
+### The Recursive Merge (Non-Fast-Forward)
+
+back in our main branch, we can force git to use a non-fast-forward merge with the `--no-ff` flag. this is the recursive strategy. it creates a new commit about the merge.
+
+```sh
+git merge --no-ff feature
+git log
+```
+
+if we have two branches, and this time, the master branch has also changed. so we can't do a regular fast-forward merge. 
+
+when we reset, we reset to remove the merge commit. we don't care about all the other commits from the feature branch.
+```sh
+git log
+git reset --hard HEAD~1
+
+# change main branch
+echo "move main" > ./master/m3.txt
+git add .
+git commit -m "m3"
+
+# merge
+git merge feature
+
+# reset
+git reset --hard HEAD~1
+
+# merge squash
+git merge --squash feature
+git add .
+git commit -m "master and feature merged"
+```
+
+### Rebasing - Theory
+
+`git rebase` is a way to add the commits at a diffrent location. we make the new HEAD commit become the base commit of the feature commits.
+
+rebase doesn't move commits, it **recreates** them, and it's dangerous to use in a shared project. 
+
+the rebased commits will have different ids.
+```sh
+#restore
+git log
+git reset --hard HEAD~1
+
+# in the feature branch
+git switch feature
+git log # remember the ids
+git rebase maser
+git log #  ids are different
+```
+
+in large projects, rebasing can mess up the history, so it might not be a good idea.
+
+```sh
+git switch master
+git merge feature #fast forward merge
+```
+
+> - New commits in master branch while working in feature branch
+> - feature relies on additional commits in master branch. rebase master into feature branch.
+> - feature is finished - implementation into master without merge commit. merge master into feature + fast forward merge feature into master.
+
+### Handling Merge Conflicts
+
+sometimes a merge fails, this happens when there are conflicts between branches. sometimes different branches change the same file
+
+```sh
+# in master
+echo "from master" > feature/f1.txt
+git add .
+git commit -m "f1 from master"
+
+# in feature
+git switch feature
+echo "from feature!" > feature/f1.txt
+git add .
+git commit -m "f1 from master"
+
+# merge
+git switch master
+git merge feature #merge conflict
+```
+
+now the merge fails, and we need to fix it. vscode gives us visual interface to see the differences.
+
+we can see the data in `git status`, use `git log --merge`, `git diff` or abort the merge with `git merge --abort`.
+
+if we fix the conflict, we need to commit the changes.
+
+### Merge vs Rebase vs Cherry Pick
+
+> - merge (no fast-forward) - create marge commit - new commit.
+> - rebase - change single commit's parent - new commit IDs.
+> - cherry pick - add a specific commit to branch - copies commit with new ID.
+
+
+sometimes we want just one commit from another branch, without taking (merging) the entire branch.
+```sh
+# in master
+git switch master
+echo "typo" > master/m1.txt
+git add .
+git commit -m "with typo"
+
+#
+git switch -c feature2
+mkdir feature2
+echo "new feature2" > feature2/f-new-1.txt
+git add .
+git commit -m "f-new-1"
+echo "fix typo!" > master/m1.txt
+git add .
+git commit -m "type fix in m1"
+echo "new feature2-2" > feature2/f-new-2.txt
+git add .
+git commit -m "f-new-2"
+
+# in master
+git switch main
+git cherry-pick <commit-id--branch>
+git log
+```
+
+the cherry-picked commit will have a different id.
+
+### Working with Tags (`git tag`)
+`git tag` allows us to create tagged commit, a tag is a label, like a milestone of a project.
+
+```sh
+git init
+git echo "a" >a1.txt
+git add .
+git commit -m "a1"
+git echo "b" >a2.txt
+git commit -am "a2"
+git echo "c" >a3.txt
+git commit -am "a3"
+
+git tag #show tags
+git tag tag-name <commit-id> # light weight tag
+git tag #show tag
+git show tag-name
+git checkout tag-name #checkout commit by tag
+git checkout master
+git tag -d tag-name #remove tag
+git tag -a 2.0 -m "latest version" #annotated tag
+git show 2.0
+```
+
+there are lightweigh tags and annotated tags. an annotated tag is a real object, so it holds data about who created it.
+
+### Useful Resources & Links
+
+
 </details>
 
 ## Section 5 - From Local To Remote - Understanding GitHub
-<details>
+<!-- <details> -->
 <summary>
 
 </summary>
+
+Leaving the local git environment and moving to the cloud on github. GitHub is a repository hosting service.
+
+
+### From Local to Remote Repository - Theory
+
+we have an existing git repository on the local machine, and we want to move it to github.
+
+we need to establish a connection betwee the local repository to the remote one.
+
+`git remote add origin <url>` - origin is how we refer to the remote repository, it's an alias to the url. the url is the address of the remote repository.
+
+we then push our local repository onto the remote by calling `git push`, and we get the data from the remote repository with `git pull`.
+
+### Creating a GitHub Account & Introducing GitHub
+
+we go to the github website, set up an account (use the free plan), we can create a new repository or import them from another provider (like gitlab), there all kinds of options.
+
+### Creating a Remote Repository
+
+in the github page, we click <kbd>Create Repository</kbd> or in the repositories page we can click <kbd>New</kbd>.
+
+we can choose the owner of the repository, the name, a description, set the access level (public/ private), and initialize the repositrory with **README** file, a **.gitignore** file and a license file.
+
+once we create the repository, we get some options of how to connect to it.
+
+### Connecting Local & Remote Repositories
+
+since we have an existing repository, we can push it from them the local machine.
+
+
+```sh
+git init
+echo "hello world" > m1.txt
+git add .
+git commit -m "first commit!"
+
+git remote add origin <address>
+git branch -m main #rename branch to main
+git push -u origin main #push local to remote
+```
+
+this doesn't work yet, because we aren't identified as our github user. we get a pop-up to sign in into github (which won't be supported in the future), or use a personal access token.
+
+### Understanding the Personal Access Token
+
+in github web page, click the profile and choose <kbd>settings</kbd>, then <kbd>developer settings</kbd> and we select <kbd>personal access tokens</kbd>, we <kbd>Generate new token</kbd>, assign permissions, give it an experssion time, and copy the created token. and store it somewhere safe.
+
+we also fill it in the the popup, so now we have connected our vscode ide to github.
+
+
+### MacOS Users Only: Please Read
+
+### Pushing a Second Commit
+
+### From Local to Remote - Understanding the Workflow
+
+### Remote Tracking Branches in Practice
+
+### Understanding Local Tracking Branches
+
+### Creating Local Tracking Branches
+
+### Remote & Tracking Branches - Command Overview
+
+### Cloning a Remote Repository
+
+### Understanding the Upstream
+
+### Deleting Remote Branches & Public Commits
+
+### Wrap Up
+
+
 </details>
 
 ## Section 6 - GitHub Deep Dive - Collaboration & Contribution
@@ -296,26 +728,119 @@ if we staged a file and we want to undo those changes
 Stuff worth remembering
 </summary>
 
-git commands
+### Git Commands
 
-command | use | flags | notes
----|---|---|---
-`git version` | which version was installed | `--build-options` for additional data | like `git --version`
+command | use |  notes
+---|---|---|
+`git version` | which version was installed | like `git --version`
 `git init` | initialize git in folder | 
-`git status` | check status | `-s --short` `-b --branch` | see tracked and untracked files
-`git log` | see commit logs || exit by pressing `q`
-`git config` | change configuration |`--global`
+`git add` | add files to track | 
+`git status` | check status |  see tracked and untracked files
+`git log` | see commit logs | exit by pressing `q`
+`git config` | change configuration |
 `git checkout` | checkout branch or commit | `--` current branch|
-`git branch` | see or create branches | `-v` for verbose info
-`git merge <other-branch>` | merge changes ||
-`git switch` | branch operations | `-c` to create new branches | similar to checkout, but solely for branches
+`git branch` | see or create branches | 
+`git merge <other-branch>` | merge changes |
+`git switch` | branch operation| similar to checkout, but solely for branches
 `git ls-files` | which files are part of the staging area (which are tracked)
-`git restore` | restore files | `--staged`
-`git clean` | remove untracked files | `-d`,`-n`,`-f`|
+`git restore` | restore files | 
+`git clean` | remove untracked files |
+`git reset` bring back latest status to the staging area |  `git restore --staged` is a new way of doing this
+`git stash` | stash changes without a commit | deafult behavior is `push`
+`git reflog` | retrieve deleted data | default behavior is `show`
+`git rebase` | recreate commits and change base commit
+`git diff` | see differences
+`git cherry-pick` | get specific commit
+`git tag` | label commits
+`git show` | view objects (default HEAD) | show commits, tags, trees, blobs
+`git remote` | connect to a remote hosting
 
+[git version](https://git-scm.com/docs/git-version)
+- `--build-options` - more detailed information
 
-git status
+[git status](https://git-scm.com/docs/git-status)
 - `-s --short` - short form
 - `-b --branch` - show branch info when running short form
 - `--long` - long from
+
+[git branch](https://git-scm.com/docs/git-branch)
+- `-d --delete` - delete branch if merged
+- `-D` - delete branch even if wasn't merged, same as `--delete --force`.
+- `-v` - verbose
+- `-m` - rename
+- `-M` - rename force
+
+[git switch](https://git-scm.com/docs/git-switch)
+- `-c --create` - create branch if doesn't exist
+- `-C --Create` - create branch, if exists override it
+
+[git log](https://git-scm.com/docs/git-log)
+- `-n --max-count` - limit number of log entries
+- `--merge`
+
+[git clean](https://git-scm.com/docs/git-clean)
+- `-d` - directory recursion when no path given
+- `--dry-run -n` - just list files
+- `--force -f` -  remove files
+- `--interactive -i` - interactive mode
+
+[git reset](https://git-scm.com/docs/git-reset)
+- mode:
+  - `--soft` -
+  - `--mixed` (default) -
+  - `--hard` -
+
+[git restore](https://git-scm.com/docs/git-restore)
+- `--staged -S`- remove staged changes
+- 
+
+[git stash](https://git-scm.com/docs/git-stash)
+- `push` - push a dirty snapshot, `-m` flag to add a msg. this is the default behavior.
+- `apply` - retrieve from stash, we can use the index to get a specific stash.
+- `pop` - retrieve and remove from stash, we can use the index to get a specific stash.
+- `list` - see stash list
+- `show`
+- `drop` - remove a stash by index.
+- `clear` - remove all stashes
+
+[git reflog](https://git-scm.com/docs/git-reflog)
+- `show` - default behavior, log of user actions (moving between branches, etc)
+- `expire`
+- `delete`
+- `exists`
+
+[git merge](https://git-scm.com/docs/git-merge)
+- `squash`
+- `--no-ff` - don't do fast-forward merge
+- `--abort` - abort conflicted merge
+
+[git rebase](https://git-scm.com/docs/git-rebase)
+
+
+[git cherry-pick](https://git-scm.com/docs/git-cherry-pick)
+
+[git tag](https://git-scm.com/docs/git-tag)
+- `--list -l` - list tags, default
+- `-a` - annotated tag
+  - `-m` - add message to annotated tag
+- `-d` - remove tag
+
+[git show](https://git-scm.com/docs/git-show)
+
+[git remote](https://git-scm.com/docs/git-remote)
+- `add origin <url>` - add remote
+
+[git pull](https://git-scm.com/docs/git-pull)
+
+[git push](https://git-scm.com/docs/git-push)
+- `-u` - set upstream
+
+### .gitignore file
+
+each line is a pattern:
+
+- `*` - as wild card
+- `!` - at the start of the line to override ignore rules (force tracking)
+- `#` - comments
+ 
 </details>
