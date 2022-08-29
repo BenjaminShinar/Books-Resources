@@ -627,9 +627,9 @@ there are lightweigh tags and annotated tags. an annotated tag is a real object,
 </details>
 
 ## Section 5 - From Local To Remote - Understanding GitHub
-<!-- <details> -->
+<details>
 <summary>
-
+Basic ways to work with github.
 </summary>
 
 Leaving the local git environment and moving to the cloud on github. GitHub is a repository hosting service.
@@ -681,29 +681,79 @@ in github web page, click the profile and choose <kbd>settings</kbd>, then <kbd>
 
 we also fill it in the the popup, so now we have connected our vscode ide to github.
 
-
-### MacOS Users Only: Please Read
-
 ### Pushing a Second Commit
+
+adding another file, just like the first, `git add`, `git commit` and `git push`. git push doesn't work if we don't set the upstream branch, so for now we still need to use `git push origin/master`.
+
+in github we can see the commit history.
+
+our credentials (the access token) is stored in **windows credentials manager**.
 
 ### From Local to Remote - Understanding the Workflow
 
-### Remote Tracking Branches in Practice
+<details>
+<summary>
+All kinds of branches, local, remote and tracking.
+</summary>
 
-### Understanding Local Tracking Branches
+running `git branch -a` shows us new data. it shows us the **remote tracking branch**, a local copy that connects the local and remote branch.
 
-### Creating Local Tracking Branches
+this also is used when we 'pull' from the remote branch, a tracking branch is created, and it is merged into the local branch.
 
-### Remote & Tracking Branches - Command Overview
+#### Remote Tracking Branches in Practice
+
+we create a new local branch, make changes and push it to github, now we have two remote tracking branches.
+
+but we can also create a branch on github, we don't see it in our branches, but we can still list it.
+
+`git ls-remote`
+
+to get this branch, we can run `git fetch origin` to grab everything into the remote tracking branches. to merge this, we can run `git pull origin master` (nothing changed).
+
+remote tracking branches are read-only.
+
+#### Understanding Local Tracking Branches
+
+- local branch
+- local tracking branch - local reference to a remote tracking branch (git pull, push)
+- remote tracking branch - local copy of the remote (git fetch)
+- remote branch
+
+
+local tracking branch are editable - the pull/push operations act on this branch. if we have a local tracking branch configured, we don't need to specify the `origin master` each time.
+
+
+#### Creating Local Tracking Branches
+
+to create a local tracking branch:
+`git branch --track feature-remote-local origin/feature-remote`  (this isn't actually what we want).
+
+the names need to match.
+
+#### Remote & Tracking Branches - Command Overview
+
+`git remote` shows the curret remote services, `git remote show origin` gives us more details.
+
+</details>
 
 ### Cloning a Remote Repository
 
+to get an existing remote repository, we can run `git clone`. we get the URL from github. we don't need to run `git init` before. we only get the master branch locally, for the rest of the branches, we have remote tracking branches, but not local. if we want to work on one of them, we can create a local tracking branch.
+
+if we don't specify which branch to track, the default behavior is to track the master branch.
+
 ### Understanding the Upstream
+
+the `-u` flag for git push creates an upstream, which is a local tracking branch, it's a bit easier to create and manage.
 
 ### Deleting Remote Branches & Public Commits
 
-### Wrap Up
+it's easy to delete local branches. to delete remote branches we add the `--remote` flag to the delete command, we just delete a remote tracking branch.
 
+
+`git push origin --delete branch_name` - to delete a branch from github.
+
+undoing commits is done by reseting the head, `git reset --hard HEAD~1` and then push, which fails initially, but we can add the `--force` flag to force the push.
 
 </details>
 
@@ -712,6 +762,38 @@ we also fill it in the the popup, so now we have connected our vscode ide to git
 <summary>
 
 </summary>
+
+### Module Introduction
+### The 4 GitHub Usecases
+### Understanding GitHub Account Types
+### Changing the Repository Type from Public to Private
+### Pushing Commits to a Public Repository
+### How GitHub Manages Account Security
+### Understanding & Adding a Collaborator to a Private User Account
+### Collaborating in Private Repositories
+### Comparing Owner & Collaborator Rights
+### Limiting Interactions
+### Introducing Organizations
+### Creating an Organization
+### Exploring Member Repository Permissions
+### Adding Outside Collaborators
+### Adding Organization Members
+### Failing to Manage Access for Individual Repositories
+### Introducing Teams
+### Managing Team Repository Access Efficiently
+### Understanding Forks & Pull Requests
+### Forking a Repository
+### Pull Requests in Practice
+### Opening & Closing Issues
+### Working with GitHub Projects
+### Creating a README File in a Repository
+### Presenting Yourself as Developer on GitHub
+### About GitHub Stars
+### Wrap Up
+### Useful Resources & Links
+
+
+
 </details>
 
 ## Section 7 - Real Project Example: Git & GitHub Applied
@@ -754,6 +836,7 @@ command | use |  notes
 `git tag` | label commits
 `git show` | view objects (default HEAD) | show commits, tags, trees, blobs
 `git remote` | connect to a remote hosting
+`git clone` | clone remote repository
 
 [git version](https://git-scm.com/docs/git-version)
 - `--build-options` - more detailed information
@@ -761,14 +844,17 @@ command | use |  notes
 [git status](https://git-scm.com/docs/git-status)
 - `-s --short` - short form
 - `-b --branch` - show branch info when running short form
-- `--long` - long from
+- `--long` - long form
 
 [git branch](https://git-scm.com/docs/git-branch)
 - `-d --delete` - delete branch if merged
 - `-D` - delete branch even if wasn't merged, same as `--delete --force`.
-- `-v` - verbose
+- `-v -vv` - verbose
 - `-m` - rename
 - `-M` - rename force
+- `-a --all ` - see all branches (including tracking branches)
+- `-r` - remote branches
+- `--track` - create tracking branch
 
 [git switch](https://git-scm.com/docs/git-switch)
 - `-c --create` - create branch if doesn't exist
@@ -829,11 +915,13 @@ command | use |  notes
 
 [git remote](https://git-scm.com/docs/git-remote)
 - `add origin <url>` - add remote
+- `show origin` - show detailed configuration
 
 [git pull](https://git-scm.com/docs/git-pull)
 
 [git push](https://git-scm.com/docs/git-push)
 - `-u` - set upstream
+- `--delete` - delete remote branches
 
 ### .gitignore file
 
