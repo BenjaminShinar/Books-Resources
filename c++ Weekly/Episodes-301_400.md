@@ -2332,3 +2332,89 @@ the example in the video is chai-script, so not all of those options are viable.
 
 
 </details>
+
+## C++ Weekly - Ep 339 - `static constexpr` vs `inline constexpr`
+<details>
+<summary>
+inline static data at file (global) scope.
+</summary>
+
+[`static constexpr` vs `inline constexpr`](https://youtu.be/QVHwOOrSh3w)
+
+follow up on episode 312, which argued against using constexpr in favor of `static constexpr`.
+
+```cpp
+void func()
+{
+    constexpr auto value = some_function();
+    static constexpr auto value2 = some_function2(); // preferable
+}
+```
+
+but there are some more considerations, such as static constexpr at a file header.
+
+```cpp
+//header.hpp
+static constexpr int data[10000000];
+//main.cpp
+#include "header.hpp"
+const int *get_data();
+
+int main()
+{
+    return get_date()[100];
+}
+
+//file1.cpp
+#include "header.hpp"
+const int *get_data()
+{
+    return data;
+}
+```
+
+if we look at the file sizes, the both files now have the large sizes. and if we link them together, the size doubles.
+
+if we change the header file to `inline constexpr`.
+```cpp
+//header.hpp
+inline constexpr int data[10000000];
+```
+
+each compiled file is still very large, but the linker merges them together, so the output file only contains one 'copy' of this data.
+</details>
+
+
+## C++ Weekly - Ep 340 - Finally! A Simple String Split in C++!
+<details>
+<summary>
+A language standard split string capability 
+</summary>
+
+[Finally! A Simple String Split in C++!](https://youtu.be/V14xGZAyVKI)
+
+since c++20, there is finally a simple way to split strings
+
+```cpp
+#include <fmt/format.h>
+#include <ranges>
+#include <string_view>
+int main()
+{
+    auto split_strings = std::string_view{"Hellow world C++20!"} | std::ranges::views::split(' ');
+    for (const auto &string: split_strings)
+    {
+        std::cout << std::string_view{string.begin(), string.end()}; // still needed
+        fmt::print("{}\n",string);
+    }
+}
+```
+
+in c++23, the std::string_view will be able to take the range and construct a string out of it.
+
+the ranges views are lazily evaluated, so there might be some issues with `constexpr` functions.
+</details>
+
+
+
+
