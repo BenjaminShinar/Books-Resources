@@ -763,22 +763,91 @@ undoing commits is done by reseting the head, `git reset --hard HEAD~1` and then
 
 </summary>
 
-### Module Introduction
+
+Using Github in collaboration with others, exchanging information and code with other developers:
+- Account types
+- Repository types
+- Contributing  to opensource projects
+
 ### The 4 GitHub Usecases
+
+core uses of github, some are useful for a single user:
+- use github as a cloud storage - durable and available.
+- portfolio page - public facing 
+
+for multiple users:
+- collaberation on a project, either as a simple user or as part of an organization.
+- contributing to other projects, even if it doesn't belong to you.
+
 ### Understanding GitHub Account Types
+
+Account Types (pricing):
+- Free - Personal user account
+- Team - Organization account
+- Enterprise - Enterprise account
+
+the personal user account can have public and private repositories, and work with unlimited collaborators for projects.
+
+the organization account is a shared account for groups, they have the same features plus some extras, either the basic set of the team plan or the advanced enterprise plan.
+
+the enterprise account manages multiple github accounts, it's a paid service with the github enterprise cloud and server options.
+
+we can see our account type under <kbd>settings</kbd>, <kbd>Organizations</kbd>.
+
 ### Changing the Repository Type from Public to Private
+
+Repositories can be private or public, under <kbd>settings</kbd> we can change the repository visibility and make a repository public or private.
+
 ### Pushing Commits to a Public Repository
+
+we can clone any public repository,but we can't push to repositories which we don't own (have an access token).
+
 ### How GitHub Manages Account Security
+
+The personal access token provides github access via Git. we can set different permissions levels.
+
+if a different user wants make changes to our code, then he is a collaborator, how this user can interact with our code depends on whether they are inside the same enterprise, if they are part of a team which has the repository, etc...
+
 ### Understanding & Adding a Collaborator to a Private User Account
+
+in the repository settings, we can click <kbd>Manage access</kbd> and see who has access. we can invite other github users to become collaborators.
+
+then those collaborators can use their own access tokens, and they'll only have access to what we give them.
+
 ### Collaborating in Private Repositories
+
+if we change the visibility of the repository, the collaborators still have the ability to contribute and make changes.
+
 ### Comparing Owner & Collaborator Rights
+
+[permissions docs](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-personal-account-settings/permission-levels-for-a-personal-account-repository)
+
+note: in a private user account and a private account, we can't have 'read-only' permissions to another user, so we can't simply invite some to only read the repository.
+
 ### Limiting Interactions
-### Introducing Organizations
-### Creating an Organization
-### Exploring Member Repository Permissions
-### Adding Outside Collaborators
-### Adding Organization Members
-### Failing to Manage Access for Individual Repositories
+
+in this context, interaction means commenting, opening issues and creating pull requests.
+
+under the <kbd>Settings</kbd> page in our profile, in <kbd>Interaction Limits</kbd> we can restrict what other users can do with our repositories. these limits will win over repository specific limitations. we can restrict actions to a period of time.\
+This is a broad-strokes approach, which only makes sense when dealing with public repositories. there are also similar options for individual repositories.
+
+
+
+### Organizations
+<details>
+<summary>
+
+</summary>
+
+
+#### Introducing Organizations
+#### Creating an Organization
+#### Exploring Member Repository Permissions
+#### Adding Outside Collaborators
+#### Adding Organization Members
+#### Failing to Manage Access for Individual Repositories
+</details>
+
 ### Introducing Teams
 ### Managing Team Repository Access Efficiently
 ### Understanding Forks & Pull Requests
