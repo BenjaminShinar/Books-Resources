@@ -831,21 +831,42 @@ in this context, interaction means commenting, opening issues and creating pull 
 under the <kbd>Settings</kbd> page in our profile, in <kbd>Interaction Limits</kbd> we can restrict what other users can do with our repositories. these limits will win over repository specific limitations. we can restrict actions to a period of time.\
 This is a broad-strokes approach, which only makes sense when dealing with public repositories. there are also similar options for individual repositories.
 
-
-
 ### Organizations
+
 <details>
 <summary>
-
+Several Accounts inside an organization.
 </summary>
 
-
 #### Introducing Organizations
+
+member-role access for repositories in a large organization.
+
 #### Creating an Organization
+
+Under <kbd>settings</kbd>, under <kbd>organization</kbd>, we can transform any account into an organization account (as long as it's not part of an organization), or create a new organization from the account. 
+
+if we choose to create an organization, we then choose the plan (free, team, enterprise) and fill in the details.
+
+from the personal user, we can switch into the organization user account
+
 #### Exploring Member Repository Permissions
+
+creating repositories is the same as with the personal account, but in addition to "Direct Access" and "Private Repository" settings, we have "Base Role" options. these settings effect users who are member of the organization, and not outside collaborators.
+
+we can also set some other options, such as creating repositories, forking, creating pages, etc...
+
 #### Adding Outside Collaborators
+
+outside collaborators don't belong to the organization, collaborators have some new permissions - read, triage(managa issues, not code), write, maintain(no destructive actions permitted) and admin.
+
 #### Adding Organization Members
+
+under the <kbd>People</kbd> tab, we can invite members to the organization. the other user needs to accept the invitetation. 
+
 #### Failing to Manage Access for Individual Repositories
+
+member level access is for all repositories, not specific.
 </details>
 
 ### Introducing Teams
