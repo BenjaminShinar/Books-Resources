@@ -2415,6 +2415,53 @@ in c++23, the std::string_view will be able to take the range and construct a st
 the ranges views are lazily evaluated, so there might be some issues with `constexpr` functions.
 </details>
 
+## C++ Weekly - Ep 341 - std format vs lib {fmt}
+<details>
+<summary>
+comparing between the standard library format library and the {fmt} package.
+</summary>
+
+[std format vs lib {fmt}](https://youtu.be/zc6B-j0S9Iw)
+
+`std <fortmat>` is what we get with the compiler, while `lib {fmt}` is what it was based on.
+
+
+1. `{fmt}` is availbe today
+2. `<format>` is currently only availble only on visual studio,
+
+```cpp
+#include <fmt/format.h> // lib format
+#include <format> // std library
+
+int main()
+{
+    std::cout << std::format("Hello {}",42);
+    std::puts(std::format("Hello {}",42).c_str());
+    fmt::print("Hello {}",42);
+}
+```
+
+`std::format` doesn't have a way to print to the console, so we need to jump through some hoops. maybe in c++23. it is guranteed to have ABI stability. `{fmt}` has more utility built in into it, with helpers and so on. it also has constexpr capability (with `FMT_COMPILE`)
+
+```cpp
+#include <fmt/format.h>
+#include <fmt/compile.h>
+#include <array>
+
+constexpr auto get_string(int value)
+{
+    std::array<char, 1000> result{};
+    fmt::format_to(result.begin(), FMT_COMPILE("Hello {}"),value);
+    return result;
+}
+
+int main()
+{
+    static constexpr auto str = get_string(42);
+    std::puts(str.date());
+}
+```
+</details>
 
 
 
