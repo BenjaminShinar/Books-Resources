@@ -72,35 +72,104 @@ Mac terminology - the console is called 'the terminal',the shell is the cli itse
 
 in windows, we have the command prompt, as the basic initial windows shell. there is also a newer version, powershell. we can also use the git-bash cli emulator, which allows us to have a unix-like experience.
 
-### Please Read! Windows & Mac Users
 
-### Mac Terminal - The Basics
+### Mac Terminal
+<details>
+<summary>
 
-### Accessing Folders
+</summary>
 
-### Absolute vs Relative Paths
+#### Accessing Folders
 
-### Creating & Deleting Files
+#### Absolute vs Relative Paths
 
-### Introducing Flags and Removing Data
+#### Creating & Deleting Files
 
-### Copying & Moving Files & Folders
+#### Introducing Flags and Removing Data
 
-### Mac Terminal - Core Commands Overview
+#### Copying & Moving Files & Folders
 
-### Windows Command Prompt - The Basics
+#### Mac Terminal - Core Commands Overview
 
-### Absolute vs Relative Paths
+- `pwd` - print working directory
+- `ls` - list files
+- `cd` - change directory
+- `cd ..` - go one level up
+- `cd /` - root directort
+- `cd /Users` - users folder
+- `cd ~` - home directory
+- `touch` - create file
+- `mkdir` - create folder
+- `r` - delete file
+- `rmdir` - remove empty folder
+- `cp` - copy files and folder
+- `mv` - move / rename files and folders
 
-### Creating & Deleting Files & Folders
+</details>
 
-### Copying & Moving Files
+### Windows Command Prompt
+<details>
+<summary>
+Windows Command Prompt
+</summary>
 
-### Windows Command Prompt - Core Commands Overview
+we use `command prompt` as the windows cli tool
 
-### Useful Resources & Links
+- home directory - c:/users/\<username\>
+- users directory - c:/users
+- root directory - c:/
 
-### </details>
+```sh
+dir  #list files
+cd .. #move one folder "up"
+d: # move to drive D
+```
+
+#### Absolute vs Relative Paths
+
+we have relative and abasolute paths. relative path start from the current directory, and we navigate based on the relation from the current location. abasolute path always use the complete path, the abasolute path starts from the root folder (the drive), and the same absolutes path will always bring us to where we want to be,no matter where we are.
+
+```sh
+cd / #root
+cd ~ #home
+```
+
+relative paths are easier to navigate, while absolute paths help us to be consistent.
+
+#### Creating & Deleting Files & Folders
+
+```sh
+mkdir folder1 # create new folder
+echo our first file > text.txt #create new file
+type test.txt #see contents of file
+del test.txt #delete file
+rmdir folder1 #remove folder
+```
+
+#### Copying & Moving Files
+
+```sh
+copy test2.txt folder #copy file into folder
+move test3.txt folder #move file into folder
+```
+
+#### Windows Command Prompt - Core Commands Overview
+
+- `cd` - print current directory
+- `cd ..` - move on level up
+- `dir` - list files
+- `cls` - clear screen
+- `echo` - 
+- `mkdir` - create fp;der
+- `del` - delete file
+- `rmdir` - remove directory
+- `copy` - copy file/folder
+- `move` - move file/folder
+
+</details>
+
+
+ </details>
 
 
 ## Section 3 - Version Management with Git - The Basics
@@ -867,10 +936,21 @@ under the <kbd>People</kbd> tab, we can invite members to the organization. the 
 #### Failing to Manage Access for Individual Repositories
 
 member level access is for all repositories, not specific.
+
 </details>
 
 ### Introducing Teams
+
+under the <kbd>Teams</kbd> tab, we can create teams, which have more flexible levels of access. teams have a name, ano optional description, sub teams (teams within a team), and visibility level (visible or secret).
+
+in the team page, we can create discussion and write messages. we assign repositores to a team, and then we set the access level for each. 
+
 ### Managing Team Repository Access Efficiently
+
+the members will still have permissions based on he "base permission" level, so we need to set it to **no permissions** so that members of the team won't have access to other repositories of the organization.
+
+
+
 ### Understanding Forks & Pull Requests
 ### Forking a Repository
 ### Pull Requests in Practice
