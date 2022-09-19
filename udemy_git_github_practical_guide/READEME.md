@@ -949,11 +949,28 @@ in the team page, we can create discussion and write messages. we assign reposit
 
 the members will still have permissions based on he "base permission" level, so we need to set it to **no permissions** so that members of the team won't have access to other repositories of the organization.
 
-
-
 ### Understanding Forks & Pull Requests
+
+contributing to projects without being assigned to them.
+
+cloning vs forking:\
+cloning/pushing usually requires the owner to know about the other people who wish to work on the code. a fork is a 'copy' of the remote repository that resides in the external user github account. forking is a github terminology, it isn't native to git.\
+the contributing user works on the forked repository and pushes changes to it. when the development is done, a **pull request** is created, and the original owner can decide to accept the PR and merge it into the main repository.
+
+we can also use the forking/pulling process inside the a team, and take advantage of he pull-request features for code review.
+
 ### Forking a Repository
+
+we must be signed it to github in order to fork repositories, and we need to have access to it (like it being a public repository). we simply click the <kbd>fork</kbd> button. the forked repository shows the original repo, and we can see the <kbd>contribute</kbd> and <kbd>fetch upstream</kbd> options.
+
 ### Pull Requests in Practice
+
+the owner of the repositroy can see who forked the repositories, by looking at the <kbd>insights</kbd> tab.
+
+to start a new pull request, we go to the <kbd>pull requests</kbd> tab and click <kbd>create new pull request</kbd>. we need to choose which is the source and which is the target branch, usually the source is inside the forked repository, while the target is the original.
+
+when we create a pull request, we write a comment to descrive the changes, and we see if there are merge conflicts. if we wish to accept the changes we can click <kbd>Merge pull requests</kbd>. we can also close a pull request if we don't wish to accept it. we could also <kbd>Revert</kbd> a merge, which is another commit.
+
 ### Opening & Closing Issues
 ### Working with GitHub Projects
 ### Creating a README File in a Repository
