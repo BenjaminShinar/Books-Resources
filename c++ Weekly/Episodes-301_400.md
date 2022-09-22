@@ -2415,7 +2415,7 @@ in c++23, the std::string_view will be able to take the range and construct a st
 the ranges views are lazily evaluated, so there might be some issues with `constexpr` functions.
 </details>
 
-## C++ Weekly - Ep 341 - std format vs lib {fmt}
+## C++ Weekly - Ep 341 - `std format` vs lib `{fmt}`
 <details>
 <summary>
 comparing between the standard library format library and the {fmt} package.
@@ -2463,5 +2463,100 @@ int main()
 ```
 </details>
 
+## C++ Weekly - Ep 342 - C++20's Ranges: A Quick Start
+<details>
+<summary>
+Ranges help us solve common probelms and avoid bugs.
+</summary>
+
+[C++20's Ranges: A Quick Start](https://youtu.be/sZy9XcGHmI4)
+
+
+std::ranges are wrappers which help us write better code for our common algorithms.
+
+
+> 1. handy adapters for common algorithms
+> 1. pipeable range views
+> 1. simple solutions to annoying problems
+> 1. lazy transform has interesting implications
+> 
+> all of these are constexpr capable
+
+
+we start with a buggy implementation, in this case the `get_data()` function returns a temporary object each time, so we should get a iterator mismatch runtime error.
+```cpp
+#include <algorithm>
+#include <vector>
+#include <ranges>
+
+std::vector<int> get_data() { return std::vector<int>{1,2,3,4,5,6}; }
+
+bool test_data()
+{
+    auto result = std::all_of(get_date().begin(),get_date().end(), [](const int i){return i<5;});
+    return result;
+}
+int main()
+{
+    test_data();
+}
+```
+
+we could fix it by being explicit
+```cpp
+bool test_data()
+{
+    auto data = get_data();
+    auto result = std::all_of(data.begin(),data.end(), [](const int i){return i<5;});
+    return result;
+}
+```
+but ranges help us avoid this.
+```cpp
+bool test_data()
+{
+    auto result = std::ranges::all_of(get_date(), [](const int i){return i<5;});
+    return result;
+}
+```
+
+ranges also allow us pipes and views, and use lazy evaluation.
+
+```cpp
+//lazy evaluated
+bool test_data()
+{
+    auto result = std::ranges::all_of(
+        get_date() |std::ranges::views::drop(1) | std::ranges::views::take(2),
+        [](const int i){return i<5;});
+    return result;
+}
+```
+
+we can also use it for simple data wrangling, like skipping the first element.
+```cpp
+#include <format>
+void iterate_data()
+{
+    for (const auto &elem : get_data() | std::ranges::views::drop(1) 
+    {
+        fmt::print("{}\n",elem);
+    }
+}
+```
+lazy evaluation also helps us  with transformations. we use explicit template parameters for lambda (introduced in c++20).
+```cpp
+void iterate_with_index()
+{
+    auto make_index = [idx = std::size_t{0}]<typename T>(const T &elem) mutable{
+        return std::pair<std::size_t, const T &>{idx++, elem};
+    };
+    for (const auto &[index, elem]: get_date() | std::ranges::views::transform(make_index))
+    {
+        fmt::print("{}: {}\n",index, elem);
+    }
+}
+```
+</details>
 
 

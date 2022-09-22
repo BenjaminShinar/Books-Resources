@@ -7,13 +7,13 @@
 udemy course [Learn Git & GitHub and master working with commits, branches, the stash, cherry picking, rebasing, pull requests & more!](https://www.udemy.com/course/git-github-practical-guide/) by *Manuel Lorenz* and *Maximilian Schwarzmüller*. 
 
 
-1. Introduction
-1. Mac Terminal & Windows Prompt Introduction
-1. Version Management with Git - The Basics
-1. Diving Deeper Into Git
-1. From Local To Remote - Understanding GitHub
-1. GitHub Deep Dive - Collaboration & Contribution
-1. Real Project Example: Git & GitHub Applied
+1. [Introduction](#section-1-introduction)
+1. [Mac Terminal & Windows Prompt Introduction](#section-2---mac-terminal--windows-prompt-introduction)
+1. [Version Management with Git - The Basics](#section-3---version-management-with-git---the-basics)
+1. [Diving Deeper Into Git](#section-4---diving-deeper-into-git)
+1. [From Local To Remote - Understanding GitHub](#section-5---from-local-to-remote---understanding-github)
+1. [GitHub Deep Dive - Collaboration & Contribution](#section-6---github-deep-dive---collaboration--contribution)
+1. [Real Project Example: Git & GitHub Applied](#section-7---real-project-example-git--github-applied)
 
 ## Section 1: Introduction
 <details>
@@ -76,31 +76,43 @@ in windows, we have the command prompt, as the basic initial windows shell. ther
 ### Mac Terminal
 <details>
 <summary>
-
+Using the z-shell terminal in Mac.
 </summary>
 
+in mac computer, we access the **z-shell** terminal (abbreviated as **zsh**). The terminal start at the user folder - the home directory, marked with the Tilde symbol (<kbd>~</kbd>) . `pwd` shows us where we are. to see the items in the folder, we write `ls`. we change directories with the `cd` command,  
+
 #### Accessing Folders
+we can press <kbd>TAB</kbd> to get auto-completion. if we have a space in folder name, we must escape it with **\\** (backslash symbol).
 
 #### Absolute vs Relative Paths
+paths can be relative to the current working directory, or absolute (starting from the root directory).the `pwd` command prints the absolute path.
 
 #### Creating & Deleting Files
 
+we create files with `touch` and delete them with `rm`. removing folder is done with `rmdir`, but it requires the folder to be empty.
+
 #### Introducing Flags and Removing Data
 
+flags allow us to add more options to a command, like `ls -s` to see file sizes, or `ls -l` to see the long format. we can combine flags `ls -ls`. we can check the manual of each command by typing `man <command>`.\
+if we want to remove a none-empty directory, we can use the `rm -r` flag, which removes the folder and the internal files. (r stand for recursive).
+
 #### Copying & Moving Files & Folders
+we can copy files and folder with the `cp` and `mv` commands, we use the `mv` to rename files. the commands take the source path and the destination. the paths can be relative or absolute.
+
+if we want to copy multiple files in a folder, we can use `cp -r source target`, we might need to add a slash `/` if we don't want to create a new folder.
 
 #### Mac Terminal - Core Commands Overview
-
 - `pwd` - print working directory
 - `ls` - list files
 - `cd` - change directory
-- `cd ..` - go one level up
-- `cd /` - root directort
-- `cd /Users` - users folder
-- `cd ~` - home directory
+  - `cd ..` - go one level up
+  - `cd ~` - home directory
+  - `cd /` - root directort
+  - `cd /Users` - users folder
+- `clear` - clear screen
 - `touch` - create file
 - `mkdir` - create folder
-- `r` - delete file
+- `rm` - delete file entirely
 - `rmdir` - remove empty folder
 - `cp` - copy files and folder
 - `mv` - move / rename files and folders
@@ -110,7 +122,7 @@ in windows, we have the command prompt, as the basic initial windows shell. ther
 ### Windows Command Prompt
 <details>
 <summary>
-Windows Command Prompt
+Windows Command Prompt.
 </summary>
 
 we use `command prompt` as the windows cli tool
@@ -829,7 +841,7 @@ undoing commits is done by reseting the head, `git reset --hard HEAD~1` and then
 ## Section 6 - GitHub Deep Dive - Collaboration & Contribution
 <details>
 <summary>
-
+Using Github in Practice. 
 </summary>
 
 
@@ -972,22 +984,86 @@ to start a new pull request, we go to the <kbd>pull requests</kbd> tab and click
 when we create a pull request, we write a comment to descrive the changes, and we see if there are merge conflicts. if we wish to accept the changes we can click <kbd>Merge pull requests</kbd>. we can also close a pull request if we don't wish to accept it. we could also <kbd>Revert</kbd> a merge, which is another commit.
 
 ### Opening & Closing Issues
+
+The <kbd>Issues</kbd> tab, we can visit actual repositroy, like [vueJS](https://github.com/vuejs/vue). the issues tab documents what open issues exists, issues are points for improvements, like bugs, feature requests, etc. a well written issue describes a probelm or a need, and documents the effects, or how to re-produce it. and then other people can work on fixing it.
+
+in our repository, we can create a <kbd>New Issue</kbd>, and fill in the text. we can assign another user to work on the issue, apply labels, attach to a pull requests, etc....
+
+
 ### Working with GitHub Projects
+
+in the <kbd>Projects</kbd> tab, we can <kbd>Create a New Project</kbd>. there are pre-defined templates. a project is a board which tracks the issues and similar items. a project board has cards (or notes) which we can create and move around. it's like a board in Jira, but intergrated into github. when we create an issue, we can assign it to a project, and then it will appear on the board and we can place it in the correct column.
+
+we can click <kbd>Manage Automation</kbd> and have the issues move between the boards based on their state.
+
 ### Creating a README File in a Repository
+
+we can create an optional "README.md" file at each folder, and at the repository root. md stand for markdown, a lightweight markup langauge to create formatted text. The file is displayed when we view the repository.\
+It contains a description of the repository, basic instructions, and helps managing the contribution rules to the repository.
+
+the file is part of the repository, and we commit it just like any other file.
+
 ### Presenting Yourself as Developer on GitHub
+
+we also have a markdown page for our personal account, if we access our profile page, we can create repository that has the same name as the username. this repository can contain a "README.md" that will be displayed when someone visits the user profile page.\
+This acts as a github landing-page.
+
 ### About GitHub Stars
-### Wrap Up
-### Useful Resources & Links
 
-
+Github stars are a "reputation" measurement, like facebook "like", instagram "heart" or up-votes.
 
 </details>
 
 ## Section 7 - Real Project Example: Git & GitHub Applied
-<details>
+<!-- <details> -->
 <summary>
 
 </summary>
+
+Applying the knowledge to create a real project on github. we will build a web project on the local git, and push it to github. there will also be a collabration part.
+
+### Preparing the Project
+The website is built with React, it's a food shopping website, it's just a UI, with no backend for the code. the project requires nodeJS to run locally.
+
+### Project Setup
+we start by downloading the source code and extracting it. to start the website locally, we need to run some commands.
+
+```sh
+npm install
+npm start
+```
+the project start at an incomplete state.
+
+### Creating our First Commit Locally
+we first initialize the project as a local git repository. we first run `git init`. we might get a warning about the "node_modules" being too much to track. we can delete the folder and re-create it with `npm install`.  we don't need to track those files in git, so we can add the folder to the ".gitignore" file.
+
+now we add the first commit with all the files
+
+```sh
+git add .
+git commit -m "initial commit"
+git status
+```
+
+we can rename the master branch into "main"
+`git branch -m master main`.
+
+
+### Changing the ReactJS Project Code
+### Pushing the Code to the Owner's Remote Repository
+### Cloning the Project & Changing the Code
+### Pushing the Commit & Why it Fails
+### Adding a Collaborator
+### Creating the Personal Access Token & Pushing Successfully
+### Merging the Owner Branches
+### Fixing Merge Conflicts
+### Accessing Code via Forks
+### Contributing to the Project by Improving the Code
+### Creating the Pull Request
+### Accepting the Pull Request
+### Useful Resources & Links
+
+
 </details>
 
 
