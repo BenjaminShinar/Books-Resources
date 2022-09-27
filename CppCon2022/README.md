@@ -3,6 +3,12 @@ ignore these words in spell check for this file
 // cSpell:ignore
 -->
 
+# CppCon 2023
+
+[website](https://cppcon.org/), [youtube playlist](https://www.youtube.com/playlist?list=PLHTh1InhhwT6c2JNtUiJkaH8YRqzhU7Ag).
+
+## Topics
+
 - [Algorithms & Data Structures](Algorithms%20&%20Data%20Structures.md)
 - [Concurrency](Concurrency.md)
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
@@ -11,6 +17,7 @@ ignore these words in spell check for this file
 - [Future of C++](Future%20of%20C++.md)
   - Contemporary C++ in Action - Daniela Engert
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
+  - C++ in Constrained Environments - Bjarne Stroustrup
 - [General C++](General%20C++.md)
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)

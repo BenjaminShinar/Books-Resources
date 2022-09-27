@@ -14,6 +14,6 @@
     "serializers",
     "println"
   ],
-  "ignoreWords": [],
+  "ignoreWords": ["Bjarne"],
   "import": []
 }
