@@ -1,0 +1,19 @@
+{
+  "version": "0.2",
+  "ignorePaths": [],
+  "dictionaryDefinitions": [],
+  "dictionaries": ["cpp"],
+  "words": [
+    "Clonable",
+    "CRTP",
+    "Cyclomatic",
+    "Daniela",
+    "initializable",
+    "invokable",
+    "nulllptr",
+    "serializers",
+    "println"
+  ],
+  "ignoreWords": [],
+  "import": []
+}
