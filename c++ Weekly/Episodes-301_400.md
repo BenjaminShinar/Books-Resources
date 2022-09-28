@@ -2560,3 +2560,65 @@ void iterate_with_index()
 </details>
 
 
+
+## C++ Weekly - Ep 343 - Digging Into Type Erasure
+<details>
+<summary>
+Hiding away the concrete type.
+</summary>
+
+[Digging Into Type Erasure](https://youtu.be/iMzEUdacznQ)
+
+type erasure allows us to "hide" types in runtime, inheritance is one such way to do so in c++. we could run `dynamic_cast<>` and check if it fits to one specific type, but that's all.
+
+the `std::function` is type-erased, it can take a function, a function pointer, a lambda, or anything which is callable, even combining the `std::bind_front`.
+```cpp
+int use_function(const std::function<int(int,int)> &f)
+{
+    return f(2,3);
+}
+```
+
+> Type Erasure: hide the exact type of an object wen you work with it.
+> - simpler and faster to compile interfaces.
+> - can work with any type that might be declared in the future.
+> - compilation firewall to prevent recompiling the entire library for adding a new type.
+
+
+we create an `animal_view` type, which has constructor that takes a referene, and it works with anything that has a `speak` function. defined to it. it works like an interface.
+
+```cpp
+class animal_view{
+    public:
+        template <typename Speakable>
+        explicit animal_view (const Speakable *speakable) : object{&speakable}, speak_impl{
+            [](const void *obj) {return static_cast<const Speakable *>(obj)->speak();}
+            }
+        {
+        }      
+
+        void speak() const 
+        {
+            speak_impl(object);
+        }
+    private:
+        const void *object;
+        void (*speak_impl)(const void *);
+};
+
+void do_animal_things(animal_view animal){animal.speak();}
+
+int main()
+{
+    struct Cow {
+        void speak() const {fmt::print("Moo\n");}
+    };
+    struct Sheep {
+        void speak() const {fmt::print("Baa\n");}
+    };
+
+    do_animal_things(animal_view{Cow{}});
+    do_animal_things(animal_view{Sheep{}});
+}
+```
+</details>
