@@ -5,7 +5,7 @@ ignore these words in spell check for this file
 
 # CppCon 2023
 
-[website](https://cppcon.org/), [youtube playlist](https://www.youtube.com/playlist?list=PLHTh1InhhwT6c2JNtUiJkaH8YRqzhU7Ag).
+[website](https://cppcon.org/), [youtube playlist](https://www.youtube.com/playlist?list=PLHTh1InhhwT6c2JNtUiJkaH8YRqzhU7Ag), [materials index](https://github.com/CppCon/CppCon2022).
 
 ## Topics
 
@@ -14,6 +14,7 @@ ignore these words in spell check for this file
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
+  - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
 - [Future of C++](Future%20of%20C++.md)
   - Contemporary C++ in Action - Daniela Engert
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
