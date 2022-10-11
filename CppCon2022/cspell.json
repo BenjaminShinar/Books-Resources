@@ -7,13 +7,13 @@
     "Clonable",
     "CRTP",
     "Cyclomatic",
-    "Daniela",
     "initializable",
     "invokable",
     "nulllptr",
     "serializers",
-    "println"
+    "println",
+    "alignas"
   ],
-  "ignoreWords": ["Bjarne"],
+  "ignoreWords": ["Bjarne", "Rainey", "Daniela"],
   "import": []
 }

@@ -251,7 +251,809 @@ we use the big O notation to denote time or space complexity. we care about the 
 
 ## Data Structures
 
+<details>
+<summary>
+examples of basic data structures.
+</summary>
+
+### What is Data Structure
+
+a way to store and modify data, so that it could accessed efficiently. Arrays and lists are such strcutrues, but they have limitations, such as serching for a value, which requires checking each element one by one.
+
+### Binary Search Tree
+
+[tree visualization tool](https://www.cs.usfca.edu/~galles/visualization/BST.html)
+
+A tree is structure Nodes, a node has a value and it can have children nodes. in a binary tree, a node can have up to two children (zero, one, or two), each node can only have one parent, except for the **Root** node, which only has children nodes and not parent node. nodes without children are called **Leafs**. in a binary search tree, all the nodes under the left children tree have values lower than the parent node. and all the nodes in the right subtree have a value larger than that of the parent.
+
+so to **search** a value, we compare the searched value to the root, and based on the result we continue down the correct subtree. to **insert** an element, we perform the same process, and we go down the correct path, if the value doesn't exist, we add a node as either a left or right side subtree. when we wish to **delete** a node, there are 3 possible options:
+
+- deleting a leaf - find the leaf value, disconnect the parent node from it.
+- delete a node with one child - make the child node connect to the parent node instead of the removed node.
+- delete a node with two children - we need to replace the removed node with either the highest value at the left sub tree, or the lowest value at the right subtree. we usually replace the values and then delete new "leaf" (it will have at most one child node).
+
+for all cases of deletion, we need to update the parent node and replace the reference it holds.
+
+```cs
+class BinaryTreeNode
+{
+  public int value{get};
+  public BinaryTreeNode leftNode;
+  public BinaryTreeNode rightNode;
+
+  public BinaryTreeNode (int nodeValue,BinaryTreeNode left, BinaryTreeNode right)
+  {
+    value = nodeValue;
+    leftNode=left;
+    rightNode=right;
+  }
+}
+
+class BinarySearchTree
+{
+  BinaryTreeNode root = null;
+
+  public void Insert(int value)
+  {
+    if (root == null)
+    {
+      root = new BinaryTreeNode(value, null, null);
+      return;
+    }
+    BinaryTreeNode parent = null;
+    BinaryTreeNode current = root;
+
+    while (current != null)
+    {
+      parent = current;
+      if (current.value < value)
+      {
+        current = current.rightNode;
+      }
+      else if (current.value > value)
+      {
+        current = current.leftNode;
+      }
+      else
+      {
+        return; // exists already
+      }
+    }
+
+    //parent can't be null
+    if (parrent.value < value)
+    {
+      parent.leftNode = newBinaryTreeNode(value);
+    }
+    else
+    {
+      parent.rightNode = newBinaryTreeNode(value);
+    }
+  }
+
+  public bool Search(int value)
+  {
+    BinaryTreeNode current = root;
+
+    while (current != null)
+    {
+      if (current.value < value)
+      {
+        current = current.rightNode;
+      }
+      else if (current.value > value)
+      {
+        current = current.leftNode;
+      }
+      else
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public bool delete(int value)
+  {
+    if (root == null)
+    {
+      return false
+    }
+    BinaryTreeNode parent = null;
+    BinaryTreeNode current = root;
+
+    while (current.value != value)
+    {
+      parent = current;
+      if (current.value < value)
+      {
+        current = current.rightNode;
+      }
+      else if (current.value > value)
+      {
+        current = current.leftNode;
+      }
+      else
+      {
+        //value doesn't exists in tree
+        return false;
+      }
+    }
+
+    //case 1: no children (leaf)
+
+    if ((current.leftNode== null) && (current.rightNode ==null))
+    {
+      if (current == root)
+      {
+        root = null;
+      }
+      else if (parent.value < value)
+      {
+        parent.rightNode = null;
+      }
+      else
+      {
+        parent.leftNode = null;
+      }
+      return true;
+    }
+
+    //case 2: one childrent
+
+    if (current.leftNode== null)
+    {
+      if (current == root)
+      {
+        root= current.rightNode;
+      }
+      else if (parent.value < value)
+      {
+        parent.rightNode = current.rightNode;
+      }
+      else
+      {
+        parent.leftNode = current.rightNode;
+      }
+      return true;
+    }
+    else if (current.rightNode == null)
+    {
+      if (current == root)
+      {
+        root= current.leftNode;
+      }
+      else if (parent.value < value)
+      {
+        parent.rightNode = current.leftNode;
+      }
+      else
+      {
+        parent.leftNode = current.leftNode;
+      }
+      return true;
+    }
+
+    // case 3: node has two childrent.
+     if ((current.leftNode!= null) && (current.rightNode !=null))
+     {
+      BinaryTreeNode successor = getBiggestNodeFromLeftSubtree(current); // another function
+      successor.leftNode=current.leftNode;
+      successor.rightNode=current.rightNode;
+
+      if (current==root)
+      {
+        root=successor;
+      }
+      else if(parent.value< successor.value)
+      {
+        parent.rightNode=successor;
+      }
+      else
+      {
+        parent.leftNode=successor;
+      }
+      return true;
+     }
+
+     return false;
+  }
+
+  BinaryTreeNode getBiggestNodeFromLeftSubtree(BinaryTreeNode start)
+  {
+    BinaryTreeNode parent = start.leftNode;
+    BinaryTreeNode rightChild = parent.rightNode;
+
+    if (rightChild == null)
+    {
+      start.leftNode = parent.leftNode;
+      return parent;
+    }
+
+    while (parent.rightNode != null)
+    {
+      parent = rightChild;
+      rightChild= rightChild.rightNode;
+    }
+
+    parent.rightNode = rightChild.leftNode;
+    return rightChild;
+  }
+}
+```
+
+### AVL tree
+
+The AVL tree is binary search tree that balances itself. so it won't ever have a unbalanced subtrees. a balance tree is measured by comparing the height of each subtree, if the height absolute value is larger than 1, then the tree is imbalanced. height is defined as the number of level in each subtree. if the AVL tree is not balanced, then we use rotations to correct it.
+
+- LL : 1 (parent) - 2 (right child of parent) - 3 (right child of 2)
+- RR : 3 (parent) - 2 (left child of parent) - 1 (left child of 2)
+- LR : 1 (parent) - 3 (right child parent) - 2 (left child of 3)
+- RL : 3 (parent) - 1 (left child parent) - 2 (right child of 1)
+
+in all cases, we want to balance the tree
+
+- 2 (parent) - 1 (left child of parent) - 3 (right child of parent)
+
+**insertion** is the same as regular tree, but after each insertion, we calculate the balance and perfrom rotations. **deletion** is similar, after deletion we perform rotations as needed. **search** doesn't change the tree, so there is no need to make rotations.
+
+```cs
+class AvlNode
+{
+  public int value;
+  AvlNode parent;
+  AvlNode leftNode;
+  AvlNode rightNode;
+}
+
+class AvlSearchTree
+{
+  AvlNode root;
+  void Insert (value)
+  {
+    if (root == null)
+    {
+      root = new AvlNode(value);
+      return;
+    }
+
+    AvlNode current = root;
+    while (true)
+    {
+      if (current.value <value )
+      {
+        if (current.rightNode != null)
+        {
+          current = current.rightNode;
+        }
+        else
+        {
+          current.rightNode = new AvlNode(value)
+          {parent=current};
+          break;
+        }
+      }
+      else if(current.value > value)
+      {
+        if (current.leftNode != null)
+        {
+          current = current.leftNod;
+        }
+        else
+        {
+          current.leftNod = new AvlNode(value)
+          {parent=current};
+          break;
+        }
+      }
+      else
+      {
+        //exists
+        return;
+      }
+    }
+    rebalance(current);
+  }
+
+
+  bool Delete (int value)
+  {
+    AvlNode current = root;
+    while (current != null)
+    {
+      if (current.value < value)
+      {
+        current = current.rightNode;
+      }
+      else if (current.value> value)
+      {
+        current = current.leftNode;
+      }
+      else
+      {
+        deleteNode(current);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void deleteNode(AvlNode node)
+  {
+    // case 1: node is leaf
+    if ((node.leftNode == null) && (node.rightNode == null))
+    {
+      if (node != root)
+      {
+        AvlNode parent = node.parent;
+        if (parent.value < node.value)
+        {
+          parent.rightNode = null;
+        }
+        else
+        {
+          parent.leftNode = null;
+        }
+        rebalance(parent);
+      }
+      else
+      {
+        root = null;
+      }
+    }
+    // case 2: node has on child;
+    else if (node.leftNode == null)
+    {
+      if (node != root)
+      {
+        AvlNode parent = node.parent;
+        if (parent.value < node.value)
+        {
+          parent.rightNode = node.rightNode;
+        }
+        else
+        {
+          parent.leftNode = node.rightNode;
+        }
+      }
+      else
+      {
+        node.rightNode.parent=null;
+        root = node.rightNode;
+      }
+      rebalace(node.rightNode);
+      return;
+    }
+    else if (node.rightNode == null)
+    {
+      if (node != root)
+      {
+        AvlNode parent = node.parent;
+        if (parent.value < node.value)
+        {
+          parent.rightNode = node.leftNode;
+        }
+        else
+        {
+          parent.leftNode = node.leftNode;
+        }
+      }
+      else
+      {
+        node.leftNode.parent=null;
+        root = node.leftNode;
+      }
+      rebalace(node.leftNode);
+      return;
+    }
+    // case3: node has both children
+    if ((node.leftNode != null) && (node.rightNode != null))
+    {
+      AvlNode successor = getBiggestNodeFromLeftSubtree(current); // another function
+      successor.leftNode = current.leftNode;
+      successor.rightNode = current.rightNode;
+      AvlNode parentNode = node.parent;
+      if (current!=root)
+      {
+        if(parent.value< successor.value)
+        {
+          parent.rightNode=successor;
+        }
+        else
+        {
+          parent.leftNode=successor;
+        }
+      }
+      else
+      {
+        successor.parent=null;
+        root=successor;
+      }
+      rebalance(successor);
+    }
+  }
+
+  void rebalance(AvlNode start)
+  {
+    int balance = node.getBalance();
+    if (balance == -2)
+    {
+      if (node.leftNode.getBalance() == 1)
+      {
+        node = LR(node);
+      }
+      else
+      {
+        node = RR(node)
+      }
+    }
+    else if (balance == 2)
+    {
+      if (node.rightNode.getBalance() == -1)
+      {
+        node = RL(node);
+      }
+      else
+      {
+        node = LL(node)
+      }
+    }
+
+    if (node != root)
+    {
+      rebalance(node.parent);
+    }
+  }
+
+  void LL(AvlNode node)
+  {
+    AvlNode right = node.rightNode;
+    AvlNode parent = node.parent;
+    node.rightNode= right.leftNode;
+    right.leftNode=node;
+    if (node!= root)
+    {
+      if (parent.value < right.value)
+      {
+        parent.rightNode = right;
+      }
+      else
+      {
+        parent.leftNode = right;
+      }
+    }
+    else
+    {
+      right.parent =null;
+      root=right;
+    }
+    return right;
+  }
+
+void RR(AvlNode node)
+  {
+    AvlNode left = node.leftNode;
+    AvlNode parent = node.parent;
+    node.leftNode= right.rightNode;
+    left.rightNode=node;
+    if (node!= root)
+    {
+      if (parent.value < left.value)
+      {
+        parent.rightNode = left;
+      }
+      else
+      {
+        parent.leftNode = left;
+      }
+    }
+    else
+    {
+      left.parent =null;
+      root=left;
+    }
+    return left;
+  }
+
+  public void RL(AvlNode node)
+  {
+    RR(node.rightNode);
+    return LL(node);
+  }
+  public void LR(AvlNode node)
+  {
+    LL(node.leftNode);
+    retrun RR(node);
+  }
+  public int getBalacne()
+  {
+    var leftBalance = leftNode?.getHeight() ?? 0;
+    var rightBalance = rightNode?.getHeight() ?? 0;
+
+    return leftBalance - rightBalance;
+  }
+
+  public int getHeight()
+  {
+    if ((leftNode == null) &&(rightNode == null))
+    {
+      return 1;
+    }
+    else if (leftNode == null)
+    {
+      return rightNode.getHeight() + 1;
+    }
+    else if(rightNode == null)
+    {
+      return leftNode.getHeight() + 1;
+    }
+    else
+    {
+      int rightHeight = rightNode.getHeight();
+      int leftHeight = leftNode.getHeight();
+      return max(rightHeight,leftHeight)+1;
+    }
+  }
+}
+```
+
+### Linked List
+
+A linked list is a collection of connected nodes, it starts with a head node. adding a node at the head is always a constant time operation. whenever we add a value, we create a new node, point it to the current head, and set this node as Head.
+
+searching is done by going over all nodes, inserting and deleting nodes doesn't require moving them in memory, because they are only connected by references.
+
+```cs
+class Node
+{
+  public int value;
+  public Node next=null;
+  public Node(int nodeValue, Node nextNode)
+  {
+    value=nodeValue;
+    next=nextNode;
+  }
+}
+
+class LinkedList
+{
+  public Node head = null;
+
+  public void insert(int value)
+  {
+    head = new Node(value, head);
+  }
+  public bool search(int value)
+  {
+    Node current = head;
+
+    while(current != null)
+    {
+      if (current.value == value)
+      {
+        return true;
+      }
+      current = current.next;
+    }
+    return false;
+  }
+  public bool delete(int value)
+  {
+
+    if (head == null)
+    {
+      return false;
+    }
+    if (head.value == value)
+    {
+      head = head.next;
+      return true;
+    }
+
+    Node previous = head;
+    Node current = head.next;
+
+    while (current != null)
+    {
+      if (current.value == value)
+      {
+        previous.next= current.next;
+        return true;
+      }
+      else
+      {
+        previous=current;
+        current=current.next;
+      }
+    }
+    return false;
+  }
+}
+```
+
+### Trie
+
+Trie is a tree-like structure, but unlike the binary search tree, it uses more than two children nodes. the common use-case is when we want auto-completion.
+
+each trieNode contains a map of children nodes, the value of the node is all the directions taken to reach it from the root node. in this example, the Trie is for dictionaries, so we also record whether this node is a valid word or not. the number of children nodes is the number of letters in the alphabet.
+
+when we add a word, we follow the path of the letters in the word, and if the node doesn't exist we create it. the power of the data structure comes into play when we have multiple elements with similar prefixes. searching is done by following each part of the word one by one. Deleting requires checking whether there are empty nodes to delete in the path.
+
+```cs
+class TrieNode
+{
+  public Dictionary<char, TrieNode> table = new Dictionary<char,TrieNode>();
+  public bool isWord=false;
+
+  public bool hasRecord(char c){
+    return table.containsKey(c);
+  }
+  public bool isEmpty()
+  {
+    return table.Count == 0;
+  }
+  public TrieNode followChar(char c)
+  {
+    if (hasRecord(c))
+    {
+      return table[c];
+    }
+    return null;
+  }
+  public void addRecord(char c, TrieNode n)
+  {
+    table.add(c,n);
+  }
+  public void deleteRecord(char c)
+  {
+    table.remove(c);
+  }
+}
+
+public class Trie
+{
+  TrieNode root = new TrieNode();
+  public void insert(string value)
+  {
+    char[] input = value.toCharArray();
+    TrieNode node = root;
+    foreach (char c in input)
+    {
+      if (!node.hasRecord(c))
+      {
+        node.addRecord(c, new TrieNode());
+      }
+      node  = node.followChar(c);
+    }
+  }
+
+  public book search(string value)
+  {
+    char[] input = value.toCharArray();
+    TrieNode node = root;
+    foreach (char c in input)
+    {
+      if (!node.hasRecord(c))
+      {
+        return false;
+      }
+      node  = node.followChar(c);
+    }
+    return node.isWord;
+  }
+
+    public bool delete(string value)
+  {
+    char[] input = value.toCharArray();
+    TrieNode node = root;
+    TrieNode[] path = new TrieNode[input.Length];
+    int pathLength = 0;
+    for (int i=0; i< input.Length; i++)
+    {
+      if (!node.hasRecord(input[i]))
+      {
+        return false;
+      }
+      node = node.followChar(input[i]);
+      path[pathLength] =n;
+      pathLength++;
+    }
+    node.isWord=false;
+
+    // deleting unused nodes
+
+    int inputIndex = input.Length -1;
+    for (int i = pathLength -2; i >= 0 ;i--)
+    {
+      if (node.isEmpty() && !node.isWord)
+      {
+        node=path[i];
+        node.deleteRecord(input[inputIndex]);
+        inputIndex--;
+      }
+      else
+      {
+        break;
+      }
+    }
+    return true;
+  }
+}
+```
+
+### Hash Table
+
+Matching Keys with index position, the size is set by us, and the hash function takes an input and returns an index. we use a design that combines an array with linkedList. so we don't care about having multiple values with the same resulting index position.
+
+our has function can be something as simple as using two primes numbers, or by using some bit operators.
+
+```
+hash = 7;
+for (character in input)
+  hash = hash*31 + character
+return hash
+```
+
+and we just use the module operator to get the correct index.
+
+```cs
+class HashTable
+{
+  private LinkedList[] data;
+  public hashTable(int size)
+  {
+    for (int i = 0; i< size; i++)
+    {
+      data[i]= new LinkedList();
+    }
+  }
+
+  public void insert(string value)
+  {
+    int index = Math.abs(hashFunction(value)) % data.Length;
+    data[index].insert(value);
+  }
+  public bool search(string value)
+  {
+    int index = Math.abs(hashFunction(value)) % data.Length;
+    return data[index].search(value);
+  }
+  public bool delete(string value)
+  {
+    int index = Math.abs(hashFunction(value)) % data.Length;
+    return data[index].delete(value);
+  }
+
+  public int hashFunction(string value)
+  {
+    int hash = 7;
+    foreach (char c in value.toCharArray())
+    {
+      hash = hash * 31 + c;
+    }
+    return hash
+  }
+}
+```
+
+</details>
+
 ## Problem Solving Techniques
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+### Divide and Conquer
+
+### Dynamic Programming
+
+### Greedy approach
+
+### Backtracking
+
+</details>
 
 ## Complex Problems
 
