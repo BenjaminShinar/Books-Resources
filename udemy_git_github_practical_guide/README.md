@@ -1050,7 +1050,56 @@ we can rename the master branch into "main"
 
 
 ### Changing the ReactJS Project Code
+we start this section by changing the app code. this is just react code.
+
+```ts
+import {useState} from 'react';
+
+
+function APP() {
+
+const [cartIsShown, setCartIsShown]=useState(false);
+
+function showCartHandler(){
+  setCartIsShown(true);
+}
+function hideCartHandler(){
+  setCartIsShown(false);
+}
+  return (
+    <CartProvider>
+      {cartIsShown && <div>Cart...</div>}
+      <Header onShowCart={showCartHandler} />
+      <main>
+        <Meals />
+      </main>
+    </CartProvider>
+  );
+}
+```
+
+this is a new feature, so we want it as a feature branch.
+
+```sh
+git checkout -b feat/cart-logic
+git add .
+git commit -m "added cart visibility state"
+```
+
 ### Pushing the Code to the Owner's Remote Repository
+we have the commit locally, but it needs to be pushed to github, so other collabrators could work on it as well.
+
+we create the repository from the github page, and we don't need to clone it, we set it as remote repository. We need to have git configured before hand, by running `git config` at some time.
+
+```sh
+git remote add origin <url>
+git push origin main
+```
+
+now we need to login into github, usually with personal access token. from <kbd>Account Settings</kbd>,<kbd>Developer Settings</kbd>, and <kbd>Personal access tokens</kbd>.
+
+if we have done everything correctly, our changes will be on github.
+
 ### Cloning the Project & Changing the Code
 ### Pushing the Commit & Why it Fails
 ### Adding a Collaborator
