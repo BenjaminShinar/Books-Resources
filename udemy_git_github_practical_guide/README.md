@@ -1101,9 +1101,50 @@ now we need to login into github, usually with personal access token. from <kbd>
 if we have done everything correctly, our changes will be on github.
 
 ### Cloning the Project & Changing the Code
+
+we are now it the "collabration" part, we want to clone the project from github into our local machine. we simply run `git clone` with the url. if we want the project to be cloned in the current directory, we add a space and a dot to the clone command.
+
+Because this is a node project, we run `npm install`, but this has nothing to do with git or github. we can start the project with `npm start`.
+
+we play with react code, under "/src/component/Cart" we add "Cart.js" and "Cart.module.css" files. in the "app.js" file, we add an import statement
+
+```js
+import Cart from './components/Cart/Cart';
+
+function APP(){
+  return (
+    <CartProvider>
+      <Cart />
+      <Header />
+      <main>
+        <Meals />
+      </main>
+    </CartProvider>
+  );
+}
+```
+now we want to push the code back to github.
+
 ### Pushing the Commit & Why it Fails
+we want our code to be in a seprate branch.
+
+```sh
+git checkout -b feat/car
+git branch
+git add .
+git commit -m "cart module"
+git push origin feat/cart
+```
+this fails because we aren't authorized to push into the github repository. we only cloned it, but we still aren't designated as project collabratores.
+
 ### Adding a Collaborator
+
+in the github repository, we need to add ourself as a collaborator. this is better than sharing a personal access token.
+
+in the project <kbd>Settings</kbd>, under <kbd>Manage Access</kbd> we click <kbd>Invite a collaborator</kbd>.
+
 ### Creating the Personal Access Token & Pushing Successfully
+
 ### Merging the Owner Branches
 ### Fixing Merge Conflicts
 ### Accessing Code via Forks

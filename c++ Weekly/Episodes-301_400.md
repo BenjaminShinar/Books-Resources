@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -2621,4 +2621,115 @@ int main()
     do_animal_things(animal_view{Sheep{}});
 }
 ```
+</details>
+
+## C++ Weekly - Ep 344 - `decltype(auto)`: An Overview of How, Why and Where
+<details>
+<summary>
+"Perfect returning" for types.
+</summary>
+
+[`decltype(auto)`: An Overview of How, Why and Where](https://youtu.be/E5L66fkNlpE)
+
+
+`decltype(auto)` deduces the **exact** type of an expresion.
+
+in this example, what is the type of *i*? it changes depending on how we set the callsite variable.
+```cpp
+#include <type_traits>
+
+const int &get_value();
+
+int main()
+{
+    auto i = get_value();
+    static_assert(std::is_same_v<decltype(i),int>);
+
+    const auto i2 = get_value();
+    static_assert(std::is_same_v<decltype(i2),const int>);
+
+    const auto &i3 = get_value();
+    static_assert(std::is_same_v<decltype(i3),const int &>);
+
+    auto &i4 = get_value();
+    static_assert(std::is_same_v<decltype(i4),const int &>); // must be const
+}
+```
+
+auto will never deduce a reference on it's own. but `decltype(auto)` does. it comes into use in generic code,
+
+```cpp
+int main()
+{
+    decltype(auto) x = get_value():
+    static_assert(std::is_same_v<decltype(x),const int &>);
+}
+```
+
+there is also perfect returning, which seems silly, but is needed when working with templated generic code.
+
+```cpp
+
+const int &get_value();
+
+auto get_value_wrapped_error()
+{
+    return get_value(); // this is now an int
+}
+
+decltype(auto) get_value_wrapped()
+{
+    return get_value(); // this maintains the exact type
+}
+
+int main()
+{
+    decltype(auto) y = get_value_wrapped_error():
+    static_assert(std::is_same_v<decltype(y),const int &>); // this fails
+
+    decltype(auto) z = get_value_wrapped():
+    static_assert(std::is_same_v<decltype(z),const int &>);
+}
+```
+
+we can get in trouble if we use parentheses in  the return statement.
+
+```cpp
+auto get_value() -> decltype(auto){
+    int i = 42;
+    return i; //no problem
+    // return (i); // error! this is now an expression, and therefore an rvalue - reference to local value
+}
+```
+
+so it's suggested to not use parentheses when returning values from functions.
+
+</details>
+
+## C++ Weekly - Ep 345 - No Networking in C++20 or C++23! Now What?
+<details>
+<summary>
+Some recommended libraries for networking.
+</summary>
+
+[No Networking in C++20 or C++23! Now What?](https://youtu.be/v6m70HyI0XE)
+
+The networking features weren't part of the c++ standard library in either c++20 or c++23.
+
+we finally have package managers for c++, and we can use them go get networking libraries!
+- conan
+- hunter
+- vcpkg
+ 
+There are c++ libraries for networking:
+ - ASIO - which is the closest thing to what we are expecting to get from the standard
+ - QT - a framework\utility library with a lot of stuff, including networking 
+ - Poco - utility library - networking focused
+ - ACE - low level
+ - uvw - wrapper around C libuv library
+ 
+there are libraries which wrap around libcurl, such as **cpr**. which is meant to be C++ version of python **Request** library.
+
+for message passing, there is **ZeroMQ**, and there's **asio-grpc** for asynchronous interface, and there are websockets libraries, and REST libraries.
+
 </details>
