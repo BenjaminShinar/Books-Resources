@@ -4,9 +4,9 @@
 
 # Software Engineering Fundamentals From Scratch in C Sharp
 
-<!-- <details> -->
+<details>
 <summary>
-
+Surface level course about data structures, sorting and some basic problems.
 </summary>
 
 udemy course [Software Engineering Fundamentals From Scratch in C Sharp](https://www.udemy.com/course/software-engineering-fundamentals-from-scratch-in-c-sharp)
@@ -1040,31 +1040,114 @@ class HashTable
 
 ## Problem Solving Techniques
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Basic problem solving algorithms and approaches.
 </summary>
 
 ### Divide and Conquer
 
+An algorithm pattern which breaks down a big problem into smaller sub problems, and does this over and over until the problem become simple, then the results are combined together. **merge sort** is an example of such algorithm, we divided the data into smaller parts, until each part was sorted (size of one), and then on the way back, we combined the solutions together to get a sorted range.
+
 ### Dynamic Programming
 
-### Greedy approach
+Dynamic programming is a method of solving problems that relies on storing the results of smaller sub problems, and then reusing those results again and again. this comes into play with the fibonacci sequence, rather than recurse each time until we reach the base condition for each branch, we calculate the results only once.
+
+### Greedy Approach
+
+in this pattern, we focus on the current case, ignoring all the other future steps. this makes calculations simpler, but won't always bring us to the optimal solution. the travelling salesmen is an example of a situation where this approach fails.
 
 ### Backtracking
+
+Backtracking uses brute force to go over all the options, and find a solution, or going over all the possible solutions and finding out that there are none.\
+The **N Queens problem** can be solved with backtracking. the goal is to set N chess queens on a N \* N sized chess board without having any queen threating another one. for each row, we start by putting a queen and determing if it's a valid location, if it is, we move to the next row, if not, we try another option in the row, and if we don't have any options, we move back to the previous row.
 
 </details>
 
 ## Complex Problems
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Basic Problems
 </summary>
 
-### 0-1 Knapsack problem
+### Knapsack problem
+
+The **Knapsack** (or **Thieves bag**) problem is an optimization problem, we items of different weights and values, and we want to fit them all into a bad with limited capacity.
+
+| Item | Weight | Value |
+| ---- | ------ | ----- |
+| A    | 1      | 2     |
+| B    | 2      | 2     |
+| C    | 3      | 5     |
+| D    | 4      | 6     |
+
+with the bag size being 5.
+
+we use dynamic programming, determing what is the optimal composition of items for each bag size until the given size.
+
+we start with empty first row and column. then we calculate for each bag size and item the optimal worth.
+the pseudo code is:
+
+```
+for i in [0:n] do:
+  m[i,0] = 0
+for i in [0:b] do:
+  m[0,i] = 0
+
+for i in [0:n] do:
+  for c in [0:b] do:
+    if c < w(i) then:
+      m[i,c] = m[i-1,c]
+    else
+      m[i,c] = max(m[i-1,c], m[i-1,c-w(i)] + p(i))
+```
+
+| value | weight | 0   | 1   | 2   | 3   | 4   | 5   |
+| ----- | ------ | --- | --- | --- | --- | --- | --- |
+| 0     | 0      | 0   | 0   | 0   | 0   | 0   | 0   |
+| 2     | 1      | 0   | 2   | 2   | 2   | 2   | 2   |
+| 3     | 2      | 0   | 2   | 2   | 4   | 4   | 4   |
+| 5     | 3      | 0   | 2   | 2   | 5   | 7   | 7   |
+| 6     | 4      | 0   | 2   | 2   | 5   | 7   | 8   |
+
+to determine which items we take , we start with optimal solution, and check if the bag has enough space for the item, and if taking it is beneficial by comparing to the cell above it, if it's larger, we add it to the bag and decrease the free space
+
+```
+s = {} // empty set
+c = b // free size
+for i = [n:0] do:
+  if (c - w(i) >= 0 and (m[i-1,c] < m[i-1,c-w(i)+p(i)] )) do:
+    s <- {i} // insert item to sack
+    c = c-w(i) // reduce empty space
+
+return s //best worth elements
+```
 
 ### Kruskal's algorithm
+
+solving a spanning tree (a tree where each node is connected to more than one other node), by passing the through all nodes, while avoid cycles.
+
+we use the greedy approach, trying each edge and avoid cycles. for N nodes, the minimal number is N-1 edges. we use disjoined sets, and we create components. it changes the root of each edge.
+
+example:
+
+| source | destination | edge cost |
+| ------ | ----------- | --------- |
+| A      | B           | 4         |
+| A      | C           | 3         |
+| B      | C           | 1         |
+| B      | D           | 8         |
+| B      | E           | 8         |
+| C      | D           | 6         |
+| D      | E           | 2         |
+
+steps, starting with the smallert
+
+- {B:C} (1)
+- {B:C} {D:E} (1,2)
+- {C:{A:B}} {D:E} (1,2,3)
+- {C:{{A:B},{D:E}}} (1,2,3,6)
 
 </details>
 

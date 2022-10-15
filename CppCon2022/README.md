@@ -23,11 +23,13 @@ ignore these words in spell check for this file
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
 - [Math & Numbers](Math%20&%20Numbers.md)
+  - Principia Mathematica - The Foundations of Arithmetic in C++
 - [Networking & Web](Networking%20&%20Web.md)
 - [Resource Management](Resource%20Management.md)
 - [Scientific Computing](Scientific%20Computing.md)
 - [Social Registration](Social%20Registration.md)
 - [Software Design](Software%20Design.md)
+  - How C++23 Changes the Way We Write Code - Timur Doumler
 - [Templates & Metaprogramming](Templates%20&%20Metaprogramming.md)
 - [Tooling](Tooling.md)
 - [Value Semantics](Value%20Semantics.md)

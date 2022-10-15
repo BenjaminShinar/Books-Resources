@@ -12,8 +12,17 @@
     "nulllptr",
     "serializers",
     "println",
-    "alignas"
+    "alignas",
+    "remove_cvref_t"
   ],
-  "ignoreWords": ["Bjarne", "Rainey", "Daniela"],
+  "ignoreWords": [
+    "Bjarne",
+    "Rainey",
+    "Daniela",
+    "Doumler",
+    "Lippincott",
+    "Principia",
+    "Mathematica"
+  ],
   "import": []
 }
