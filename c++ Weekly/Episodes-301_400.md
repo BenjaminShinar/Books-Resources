@@ -2733,3 +2733,46 @@ there are libraries which wrap around libcurl, such as **cpr**. which is meant t
 for message passing, there is **ZeroMQ**, and there's **asio-grpc** for asynchronous interface, and there are websockets libraries, and REST libraries.
 
 </details>
+
+## C++ Weekly - Ep 346 - C++23's `bind_back`
+<details>
+<summary>
+binding parameters to an object.
+</summary>
+
+[C++23's `bind_back`](https://youtu.be/pDiP2frdMnI)
+
+a new c++23 feature, *std::bind_back* 
+
+```cpp
+
+struct Point {
+    int x;
+    int y;
+
+    void displace(int x_displacement, int y_displacement) {
+        x += x_displacement;
+        y += y_displacement;
+    }
+
+    Point operator+(Point displacement) const {
+        return Point{x + displacement.x, y+ y.displacement};
+    }
+
+    void print() const {
+        fmt::print("{{{},{}}}\n",x,y);
+    }
+};
+
+int main()
+{
+    Point p{42,24};
+    p.print();
+    auto displace_by_1_2 = std::bind_back(&point:displace,1,2);
+    displace_by_1_2(p1);
+    p.print();
+}
+```
+
+we can use it in algorithms or in a range, it can sometimes replace a lambda.
+</details>
