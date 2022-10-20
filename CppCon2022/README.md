@@ -11,6 +11,7 @@ ignore these words in spell check for this file
 
 - [Algorithms & Data Structures](Algorithms%20&%20Data%20Structures.md)
 - [Concurrency](Concurrency.md)
+  - C++20’s Coroutines for Beginners - Andreas Fertig
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
