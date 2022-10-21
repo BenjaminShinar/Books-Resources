@@ -13,7 +13,9 @@
     "serializers",
     "println",
     "alignas",
-    "remove_cvref_t"
+    "remove_cvref_t",
+    "mdspan",
+    "mdarray"
   ],
   "ignoreWords": [
     "Bjarne",
@@ -23,7 +25,9 @@
     "Lippincott",
     "Principia",
     "Mathematica",
-    "Fertig"
+    "Fertig",
+    "Ciura",
+    "Chuanqi"
   ],
   "import": []
 }

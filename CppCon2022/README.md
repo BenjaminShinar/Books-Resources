@@ -10,9 +10,11 @@ ignore these words in spell check for this file
 ## Topics
 
 - [Algorithms & Data Structures](Algorithms%20&%20Data%20Structures.md)
+  - The Imperatives Must Go! [Functional Programming in Modern C++] - Victor Ciura
 - [Concurrency](Concurrency.md)
   - C++20’s Coroutines for Beginners - Andreas Fertig
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
+  - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
@@ -20,6 +22,7 @@ ignore these words in spell check for this file
   - Contemporary C++ in Action - Daniela Engert
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
   - C++ in Constrained Environments - Bjarne Stroustrup
+  - What’s New in C++23 - Sy Brand
 - [General C++](General%20C++.md)
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
