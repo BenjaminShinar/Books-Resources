@@ -1015,9 +1015,9 @@ Github stars are a "reputation" measurement, like facebook "like", instagram "he
 </details>
 
 ## Section 7 - Real Project Example: Git & GitHub Applied
-<!-- <details> -->
+<details>
 <summary>
-
+Learning by doing. Step by step example of working on a github project.
 </summary>
 
 Applying the knowledge to create a real project on github. we will build a web project on the local git, and push it to github. there will also be a collabration part.
@@ -1145,17 +1145,75 @@ in the project <kbd>Settings</kbd>, under <kbd>Manage Access</kbd> we click <kbd
 
 ### Creating the Personal Access Token & Pushing Successfully
 
-### Merging the Owner Branches
-### Fixing Merge Conflicts
-### Accessing Code via Forks
-### Contributing to the Project by Improving the Code
-### Creating the Pull Request
-### Accepting the Pull Request
-### Useful Resources & Links
+A collaborator can't change the repository settings, it's something that only the owner can do.
 
+we access github from the vscode editor by using a personal access token. under the <kbd>profile</kbd>, <kbd>Settings</kbd>, <kbd>Developer Settings</kbd>, we can create a token with *repo* permissions.\
+if everything worked correctly, then we can now create branches.
+
+### Merging the Owner Branches
+
+from the repository owner, we need to `git pull` and then we can run `git branch -a` to see the branches. we want to merge changes.
+```sh
+git merge feat/cart-logic #merge into current branch
+```
+
+### Fixing Merge Conflicts
+
+local branch, tracking branches...
+
+```sh
+git checkout origin/feat/cart
+git checkout feat/cart # create local tracking branch
+git merge feat/cart # merge into main
+```
+but now we have a conflict. conflicts are marked in the file with "<<<<<< HEAD", "=======" and ">>>>>> Branch Name". we fix the code.
+
+```js
+return (
+    <CartProvider>
+      {cartIsShown && <Cart onClose={hideCartHandler}/>}
+      <Header onShowCart={ShowCartHandler}/>
+      <main>
+        <Meals />
+      </main>
+    </CartProvider>
+  );
+```
+we commit the code and push it back to github.
+```sh
+git add .
+git commit -m "merge conflicts"
+git push origin main
+```
+
+### Accessing Code via Forks
+
+a third option to modify the repository is by using pull requests, this doesn't require us to be an owner or designated as a collaborator. we can **fork** the repository, fix an issue and push it back with a **pull request**. forking just requires the repository to be visible, and it part of the github capability, rather than git's. after forking, we clone the branch to the local development machine.
+
+### Contributing to the Project by Improving the Code
+
+we fix the code
+
+```js
+const cartItemRemoveHandler = (id) => {
+  cartCtx.removeItem(id);
+};
+
+const cartItemAddHandler = (item) => {
+  cartCtx.addItem({...,item,amount: 1});
+};
+```
+we push the commit to our github repository.
+
+### Creating the Pull Request
+
+in the original repository, under the <kbd>pull requests</kbd> tab, and the <kbd>new pull request</kbd>, the default behavior is to create a pull request from a branch, so we need to move it into "compare accross forks", and then we can see our forked repository. we choose the branches we want to merge between, and then we see the changes and commits. to confirm we click <kbd>Create pull request</kbd> and fill the form with description of our changes.
+
+### Accepting the Pull Request
+
+The code owner sees the pull request to the repository, and can review the changes, comment on them and start a conversation. if everything is fine, we can <kbd>merge pull request</kbd>, if not, we might need to solve any conflicts. accepting a pull request creates a commit. once accepted, a pull request is closed.
 
 </details>
-
 
 ## Takeaways
 <details>
