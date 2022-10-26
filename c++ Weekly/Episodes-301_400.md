@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Wconversion
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -2775,4 +2775,31 @@ int main()
 ```
 
 we can use it in algorithms or in a range, it can sometimes replace a lambda.
+</details>
+
+## C++ Weekly - Ep 347 - This PlayStation Jailbreak NEVER SHOULD HAVE HAPPENED
+<details>
+<summary>
+Implicit type conversion created a bug.
+</summary>
+
+[This PlayStation Jailbreak NEVER SHOULD HAVE HAPPENED](https://youtu.be/rWCvk4KZuV4)
+
+there was ps5 jail break, which was a C vulnerability, a heap buffer size over flow. 
+
+[CVE report](https://hackerone.com/reports/1340942)
+
+the size is of type size_t, but its being used in a function that gets an integer. so there is some conversion going on and the allocated buffer is much smaller than expected, and then we get possible overflows.
+
+```c++
+std::size_t getSize();
+void * doAlloc(int size);
+int main()
+{
+    std::size_t size = getSize();
+    void * memory = doAlloc(size); // this is now truncated into integer.
+}
+```
+
+this might have been avoided if the correct warning flags: `-Werror -Wall -Wextra -Wconversion`.
 </details>
