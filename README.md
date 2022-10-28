@@ -8,6 +8,7 @@ ignore these words in spell check for this file
 where I store my learning from books, youtube videos, and other sources which don't fit elsewhere.
 
 ### FireShip - WebSockets in 100 Seconds & Beyond with Socket.io
+
 <details>
 <summary>
 A bidirectional connection over tcp/ip.
@@ -218,6 +219,7 @@ service mesh.
 </details>
 
 ## Regex Stuff
+
 <details>
 <summary>
 Things to remember about regex
@@ -231,11 +233,9 @@ patterns:
 
 commands:
 
-
-
 ```ps
 # regex match
-Select-String -Path .\regex22.txt -Pattern "^fooa+bar$" 
+Select-String -Path .\regex22.txt -Pattern "^fooa+bar$"
 # simple match
 "aaaabc" -match "a+bc"
 # simple replace
@@ -283,17 +283,30 @@ defintion and tooltip
   - <<kbd>&#x</kbd>>\<Hexdecimal Number><<kbd>;</kbd>> &#x3B2;
   - <<kbd>&#x</kbd>>\<symbol name><<kbd>;</kbd>> &gamma;
 
+[some html symbols](https://www.w3schools.com/charsets/ref_utf_punctuation.asp)
+
+| symbol       | code     |
+| ------------ | -------- |
+| left arrrow  | &larr;   |
+| right arrrow | &rarr;   |
+| two arrows   | &#8644;  |
+| alpha        | &alpha;  |
+| Weird A      | &#x0041; |
+| plus minus   | &pm;     |
+| empty        | &empty;  |
+
 </details>
 
 ## Other stuff
+
 <details>
 <summary>
 MISC
 </summary>
 
 set environment variables
+
 - linux: `export AWS_DEFAULT_REGION=us-east-1`
 - windows cmd: `set AWS_DEFAULT_REGION=us-east-1`
 - powershell: `$Env:AWS_DEFAULT_REGION='us-east-1'`
 </details>
-

@@ -13,8 +13,10 @@ ignore these words in spell check for this file
   - The Imperatives Must Go! [Functional Programming in Modern C++] - Victor Ciura
 - [Concurrency](Concurrency.md)
   - C++20’s Coroutines for Beginners - Andreas Fertig
+  - Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet - Andreas Weis
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
+  - Back to Basics: Debugging in C++ - Mike Shah
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
@@ -23,6 +25,7 @@ ignore these words in spell check for this file
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
   - C++ in Constrained Environments - Bjarne Stroustrup
   - What’s New in C++23 - Sy Brand
+  - C++23 - What's In It For You? - Marc Gregoire
 - [General C++](General%20C++.md)
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
@@ -34,6 +37,7 @@ ignore these words in spell check for this file
 - [Social Registration](Social%20Registration.md)
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
+  - How Microsoft Uses C++ to Deliver Office - Huge Size, Small Components - Zachary Henkel
 - [Templates & Metaprogramming](Templates%20&%20Metaprogramming.md)
 - [Tooling](Tooling.md)
 - [Value Semantics](Value%20Semantics.md)
