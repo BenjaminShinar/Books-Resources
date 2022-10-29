@@ -39,6 +39,7 @@ ignore these words in spell check for this file
   - How C++23 Changes the Way We Write Code - Timur Doumler
   - How Microsoft Uses C++ to Deliver Office - Huge Size, Small Components - Zachary Henkel
 - [Templates & Metaprogramming](Templates%20&%20Metaprogramming.md)
+  - Back to Basics: Templates in C++ - Nicolai Josuttis
 - [Tooling](Tooling.md)
 - [Value Semantics](Value%20Semantics.md)
 - [Lighting Talks](#lightning-talks)
