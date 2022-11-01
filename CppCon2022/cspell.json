@@ -15,7 +15,8 @@
     "alignas",
     "remove_cvref_t",
     "mdspan",
-    "mdarray"
+    "mdarray",
+    "cvref"
   ],
   "ignoreWords": [
     "Bjarne",
@@ -31,7 +32,13 @@
     "Weis",
     "Gregoire",
     "Henkel",
-    "Josuttis"
+    "Josuttis",
+    "Ankur",
+    "Satle",
+    "Augustin",
+    "Popa",
+    "Leahy",
+    "Trott"
   ],
   "import": []
 }

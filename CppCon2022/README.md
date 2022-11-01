@@ -11,15 +11,18 @@ ignore these words in spell check for this file
 
 - [Algorithms & Data Structures](Algorithms%20&%20Data%20Structures.md)
   - The Imperatives Must Go! [Functional Programming in Modern C++] - Victor Ciura
+  - Functional Composable Operations with Unix-Style Pipes in C++ - Ankur Satle
 - [Concurrency](Concurrency.md)
   - C++20’s Coroutines for Beginners - Andreas Fertig
   - Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet - Andreas Weis
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
   - Back to Basics: Debugging in C++ - Mike Shah
+  - C++ Dependencies Don’t Have To Be Painful - Why You Should Use a Package Manager - Augustin Popa
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
+  - Taking a Byte Out of C++ - Avoiding Punning by Starting Lifetimes - Robert Leahy
 - [Future of C++](Future%20of%20C++.md)
   - Contemporary C++ in Action - Daniela Engert
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
@@ -34,6 +37,7 @@ ignore these words in spell check for this file
 - [Networking & Web](Networking%20&%20Web.md)
 - [Resource Management](Resource%20Management.md)
 - [Scientific Computing](Scientific%20Computing.md)
+  - C++ Performance Portablity - A Decade of Lessons Learned - Christian Trott
 - [Social Registration](Social%20Registration.md)
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
