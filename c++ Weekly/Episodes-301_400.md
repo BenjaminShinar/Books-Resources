@@ -2803,3 +2803,106 @@ int main()
 
 this might have been avoided if the correct warning flags: `-Werror -Wall -Wextra -Wconversion`.
 </details>
+
+## C++ Weekly - Ep 348 - A Modern C++ Quick Start Tutorial - 90 Topics in 20 Minutes
+<details>
+<summary>
+c++ topics and examples of how they are used in lambdas.
+</summary>
+
+[A Modern C++ Quick Start Tutorial - 90 Topics in 20 Minutes](https://youtu.be/VpqwCDSfgz0), [notes](https://github.com/lefticus/cpp_weekly/issues/168)
+
+topics in c++
+
+- lambdas
+- struct
+- constexpr
+- operator overloading
+- call operator
+- const member functions
+- braced initialization
+- `auto` return type deduction
+- "compiler magic"function parameters
+- pass-by-value
+- attributes on parameters
+- pass-by-reference
+- pass-by-value vs pass-by-reference
+- pre-increment and post increment
+- trailing return types
+- class vs struct
+- private vs public
+- implicit conversions
+- function pointer
+- static member function
+- using alias
+- efficiency when chaing functions
+- templates
+- template argument type deduction
+- alias templates
+- template instantiaions
+- `noexcept`
+- `noexcept` in the type system
+- variadic templates
+- variadic lambdas
+- fold expressions
+- function attributes
+- concepts
+- non-type template parameter
+- integer sequences
+- template parameter pattern matching
+- explicit lambda templates
+- tuples
+- unplacking of tuples
+- variadic `sizeof...()` operator
+- direct initialization of members
+- `mutable` keyword
+- non-const member function
+- reference members
+- member copies
+- object layout
+- member padding
+- order of construction/desruction
+- generalized lambda capture
+- immediately invoked lambda
+- return value optimization
+- guaranteed return value optimization
+- initializer_list
+- recursive lambdas
+- deducing `this`
+- recursive functions
+- trivially copyable  types
+- higher order functions
+- dangaling references
+- undefined behavior
+- inheritance
+- mutiple inheritance
+- function hiding
+- variadic `using` decleration
+- scoping / lookup rules
+- class template argument deduction
+- deduction guides
+- algorithms
+- ranges
+- /<functional/> header
+- virtual member function
+- member function pointers
+- special member functions
+- member function call syntax
+- type erasure
+- dynamic vs automatic storage
+- type_traits
+- operator `<=>`
+- protected
+- virtual inheritance
+- compilation model
+- ODR violatios
+- preprocessor
+- project structure and layout
+- the breadth of the standard layout
+- variable templates
+- coroutines
+- modules
+- 
+
+</details>
+
