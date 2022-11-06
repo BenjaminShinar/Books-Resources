@@ -36,6 +36,7 @@ ignore these words in spell check for this file
   - Principia Mathematica - The Foundations of Arithmetic in C++
 - [Networking & Web](Networking%20&%20Web.md)
 - [Resource Management](Resource%20Management.md)
+  - Back to Basics: C++ Move Semantics - Andreas Fertig
 - [Scientific Computing](Scientific%20Computing.md)
   - C++ Performance Portablity - A Decade of Lessons Learned - Christian Trott
 - [Social Registration](Social%20Registration.md)
@@ -45,6 +46,7 @@ ignore these words in spell check for this file
 - [Templates & Metaprogramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
 - [Tooling](Tooling.md)
+  - import CMake, CMake and C++20 Modules - Bill Hoffman
 - [Value Semantics](Value%20Semantics.md)
 - [Lighting Talks](#lightning-talks)
 

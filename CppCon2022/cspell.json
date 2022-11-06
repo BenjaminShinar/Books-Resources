@@ -38,7 +38,10 @@
     "Augustin",
     "Popa",
     "Leahy",
-    "Trott"
+    "Trott",
+    "prvalue",
+    "xvalue",
+    "glvalue"
   ],
   "import": []
 }
