@@ -464,6 +464,7 @@ it might silently use a constructor rather than a move if the try to move from c
 <summary>
 Creating random objects that are independent from one another but still consistent and stable.
 </summary>
+
 [Experiments With Generating Stably Random Game Assets](https://youtu.be/xMdwK9p5qOw)
 
 looking at randomly generated procedurals games contents (like **No Man's Sky**). taking a RNG (random number generator) called [Xoroshiro](https://en.wikipedia.org/wiki/Xoroshiro128%2B), Xoroshiro stands for the operators: XOR, rotate, shift,rotate.

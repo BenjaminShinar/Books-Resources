@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Upserts
+// cSpell:ignore Upserts xattr
  -->
 
 # Elasticsearch Complete Guide
@@ -104,11 +104,59 @@ now want to monitor the access and error logs, so we add a filebeat agent to get
 </summary>
 
 ### Overview of installation options
+we would like to install elasticSearch and Kibana. we can either it directly or use a container. there is also a trial version.
 
 ### Running Elasticsearch & Kibana in Elastic Cloud
 
+
+in [elasticCloud](https://www.elastic.co/cloud/cloud-trial-overview?medium=email&campaign=marketo-fallback), there is an option for a trial version, and we get a managed solution for 14 days.
+
+the trial period begins we when launch a deployment, we choose the basic stack. we don't care which cloud provider we use (Azure, GCP, AWS).
+
+when we create the deployment, we get a username (elastic), and the password.
+
+we need the elasticSearch end point links, for both the engine and the kibana dashboard.
+
 ### Setting up Elasticsearch & Kibana on macOS & Linux
+
+for macOS, we need to download and extract two archives. elasticSearch uses openJVM, while kibana uses nodeJS as a runtime.
+
+```sh
+tar -zxf archive.tar.gz
+```
+
+once extracted, we navigate to thefolders and run the commands. when we run the elasticsearch command, a superuser is created, as well as TLS certificates, we need the enrollment token for kibana.
+
+```sh
+cd elasticSearch
+bin/elasticsearch
+```
+
+in a new working terminal, we need to start kibana, there is an extra command for macos. when we follow the kibana link, we are prompted to paste the enrollment token.
+
+```sh
+xattr -d  -r come.apple.quarantine path/to/kibana # MacOs only
+cd kibana
+bin/kibana
+```
+
+we authenticate ourselves using the super user (elastic) and the generated password.
+
 ### Setting up Elasticsearch & Kibana on Windows
+
+we extract the elasticSearch and Kibana zipped files into folers.\
+we navigate to the folders and run the scripts. we take the password and the enrollment token.
+```ps
+cd elasticSearch
+bin\elasticSearch.nat
+```
+
+and for kibana, we run the script, go to the web browesr and enter the enrollment token, then fill in the password for the super users (user name is "elastic" by default).
+
+```ps
+cd kibana
+bin\kibana.bat
+```
 ### Understanding the basic architecture
 ### Inspecting the cluster
 ### Sending queries with cURL
@@ -164,4 +212,11 @@ now want to monitor the access and error logs, so we add a filebeat agent to get
 <summary>
 Stuff worth remembering.
 </summary>
+
+
+### Docker setup
+
+[docker instructions](https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html)
+
+
 </details>

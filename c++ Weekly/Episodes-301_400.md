@@ -2833,8 +2833,7 @@ topics in c++
 - private vs public
 - implicit conversions
 - function pointer
-- static member function
-- using alias
+- static member function- using alias
 - efficiency when chaing functions
 - templates
 - template argument type deduction
@@ -2902,7 +2901,55 @@ topics in c++
 - variable templates
 - coroutines
 - modules
-- 
 
 </details>
 
+## C++ Weekly - Ep 349 - C++23's `move_only_function`
+<details>
+<summary>
+Passing a type erased function which owns non-copyable data.
+</summary>
+
+[C++23's `move_only_function`](https://youtu.be/OJtGOJI0JEw)
+
+a new c++23 feature. 
+
+when we try to use std::function, it can't be used with a lambda that owns a non-copyable capture, such as a unique pointer, or any move-only elment.
+
+```cpp
+#include <functional>
+
+void register_callback(std::function<int (int)> callback);
+
+int main()
+{
+    
+    std::funcion<int (int)> cb{
+        [i= std::make_unique<int(42)>](const int val) {return val + *i;}
+    };
+    //this fails
+    register_callback(cb);
+}
+```
+*std::move_only_function* was created to over come this limitation.
+
+```cpp
+#include <functional>
+
+void register_callback(std::move_only_funcion<int (int)> callback);
+
+int main()
+{
+    //this works
+    std::move_only_funcion<int (int)> cb{
+        [i= std::make_unique<int(42)>](const int val) {return val + *i;}
+    };
+
+    // this works
+    register_callback(std::move(cb));
+}
+```
+
+we can't a move of const object, so if we want, we can create the lambda as a temporary object (rvalue) by writing the code directly in the function call.
+
+</details>

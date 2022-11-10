@@ -3,7 +3,7 @@ ignore these words in spell check for this file
 // cSpell:ignore
 -->
 
-# CppCon 2023
+# CppCon 2022
 
 [website](https://cppcon.org/), [youtube playlist](https://www.youtube.com/playlist?list=PLHTh1InhhwT6c2JNtUiJkaH8YRqzhU7Ag), [materials index](https://github.com/CppCon/CppCon2022).
 
@@ -49,3 +49,164 @@ ignore these words in spell check for this file
 - [Lighting Talks](#lightning-talks)
 
 ## Lightning Talks
+
+
+### Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
+
+<details>
+<summary>
+
+</summary>
+
+[Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me](https://youtu.be/Oq4NW5idmiI), [slides](https://github.com/CppCon/CppCon2022/blob/main/Presentations/CppCon-2022-How-Generic-Programming-came-to-the-rescue.pdf)
+
+> Focus of the talk - “**implementing traits with functions**”.\
+> Explanation of template metaprogramming implementation to abstraction JSON libraries.
+> - Detecting if a function or method are implement for a type
+> - Checking if an ADL implementation exists
+> - Compile time requirements and SFINAE
+
+
+once they added a package manager, it was easy to get more packages, and different libraries which do the same things are added to the stack.
+
+> “Why don’t you template out the logic and metaprogram a traits
+implementation?”
+
+```cpp
+template<typename json_traits>
+class basic_claim {
+  static_assert(details::is_valid_traits<json_traits>::value,
+  "traits must satisfy requirements");
+
+  static_assert(
+  details::is_valid_json_types<typename json_traits::value_type,
+  typename json_traits::string_type,
+  typename json_traits::integer_type,
+  typename json_traits::object_type,
+  typename json_traits::array_type>::value,
+  "must satisfy json container requirements");
+}
+```
+
+JWT -JSON Web Token, some predefined key. we need to both **create** and **verify** tokens.
+
+the values can only be a limited set of types.
+
+#### Verifying Claims
+> Q: How can we check a type implements a function?
+
+combine: using `std::experimental::is_detected`, which employs SFINAE to detect a named entity, but we need to add `std::is_function`, and eventually, we want to create a `is_signature` trait.
+
+#### Creating Tokens
+
+decltype doesn't work easily with overload functions, we need to resolve the function at compile time. more assertion errors over member functions.
+
+variance with methods (array `.at` vs `[]`).
+
+
+> Review
+> - Check static function signatures with `is_detected`, `is_function`, and
+`is_same`
+> - We can resolve overloaded functions with the help of `declval`
+> - To overcome `declval`’s lack of substitution we can add template helpers to return `true_type` of `false_type` is it does not resolve.
+> - More indirection is usually the answer with SFINAE
+
+</details>
+
+### HPX - A C++ Library for Parallelism and Concurrency - Hartmut Kaiser
+<!-- <details> -->
+<summary>
+
+</summary>
+
+
+
+[HPX - A C++ Library for Parallelism and Concurrency](https://youtu.be/npufmMlGOoM), [slides](https://github.com/CppCon/CppCon2022/blob/main/Presentations/HPX-A-C-Standard-Library-for-Parallelism-and-Concurrency-CppCon-2022-1.pdf)
+
+
+> HPX – An Asynchronous Many-task
+Runtime System
+
+differences in performance between compute-bound and memory-bound parallel tasks. also difference performance patterns depending on the number of cores.
+
+HPX: a threading implementation, more efficient than naive threads (jthread, std::thread, pthread), with several functional layers, conforming to the standard, and offers some externsions. allows for distributes execution.
+
+this talk will focus on parallel loop and algorithms
+
+> - Simple iterative algorithms
+>   - One pass over the input sequence.
+>   - for_each, copy, fill, generate, reverse, etc. 
+> - Iterative algorithms ‘with a twist’
+>   - One pass over the input sequence.
+>   - Parallel execution requires additional operation after first pass, most of
+the time this is a reduction step
+>   - min_element, all_of, find, count, equal, etc.
+> - Scan based algorithms
+>   - At least three algorithmic steps.
+>   - inclusive_scan, exclusive_scan, etc. 
+> - Auxillary algorithms
+>   - Sorting, heap operations, set operations, rotate
+
+
+parallelization can work on CPU (threads and cores), and on GPUs.
+
+
+#### Parallelize Loops
+
+execution policies:
+
+> Convey guarantees/requirements imposed by loop body
+> -  seq: execute in-order (sequenced) on current thread
+> -  unseq: allow out-of-order execution (un-sequenced) on current thread - vectorization
+> -  par: allow parallel execution on different threads
+> - par_unseq: allow parallel out-of-order (vectorized) execution on different threads
+
+in the future the standard might include *std::simd*, which will require explicit vectorization. but that's still in the experimental stage.
+
+HPX adds more policies, explicit parallelized vectorization and execution.
+
+the first example uses std::future to launch threads and parallelize on them, it cuts the input data into chunks.
+
+#### Background
+
+Amdahl's Law (Strong scaling), the speed up of parallelizion is capped by the number of processors and how much of the code can be parallelized
+
+$
+S = \frac 1{(1-p) + \frac {P}{N}}
+$
+
+SLOW - problems with parallelization
+> - Starvation
+>   - Insufficient concurrent work to maintain high utilization of resources.
+> - Latencies
+>   - Time-distance delay of remote resource
+access and services
+> - Overheads
+>   - Work for management of parallel actions and resources on critical path which are not necessary in sequential variant.
+> - Waiting for Contention resolution.
+>   - Delays due to lack of availability of
+oversubscribed shared resources.
+
+
+there is a U-shaped curve of gains from spliting chunks. the overhead can be greater than the gains, but if the there are too many chunks (with smaller data), the performance will go down. this goes together with the number of cores.
+
+#### Executors
+
+> Executors abstract different task launching infrastructures
+> - Synchronization using futures
+>   - HPX historically uses futures as main means of coordinating.
+> -  Synchronization using sender/receivers (C++26?)
+>   - C++ standardization focusses on developing an infrastructure for anything related to asynchrony and parallelism.
+>   - P2300: std::execution (senders & receivers)
+>   - Computational basis for asynchronous programming
+>   - Current discussions focus on integrating parallel algorithms.
+
+
+some examples: execution policies, attaching to an executor, parallel task execution (asynchronous and futures), senders & receivers. eager and lazy executions.
+
+**Explicit vectorization**: 
+simd - single instruction, multiple data.
+
+**Linear algebra**, a proposal for standardization, might also work with execution policies. `std::linalg::scale`
+
+</details>
