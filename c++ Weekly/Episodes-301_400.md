@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Wconversion
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Wconversion Codecov fanalyzer
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -2952,4 +2952,66 @@ int main()
 
 we can't a move of const object, so if we want, we can create the lambda as a temporary object (rvalue) by writing the code directly in the function call.
 
+</details>
+
+## C++ Weekly - Ep 350 - The Right Way to Write C++ Code in 2022
+<details>
+<summary>
+Best Practices for working with C++ code today.
+</summary>
+
+[The Right Way to Write C++ Code in 2022](https://youtu.be/q7Gv4J3FyYE)
+
+> "We are in a golden age of C++ tooling"
+
+many of these examples are up on the best practices repo.
+
+Continuos Build Enviornment:\
+github, gitlab, jenkins, there are many
+
+use as many compilers as you can, compilers can have different warnings 
+- gcc
+- clang
+- MSVC (cl.exe)
+- clang.cl
+
+
+testing enviornment:
+- docTest
+- Catch2
+- gtest
+- boost
+
+test coverage analysis and reporting, preferably integrated with the build enviornment. it should have historical tracking to catch regressions.
+- coveralls
+- codecov.io
+
+
+static analysis, as many as possible.
+- at least all the warnings treated as errors (`-Werror`, `-Wconversion`)
+- `gcc -fanalyzer`
+- `cl.exe /analyze`
+- cppcheck
+- clang-tidy
+- sonar
+- PVS studio
+
+runtime analysis during testing
+- Address sanitizer
+- Undefined behavior sanitizer
+- Memory sanitizer
+- Thread sanitizer
+- valgrind
+- **DrMemory** (windows compatible)
+- Debug Checked Iterators from the compiler
+
+Fuzz Testing - random input to the API
+- used together with runtime analysis
+- trying to feed the API weird data
+
+Ship with Hardening enabled
+- control flow guard (visual studio)
+- `_FORTIFY_SOURCE` (GCC)
+- stack protector
+- **UBSan** `-fsanitize-minimal-runtime`
 </details>
