@@ -4,19 +4,19 @@
   "dictionaryDefinitions": [],
   "dictionaries": ["cpp"],
   "words": [
+    "alignas",
     "Clonable",
     "CRTP",
+    "cvref",
     "Cyclomatic",
     "initializable",
     "invokable",
-    "nulllptr",
-    "serializers",
-    "println",
-    "alignas",
-    "remove_cvref_t",
-    "mdspan",
     "mdarray",
-    "cvref"
+    "mdspan",
+    "nulllptr",
+    "println",
+    "remove_cvref_t",
+    "serializers"
   ],
   "ignoreWords": [
     "Bjarne",
@@ -46,7 +46,12 @@
     "Amini",
     "Maged",
     "McKenney",
-    "Dathskovsky"
+    "Dathskovsky",
+    "Ivica",
+    "Bogosavljevic",
+    "Withopf",
+    "Pavel",
+    "Novikov"
   ],
   "import": []
 }

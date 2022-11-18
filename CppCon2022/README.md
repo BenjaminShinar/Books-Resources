@@ -23,7 +23,7 @@ ignore these words in spell check for this file
 - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
 - Back to Basics: Debugging in C++ - Mike Shah
 - C++ Dependencies Don’t Have To Be Painful - Why You Should Use a Package Manager - Augustin Popa
-- Going Beyond Build Distribution - Using Incredibuild to Accelerate Static Code Analysis and Builds - - Jonathan "Beau" Peck
+- Going Beyond Build Distribution - Using Incredibuild to Accelerate Static Code Analysis and Builds - Jonathan "Beau" Peck
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
@@ -34,6 +34,7 @@ ignore these words in spell check for this file
   - C++ in Constrained Environments - Bjarne Stroustrup
   - What’s New in C++23 - Sy Brand
   - C++23 - What's In It For You? - Marc Gregoire
+  - Understanding C++ coroutines by example: Generators - Pavel Novikov
 - [General C++](General%20C++.md)
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
   - C++ Lambda Idioms - Timur Doumler
@@ -50,10 +51,12 @@ ignore these words in spell check for this file
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
   - How Microsoft Uses C++ to Deliver Office - Huge Size, Small Components - Zachary Henkel
+  - The Hidden Performance Price of C++ Virtual Functions - Ivica Bogosavljevic
 - [Templates & Metaprogramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
-  - ~~High Speed Query Execution with Accelerators and C++ - Alex Dathskovsky~~
+  - High Speed Query Execution with Accelerators and C++ - Alex Dathskovsky
+  - Taking Static Type-Safety to the Next Level - Physical Units for Matrices - Daniel Withopf
 - [Tooling](Tooling.md)
   - import CMake, CMake and C++20 Modules - Bill Hoffman
 - [Value Semantics](Value%20Semantics.md)
