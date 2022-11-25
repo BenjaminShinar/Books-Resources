@@ -13,6 +13,7 @@ ignore these words in spell check for this file
   - The Imperatives Must Go! [Functional Programming in Modern C++] - Victor Ciura
   - Functional Composable Operations with Unix-Style Pipes in C++ - Ankur Satle
   - Understanding Allocator Impact on Runtime Performance in C++ - Parsa Amini
+  - Refresher on Containers, Algorithms and Performance in C++ - Vladimir Vishnevskii
 - [Concurrency](Concurrency.md)
 
   - C++20’s Coroutines for Beginners - Andreas Fertig
@@ -20,10 +21,10 @@ ignore these words in spell check for this file
   - C++ Concurrency TS-2 Use Cases and Future Direction - Michael Wong, Maged Michael, Paul McKenney
 
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
-- Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
-- Back to Basics: Debugging in C++ - Mike Shah
-- C++ Dependencies Don’t Have To Be Painful - Why You Should Use a Package Manager - Augustin Popa
-- Going Beyond Build Distribution - Using Incredibuild to Accelerate Static Code Analysis and Builds - Jonathan "Beau" Peck
+  - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
+  - Back to Basics: Debugging in C++ - Mike Shah
+  - C++ Dependencies Don’t Have To Be Painful - Why You Should Use a Package Manager - Augustin Popa
+  - Going Beyond Build Distribution - Using Incredibuild to Accelerate Static Code Analysis and Builds - Jonathan "Beau" Peck
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
@@ -38,6 +39,8 @@ ignore these words in spell check for this file
 - [General C++](General%20C++.md)
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
   - C++ Lambda Idioms - Timur Doumler
+  - Undefined Behavior in the STL - Sandor Dargo
+  - C++ MythBusters - Victor Ciura
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
 - [Math & Numbers](Math%20&%20Numbers.md)
   - Principia Mathematica - The Foundations of Arithmetic in C++
