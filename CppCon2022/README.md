@@ -60,9 +60,11 @@ ignore these words in spell check for this file
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
   - High Speed Query Execution with Accelerators and C++ - Alex Dathskovsky
   - Taking Static Type-Safety to the Next Level - Physical Units for Matrices - Daniel Withopf
+  - C++ for Enterprise Applications - Vincent Lextrait
 - [Tooling](Tooling.md)
   - import CMake, CMake and C++20 Modules - Bill Hoffman
 - [Value Semantics](Value%20Semantics.md)
+  - Back to Basics: Cpp Value Semantics - Klaus Iglberger
 - [Lighting Talks](#lightning-talks)
 
 ## Lightning Talks
