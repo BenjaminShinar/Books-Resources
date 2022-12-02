@@ -41,10 +41,13 @@ ignore these words in spell check for this file
   - C++ Lambda Idioms - Timur Doumler
   - Undefined Behavior in the STL - Sandor Dargo
   - C++ MythBusters - Victor Ciura
+  - C++ Function Multiversioning in Windows - Joe Bialek and Pranav Kant
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
+  - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
 - [Math & Numbers](Math%20&%20Numbers.md)
   - Principia Mathematica - The Foundations of Arithmetic in C++
 - [Networking & Web](Networking%20&%20Web.md)
+  - WebAssembly: Taking Your C++ and Going Places - Nipun Jindal & Pranay Kumar
 - [Resource Management](Resource%20Management.md)
   - Back to Basics: C++ Move Semantics - Andreas Fertig
 - [Scientific Computing](Scientific%20Computing.md)
@@ -55,6 +58,7 @@ ignore these words in spell check for this file
   - How C++23 Changes the Way We Write Code - Timur Doumler
   - How Microsoft Uses C++ to Deliver Office - Huge Size, Small Components - Zachary Henkel
   - The Hidden Performance Price of C++ Virtual Functions - Ivica Bogosavljevic
+  - Using Modern C++ to Eliminate Virtual Functions - Jonathan Gopel
 - [Templates & Metaprogramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
