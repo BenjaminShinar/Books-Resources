@@ -3015,3 +3015,35 @@ Ship with Hardening enabled
 - stack protector
 - **UBSan** `-fsanitize-minimal-runtime`
 </details>
+
+## C++ Weekly - Ep 351 - Your 5 Step Plan For Deeper C++ Knowledge
+<details>
+<summary>
+5 things to do in order to get better understanding of c++.
+</summary>
+
+[Your 5 Step Plan For Deeper C++ Knowledge](https://youtu.be/287_oG4CNMc)
+
+object life time: a class that writes to the console when it's created or destroyed, and tells us what happened, this allows us to see return value optimization, copy ellison, and so on.
+
+study the lambda: when are things created, what happens if it's inside the body of the lambda, inside the capture list, what happens when we copy a lambda.
+
+create a `std::function implementation`, get an understaing of type erasure, lifetime. make it work with lambda, free functions, static functions, etc... . also make it `constexpr`, and to try and impalement small function optimization.
+
+</details>
+
+## C++ Weekly - Ep 352 - Not Doing This Should Be Illegal! (Always Fuzz Your C++!)
+<details>
+<summary>
+Fuzz testing
+</summary>
+
+[Not Doing This Should Be Illegal! (Always Fuzz Your C++!)](https://youtu.be/Is1MurHeZvg)
+
+fuzz testing is a way of testing software for vulnerabilities, we use a tool to feed random input into the program, and seeing if it causes problems. we can use sanitizers to see if the input has effect. this isn't a new concept, the term "fuzzing" exists since the late 80's.
+
+example of a bug, not checking for string ending, and how using fuzz testing finds the bug. another example with rotating bits in an integer. another example of how fuzzing would have found earlier bugs.
+
+
+</details>
+
