@@ -3047,3 +3047,25 @@ example of a bug, not checking for string ending, and how using fuzz testing fin
 
 </details>
 
+## C++ Weekly - Ep 353 - Implicit Conversions Are Evil
+<details>
+<summary>
+
+</summary>
+
+[Implicit Conversions Are Evil](https://youtu.be/T97QJ0KBaBU)
+
+> "This C++ Feature Must GO!"
+
+writing safer C++. starting with some examples.
+
+the key value of a map (dictionary) is always const. so if we specify the std::pair, the first element must be const, even if we didn't specify the map as such.
+
+converting a std::string to string_view and converting back.
+
+slicing when converting from derived class to base class.
+
+implicit conversion from std::shared_ptr to `const std::shared_ptr`.
+
+there are many sharp edges, and many places where we can fall into. it can create non-trivial objects and cost us in performance.
+</details>
