@@ -4,11 +4,9 @@
 
 # Microsoft Azure Fundamentals
 
-microsoft course 
+[Microsoft Azure Fundamentals:](https://learn.microsoft.com/en-us/training/paths/az-900-describe-cloud-concepts/), [az-900 exam](https://learn.microsoft.com/en-us/certifications/exams/az-900)
 
-[az-900 exam](https://learn.microsoft.com/en-us/certifications/exams/az-900)
-
-each learning path corresponds to one domain of the exam.
+each learning path corresponds to one domain of the exam. a learning path is composed of several modules.
 
 AZ-900 Domain Area | Weight
 ---|---
@@ -27,13 +25,11 @@ Describe Microsoft cost management and Service Level Agreements|10-15%
 > - Describe core Azure architecture components such as subscriptions, management groups, resources and resource groups
 > - Summarize geographic distribution concepts such as Azure regions, region pairs, and availability zones
 
-## Core Azure concepts
-<!-- <details> -->
+## Azure Concepts
+<details>
 <summary>
-Azure fundamentals is a six-part series that teaches you basic cloud concepts, provides a streamlined overview of many Azure services, and guides you with hands-on exercises to deploy your very first services for free.
+Basic cloud concepts, Azure concepts and base components.
 </summary>
-
-https://learn.microsoft.com/en-us/training/paths/az-900-describe-cloud-concepts/
 
 ### Introduction to Azure Fundamentals
 <details>
@@ -158,9 +154,72 @@ They have an on premises data center with data and video. currently, the IT team
 This module introduces you to the basics of cloud computing and Azure, and how to get started with Azure's subscriptions and accounts.
 </summary>
 
+Azure (and other cloud computing services) allow for increase in availability, scalability, and help make deployment faster.\
+We can 
+
 ####  Different Types of Cloud Models
+there are three configurations of cloud deployment models: public, private and hybrid.\
+
+in a public cloud, the computing machines and storage are located in the datacenters of the hosting company, there is no capital (monterey) barrier to start or to expand, and all access is done via the internet.\
+A private cloud is exclusively used by the purchasing company, and it can be hosted either on premises or at a 3rd part site. all hardware is purchased by the company, and maintained by them, this gives the company complete control over security.\
+a hybrid cloud deployment combines the two, allowing the company to control which servies run on the public cloud an which run on the private cloud (i.e. for legal reasons and compliance with regulations).
+
+> **Public cloud:**\
+> Services are offered over the public internet and available to anyone who wants to purchase them. Cloud resources, such as servers and storage, are owned and operated by a third-party cloud service provider, and delivered over the internet.
+> 
+> **Private cloud:**\
+> A private cloud consists of computing resources used exclusively by users from one business or organization. A private cloud can be physically located at your organization's on-site (on-premises) datacenter, or it can be hosted by a third-party service provider.
+> 
+> **Hybrid cloud:**\
+> A hybrid cloud is a computing environment that combines a public cloud and a private cloud by allowing data and applications to be shared between them.
+
 ####  Cloud Benefits and Considerations
+
+Advantages of cloud computing (azure):
+
+> - High availability: Depending on the service-level agreement (SLA) that you choose, your cloud-based apps can provide a continuous user experience with no apparent downtime, even when things go wrong.
+> - Scalability: Apps in the cloud can scale vertically and horizontally:
+>   - Scale vertically to increase compute capacity by adding RAM or CPUs to a virtual machine.
+>   - Scaling horizontally increases compute capacity by adding instances of resources, such as adding VMs to the configuration.
+> - Elasticity: You can configure cloud-based apps to take advantage of autoscaling, so your apps always have the resources they need.
+> - Agility: Deploy and configure cloud-based resources quickly as your app requirements change.
+> - Geo-distribution: You can deploy apps and data to regional datacenters around the globe, thereby ensuring that your customers always have the best performance in their region.
+> - Disaster recovery: By taking advantage of cloud-based backup services, data replication, and geo-distribution, you can deploy your apps with the confidence that comes from knowing that your data is safe in the event of disaster.
+
+when we consider the costs, there are two types of costs to consider, Capital Expenditure (CapEx) and Operational Expenditure (CapOx).
+> - Capital Expenditure (CapEx) is the up-front spending of money on physical infrastructure, and then deducting that up-front expense over time. The up-front cost from CapEx has a value that reduces over time.
+> - Operational Expenditure (OpEx) is spending money on services or products now, and being billed for them now. You can deduct this expense in the same year you spend it. There is no up-front cost, as you pay for a service or product as you use it.
+
+Buying infrastucure is considered CapEx, it is paid for upfront, in goes into the accounting books as an asset, the value of which decreases over time. Purchasing services from the cloud provider is considered OpEx, it effects the operations balance sheet of the company, as well as the net-profit and taxable income.
+
+> Cloud Computing is consumption-based model, which means that end users only pay for the resources that they use. Whatever they use is what they pay for.\
+> A consumption-based model has many benefits, including:
+> - No upfront costs.
+> - No need to purchase and manage costly infrastructure that users might not use to its fullest.
+> - The ability to pay for additional resources when they are needed.
+> - The ability to stop paying for resources that are no longer needed. 
+
 ####  Different Cloud Services
+
+Cloud services can be divided into different service models, based on how the responsability of managing them is distributed between the provider and the user. on one end, there is IaaS (Infrastructure-as-a-Service), which gives the user the most control over the resources, while at the other end there is SaaS (Software-as-a-Service), which is the most managed services where the provider takes care of most of the work, between them there is PaaS (Platform-as-a-Service).
+
+Acronym |Full Name | Provider responsability | User  responsability | Example
+---|---|---|---|---|
+Iaas | Infrastructure-as-a-Service |hardware| perating system maintenance, network configuration  |Azure virtual Machines
+PaaS| Platform-as-a-Service |Virtual machines, networking| Applications | Azure App Services
+SaaS | Software-as-a-Service|Virtual machines, networking, data storage, applications| Application data| Microsoft Office 365 
+
+in IaaS, you simply rent the infrastructure instead of buying it, everything else is like on premises data center, the customer has the most control over the resources, and can tailor them to its' needs. in PaaS, the cloud provder has more responsability, which means the client can focus on the application development. in SaaS, the client only provides the data to the application, but the application (software) is provided by the cloud host. so this is the easiest option to use, and it provides access to the most up-to-date software, but it limits what kinds of applications the client can run.
+
+Model | Storage | networking| Compute | virtual machine| operating System | runtime | Applications|Data & Access
+---|---|---|---|---|---|---|---|---|
+On-Premises (private cloud) | Customer Managed |Customer Managed|Customer Managed|Customer Managed|Customer Managed|Customer Managed|Customer Managed|Customer Managed
+IaaS | Cloud Provided |Cloud Provided|Cloud Provided|Customer Managed|Customer Managed|Customer Managed|Customer Managed|Customer Managed
+PaaS | Cloud Provided |Cloud Provided|Cloud Provided|Cloud Provided|Cloud Provided|Cloud Provided|Customer Managed|Customer Managed
+SaaS | Cloud Provided |Cloud Provided|Cloud Provided|Cloud Provided|Cloud Provided|Cloud Provided|Cloud Provided|Customer Managed
+
+
+**Serverless computing** is like PaaS in a way, as it allows the user to build applications on their own, and not rely on the software the cloud provider supports. in this case, the cloud automatically provisions and manages the resources behind the scenes, which makes serverless computing very scalable. serverless computing tends to be event-driven.
 
 </details>
 
@@ -169,9 +228,168 @@ This module introduces you to the basics of cloud computing and Azure, and how t
 <summary>
 In this module, you'll examine the various concepts, resources, and terminology that are necessary to work with Azure architecture. For example, you'll learn about Azure subscriptions and management groups, resource groups and Azure Resource Manager, as well as Azure regions and availability zones.
 </summary>
+
+getting an understanding of azure's terminology.
+
+the hierarchy begins at the management group, which has subscriptions, which have resource groups, which contain azure resources.
+
+> - Management groups: These groups help you manage access, policy, and compliance for multiple subscriptions. All subscriptions in a management group automatically inherit the conditions applied to the management group.
+> - Subscriptions: A subscription groups together user accounts and the resources that have been created by those user accounts. For each subscription, there are limits or quotas on the amount of resources that you can create and use. Organizations can use subscriptions to manage costs and the resources that are created by users, teams, or projects.
+> - Resource groups: Resources are combined into resource groups, which act as a logical container into which Azure resources like web apps, databases, and storage accounts are deployed and managed.
+> - Resources: Resources are instances of services that you create, like virtual machines, storage, or SQL databases.
+
+#### Regions, Availability Zones, and Region Pairs
+
+> A region is a geographical area on the planet that contains at least one but potentially multiple datacenters that are nearby and networked together with a low-latency network. Azure intelligently assigns and controls the resources within each region to ensure workloads are appropriately balanced.
+
+There are also *special Azure regions*, which are used for legal and compliance purposes, some are US-based and some China based.
+
+Each region is comprised of availability zones, an availability zone is a data center. if one availability zone goes down, the others aren't effected. availability zones are connected to one another through a private, high speed, fiber-optic network. we can run applications in different availability zones for high availability or in the same availability zone for high performance.
+
+services can be zonal, zonal-redundant, and non-regional.
+- a zonal service is pinned to an specific availability zone. such as a virtual machine or a managed disc.
+- a zonal-redundant service is replicated automatically across availability zones. such examples might be a database.
+- a non-regional service is not tied to a specific region, and should be available even if the entire region goes down.
+
+in addition to that, Azure has the concept of *Geography*, which contains *region pairs*. a geography is a conceptual location (such as asia, europe, us), and a region pair is a pairing of two regions, which are at a sufficient distance from one another but (mostly) reside in the same state. region pairs are preferred for cross region data redundancy, and azure keeps each region in the region pair on a different maintenance schedule, and will prioritize fixing one of the regions if a large scale disaster happens. this means that even if a disaster happens or an azure update goes horribly wrong, the data from one region can be preserved in the other region.
+
+#### Resources and Azure Resource Manager
+
+> - Resource: A manageable item that's available through Azure. Virtual machines (VMs), storage accounts, web apps, databases, and virtual networks are examples of resources.
+> - Resource group: A container that holds related resources for an Azure solution. The resource group includes resources that you want to manage as a group. You decide which resources belong in a resource group based on what makes the most sense for your organization.
+
+All resources resign in a resource group, and a resource can be a member of only one resource group. resources can be moved between resource groups (under some conditions), there is not nesting of resource groups. Resource groups allow for a logical grouping of resources based on the organization needs. Resource groups also control **lifecycle** - when a resource group is removed (deleted), all the resources inside it are also removed. in addition, we also use resource groups as an **authorization** scope, when we give role based access control (RBAC) permissions we can allow access to resources in a specific resource group.
+
+> **Azure Resource Manager**:\
+> Azure Resource Manager is the deployment and management service for Azure. It provides a management layer that enables you to create, update, and delete resources in your Azure account. You use management features like access control, locks, and tags to secure and organize your resources after deployment.
+
+all azure actions (via the web console, apis, sdk, etc...) are processed via the Azure Resource Manager, so the results are always consistent no matter how the user interacts with azure.
+
+> With Resource Manager, you can:
+> - Manage your infrastructure through declarative templates rather than scripts. A Resource Manager template is a JSON file that defines what you want to deploy to Azure.
+> - Deploy, manage, and monitor all the resources for your solution as a group, rather than handling these resources individually.
+> - Redeploy your solution throughout the development life cycle and have confidence your resources are deployed in a consistent state.
+> - Define the dependencies between resources so they're deployed in the correct order.
+> - Apply access control to all services because RBAC is natively integrated into the management platform.
+> - Apply tags to resources to logically organize all the resources in your subscription.
+> - Clarify your organization's billing by viewing costs for a group of resources that share the same tag.
+
+it also allows us to protect resources from accidental deletion by applying policies and resource locks. we can also use Azure policies to ensure the same tags are used.
+
+#### Subscriptions and Management Groups
+
+> Azure subscriptions:\
+> Using Azure requires an Azure subscription. A subscription provides you with authenticated and authorized access to Azure products and services. It also allows you to provision resources. An Azure subscription is a logical unit of Azure services that links to an Azure account, which is an identity in Azure Active Directory (Azure AD) or in a directory that Azure AD trusts.
+
+an azure Account has subscriptions, a subscription can have a *billing models* and an *access-management/control* policy (model). a billing model groups subscriptions into a different reports or invoices, which are required for managing costs. the access management defines the boundaries of which resources can be provisioned.
+
+common ways to organize subscriptions is by geographical environment (which also helps with compliance), by the organizational structure (which helps with managing permissions) and by billing purposes (which helps track costs).
+
+subscriptions also have limits, such as maximum number of Azure ExpressRoute circuits (10 per subscription), so a new subscription can allow for more of those limited resources.
+
+**Billing profiles** are organized under a single **billing account**, a profile is matches an invoice and has payment method. inside each billing profile, we can designate different subscriptions a invoice sections.
+
+**Azure management groups** provide a level of scope above that of subscriptions, and are used to manage access, policies and compliance in a single location. management groups can be nested (contain other management groups) and they contain the subscriptions. permissions are managed at the management group and are inherited by the nested groups and the subscriptions. all subscriptions in a management group must trust the same Azure AD tenant.
+
+management group policies can limit what can be done by the subscriptions inside it, and helps manage all the permissions for different users.
+
+> Important facts about management groups
+> - 10,000 management groups can be supported in a single directory.
+> - A management group tree can support up to six levels of depth. This limit doesn't include the root level or the subscription level.
+> - Each management group and subscription can support only one parent.
+> - Each management group can have many children.
+> - All subscriptions and management groups are within a single hierarchy in each directory.
 </details>
 
 </details>
+
+
+
+## Azure Services
+<!-- <details> -->
+<summary>
+
+</summary>
+
+### Architectural Components of Azure
+<!-- <details> -->
+<summary>
+This module explains the basic infrastructure components of Microsoft Azure. You'll learn about the physical infrastructure, how resources are managed, and have a chance to create an Azure resource.
+</summary>
+
+#### What is Microsoft Azure
+
+Azure is microsoft's cloud computing solution, which provides IaaS, PaaS and SaaS options, as well as scalability. security and high availability options.
+
+azure can provide simple virtual machines, databases, and even AI and machine learning services.
+
+#### Get Started with Azure Accounts
+
+the top level of azure is the azure account (which hold subscriptions), for free accounts, there are two levels:
+- free account (free credit, access to free services, one year access to popular paid services)
+- free student account (more time to use the credit, access to some more services).
+
+the microsoft learn sandbox is a temporary subscription in the azure account, which cleans up all the created resources after the session is complete, and provides the resources for free.
+
+#### Exercise - Explore the Learn Sandbox
+#### Describe Azure Physical Infrastructure
+#### Describe Azure Management Infrastructure
+#### Exercise - Create an Azure Resource
+
+</details>
+
+### Compute and Networking Services
+<details>
+<summary>
+This module focuses on some of the computer services and networking services available within Azure.
+</summary>
+</details>
+
+### Storage Services
+<details>
+<summary>
+This module introduces you to storage in Azure, including things such as different types of storage and how a distributed infrastructure can make your data more resilient.
+</summary>
+</details>
+
+### Identity, Access, and Security
+<details>
+<summary>
+This module covers some of the authorization and authentication methods available with Azure.
+</summary>
+</details>
+
+
+</details>
+
+## Solutions and Management Tools on Azure
+<details>
+<summary>
+
+</summary>
+</details>
+
+## General Security and Network Security Features
+<details>
+<summary>
+
+</summary>
+</details>
+
+## Identity, Governance, Privacy, and Compliance Features
+<details>
+<summary>
+
+</summary>
+</details>
+
+## Microsoft Cost Management and Service Level Agreements
+<details>
+<summary>
+
+</summary>
+</details>
+
 
 ## Takeaways
 <!-- <details> -->
@@ -179,13 +397,14 @@ In this module, you'll examine the various concepts, resources, and terminology 
 
 </summary>
 
-- Azure Web Apps
-- Azure Functions
+- Azure Web Apps - scalable host websites
+- Azure Functions - event driven actions.
 - Container Instance
 - Kubernetes Services
 - Cosmos DB - noSQL
 - Azure Portal
-
+- Azure Resource Manager
+- Azure AD - Active directory
 
 ### Azure Services
 <details>
@@ -250,6 +469,22 @@ Natural Language processing| Allow your apps to process natural language with pr
 Azure DevOps | Use development collaboration tools such as high-performance pipelines, free private Git repositories, configurable Kanban boards, and extensive automated and cloud-based load testing. Formerly known as Visual Studio Team Services. | DevOps
 Azure DevTest Labs | Quickly create on-demand Windows and Linux environments to test or demo applications directly from deployment pipeline | DevOps
 </details>
+
+### Acronyms
+<details>
+<summary>
+Acronyms worth remembering
+</summary>
+
+Acronym | Full Name | Notes | Domain 
+---|---|---
+CapEx | Capital Expenditure | up-front spending of money on physical infrastructure | Finance
+OpEx | Operational Expenditure |  spending money on services or products now, and being billed for them now.| Finance
+SLA | Service Level Agreement | what the company legally guarantees | ?
+ARM | Azure Resource Manager | deployment and management service layer for Azure | Azure
+</details>
+
+###
 
 </details>
 
