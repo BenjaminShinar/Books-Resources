@@ -15,16 +15,15 @@ ignore these words in spell check for this file
   - Understanding Allocator Impact on Runtime Performance in C++ - Parsa Amini
   - Refresher on Containers, Algorithms and Performance in C++ - Vladimir Vishnevskii
 - [Concurrency](Concurrency.md)
-
   - C++20’s Coroutines for Beginners - Andreas Fertig
   - Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet - Andreas Weis
   - C++ Concurrency TS-2 Use Cases and Future Direction - Michael Wong, Maged Michael, Paul McKenney
-
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
   - Back to Basics: Debugging in C++ - Mike Shah
   - C++ Dependencies Don’t Have To Be Painful - Why You Should Use a Package Manager - Augustin Popa
   - Going Beyond Build Distribution - Using Incredibuild to Accelerate Static Code Analysis and Builds - Jonathan "Beau" Peck
+  - Case For a Standardized Package Description Format for External C++ Libraries - Luis Caro Campos
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
@@ -42,6 +41,7 @@ ignore these words in spell check for this file
   - Undefined Behavior in the STL - Sandor Dargo
   - C++ MythBusters - Victor Ciura
   - C++ Function Multiversioning in Windows - Joe Bialek and Pranav Kant
+  - Embracing Trailing Return Types and `auto` Return SAFELY in Modern C++ - Pablo Halpern
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
   - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
 - [Math & Numbers](Math%20&%20Numbers.md)
@@ -50,9 +50,11 @@ ignore these words in spell check for this file
   - WebAssembly: Taking Your C++ and Going Places - Nipun Jindal & Pranay Kumar
 - [Resource Management](Resource%20Management.md)
   - Back to Basics: C++ Move Semantics - Andreas Fertig
+  - Back to Basics: C++ Smart Pointers - David Olsen
 - [Scientific Computing](Scientific%20Computing.md)
   - C++ Performance Portablity - A Decade of Lessons Learned - Christian Trott
   - HPX - A C++ Library for Parallelism and Concurrency - Hartmut Kaiser
+  - Graph Algorithms and Data Structures in C++20 - Phil Ratzloff & Andrew Lumsdaine
 - [Social Registration](Social%20Registration.md)
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler

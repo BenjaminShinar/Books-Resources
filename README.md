@@ -281,7 +281,7 @@ defintion and tooltip
 - HTML Entity:
   - <<kbd>&#</kbd>>\<Decimal Number><<kbd>;</kbd>> &#945;
   - <<kbd>&#x</kbd>>\<Hexdecimal Number><<kbd>;</kbd>> &#x3B2;
-  - <<kbd>&#x</kbd>>\<symbol name><<kbd>;</kbd>> &gamma;
+  - <<kbd>&</kbd>>\<symbol name><<kbd>;</kbd>> &gamma;
 
 [some html symbols](https://www.w3schools.com/charsets/ref_utf_punctuation.asp)
 
