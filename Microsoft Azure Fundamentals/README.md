@@ -1,10 +1,10 @@
 <!--
-// cSpell:ignore PAAS
+// cSpell:ignore PAAS pwsh
  -->
 
 # Microsoft Azure Fundamentals
 
-[Microsoft Azure Fundamentals:](https://learn.microsoft.com/en-us/training/paths/az-900-describe-cloud-concepts/), [az-900 exam](https://learn.microsoft.com/en-us/certifications/exams/az-900)
+[Microsoft Azure Fundamentals:](https://learn.microsoft.com/en-us/training/paths/az-900-describe-cloud-concepts/), [az-900 exam](https://learn.microsoft.com/en-us/certifications/exams/az-900), [Azure Global infrastructure](https://infrastructuremap.microsoft.com/), [Azure Cli Documentation](https://learn.microsoft.com/en-us/cli/azure/?view=azure-cli-latest)
 
 each learning path corresponds to one domain of the exam. a learning path is composed of several modules.
 
@@ -312,7 +312,7 @@ management group policies can limit what can be done by the subscriptions inside
 </summary>
 
 ### Architectural Components of Azure
-<!-- <details> -->
+<details>
 <summary>
 This module explains the basic infrastructure components of Microsoft Azure. You'll learn about the physical infrastructure, how resources are managed, and have a chance to create an Azure resource.
 </summary>
@@ -332,17 +332,236 @@ the top level of azure is the azure account (which hold subscriptions), for free
 the microsoft learn sandbox is a temporary subscription in the azure account, which cleans up all the created resources after the session is complete, and provides the resources for free.
 
 #### Exercise - Explore the Learn Sandbox
-#### Describe Azure Physical Infrastructure
-#### Describe Azure Management Infrastructure
-#### Exercise - Create an Azure Resource
+we activate the sandbox environment in the azure account. it is limited to daily activations and each activation has a time limit.
 
+Azure cloud shell
+
+```ps
+Get-Date
+az version
+bash #switch to bash
+```
+
+```sh
+date
+az upgrade
+pwsh # switch to powershell
+```
+we can enter the interactive mode with `az interactive`, which allows us to run azure commands without the `az` command, and has autocompleteion.
+
+```sh
+version # az version
+upgrade # az upgrade
+exit #exit az interactive mode
+```
+
+#### Azure Physical Infrastructure
+
+physical infrastucure and management infrastructure
+
+the azure physical infrastructure is based on the azure data centers, which are are located all around the world
+
+[Azure Global infrastructure](https://infrastructuremap.microsoft.com/). data centers are grouped into azure availability zones and regions, and then into geographies.
+
+resources can be *zonal* - pinned to a specific zone, *zone-redundant* - automatically (or at request) duplicated across avalability zones, and *non-regional* - which are always available, even in case of a region wide outage.
+
+An *avalability zone* is s datacenter (sometiemes more) which is physically separated from than other data centers, it has it's own power, cooling, and networks.\
+Avalability zones allows for high availability and reddany in case of failure, and we can duplicate data across avalability zones (at a cost).
+
+A *region* contains at least (but usually more) availability zones (data centers), which are networked toegether. if one availability zone is down, the others continue to operate. azure also has the concept of *region pairs*, which is a pairing of two regions in the same geography. this allows for more redundancy, and azure keeps the two regions on different maintenance scheduling for extra safety.\
+(some regions don't have a region pair or only have a one way backup).\
+lastly, there are *sovereign regions*, such as us-gov and china. us-gov regions are operated by employees with us security clearnance, while china regions are operated by a chinese company, rather than microsoft.
+
+#### Azure Management Infrastructure
+
+the management infrastructure describes how azure resources are managed logically.
+
+a *resource* is anything that the user can deploy onto the cloud, it is the building block of azure - virtual machines, virtual networks, databases, cognitive services, everything.
+
+*Resource groups* are grouping of resources, each resource must be placed inside a resource group (some can be moved between them). we can apply actions to a resource group and it will applied to all the resources inside it - delete a resource group or give access. resource groups cannot be nested.
+
+*subscriptions* are azure unit of management, billing and scale. subscriptions contain resource groups, and are used to interact with resources and the azure portal. subscriptions act both as billing boundaries (separate invoices per subscription) and as access control boundaries (applying policies on a subscription to determine which operations are allowed).
+
+Azure *management groups* are the layer that manages subscriptions, this is done for enterprise level policies. management groups can be nested, and they contain subscriptions. we use management groups to apply governance policies and to provide access to multiple subscriptions via azure RBAC (role based access control).
+
+#### Exercise - Create an Azure Resource
+in this Exercise, we create a virtual machine.
+
+in the portal, we click <kbd>Create a resource</kbd>, then choose <kbd>Virtual Machine</kbd> and <kbd>Create</kbd>.
+
+we fill the settings with values.
+```sh
+az group list
+az vm list --resource-group <group-name>
+```
 </details>
 
 ### Compute and Networking Services
-<details>
+<!-- <details> -->
 <summary>
 This module focuses on some of the computer services and networking services available within Azure.
 </summary>
+
+- compute options:
+  - Virtual machines
+  - containers
+  - Azure functions
+- networking
+  - azure virtual networks
+  - azure DNS
+  - Azure express Route
+
+
+#### Azure Virtual Machines
+
+Azure virtual machine are a form of IaaS, we get a virtualized machine, which we can control and customize: the operating system, the software and the host configuration.
+
+we can re-use the same virtual machine configuration by creating an Image out of it, and then use the image as a template.
+
+the resources used for vms are:
+- computing power: cpu cores, ram
+- storage: hard disk drives, ssd
+- netwokring: virtual networks, public ip address, ports
+
+**Scaling: Scale Sets and Availability Sets**
+
+*scale sets* allow us to create and manage identical groups of virtual machines, all running the same software and the same configurations. the scale set vms all run on the same routing parameters, and can be monitored to scale up or down based on schedule or demand. they sit behind a load balancer.
+
+*avaliability sets* are a tool to deploy multiple vms in a way that ensures high availability. they are deployed in a way that prevents downtime. there is no additional costs for using avalability sets.
+- update domain - separate machines so that they aren't updated at the same cycle, and there is a gap between updating each group.
+- fault domain - separate machines by power source and network switch. 
+
+> Examples of when to use VMs:\
+> Some common examples or use cases for virtual machines include:
+> 
+> - During testing and development. VMs provide a quick and easy way to create different OS and application configurations. Test and development personnel can then easily delete the VMs when they no longer need them.
+> - When running applications in the cloud. The ability to run certain applications in the public cloud as opposed to creating a traditional infrastructure to run them can provide substantial economic benefits. For example, an application might need to handle fluctuations in demand. Shutting down VMs when you don't need them or quickly starting them up to meet a sudden increase in demand means you pay only for the resources you use.
+> - When extending your datacenter to the cloud: An organization can extend the capabilities of its own on-premises network by creating a virtual network in Azure and adding VMs to that virtual network. Applications like SharePoint can then run on an Azure VM instead of running locally. This arrangement makes it easier or less expensive to deploy than in an on-premises environment.
+> - During disaster recovery: As with running certain types of applications in the cloud and extending an on-premises network to the cloud, you can get significant cost savings by using an IaaS-based approach to disaster recovery. If a primary datacenter fails, you can create VMs running on Azure to run your critical applications and then shut them down when the primary datacenter becomes operational again
+
+"lift and shift" - moving from physical server to the cloud.
+
+#### Exercise - Create an Azure Virtual Machine
+
+> In this exercise, you create an Azure virtual machine (VM) and install Nginx, a popular web server.
+> 1. Use the following Azure CLI commands to create a Linux VM and install Nginx. After your VM is created, you'll use the Custom Script Extension to install Nginx. The Custom Script Extension is an easy way to download and run scripts on your Azure VMs. It's just one of the many ways you can configure the system after your VM is up and running.
+> ```sh
+> az vm create \
+>   --resource-group learn-85829cc9-09c8-47e6-9c14-519ca17cdc77 \
+>   --name my-vm \
+>   --image UbuntuLTS \
+>   --admin-username azureuser \
+>   --generate-ssh-keys
+> ```
+> 2. Run the following az vm extension set command to configure Nginx on your VM:
+> ```sh
+> az vm extension set \
+>   --resource-group learn-85829cc9-09c8-47e6-9c14-519ca17cdc77 \
+>   --vm-name my-vm \
+>   --name customScript \
+>   --publisher Microsoft.Azure.Extensions \
+>   --version 2.1 \
+>   --settings '{"fileUris":["https://raw.githubusercontent.com/MicrosoftDocs/mslearn-welcome-to-azure/master/configure-nginx.sh"]}' \
+>   --protected-settings '{"commandToExecute": "./configure-nginx.sh"}'
+>   ```
+
+we created a virtual machine ("my-vm") from an ubuntu Image, set an admin to the machine and created ssh keys. then we downloaded a script onto it and run it, this script installs nginx on the vm.
+
+
+#### Azure Virtual Desktop
+
+Azure virtual desktop is a virtual machine that runs an windows machine on the cloud, which can be used as any windows computer, not just as a server. we can separate the environment and the data from the hardware, the user can access the same desktop computer, no matter which device it is running.
+
+this also allows for providing stronger machines without buying stronger hardware. and it also allows for better security, as all the important data is on the cloud, and not on the users machines.
+
+#### Azure Containers
+
+Azure containers are a way to run multiple instances of an application on a single host, rather than running multiple hosts. with containers, we don't manage the operating system. containers are designed to be a light-weight solution that responds better and faster to changes in demand.
+
+vm - an abstraction layer for cpu, memory and storage, and operating system. but only one operating system per machine. containers bundle a single app and the dependencies, then it is run on a host machine in a container runtime, and many containers can run in a single host machine. because containers are smaller, they can scale up more easily, and can be orchestrated with orchestration services. 
+
+VM virtualize hardware, while containers virtualize the OS and runtime.
+
+Azure container instances are a form of PaaS, we can split a website into different parts (frontend, backend, database) and run each in a different container, thus providing greater flexability.
+
+#### Azure Functions
+
+> Azure Functions is an event-driven, serverless compute option that doesn’t require maintaining virtual machines or containers. If you build an app using VMs or containers, those resources have to be “running” in order for your app to function. With Azure Functions, an event wakes the function, alleviating the need to keep resources provisioned when there are no events.
+
+Azure functions are great for event driven operations, such as responding to an api. they can be scaled automatically. azure functions are stateless by default, but can also be stateful and maintain the context.
+
+Serverless computing is the idea that we separate the server management (instaling os, patching, updating) from the developers.
+- no infrastructure management
+- scalability
+- pay for what is used - not paying for resources which are not used.
+
+#### Application Hosting Options 
+
+(hosting - making applications accessable from the web, like a website)
+
+at the basic level, we can host applications on either virtual machines or on containers, but there is also the option of sing Azure App Service.
+
+Azure App Service takes care of managing the infrastructure, provides automatic scaling and high avalability. it can integrate with github, azure devops or other code repository services for continues deployment model.\
+we can run web apps (website), api apps (REST api) and webJobs, as well as mobile apps for ios and android.
+
+#### Azure Virtual Networking
+
+virtual networks, together with virtual subnets, allow azure resources to communicate with one another, with the outside web and with on-premises computers.
+
+> Azure virtual networks provide the following key networking capabilities:
+> - Isolation and segmentation
+> - Internet communications
+> - Communicate between Azure resources
+> - Communicate with on-premises resources
+> - Route network traffic
+> - Filter network traffic
+> - Connect virtual networks
+
+public endpoints allow access to resources from anywhere in the world (public ip address), while private end point exists only within the virtual network and only have a private ip address, accessible only from inside the the address space of the containing virtual network.
+
+Isolation and segmentation - private ip address which exist only inside the virtual network, and name resolution that can either be external or internal to the virtual network.
+
+Internet communication - access to incoming traffic, either directly to the resource or via a load balancer.
+
+Communication between azure resources - not only compute resources (virtual machines), but also with azure services such as databases, storage, and others.
+
+Communication with on-premises - linking the azure cloud resources with local resources which reside in the data center, using VPN (point to site, site to site or with azure expressRoute as a private, high speed, dedicated connection.
+
+Routing network traffic - control how traffic is routed in the virtual network, using route tables, gateways and other servies.
+
+Filtering network traffic - using inbound and outbound security rules, and running a firewall.
+
+Connecting virtual network - allowing separate virtual networks to connect to one another with network peering.
+
+#### Exercise - Configure Network Access
+opening our nginx server to connections from the outside web
+
+> 1. Run the following az vm list-ip-addresses command to get your VM's IP address and store the result as a Bash variable
+> ```sh
+> IPADDRESS="$(az vm list-ip-addresses \
+>   --resource-group learn-97546a8d-0942-4ed1-b361-766bbf499022 \
+>   --name my-vm \
+>   --query "[].virtualMachine.network.publicIpAddresses[*].ipAddress" \
+>   --output tsv)"
+> ```
+>
+> 2. Run the following curl command to download the home page:
+> ```sh
+> curl --connect-timeout 5 http://$IPADDRESS
+> ```
+> The --connect-timeout argument specifies to allow up to five seconds for the connection to occur. After five seconds, you see an error message that states that the connection timed out. This message means that the VM was not accessible within the timeout period.
+> 3. s an optional step, try to access the web server from a browser:\
+> Run the following to print your VM's IP address to the console:
+> ```sh
+> echo $IPADDRESS
+> ```
+
+
+ 
+#### Describe Azure Virtual Private Networks
+#### Describe Azure ExpressRoute
+#### Describe Azure DNS
+
 </details>
 
 ### Storage Services
@@ -397,6 +616,7 @@ This module covers some of the authorization and authentication methods availabl
 
 </summary>
 
+services:
 - Azure Web Apps - scalable host websites
 - Azure Functions - event driven actions.
 - Container Instance
@@ -405,6 +625,47 @@ This module covers some of the authorization and authentication methods availabl
 - Azure Portal
 - Azure Resource Manager
 - Azure AD - Active directory
+- Border Gateway Protocol (BGP)
+- Azure Route Serve
+
+misc
+- resource groups cannot be nested.
+- management groups can be nested.
+
+### Azure Cli
+<details>
+<summary>
+Azure command line and cloud shell commands
+</summary>
+
+[all cli commands reference](https://learn.microsoft.com/en-us/cli/azure/reference-index?view=azure-cli-latest).
+
+all commands begin with `az`, unless inside interactive mode. we exit interactive mode with `exit`.
+- Azure CLI - commands which aren't specific to any service
+  - `az version` - azure cli version
+  - `az upgrade` - upgrade azure cli version
+  - `az interactive` - enter interactive mode
+    - `exit` - exit interactive mode
+- Azure Resource Groups
+  - `az group list` - list resource group
+- Azure Virtual Machines
+  - `az vm list` - list virtual machines in the default resource group
+    - `-g, --resource-group <group-name>` - list in a specifc resource group
+  - `az vm create` - create virtual machine
+    - `-g` - which resource group
+    - `--name` - the name of the virtual machine
+    - `--image`
+    - `--admin-username`
+    - `--generate-ssh-keys`
+  - `az vm extension set`
+    - `-g` - resource group name
+    - `--vm-name` - virtual machine name
+    - `--name` - script name
+    - `--publisher`- script publisher
+    - `--version` - 
+    - `--settings`
+    - `--protected-seetings`
+</details>
 
 ### Azure Services
 <details>
