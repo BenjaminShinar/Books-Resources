@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore PAAS pwsh
+// cSpell:ignore PAAS pwsh yamlc
  -->
 
 # Microsoft Azure Fundamentals
@@ -397,7 +397,7 @@ az vm list --resource-group <group-name>
 </details>
 
 ### Compute and Networking Services
-<!-- <details> -->
+<details>
 <summary>
 This module focuses on some of the computer services and networking services available within Azure.
 </summary>
@@ -534,8 +534,12 @@ Filtering network traffic - using inbound and outbound security rules, and runni
 Connecting virtual network - allowing separate virtual networks to connect to one another with network peering.
 
 #### Exercise - Configure Network Access
-opening our nginx server to connections from the outside web
 
+opening our nginx server to connections from the outside web.
+
+at first, we get the ip address, and see that we cannot access it with `curl` or from the browser.
+
+> Task 1: Access your web server
 > 1. Run the following az vm list-ip-addresses command to get your VM's IP address and store the result as a Bash variable
 > ```sh
 > IPADDRESS="$(az vm list-ip-addresses \
@@ -550,25 +554,144 @@ opening our nginx server to connections from the outside web
 > curl --connect-timeout 5 http://$IPADDRESS
 > ```
 > The --connect-timeout argument specifies to allow up to five seconds for the connection to occur. After five seconds, you see an error message that states that the connection timed out. This message means that the VM was not accessible within the timeout period.
-> 3. s an optional step, try to access the web server from a browser:\
+> 3. as an optional step, try to access the web server from a browser:\
 > Run the following to print your VM's IP address to the console:
 > ```sh
 > echo $IPADDRESS
 > ```
+> Copy the IP address that you see to the clipboard.\
+> Open a new browser tab and go to your web server. After a few moments, you see that the connection isn't happening.\
+> If you wait for the browser to time out, you'll see something like this:
 
+next, we get the virtual network security group running on the resource group, we then list the rules on it, and we see that it has a single rule, allowing for ssh access via port 22.
 
+> Task 2: List the current network security group rules
+> 1. Run the following az network nsg list command to list the network security groups that are associated with your VM:
+>```sh
+> az network nsg list \
+> --resource-group learn-ed8fb9df-3281-4fe3-a6fb-40a617edb947 \
+> --query '[].name' \
+> --output tsv
+> ```
+> Every VM on Azure is associated with at least one network security group. In this case, Azure created an NSG for you called my-vmNSG.
+> 2. Run the following az network nsg rule list command to list the rules associated with the NSG named my-vmNSG:
+> ```sh
+> az network nsg rule list \
+> --resource-group learn-ed8fb9df-3281-4fe3-a6fb-40a617edb947 \
+> --nsg-name my-vmNSG
+> ```
+>3. Run the az network nsg rule list command a second time. This time, use the --query argument to retrieve only the name, priority, affected ports, and access (Allow or Deny) for each rule. The --output argument formats the output as a table so that it's easy to read.
+> ```sh
+> az network nsg rule list \
+> --resource-group learn-ed8fb9df-3281-4fe3-a6fb-40a617edb947 \
+> --nsg-name my-vmNSG \
+> --query '[].{Name:name, Priority:priority, Port:destinationPortRange, Access:access}' \
+> --output table
+>```
+> You see the default rule, default-allow-ssh. This rule allows inbound connections over port 22 (SSH). SSH (Secure Shell) is a protocol that's used on Linux to allow administrators to access the system remotely. The priority of this rule is 1000. Rules are processed in priority order, with lower numbers processed before higher numbers.\
+> By default, a Linux VM's NSG allows network access only on port 22. This enables administrators to access the system. You need to also allow inbound connections on port 80, which allows access over HTTP.
+
+now that we know that only ssh access is allowed, we create a rule that allows web traffic via port 80, once created, we list the rules again and see it exists.
+
+> Task 3: Create the network security rule\
+> Here, you create a network security rule that allows inbound access on port 80 (HTTP).
+> 1. Run the following az network nsg rule create command to create a rule called allow-http that allows inbound access on port 80:\
+> For learning purposes, here you set the priority to 100. In this case, the priority doesn't matter. You would need to consider the priority if you had overlapping port ranges.
+> ```sh
+> az network nsg rule create \
+> --resource-group > learn-ed8fb9df-3281-4fe3-a6fb-40a617edb947 \
+> --nsg-name my-vmN> SG \
+> --name allow-http \
+> --protocol tcp \
+> --priority 100 \
+> --destination-port-range 80 \
+> --access Allow
+> ```
+> 2. To verify the configuration, run az network nsg rule list to see the updated list of rules:\
+> You see this both the default-allow-ssh rule and your new rule, allow-http:
+>```sh
+> az network nsg rule list \
+> --resource-group learn-ed8fb9df-3281-4fe3-a6fb-40a617edb947 \
+> --nsg-name my-vmNSG \
+> --query '[].{Name:name, Priority:priority, Port:destinationPortRange, Access:access}' \
+> --output table
+>```
+
+now that the rule exists, we can try to access the resource again, and this time we can.
+
+> Task 4: Access your web server again\
+> Now that you've configured network access to port 80, let's try to access the web server a second time.
+> 1. Run the same curl command that you ran earlier:
+>```sh
+>curl --connect-timeout 5 http://$IPADDRESS
+>```
+> 2. As an optional step, refresh your browser tab that points to your web server.
+> 
+> Nice work. In practice, you can create a standalone network security group that includes the inbound and outbound network access rules you need. If you have multiple VMs that serve the same purpose, you can assign that NSG to each VM at the time you create it. This technique enables you to control network access to multiple VMs under a single, central set of rules.
  
-#### Describe Azure Virtual Private Networks
-#### Describe Azure ExpressRoute
-#### Describe Azure DNS
+#### Azure Virtual Private Networks
 
+VPN - virtual private network
+
+> A virtual private network (VPN) uses an encrypted tunnel within another network. VPNs are typically deployed to connect two or more trusted private networks to one another over an untrusted network (typically the public internet). Traffic is encrypted while traveling over the untrusted network to prevent eavesdropping or other attacks. VPNs can enable networks to safely and securely share sensitive information.
+
+
+VPN Gateway is one type of a virtual network gateway, it is deployed in the a dedicated subnet of the virtual network and enables:
+- connection from on premises datacenter through site-to-site connection
+- connections from individual devices through point-to-site connections
+- connecting other virtual network thorugh network-to-network connection
+
+there can only be one vpn gateway for each virtual network, but a vpn gateway can connect to multiple locations.\
+There are two ways to deploy a vpb gateway, *policy based* or *route based*.
+- policy based gateways encrypt data based on the ip address (which is statically specified)
+- route based gateways use IPSec tunnels for routing, the routing can be static or dynamic, and it is the preferred approach and is more resilient to topology changes.
+  - Connections between virtual networks
+  - Point-to-site connections
+  - Multisite connections
+  - Coexistence with an Azure ExpressRoute gateway
+
+we might also want to maximize the resiliency of the vpn gateway, so it isn't effected by outages. there are different ways to ensure high availability
+- active/standby: two vpn gateways are created, but only one is active, when a failover or maintenance occurs, the standby is promoted and takes care of connections
+- active/active: support of BGP routing protocol, two active vpn gateways, each with a unique public ip address. two separate tunnels to the vpn gateways.
+- ExpressRoute Failover: combining expressRoute as the primary connection, and vpn gateway as the backup.
+- Zone Redundant gatways - spreading the vpn gateways across multiple availability zones, and using gateway SKU and standard public ip address (and not basic public ip address)
+
+#### Azure ExpressRoute
+
+ExpressRoute connects the on-premises networks into the cloud with a expressRoute circuit connectivity provider. the connection can be through vpn, ethernet or any other connection. Express Routes has built in redundancy for high avilability
+
+ExpresRoute can be used for global connectivity, if two datacenters are connected to the microsoft network, they can communicate over this network without going over to the public internet.\
+Using Border Gateway Protocol (BGP) allows for dynamic routing.
+
+> ExpressRoute supports four models that you can use to connect your on-premises network to the Microsoft cloud:
+> - CloudExchange colocation
+> - Point-to-point Ethernet connection
+> - Any-to-any connection
+> - Directly from ExpressRoute sites
+
+#### Azure DNS
+
+> Azure DNS is a hosting service for DNS domains that provides name resolution by using Microsoft Azure infrastructure. By hosting your domains in Azure, you can manage your DNS records using the same credentials, APIs, tools, and billing as your other Azure services.
+
+we can use Azure to manage DNS records, this means we get the benefits of azure in terms of relability, performance (from anywhere in the world) and ease of use with consolidating management at the azure platform. we can use azure RBAC to control access who can do what with the DNS records, monitor actions with audit logs and prevent modifications with policies.
+
+Azure also supports alias record sets and custom domain names.
 </details>
 
 ### Storage Services
-<details>
+<!-- <details> -->
 <summary>
 This module introduces you to storage in Azure, including things such as different types of storage and how a distributed infrastructure can make your data more resilient.
 </summary>
+
+#### Describe Azure Storage Accounts
+#### Describe Azure Storage Redundancy
+#### Describe Azure Storage Services
+#### Exercise - Create a Storage Blob
+#### Identify Azure Data Migration Options
+#### Identify Azure File Movement Options
+
+
 </details>
 
 ### Identity, Access, and Security
@@ -578,6 +701,14 @@ This module covers some of the authorization and authentication methods availabl
 </summary>
 </details>
 
+#### Describe Azure directory services
+#### Describe Azure authentication methods
+#### Describe Azure external identities
+#### Describe Azure conditional access
+#### Describe Azure role-based access control
+#### Describe zero trust model
+#### Describe defense-in-depth
+#### Describe Microsoft Defender for Cloud
 
 </details>
 
@@ -616,7 +747,7 @@ This module covers some of the authorization and authentication methods availabl
 
 </summary>
 
-services:
+**services:**
 - Azure Web Apps - scalable host websites
 - Azure Functions - event driven actions.
 - Container Instance
@@ -626,9 +757,10 @@ services:
 - Azure Resource Manager
 - Azure AD - Active directory
 - Border Gateway Protocol (BGP)
-- Azure Route Serve
+- Azure Route Server
+- Azure ExpressRoute
 
-misc
+**misc*:*
 - resource groups cannot be nested.
 - management groups can be nested.
 
@@ -641,30 +773,52 @@ Azure command line and cloud shell commands
 [all cli commands reference](https://learn.microsoft.com/en-us/cli/azure/reference-index?view=azure-cli-latest).
 
 all commands begin with `az`, unless inside interactive mode. we exit interactive mode with `exit`.
-- Azure CLI - commands which aren't specific to any service
+- Azure CLI - `az <command>` - commands which aren't specific to any service
   - `az version` - azure cli version
   - `az upgrade` - upgrade azure cli version
   - `az interactive` - enter interactive mode
     - `exit` - exit interactive mode
-- Azure Resource Groups
+- Azure Resource Groups - `az group`
   - `az group list` - list resource group
-- Azure Virtual Machines
+- Azure Virtual Machines - `az vm`
   - `az vm list` - list virtual machines in the default resource group
     - `-g, --resource-group <group-name>` - list in a specifc resource group
   - `az vm create` - create virtual machine
-    - `-g` - which resource group
+    - `--resource-group`
     - `--name` - the name of the virtual machine
-    - `--image`
-    - `--admin-username`
-    - `--generate-ssh-keys`
-  - `az vm extension set`
-    - `-g` - resource group name
-    - `--vm-name` - virtual machine name
-    - `--name` - script name
-    - `--publisher`- script publisher
-    - `--version` - 
-    - `--settings`
-    - `--protected-seetings`
+    - `--image` - operating system URN/custom image name/Id
+    - `--admin-username` - Username for the VM. Default value is current username of OS. If the default value is system reserved, then default value will be set to azureuser. 
+    - `--generate-ssh-keys` - Generate SSH public and private key files if missing.
+  - `az vm extension set` - add post deployment application to to vm
+    - `--resource-group`
+    - `--vm-name <vm-name>` - virtual machine name
+    - `--name` - extension name
+    - `--publisher`- extension publisher
+    - `--version` - extension version
+    - `--settings` - pass data in json format or path to json
+    - `--protected-seetings` - pass sensitive information, json format or path to json
+  - `az vm list-ip-addresses` - list ip addresses for virtual machine
+    - `--resource-group`, `--query`, `--output`
+    - `--vm-name <vm-name>` - virtual machine name
+- Azure Network - `az network`
+  - `az network nsg` - network security groups 
+    - `az network nsg list` - list network security group
+      - `--resource-group`, `--query`, `--output`
+    - `az network nsg rule list` - list rules for a specific network security group
+      - `--resource-group`
+      - `--nsg-name <nsg-name>` - network security group name
+    - `az network nsg rule create` - create network security group
+      - `--resource-group`
+      - `--nsg-name <nsg-name>` - network security group name
+      - `--name <rule-name>` name of the nsg rule
+      - `--protocol <*|tcp|udp|icmp|esp|ah>` - protocol to apply this rule to
+      - `--priority <numeric priority>` - number between 100 (highest priority) and 4096 (lowest), unique for each rule
+      - `--destination-port-range <list of port number or range>` - which port this rule applies to (default 80)
+      - `--access <Allow|Deny>` - rule type
+- General flags
+  - `-g, --resource-group <group-name>` - resource group name
+    - `--query "<query>"` - query to show specific data (drill down). [query format](https://learn.microsoft.com/en-us/cli/azure/query-azure-cl)
+    - `--output <json|jsonc|yaml|yamlc|tsv|table|none>` - [output format](https://learn.microsoft.com/en-us/cli/azure/format-output-azure-cli)
 </details>
 
 ### Azure Services
@@ -743,6 +897,9 @@ CapEx | Capital Expenditure | up-front spending of money on physical infrastruct
 OpEx | Operational Expenditure |  spending money on services or products now, and being billed for them now.| Finance
 SLA | Service Level Agreement | what the company legally guarantees | ?
 ARM | Azure Resource Manager | deployment and management service layer for Azure | Azure
+NSG | Network Security Group |  | Virtual Network
+VPN | Virtual Private Network | | Networking
+BGP | Border Gateway Protocol | | Networking
 </details>
 
 ###
