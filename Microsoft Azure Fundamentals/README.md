@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore PAAS pwsh yamlc
+// cSpell:ignore yamlc
  -->
 
 # Microsoft Azure Fundamentals
@@ -684,9 +684,99 @@ Azure also supports alias record sets and custom domain names.
 This module introduces you to storage in Azure, including things such as different types of storage and how a distributed infrastructure can make your data more resilient.
 </summary>
 
-#### Describe Azure Storage Accounts
-#### Describe Azure Storage Redundancy
-#### Describe Azure Storage Services
+#### Azure Storage Accounts
+
+- object store -  blob, unstructured data
+- disk store - for virtual machine and applications (ssd and hdd)
+- file store - file shares in the cloud
+- messaging store - queue, communicating between applications
+- noSQL store - table storage, key-value pairs, semi-structured data
+
+tiers:
+- hot - frequently accessed data
+- cold - infrequently accessed, at least 30 days
+- archive - rarely accessed, at least 120 days
+
+Azure storage accounts have unique namespaces, and are accessible from anywhere in the world over HTTP and HTTPS. storage accounts have different redundancy options.
+
+Type	|Supported services	|Redundancy Options	|Usage
+---|---|----|---|
+Standard general-purpose v2|	Blob Storage (including Data Lake Storage), Queue Storage, Table Storage, and Azure Files	|LRS, GRS, RA-GRS, ZRS, GZRS, RA-GZRS	|Standard storage account type for blobs, file shares, queues, and tables. Recommended for most scenarios using Azure Storage. If you want support for network file system (NFS) in Azure Files, use the premium file shares account type.
+Premium block blobs	|Blob Storage (including Data Lake Storage)|	LRS, ZRS|	Premium storage account type for block blobs and append blobs. Recommended for scenarios with high transaction rates or that use smaller objects or require consistently low storage latency.
+Premium file shares	|Azure Files|	LRS, ZRS	|Premium storage account type for file shares only. Recommended for enterprise or high-performance scale applications. Use this account type if you want a storage account that supports both Server Message Block (SMB) and NFS file shares.
+Premium page blobs	|Page blobs only	|LRS	|Premium storage account type for page blobs only.
+
+because of the unique namespace of each storage account, it can also have a unique endpoint address. each storage type has it's own endpoint format.
+
+Storage service|	Endpoint format
+---|---
+Blob Storage	|https://\<storage-account-name>.**blob**.core.windows.net
+Data Lake Storage Gen2|	https://\<storage-account-name>.**dfs**.core.windows.net
+Azure Files	|https://\<storage-account-name>.**file**.core.windows.net
+Queue Storage	|https://\<storage-account-name>.**queue**.core.windows.net
+Table Storage	|https://\<storage-account-name>.**table**.core.windows.net
+
+#### Azure Storage Redundancy
+
+Redundancy means storing multiple copies of the data, protecting it from events ch as hardware failure, network crushes and power outages.
+- primary region data replication
+  - Locally redundant storage (LRS)
+  - Zone-redundant storage (ZRS)
+- cross region data replication
+  - Geo-redundant storage (GRS)
+  - Geo-zone-redundant storage (GZRS)
+- read-access to the replicated data in another region
+  - Read-access geo-redundant storage (RA-GRS)
+  - Read-access geo-zone-redundant storage (RA-GZRS)
+
+Data is always replicated three times in the primary region, the data can be replicated in the same avilability zone, which protects against rack failure (LRS - local redundancy storage), or across different availability zones (ZRS - Zone-redundant storage), which protects against disasters to the data center.
+
+if we wish to have better durability, we can also replicate the data to another region. the data is replicated to a single data center in the other zone (LRS). we can combine LRS and GRS with geo redundancy, controling how the data is replicated in the primary zone.\
+When we have the data replicated in a secondary region, the default behavior is to only use it as backup (disaster recovery), but we can also configure it to allow read access from applications (even when the primary region is running properly). the data might not be immediately up-to-date.
+
+Type | Primary Region | Secondary Region | Read Access?
+---|---|---|---
+GRS | LRS |LRS | No
+GZRS | ZRS | LRS | No
+RA-GRS | LRS |LRS | Yes
+RA-GZRS | ZRS | LRS | Yes
+
+#### Azure Storage Services
+
+> - Azure Blobs: A massively scalable object store for text and binary data. Also includes support for big data analytics through Data Lake Storage Gen2.
+> - Azure Files: Managed file shares for cloud or on-premises deployments.
+> - Azure Queues: A messaging store for reliable messaging between application components.
+> - Azure Disks: Block-level storage volumes for Azure VMs.
+
+Azure storage benfits:
+- Durable and highly available
+- Secure
+- Scalable
+- Managed
+- Accessible
+
+##### Blob Storage
+
+Access Tiers:
+- Hot - frequently accessed
+- Cold (cool) - infrequently accessed, stored for at least 30 days
+- Archive - rarely accessed, stored for at least 180 days
+
+
+##### Azure Files
+A fully managed file share service, it can be accessed with standard protocols such as Server Message Block (SMB) and Network File System (NFS).
+- shared access - both from azure service and the on-premises users
+- fully managed - no need to manage the server hardware or OS
+- scripting and tooling - support for powershell
+- resiliency - highly available, durable
+- familiar programmability - using the same system IO apis, so code doesn't break
+
+##### Queue storage
+A message storage service that stores messages, they can later be accessed from other services or using APIs. the maximal size of a message is 64k. we use this service to create backlog of work which can be processed asynchronously, they are commonly used together with azure functions.
+
+##### Disk storage
+Block storage to be used by azure virtual machines. this is the storage disk that is attached to them.
+
 #### Exercise - Create a Storage Blob
 #### Identify Azure Data Migration Options
 #### Identify Azure File Movement Options
@@ -900,6 +990,14 @@ ARM | Azure Resource Manager | deployment and management service layer for Azure
 NSG | Network Security Group |  | Virtual Network
 VPN | Virtual Private Network | | Networking
 BGP | Border Gateway Protocol | | Networking
+LRS | Locally redundant storage |Replication in the same AZ|Storage
+ZRS | Zone-redundant storage |Replication in the different AZ in the same region|Storage Redundancy
+GRS | Geo-redundant storage | LRS + another copy in another region |Storage Redundancy
+GZRS | Geo-zone-redundant storage |ZRS + another copy in another region|Storage Redundancy 
+RA-GRS | Read-access geo-redundant storage |GRS + ability for application to read from the backup region|Storage Redundancy 
+RA-GZRS |Read-access geo-zone-redundant storage |GZRS + ability for application to read from the backup region|Storage Redundancy 
+SMB | Server Message Block |linux, macOs, windows | File Storage
+NFS | Network File syStem | linux and MacOs | File Storage
 </details>
 
 ###

@@ -3070,48 +3070,15 @@ implicit conversion from std::shared_ptr to `const std::shared_ptr`.
 there are many sharp edges, and many places where we can fall into. it can create non-trivial objects and cost us in performance.
 </details>
 
-## C++ Weekly - Ep 334 - How to Put a Lambda in a Container
+## C++ Weekly - Ep 354 - Can AI And ChatGPT Replace C++ Programmers?
 <details>
 <summary>
-attempting to create a container that holds multiple lambda objects
+Chatting with GPT and asking him to create c++ code.
 </summary>
 
-[How to Put a Lambda in a Container](https://youtu.be/qmd_yxSOsAE)
+[Can AI And ChatGPT Replace C++ Programmers?](https://youtu.be/TIDA6pvjEE0)
 
-it is actually a bit possible to put a lambda into a container. three different ways
-
-decltype: but will only allow for a container of one lambda
-```cpp
-int main(){
-    auto f = [](){return 42;};
-    std::vector<decltype(f)> data;
-    data.push_back(f);
-}
-```
-
-std::function, which is implicitly convertable to function pointer
-```cpp
-int main(){
-    auto f = [](int j){return 42+j;};
-    std::vector<std::function<int(int)>> data;  // big overhead
-    //std::vector<int(*)(int)>> data;  // vector of function pointer, less overhead, but no capturing
-    data.push_back(f);
-    data.push_back([](int k){return k;});
-}
-```
-
-a final option is to use a hack around, by having a type that creates lambdas. this might lead to ODR violations
-
-```cpp
-auto make_lambda(int value){
-    return [value](int i){return i+value;}
-}
-int main(){
-    std::vector<decltype(make_lambda(42))> data;
-    
-    data.push_back(make_lambda(1));
-    data.push_back(make_lambda(2));
-}
-```
+asking the chatbot to write c++ code, modernize it, update it to use different features, etc...\
+we even ask it to write clang-tidy stuff.
 
 </details>
