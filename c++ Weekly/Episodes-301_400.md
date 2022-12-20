@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Wconversion Codecov fanalyzer
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -3050,7 +3050,7 @@ example of a bug, not checking for string ending, and how using fuzz testing fin
 ## C++ Weekly - Ep 353 - Implicit Conversions Are Evil
 <details>
 <summary>
-
+Implicit conversions when we don't excpect them
 </summary>
 
 [Implicit Conversions Are Evil](https://youtu.be/T97QJ0KBaBU)
@@ -3081,4 +3081,31 @@ Chatting with GPT and asking him to create c++ code.
 asking the chatbot to write c++ code, modernize it, update it to use different features, etc...\
 we even ask it to write clang-tidy stuff.
 
+</details>
+
+## C++ Weekly - Ep 355 - 3 Steps For Safer C++
+<details>
+<summary>
+Static Analysis, Sanitizers and Fuzzing
+</summary>
+
+[3 Steps For Safer C++](https://youtu.be/dSYFm65KcYo)
+
+
+these steps depend on us having tests and ci-cd integration
+
+- static analysis
+  - warnings as errors
+  - fix all existsing warning
+  - build both `release` and `debug`
+  - add `clang-tidy`(without project-specific options)
+  - increase warning level `-Weverything`, `-Wall` 
+- Satirizers
+  - address sanitizers
+  - undefined behavior
+  - thread sanitizer
+  - `valgrind`, `Dr memory` if we can't add sanitizers to the tests.
+- Add fuzzing
+  - finds all the thing we don't think about
+  - first with all user-facing apis
 </details>

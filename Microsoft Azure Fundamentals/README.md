@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore yamlc
+// cSpell:ignore yamlc Intune
  -->
 
 # Microsoft Azure Fundamentals
@@ -679,7 +679,7 @@ Azure also supports alias record sets and custom domain names.
 </details>
 
 ### Storage Services
-<!-- <details> -->
+<details>
 <summary>
 This module introduces you to storage in Azure, including things such as different types of storage and how a distributed infrastructure can make your data more resilient.
 </summary>
@@ -757,11 +757,25 @@ Azure storage benfits:
 
 ##### Blob Storage
 
+Storing unstructured data, such as text, photos, video or binary data. can store any format of files, and files of massive size. blob storage supports simultaneous uploads and downloads, and is often used for backup data or for data for analysis for other azure services. there are many ways to access data in blob storage, with direct URL access, REST api, cli tools (powershell, bash) and SDKs for multiple programing languages
+
+> Blob storage is ideal for:
+> - Serving images or documents directly to a browser.
+> - Storing files for distributed access.
+> - Streaming video and audio.
+> - Storing data for backup and restore, disaster recovery, and archiving.
+> - Storing data for analysis by an on-premises or Azure-hosted service.
+
+blob storage is unlimited in size, so only a small portion of the data is frequently accessed, and sometimes blob storage is used for archiving and backup purposes, because of that, it's possible to save costs of storage by changing how it's stored. with hot storage tier, data is available immediately, with cooler storage, accessing the data takes longer, and per-access costs are higher, but the price for storage drops. Archive storage doesn't allow immediate access (the data is stored offline and must be "rehydrated"), but the costs are much lower.
+
+
 Access Tiers:
 - Hot - frequently accessed
 - Cold (cool) - infrequently accessed, stored for at least 30 days
 - Archive - rarely accessed, stored for at least 180 days
 
+> - Only the hot and cool access tiers can be set at the account level. The archive access tier isn't available at the account level.
+> - Hot, cool, and archive tiers can be set at the blob level, during or after upload.
 
 ##### Azure Files
 A fully managed file share service, it can be accessed with standard protocols such as Server Message Block (SMB) and Network File System (NFS).
@@ -778,8 +792,60 @@ A message storage service that stores messages, they can later be accessed from 
 Block storage to be used by azure virtual machines. this is the storage disk that is attached to them.
 
 #### Exercise - Create a Storage Blob
-#### Identify Azure Data Migration Options
-#### Identify Azure File Movement Options
+
+Creating a new storage account
+
+> 1. Sign in to the Azure portal at https://portal.azure.com
+> 1. Select <kbd>Create a resource.</kbd>.
+> 1. Under Categories, select <kbd>Storage</kbd>.
+> 1. Under Storage Account, select <kbd>Create</kbd>.
+> 1. On the Basics tab of the Create storage account blade, fill in the following information. Leave the defaults for everything else.
+> 1. Select <kbd>Review + Create</kbd> to review your storage account settings and allow Azure to validate the configuration.
+> 1. Once validated, select <kbd>Create</kbd>. Wait for the notification that the account was successfully created.
+> 1. Select Go to resource.
+
+working with blob storage and uploading an image.
+
+> 1. Under Data storage, select <kbd>Containers</kbd>.
+> 1. Select <kbd>+ Container</kbd> and complete the information.
+> 1. Select <kbd>Create</kbd>.
+> 1. Back in the Azure portal select the container you created, then select <kbd>Upload</kbd>.
+> 1. Browse for the image file you want to upload. Select it and then <kbd>Upload</kbd>.
+> 1. Select the Blob (file) you just uploaded. You should be on the properties tab.
+> 1. Copy the URL from the URL field and paste it into a new tab. You should receive an error message similar to the following.
+
+Changing the access level of the blob - making it viewable
+
+> 1. Go back to the Azure portal
+> 1. Select Change access level
+> 1. Set the Public access level to Blob (anonymous read access for blobs only)
+> 1. Select OK
+> 1. Refresh the tab where you attempted to access the file earlier.
+
+#### Azure Data Migration Options
+
+Getting data from and into Azure
+
+**Azure Migrate**\
+Azure migrate is a service that enables migration from an on-premises environment. we can discover servers and machines (both physical and virtual) running with *azure migrate: discovery*,and migrate them with *azure migrate: server migration*. for databases, we can use the migration assistant tool to analyze our SQL server databases for potential issues which might prevent migration, and once solver, use *azure database migration service* to migrate them to the cloud. there is also *azure app migration assistant* to help with migrating on-premises websites.
+
+
+**Azure Data Box**\
+Azure data box is a physical device that can store a large amount of data, which can then be used to migrate into an Azure cloud. we get the device by ordering it from azure, and we connect it to our network or one of the computers in the network. once connected, we can use the Data box as storage and populate it with data, and it is shipped back to azure, and the data is transferred to the cloud.\
+The device is physically hardened, shipped with tracking, and is wiped clean after each use to ensure the data is protected.
+
+Databoxes are used when there are network problems, when the volume of data is too large to transfer over the internet, and when it's important to migrate large amounts. it can also be used for disaster recovery with data from the cloud being transferred to the on-premises store. it can also be used for migrating between cloud vendors.
+
+
+#### Azure File Movement Options
+
+Besides transfering entire services, it is also possible to work with individual files.
+
+*AzCopy* is a command line utility that copies blobs or files from or to the storage account. it can also do one-way synchronization.
+
+*Azure Storage Explorer* is a web interface app the provides a graphical way to navigate and manage the stored data.
+
+*Azure File Sync*  is a tool the synchronizes a local windows server with the cloud storage, so it can act as a local cache for the stored data, and we can deploy it anywhere we want.
 
 
 </details>
@@ -791,7 +857,32 @@ This module covers some of the authorization and authentication methods availabl
 </summary>
 </details>
 
-#### Describe Azure directory services
+#### Azure Directory Services
+
+Azure AD is a directory service tha apples for both the cloud and the applications in it, and can be used for the on-premises machines.\
+Azure AD is a cloud based identity and access management service, which runs on a windows server.
+
+Azure AD can also provide auditing functionality, such as detecting unknown devices trying to connect from unknown locations.
+
+Azure AD is for:
+
+> - **IT administrators.** Administrators can use Azure AD to control access to applications and resources based on their business requirements.
+> - **App developers**. Developers can use Azure AD to provide a standards-based approach for adding functionality to applications that they build, such as adding SSO functionality to an app or enabling an app to work with a user's existing credentials.
+> - **Users**. Users can manage their identities and take maintenance actions like self-service password reset.
+> - **Online service subscribers**. Microsoft 365, Microsoft Office 365, Azure, and Microsoft Dynamics CRM Online subscribers are already using Azure AD to authenticate into their account.
+
+Azure AD provides:
+> - **Authentication**: This includes verifying identity to access applications and resources. It also includes providing functionality such as self-service password reset, multifactor authentication, a custom list of banned passwords, and smart lockout services.
+> - **Single sign-on**: Single sign-on (SSO) enables you to remember only one username and one password to access multiple applications. A single identity is tied to a user, which simplifies the security model.As users change roles or leave an organization, access modifications are tied to that identity, which greatly reduces the effort needed to change or disable accounts.
+> - **Application management**: You can manage your cloud and on-premises apps by using Azure AD. Features like Application Proxy, SaaS apps, the My Apps portal, and single sign-on provide a better user experience.
+> - **Device management**: Along with accounts for individual people, Azure AD supports the registration of devices. Registration enables devices to be managed through tools like Microsoft **Intune**. It also allows for device-based Conditional Access policies to restrict access attempts to only those coming from known devices, regardless of the requesting user account.
+
+Azure AD can be used as an identity management for on-premises machines, this requires connecting the local Active directory with Azure AD, and it cab be done with **Azure AD Connect**.
+
+**Azure Active Directory Domain Services** is a managed domain service, which allows for  directrory services to run on the cloud without having an on-premises machine to run them. this includes legacy applications and current services. it also integrates with the Azure AD tenant.
+
+AD DS creates a managed domain (a unique namespace) with windows server domain controller machines deployed to the selected region. data is synchronized to a degree.
+
 #### Describe Azure authentication methods
 #### Describe Azure external identities
 #### Describe Azure conditional access
@@ -849,10 +940,16 @@ This module covers some of the authorization and authentication methods availabl
 - Border Gateway Protocol (BGP)
 - Azure Route Server
 - Azure ExpressRoute
+- AzCopy - CLI tool to copy files and blobs to storage account 
+- Azure Storage Explorer - web app interface to storage account.
+- Azure File Sync - synchronize windows server with storage account
 
-**misc*:*
+**misc:**
 - resource groups cannot be nested.
 - management groups can be nested.
+- blob storage access
+  - Only the hot and cool access tiers can be set at the account level. The archive access tier isn't available at the account level.
+  - Hot, cool, and archive tiers can be set at the blob level, during or after upload.
 
 ### Azure Cli
 <details>
@@ -998,10 +1095,30 @@ RA-GRS | Read-access geo-redundant storage |GRS + ability for application to rea
 RA-GZRS |Read-access geo-zone-redundant storage |GZRS + ability for application to read from the backup region|Storage Redundancy 
 SMB | Server Message Block |linux, macOs, windows | File Storage
 NFS | Network File syStem | linux and MacOs | File Storage
+AD DS | Active Directory Domain Services || Identity
+LDAP | lightweight directory access protocol | | Identity
 </details>
 
-###
+### Azure and AWS 
+<!-- <details> -->
+<summary>
+which services in azure are comparable to aws services
+</summary>
 
+Service Purpose | Azure Name | AWS Name | Notes
+---|---|---|---
+Virtual Machine | Azure VM | EC2 | compute
+General Storage | Blob storage | S3 | object / blob storage |
+General Storage Tiers | Hot, Cool, Archive | S3 Standard, IA, Glacier | storage tiers for costs and retrival time |
+Event-Driven Serverless | Azure Functions | Lambda
+Message Queue | Queue storage | SQS | asynchronous message handlng
+VM disk volume | Azure Disks | EBS - elastic block storage | storage volumes for virtual compute
+File Storage | Azure Files |EFS - elastic file system | 
+Physical data transfer | Azure Data Box | AWS Snow Ball | Data migration
+</details>
+
+
+###
 </details>
 
 
