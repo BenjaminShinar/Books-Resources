@@ -883,12 +883,69 @@ Azure AD can be used as an identity management for on-premises machines, this re
 
 AD DS creates a managed domain (a unique namespace) with windows server domain controller machines deployed to the selected region. data is synchronized to a degree.
 
-#### Describe Azure authentication methods
-#### Describe Azure external identities
-#### Describe Azure conditional access
-#### Describe Azure role-based access control
-#### Describe zero trust model
-#### Describe defense-in-depth
+#### Azure Authentication Methods
+
+authentication is establishing the identity of the user (person/service/device), the user provides some sort of credentials as proof of identity. there are different forms of authentication, such as standard passwords, single sign-on (SSO), multifactor authentication and passwordles.\
+Tradionally, there is a tradeoff between the security of the password and the convenience of using it.
+
+##### Single Sign-on
+single sign on allows a user to enter the credentials once, and use the same authorization across multiple applications. this requires that all the applications trust the initial authenticator.\
+A SSO approach provides benefits to the user, as he only needs to remember a single password, it is also beneficial for the organization, as all access is mediated through the SSO, and there it is easier to disable and remove access if the need arises (such as when the user leaves the organization).
+
+##### Multifactor Authentication
+Multifactor authentication is the process of requiring an additional form of identification during the sign on. it provides an additional layer of security if the first layer (user password) was compromised.\
+MFA usually takes form as an additional code sent to the mobile device of the user, or as face scan anf fingerprint data.
+
+Azure AD MFA services provides the ability to authenticate with MFA, such as an application notification or a phone call.
+##### Passwordless Authentication
+Passwordless authentications is another form of identifying the user, it relies on having the device be connected to the identity, which lessens the threat of password leak. A second form of identification is still required, but it can be simplified (fingerprint, pin code) as it will only be valid for the specific device.
+
+Azure AD has three forms of passwordless authentication:
+- Windows Hello for bussiness - designated credentials tied to a specific PC, often using biometric and PIN (code) as the 2nd layer. Has built-in support for SSO and PKI (public key infrastructure) so it is a solid choice for large organizations.
+- Microsoft Authenticator App - an application that can be configured to provide MFA for multiple accounts and services. 
+- FIDO2 security keys - a passwordless standard for authentication, often replacing password credentials with some kind of physical key (which is easier to use, harder to steal) such as a usb key, or a device with NFC/bluetooth.
+  
+#### Azure External Identities
+
+an external Identity refers to a user (person/device/service) outside of the organization. common examples of external identities are those of vendors, suppliers, collabarators, partners, etc... they require some form of access to the organization resources, but it should be separate from the identity of those inside.
+
+External Users can occasionally "bring the own identity" by using an identity provider (like google or facebook) or their own corporate identity. External users can become "guest users", or have a two-way connection with the organization, gaining access to some resources according to policy.
+
+#### Azure Conditional Access
+
+> Conditional Access is a tool that Azure Active Directory uses to allow (or deny) access to resources based on identity signals. These signals include who the user is, where the user is, and what device the user is requesting access from.
+
+conditional access allows for granular control over identification and authentication, access attempts are classified according to signals (such as user, device, location, time), and if they are determined to ba unusual then a stronger form of authentication is required.
+
+#### Azure Role-Based Access Control
+
+following the principal of least privilege, RBAC is a way to define permissions which uses roles, which are then attached to user of user groups. with those roles, user can have access policies which define which resources are available to them.
+
+azure RBAC uses scopes and roles. scope are the resources in question, and roles are the permitted actions.\
+scopes:
+- management group
+- subscription
+- resource group
+- resource
+
+roles:
+- reader
+- contributor/custom
+- owner
+
+Rbac is hierarchical, permissions at a parent scope (such as subscription) apply to all chile scopes (resource groups, resources). it is possbile to have multiple roles apply at once, with the permissions combining.
+
+#### Zero Trust Model
+
+Zero trust is a security model that assumes the worst case scenario for all access requests, and treats each request as if it came from an uncontrolled network. this is opposed to traditional models of security which differentiated between requests originating from inside the network and were considered safe by default
+
+zero trust means:
+> - Verify explicitly - Always authenticate and authorize based on all available data points.
+> - Use least privilege access - Limit user access with Just-In-Time and Just-Enough-Access (JIT/JEA), risk-based adaptive policies, and data protection.
+> - Assume breach - Minimize blast radius and segment access. Verify end-to-end encryption. Use analytics to get visibility, drive threat detection, and improve defenses.
+
+#### Defense-In-Depth
+
 #### Describe Microsoft Defender for Cloud
 
 </details>
@@ -1097,6 +1154,8 @@ SMB | Server Message Block |linux, macOs, windows | File Storage
 NFS | Network File syStem | linux and MacOs | File Storage
 AD DS | Active Directory Domain Services || Identity
 LDAP | lightweight directory access protocol | | Identity
+FIDO | Fast Identity Online |passwordless authentication standard|Identity
+PKI | Public Key Infrastructure||Identity
 </details>
 
 ### Azure and AWS 
@@ -1114,7 +1173,7 @@ Event-Driven Serverless | Azure Functions | Lambda
 Message Queue | Queue storage | SQS | asynchronous message handlng
 VM disk volume | Azure Disks | EBS - elastic block storage | storage volumes for virtual compute
 File Storage | Azure Files |EFS - elastic file system | 
-Physical data transfer | Azure Data Box | AWS Snow Ball | Data migration
+Physical data transfer | Azure Data Box | AWS SnowBall | Data migration
 </details>
 
 
