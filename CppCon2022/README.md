@@ -18,6 +18,7 @@ ignore these words in spell check for this file
   - C++20’s Coroutines for Beginners - Andreas Fertig
   - Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet - Andreas Weis
   - C++ Concurrency TS-2 Use Cases and Future Direction - Michael Wong, Maged Michael, Paul McKenney
+  - An Introduction to Multithreading in C++20 - Anthony Williams
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
   - Back to Basics: Debugging in C++ - Mike Shah
@@ -35,6 +36,7 @@ ignore these words in spell check for this file
   - What’s New in C++23 - Sy Brand
   - C++23 - What's In It For You? - Marc Gregoire
   - Understanding C++ coroutines by example: Generators - Pavel Novikov
+  - 10 Years of Meeting C++ - Historical Highlights and the Future of C++ - Jens Weller
 - [General C++](General%20C++.md)
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
   - C++ Lambda Idioms - Timur Doumler
@@ -42,6 +44,7 @@ ignore these words in spell check for this file
   - C++ MythBusters - Victor Ciura
   - C++ Function Multiversioning in Windows - Joe Bialek and Pranav Kant
   - Embracing Trailing Return Types and `auto` Return SAFELY in Modern C++ - Pablo Halpern
+  - The Most Important Optimizations to Apply in Your C++ Programs - Jan Bielak
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
   - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
 - [Math & Numbers](Math%20&%20Numbers.md)

@@ -16,7 +16,8 @@
     "nulllptr",
     "println",
     "remove_cvref_t",
-    "serializers"
+    "serializers",
+    "jthread"
   ],
   "ignoreWords": [
     "Bjarne",
@@ -65,7 +66,8 @@
     "Ratzloff",
     "Lumsdaine",
     "Caro",
-    "Halpern"
+    "Halpern",
+    "Bielak"
   ],
   "import": []
 }
