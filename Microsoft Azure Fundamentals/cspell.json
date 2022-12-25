@@ -4,6 +4,6 @@
     "dictionaryDefinitions": [],
     "dictionaries": [],
     "words": [],
-    "ignoreWords": ["GZRS","PAAS", "pwsh"],
+    "ignoreWords": ["GZRS","PAAS", "pwsh","CSPM"],
     "import": []
 }

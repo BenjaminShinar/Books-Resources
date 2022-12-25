@@ -1124,7 +1124,7 @@ When a security event is detected, Defender for Cloud can trigger a security ale
 
 ### Cost Management
 
-<!-- <details> -->
+<details>
 <summary>
 This module explores methods to estimate, track, and manage costs in Azure.
 </summary>
@@ -1178,10 +1178,17 @@ The _Pricing Calculator_ is designed to give an estimate of how much it would co
 
 The _TCO Calculator_ (total cost of ownership) is deigned to help compare the costs of running workloads on premises against running them on the cloud. the user enter his current configuration of hardware and an estimate of labor/IT costs and is presented with a coresponding cost estimate of how much it would cost to run the workload in azure.
 
-#### Exercise - Estimate Workload Costs by Using The Pricing calculator
+#### Exercise - Estimate Workload Costs by Using The Pricing Calculator
+
+[Pricing Calculator](https://azure.microsoft.com/en-us/pricing/calculator/)
+
+setting up two virtual machines, an application gateway and SQL database.
 
 #### Exercise - Compare Workload Costs Using The TCO Calculator
 
+[Tco Calculator](https://azure.microsoft.com/en-us/pricing/tco/calculator/)
+
+cost of migrating to the cloud. virtual machines and a network
 #### Cost Management Tool
 
 Because Azure is a global cloud provider, and it supports rapid scaling, it is possible that resources will be provisioned and the user might not remember them until they appear in the invoice (and even then, the user might not recognize them as being unnecessary).
@@ -1205,7 +1212,7 @@ Tags can be enforced by azure policies, both in terms of requiring tags and for 
 
 ### Governance and Compliance
 
-<details>
+<!-- <details> -->
 <summary>
 This module introduces you to tools that can help with governance and compliance within Azure.
 </summary>
