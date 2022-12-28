@@ -1212,7 +1212,7 @@ Tags can be enforced by azure policies, both in terms of requiring tags and for 
 
 ### Governance and Compliance
 
-<!-- <details> -->
+<details>
 <summary>
 This module introduces you to tools that can help with governance and compliance within Azure.
 </summary>
@@ -1229,20 +1229,140 @@ Blueprint have versions, so they can be updated with incremental improvements. E
 
 #### Azure Policy
 
-#### Resource Locks
+> Azure Policy is a service in Azure that enables you to create, assign, and manage policies that control or audit your resources. These policies enforce different rules across your resource configurations so that those configurations stay compliant with corporate standards.
 
-#### Exercise - Configure a resource lock
+an *initiative* is a group of related azure policies. azure policies can detect resources that don't match it, and can prevent them from being created. we can define policies at different levels (management group, subscription, resource group) and they are inherited.
+
+There are default Azure policies for common resources, such as restricting the size of VM which can be provisoned. some policies can have automatic remediation steps (such as filling missing tags).it is possible to flag resources as exceptions.
+
+#### Resource Locks
+> A resource lock prevents resources from being accidentally deleted or changed.
+
+resource locks prevent changes to existing resources, even when the the person has appropriate access to it. The lock acts as defensive layer on the resource, it must be removed before the resource itself, which makes accidental deletions much harder.
+
+locks are inherited (subscription, resource group, resource). there are two types of locks:
+- Delete - the resource can be read and modified, but not deleted.
+- ReadOnly - the resource can be accessed and read, but not modified.
+
+
+#### Exercise - Configure a Resource Lock
+
+create a resource, apply a readonly lock, verify that we can't modify the resource, change lock type and try again. attempt to delete resource without removing lock, verify we can't, remove lock and delete resource.
+
+Using the personal Azure subscription
+
+>Task 1: Create a resource\
+> In order to apply a resource lock, you have to have a resource created in Azure. The first task focuses on creating a resource that you can then lock in subsequent tasks.
+> 1. Sign in to the Azure portal at https://portal.azure.com
+> 2. Select <kbd>Create a resource</kbd>.
+> 3. Under Categories, select <kbd>Storage</kbd>.
+> 4. Under Storage Account, select <kbd>Create</kbd>.
+> 5. On the Basics tab of the Create storage account blade, fill in the following information. Leave the defaults for everything else.
+> 6. Select <kbd>Review + Create</kbd> to review your storage account settings and allow Azure to validate the configuration.
+> 7. Once validated, select <kbd>Create</kbd>. Wait for the notification that the account was successfully created.
+> 8. Select <kbd>Go to resource</kbd>.
+
+now we apply the lock to the resource.
+
+> Task 2: Apply a read-only resource lock\
+> In this task you apply a read-only resource lock to the storage account. What impact do you think that will have on the storage account?
+> 1. Scroll down until you find the Settings section of the blade on the left of the screen.
+> 2. Select <kbd>Locks</kbd>.
+> 3. Select <kbd>+ Add</kbd>.
+> 4. Enter a Lock name.
+> 5. Verify the Lock type is set to Read-only
+> 6. Select OK.
+
+modifying the resource should fail!
+
+> Task 3: Add a container to the storage account\
+> In this task, you add a container to the storage account, this container is where you can store your blobs.
+> 1. Scroll up until you find the Data storage section of the blade on the left of the screen.
+> 2. Select <kbd>Containers</kbd>.
+> 3. Select <kbd>+ Container</kbd>.
+> 4. Enter a container name and select <kbd>Create</kbd>.
+> 5. You should receive an error message: Failed to create storage container.
+
+Changing the lock type to allow modification
+
+> Task 4: Modify the resource lock and create a storage container
+> 1. Scroll down until you find the Settings section of the blade on the left of the screen.
+> 2. Select <kbd>Locks</kbd>.
+> 3. Select the read-only resource lock you created.
+> 4. Change the Lock type to Delete and select <kbd>OK</kbd>.
+> 5. Scroll up until you find the Data storage section of the blade on the left of the screen.
+> 6. Select <kbd>Containers</kbd>.
+> 7. Select <kbd>+ Container</kbd>.
+> 8. Enter a container name and select <kbd>Create</kbd>
+> 9. Your storage container should appear in your list of containers.
+
+Can't delete while there is a delete lock present
+
+> Task 5: Delete the storage account\
+> You'll actually do this last task twice. Remember that there is a delete lock on the storage account, so you won't actually be able to delete the storage account yet.
+> 1. Scroll up until you find Overview at the top of the blade on the left of the screen.
+> 2. Select <kbd>Overview</kbd>.
+> 3. Select <kbd>Delete</kbd>.
+
+Remove the lock and then delete
+
+> Task 6: Remove the delete lock and delete the storage account\
+> In the final task, you remove the resource lock and delete the storage account from your Azure account. This step is important. You want to make sure you don't have any idle resource just sitting in your account.
+> 1. Select your storage account name in the breadcrumb at the top of the screen.
+> 2. Scroll down until you find the Settings section of the blade on the left of the screen.
+> 3. Select <kbd>Locks</kbd>.
+> 4. Select <kbd>Delete</kbd>.
+> 5. Select <kbd>Home</kbd> in the breadcrumb at the top of the screen.
+> 6. Select <kbd>Storage accounts</kbd>
+> 7. Select the storage account you used for this exercise.
+> 8. Select <kbd>Delete</kbd>.
+> 9. To prevent accidental deletion, Azure prompts you to enter the name of the storage account you want to delete. Enter the name of the storage account and select <kbd>Delete</kbd>.
+
 
 #### Service Trust portal
+
+> The Microsoft Service Trust Portal is a portal that provides access to various content, tools, and other resources about Microsoft security, privacy, and compliance practices.
+
+what standards of security service Azure has, what regulation applies to azure. we can mark documents here for further use. requires using an azure subscription as acknowledging and NDA.
 
 </details>
 
 ### Managing and Deploying Resource
 
-<details>
+<!-- <details> -->
 <summary>
 This module covers tools that help you manage your Azure and on-premises resources.
 </summary>
+
+#### Tools for Interacting with Azure
+
+ways with which we can communicate with Azure
+
+- Azure portal (website)
+- Azure CloudShell
+- Azure Powershell
+- Azure Cli
+
+The azure portal is a browser based way of coomunicating with the resources on azure, it has graphical interfaces and wizards to help. it is the most simple way to navigate and understand the azure eco-system. there are ways to customize the portal. 
+
+we can view reports and dashboard through the portal, and also access the azure cloudShell.
+
+The Azure CloudShell is a web based CLI tool (bash or powershell) that we can start from the azure portal, and use to run cli commands. Azure PowerShell adn Azure CLI are command line tools which can work on the local machine to communicate with the resources in Azure, the difference is the shell language, bash or powershell.
+
+#### The Purpose of Azure Arc
+
+Azure Arc is a centralized and unified way to manage resources which are outside of the azure cloud, such as on-premises and in other cloud providers.
+
+> Azure Arc provides a centralized, unified way to:
+> 
+> Manage your entire environment together by projecting your existing non-Azure resources into ARM.
+> Manage multi-cloud and hybrid virtual machines, Kubernetes clusters, and databases as if they are running in Azure.
+> Use familiar Azure services and management capabilities, regardless of where they live.
+> Continue using traditional ITOps while introducing DevOps practices to support new cloud and native patterns in your environment.
+> Configure custom locations as an abstraction layer on top of Azure Arc-enabled Kubernetes clusters and cluster extensions.
+
+#### Azure Resource Manager and Azure ARM Templates
+
 
 </details>
 
@@ -1316,6 +1436,7 @@ Stuff Worth remembering
 - blob storage access
   - Only the hot and cool access tiers can be set at the account level. The archive access tier isn't available at the account level.
   - Hot, cool, and archive tiers can be set at the blob level, during or after upload.
+- an *initiative* is a group of related azure policies
 
 ### Azure Cli
 

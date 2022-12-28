@@ -3109,3 +3109,20 @@ these steps depend on us having tests and ci-cd integration
   - finds all the thing we don't think about
   - first with all user-facing apis
 </details>
+
+## C++ Weekly - Ep 356 - The Python Enabled Calculators of 2022
+<details>
+<summary>
+The Future of Programming Education - Calculators with Python
+</summary>
+
+[The Python Enabled Calculators of 2022](https://youtu.be/82v0jYGh0p0)
+
+python is availble out of the box in many devices, while c++ isn't that easy to get started with. there are calculators with python built-in into them. the power of the devices varies (from 256kb to 8mb in the charts presented), they have special versions to python (python3 compatible).\
+it's not great to type on them, but they have some common shortcuts to make it easier.
+
+showing diffrent calculators, going over how they behave and how they support python.
+
+
+
+</details>
