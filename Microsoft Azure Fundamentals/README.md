@@ -10,12 +10,12 @@ each learning path corresponds to one domain of the exam. a learning path is com
 
 | AZ-900 Domain Area                                              | Weight |
 | --------------------------------------------------------------- | ------ |
-| Describe cloud concepts                                         | 20-25% |
-| Describe core Azure services                                    | 15-20% |
-| Describe core solutions and management tools on Azure           | 10-15% |
-| Describe general security and network security features         | 10-15% |
-| Describe identity, governance, privacy, and compliance features | 20-25% |
-| Describe Microsoft cost management and Service Level Agreements | 10-15% |
+| Describe Cloud Concepts                                         | 20-25% |
+| Describe Core Azure Services                                    | 15-20% |
+| Describe Core Solutions and Management Tools on Azure           | 10-15% |
+| Describe General Security and Network Security Features         | 10-15% |
+| Describe Identity, Governance, Privacy, and Compliance Features | 20-25% |
+| Describe Microsoft Cost Management and Service Level Agreements | 10-15% |
 
 > New to the cloud? Azure fundamentals is a six-part series that teaches you basic cloud concepts, provides a streamlined overview of many Azure services, and guides you with hands-on exercises to deploy your very first services for free.\
 > After completing this learning path, you'll be able to:
@@ -1115,9 +1115,9 @@ When a security event is detected, Defender for Cloud can trigger a security ale
 
 ## Solutions and Management Tools on Azure
 
-<!-- <details> -->
+<details>
 <summary>
-
+Tools that we use to understand our infrastructure: costs, compliance and health.
 </summary>
 
 [Azure Management and Reverences](https://learn.microsoft.com/en-us/training/paths/describe-azure-management-governance/)
@@ -1329,7 +1329,7 @@ what standards of security service Azure has, what regulation applies to azure. 
 
 ### Managing and Deploying Resource
 
-<!-- <details> -->
+<details>
 <summary>
 This module covers tools that help you manage your Azure and on-premises resources.
 </summary>
@@ -1363,6 +1363,25 @@ Azure Arc is a centralized and unified way to manage resources which are outside
 
 #### Azure Resource Manager and Azure ARM Templates
 
+Azure ARM is the core deployment and management service in azure, it takes care of all the the resources (creating, deleting and updating). all forms of azure: the portal, CLIs and SDKs go through the ARM, which ensures the results are consistent no matter which tool is used.
+
+ARM templates are a way of managing resources in a declarative way, templates are json files which describe the resources and the relation that the user wants, and when the templates are fed to azure, the resources are created, always at the correct order and in the same state. ARM templates are Infrastructure as code.
+- Declarative - write configuration, not scripts
+- Repeatable - write once, use many times
+- Orchastration - deploy with one command, let azure decide which resources can be created at parallel.
+- Modularity - nest templates inside template, reuse templates accross different projects.
+- Extensibility - fine tune templates by running scripts as part of the deployment process.
+
+> With Azure Resource Manager, you can:
+> 
+> - Manage your infrastructure through declarative templates rather than scripts. A Resource Manager template is a JSON file that defines what you want to deploy to Azure.
+> - Deploy, manage, and monitor all the resources for your solution as a group, rather than handling these resources individually.
+> - Re-deploy your solution throughout the development life-cycle and have confidence your resources are deployed in a consistent state.
+> - Define the dependencies between resources, so they're deployed in the correct order.
+> - Apply access control to all services because RBAC is natively integrated into the management platform.
+> - Apply tags to resources to logically organize all the resources in your subscription.
+> - Clarify your organization's billing by viewing costs for a group of resources that share the same tag.
+
 
 </details>
 
@@ -1371,8 +1390,40 @@ Azure Arc is a centralized and unified way to manage resources which are outside
 <details>
 <summary>
 This module covers tools that you can use to monitor your Azure environment.
-
 </summary>
+
+#### The Purpose of Azure Advisor
+
+> Azure Advisor evaluates your Azure resources and makes recommendations to help improve **reliability**, **security**, and **performance**, achieve **operational excellence**, and reduce **costs**. Azure Advisor is designed to help you save time on cloud optimization. The recommendation service includes suggested actions you can take right away, postpone, or dismiss.
+
+avaliable both in the portal as a personalized dashboard and as an API.
+
+> - Reliability is used to ensure and improve the continuity of your business-critical applications.
+> - Security is used to detect threats and vulnerabilities that might lead to security breaches.
+> - Performance is used to improve the speed of your applications.
+> - Operational Excellence is used to help you achieve process and workflow efficiency, resource manageability, and deployment best practices.
+> - Cost is used to optimize and reduce your overall Azure spending.
+
+#### Azure Service Health
+
+Azure Service health allows the user to keep track of the state of Azure and provisioned resources. it provides information about Azure in general - are they outgates in any region? is there a system-wide issue?. it also has service specific information - is one of the services undergoing maintanice or updates? and it has information about specific resources, and it can track the health and send alerts.\
+The example given is monitoring the health of a virtual machine, and using the historical data of alerts to discover trends.
+
+#### Azure Monitor
+> Azure Monitor is a platform for collecting data on your resources, analyzing that data, visualizing the information, and even acting on the results. Azure Monitor can monitor Azure resources, your on-premises resources, and even multi-cloud resources like virtual machines hosted with a different cloud provider.
+
+the data is collected at every level and layer: application, networking, data and so on. it can be viewed in detail or aggregated, and we can set custom reports or send alerts.
+
+- Azure Log Analytics - run queries on the data gathered by azure monitor.
+- Azure Monitor Alerts - set up alerts that trigger at log events, such as threshold being crossed, also set up automated actions.
+- Application Insights - monitoring **Web applications**, either by installing an SDK on the app or with an agent.
+
+> Application Insight Monitoring metrics:
+> - Request rates, response times, and failure rates
+> - Dependency rates, response times, and failure rates, to show whether external services are slowing down performance
+> - Page views and load performance reported by users' browsers
+> - AJAX calls from web pages, including rates, response times, and failure rates User and session counts
+> - Performance counters from Windows or Linux server machines, such as CPU, memory, and network usage
 
 </details>
 
@@ -1380,10 +1431,12 @@ This module covers tools that you can use to monitor your Azure environment.
 
 ## General Security and Network Security Features
 
-<details>
+<!-- <details> -->
 <summary>
 
 </summary>
+
+
 </details>
 
 ## Identity, Governance, Privacy, and Compliance Features
@@ -1429,8 +1482,12 @@ Stuff Worth remembering
 - Azure Arc - Microsoft defender extension for on-premises resources
 - Azure Security Benchmark - security and compliance
   guidelines for azure.
-  **misc:**
-
+- Azure Advisor - evaluate resources and makes recommendations for reliability, security, and performance, operational excellence and costs.
+- Azure Service Health - track the state azure in general (outages) and of provisoned resources.
+- Azure Monitor - collect data on resources, analyze the data, visualize the information (and act on the results).
+  
+  
+ **misc:**
 - resource groups cannot be nested.
 - management groups can be nested.
 - blob storage access
