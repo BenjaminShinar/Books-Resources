@@ -19,6 +19,7 @@ ignore these words in spell check for this file
   - Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet - Andreas Weis
   - C++ Concurrency TS-2 Use Cases and Future Direction - Michael Wong, Maged Michael, Paul McKenney
   - An Introduction to Multithreading in C++20 - Anthony Williams
+  - A Lock-Free Atomic Shared Pointer in Modern Cpp - Timur Doumler
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
   - Back to Basics: Debugging in C++ - Mike Shah
@@ -45,6 +46,7 @@ ignore these words in spell check for this file
   - C++ Function Multiversioning in Windows - Joe Bialek and Pranav Kant
   - Embracing Trailing Return Types and `auto` Return SAFELY in Modern C++ - Pablo Halpern
   - The Most Important Optimizations to Apply in Your C++ Programs - Jan Bielak
+  - Back to Basics: RAII in C++ - Andre Kostur
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
   - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
 - [Math & Numbers](Math%20&%20Numbers.md)
@@ -70,6 +72,7 @@ ignore these words in spell check for this file
   - High Speed Query Execution with Accelerators and C++ - Alex Dathskovsky
   - Taking Static Type-Safety to the Next Level - Physical Units for Matrices - Daniel Withopf
   - C++ for Enterprise Applications - Vincent Lextrait
+  - From C++ Templates to C++ Concepts - Metaprogramming: an Amazing Journey - Alex Dathskovsky
 - [Tooling](Tooling.md)
   - import CMake, CMake and C++20 Modules - Bill Hoffman
 - [Value Semantics](Value%20Semantics.md)
