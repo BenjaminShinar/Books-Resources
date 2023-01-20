@@ -31,6 +31,8 @@ ignore these words in spell check for this file
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
   - Taking a Byte Out of C++ - Avoiding Punning by Starting Lifetimes - Robert Leahy
+  - Introduction to Hardware Efficiency in Cpp - Ivica Bogosavljevic
+  - Killing C++ Serialization Overhead & Complexity - Eyal Zedaka
 - [Future of C++](Future%20of%20C++.md)
   - Contemporary C++ in Action - Daniela Engert
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
@@ -51,6 +53,7 @@ ignore these words in spell check for this file
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
   - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
   - Managing External API's in Enterprise Systems - Pete Muldoon
+  - Back to Basics: C++ API Design - Jason Turner
 - [Math & Numbers](Math%20&%20Numbers.md)
   - Principia Mathematica - The Foundations of Arithmetic in C++
 - [Networking & Web](Networking%20&%20Web.md)
@@ -70,6 +73,7 @@ ignore these words in spell check for this file
   - How Microsoft Uses C++ to Deliver Office - Huge Size, Small Components - Zachary Henkel
   - The Hidden Performance Price of C++ Virtual Functions - Ivica Bogosavljevic
   - Using Modern C++ to Eliminate Virtual Functions - Jonathan Gopel
+  - 10 Tips for Cleaner C++ 20 Code - David Sackstein
 - [Templates & Metaprogramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
