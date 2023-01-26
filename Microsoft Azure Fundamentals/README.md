@@ -25,6 +25,95 @@ each learning path corresponds to one domain of the exam. a learning path is com
 > - Describe core Azure architecture components such as subscriptions, management groups, resources and resource groups
 > - Summarize geographic distribution concepts such as Azure regions, region pairs, and availability zones
 
+
+
+## Describe Cloud Concepts
+<!-- <details> -->
+<summary>
+
+</summary>
+
+[Describe Cloud Concepts](https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/)
+
+### Describe Cloud Computing
+<details>
+<summary>
+This module introduces you to cloud computing. It covers things such as cloud concepts, deployment models, and understanding shared responsibility in the cloud.
+</summary>
+
+
+> Microsoft Azure is a cloud computing platform with an ever-expanding set of services to help you build solutions to meet your business goals. Azure services support everything from simple to complex. Azure has simple web services for hosting your business presence in the cloud. Azure also supports running fully virtualized computers managing your custom software solutions. Azure provides a wealth of cloud-based services like remote storage, database hosting, and centralized account management. Azure also offers new capabilities like artificial intelligence (AI) and Internet of Things (IoT) focused services.
+
+
+#### What is Cloud Computing
+> Cloud computing is the delivery of computing services over the internet. Computing services include common IT infrastructure such as virtual machines, storage, databases, and networking.\
+> [...]\
+> Because cloud computing uses the internet to deliver these services, it doesn’t have to be constrained by physical infrastructure the same way that a traditional datacenter is. That means if you need to increase your IT infrastructure rapidly, you don’t have to wait to build a new datacenter—you can use the cloud to rapidly expand your IT footprint.
+
+choose the power and size of the required computing power, but without paying for the upkeep and being able to change the machine at will. The two main resources are **Compute power** and **Storage**.
+
+#### Describe the Shared Responsibility Model
+Dividing the responsability between the cloud vendor (Microsoft Azure) and the customer. with a traditional corporate datacenter, the user is responsible for everything, to get the hardware, to put it in a locked room, to make sure it can't be accessed through the network, and to provide power and patch up the machines when there is an OS update. this is usually a full time job for the IT department.\
+With the shared responsability model, so of these tasks are offloaded to the cloud vendor - this depends on the service, but at the most basic level, the physical aspects of the hardware and netwokring are taken care of by the vendor. for some services that's all there is, like virtual machines require the user to set up the networking connections and to patch the OS if there is a security update. other services are more managed and the cloud vendor handles the machine instances (you just provide the code) and other services are provided by azure and just ingest the data the customer provides.
+
+![Shared Responsability Model](https://learn.microsoft.com/en-us/training/wwl-azure/describe-cloud-compute/media/shared-responsibility-b3829bfe.svg)
+
+#### Define Cloud Models
+
+Private, Public and Hybrid Cloud.
+
+A Private cloud is used by a single entity - it's a scaled up version of the corporate data center, but this time it can be either self hosted or hosted outside. access to it is limited.
+A public cloud (azure, aws, gcp) is open for nearly everyone to create an account, the hardware is hosted in centralized data centers in massive scale. access is done over the public internet.\
+A hybrid cloud combines the two - we use some capabilities of the public cloud to support the private cloud / data center. this can be a different usage (storing backup on the public cloud) or by using cloud service to scale out when demand increases. 
+
+Public cloud|	Private cloud|	Hybrid cloud
+---|---|---
+No capital expenditures to scale up |	Organizations have complete control over resources and security|	Provides the most flexibility
+Applications can be quickly provisioned and deprovisioned	|Data is not collocated with other organizations’ data	|Organizations determine where to run their applications
+Organizations pay only for what they use|	Hardware must be purchased for startup and maintenance|	Organizations control security, compliance, or legal requirements
+Organizations don’t have complete control over resources and security|	Organizations are responsible for hardware maintenance and updates	
+
+multi cloud is the case when different cloud vendors are used, either as part of a consistent environment or because the company is in the process of migrating.\
+Azure Arc is a set of tools that provides ways to manage the cloud environment.
+
+
+#### Describe the Consumption-Based Model
+
+Capital Expenses (CapEx) - usually one-time, upfront investments. this can include buying infrastrcure, building the datacenter, etc...\
+In contrast, Operational expense (OpEx) are ongoing, repeating costs. these are the running costs of operating and running the business.
+
+with cloud, there is almost no CapEx investment, the cost is only for the cloud services which the customer consumes. it's easy to scale up when more resources are needed, and once they aren't, they are released and there's no additional charge.
+
+
+</details>
+
+### Describe the benefits of using cloud services
+<details>
+<summary>
+
+</summary>
+
+[Describe the benefits of using cloud services](https://learn.microsoft.com/en-us/training/modules/describe-benefits-use-cloud-services/)
+
+
+#### Describe the benefits of high availability and scalability in the cloud
+#### Describe the benefits of reliability and predictability in the cloud
+#### Describe the benefits of security and governance in the cloud
+#### Describe the benefits of manageability in the cloud
+
+</details>
+
+### Describe Cloud Services Types
+<details>
+<summary>
+
+</summary>
+</details>
+
+
+
+</details>
+
 ## Azure Concepts
 
 <details>
@@ -1485,7 +1574,7 @@ Stuff Worth remembering
 - Azure Advisor - evaluate resources and makes recommendations for reliability, security, and performance, operational excellence and costs.
 - Azure Service Health - track the state azure in general (outages) and of provisoned resources.
 - Azure Monitor - collect data on resources, analyze the data, visualize the information (and act on the results).
-  
+- Azure VMware Solution  
   
  **misc:**
 - resource groups cannot be nested.
