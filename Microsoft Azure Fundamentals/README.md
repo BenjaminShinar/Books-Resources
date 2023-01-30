@@ -87,27 +87,65 @@ with cloud, there is almost no CapEx investment, the cost is only for the cloud 
 
 </details>
 
-### Describe the benefits of using cloud services
+### Describe the Benefits of Using Cloud Services
 <details>
 <summary>
-
+In this module, you’ll be introduced to some of the benefits that cloud computing offers. You’ll learn how cloud computing can help you meet variable demand while providing a good experience for your customer. You’ll also learn about security, governance, and overall manageability in the cloud.
 </summary>
 
 [Describe the benefits of using cloud services](https://learn.microsoft.com/en-us/training/modules/describe-benefits-use-cloud-services/)
 
 
-#### Describe the benefits of high availability and scalability in the cloud
-#### Describe the benefits of reliability and predictability in the cloud
-#### Describe the benefits of security and governance in the cloud
-#### Describe the benefits of manageability in the cloud
+#### High Availability and Scalability
 
+The two Considerations for cloud applications are availability and scalability. Availability is the 'uptime' - does the application respond at all times, without going dark for various reasons. scalability is a measure of how the application responds to increase in demand, making sure that even if demnad skyrockets tenfolds, the application will still operate.
+
+##### Availability
+the azure SLA defines the ensured uptime in percentages, and defines what downtime means. usually the SLA are 99% and above
+
+SLA | allowed downtime (monthly)
+---|---
+99% | 7.2 hours
+99.9% | 43.2 minutes
+
+##### Scalability
+
+scalability is the measure of adjusting resources to change in demand, rather than provision enough resources to handle the maximum demand level, and have those machine sit idly most of the time and cost money, scalability allows to provision more resources when demand increases, and release them when demnad is low. this relates to the consumption model of only paying for what's needed.
+
+there are two forms of scaling resources:
+- vertical scaling (scale up/down) - increasing the power of the used machines - adding RAM, using more CPU cores, etc...
+- horizontal scaling (scale out/in) - adding more machines (of the same type) to handle the increased demand.
+
+#### Reliability and Predictability
+> Reliability is the ability of a system to recover from failures and continue to function. It's also one of the pillars of the Microsoft Azure Well-Architected Framework.
+
+relability is how the application handles failures, this usually means having instances deployed accross different availability zones and regions, and having requests routed to running instances automatically.
+
+Predictability can either be about costs  or about performance.
+
+Performance: autoscaling, high availability, load balancing.\
+Cost: being able to predict the cloud resources costs, track the spending, monitor that no resource is exploding in costs, and be able to estimate the costs of moving the operation into the cloud with Total Cost of Ownership calculator.
+
+#### Security and Governance
+
+Azure cloud can help with compliance to governance (government and corporate regulations) by enforcing the resources adhere to certain standards, or by disallowing some resources to certain users.
+
+There are also various ways to enforce and audit cloud resources for security and best practices. as with the shared responsability model, the security concerns vary depending on the type of service, in some cases Azure takes care of nearly everyhing, and in other cases it's up to the user to handle patching and security updates.
+
+#### Manageability
+In this context, manageability means how we interact and control cloud resources. it can mean how we manage resources - scaling, deploying, monitoring, receiving alerts and acting on them. it can also mean how we communicate with the resources: via the web portal, APIs or cli tools (such as powerShell)
 </details>
 
 ### Describe Cloud Services Types
-<details>
+<!-- <details> -->
 <summary>
 
 </summary>
+
+#### Infrastructure as a Service
+#### Platform as a Service
+#### Software as a Service
+
 </details>
 
 
