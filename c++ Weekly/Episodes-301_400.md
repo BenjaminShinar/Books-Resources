@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer cppyy
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -3123,6 +3123,157 @@ it's not great to type on them, but they have some common shortcuts to make it e
 
 showing diffrent calculators, going over how they behave and how they support python.
 
+</details>
+
+## C++ Weekly - Ep 357 - `typename` VS `class` In Templates
+<details>
+<summary>
+Which should be used?
+</summary>
+
+[`typename` VS `class` In Templates](https://youtu.be/86Pa973BW4Y)
+
+when defining a template, our template parameteres could be defined as either "Typename" or "Class". in most cases it doesn't matter.
+
+```cpp
+template<typename Type1, class Type2>
+void func(Type1 t1, Type2 t2)
+{
+    /*...*/
+}
+```
+
+but there are some cases which require using one or the other. this has been true for nested template declarations, but since c++17 things have changed.
+
+</details>
+
+## C++ Weekly - Ep 358 - C23's `#embed` and C++23's `#warning`
+<details>
+<summary>
+New pre-processor directives in upcoming C and C++ standards.
+</summary>
+
+[C23's `#embed` and C++23's `#warning`](https://youtu.be/ibKnNRAq5UY).
+
+in C++23 and C23 standards, there are new pre-processor directive (commands/defintions/macros).
+
+C23 now has `#embed` - which allows us to directly pull in data from other files into the binary. we can limit the numer of the bytes taken. theoretically, we could use "/dev/random" to get random data from the local machine.
+
+```cpp
+#include <cstdio>
+
+static constexpr char data[] =
+{
+#embed "input.txt" limit(5)
+};
+
+int main()
+{
+    std::puts(data);
+}
+```
+
+C++23 provides the `#warning` directive, which we can use to write warnings at compile time directly.
+
+```cpp
+#include <climits>
+#include <csdint>
+#if UINT_MAX == UINT16_MAX
+#warning "Project not tested on 8bit platforms"
+#endif
+```
+</details>
 
 
+## C++ Weekly - Ep 359 - _std::array_'s Implementation Secret (That You Can't Use!)
+<details>
+<summary>
+Simple Implementation of the standard array.
+</summary>
+
+[_std::array_'s Implementation Secret (That You Can't Use!)](https://youtu.be/uLbv2u536G0)
+
+the array type is meant to allow a typesafe way to view arrays, unlike C-arrays, which devolve into pointers.
+
+this video is a basic implementation an array.
+- tamplate for type and size
+- indexing operator (square brackets)
+- initialization (without constructors)
+- making things constexpr
+- allowing for range-based for-loops - tons of accessors
+- structured binding support (tuple_size, get)
+
+
+the standard array has publicly accessable internal C-array, but using it directly is undefined behavior.
+```cpp
+#include <cstdint>
+#include <fmt/format.h>
+
+template<typename Contained, std::size_t Size>
+struct array{
+    Contained _values[Size];
+
+    constexpr Contained &operator[](std::size_t idx){
+        return _values[idx];
+    }
+    constexpr const Contained &operator[](std::size_t idx) const {
+        return _values[idx];
+    }
+
+    constexpr Contained *begin() {return _values;}
+    constexpr const Contained *begin() const {return _values;}
+    constexpr const Contained *end() const {return _values + Size;}
+    constexpr const Contained *cbegin() const {return _values;}
+    constexpr const Contained *cend() const {return _values + Size;}
+    constexpr Contained &front() {return _values;}
+    constexpr const Contained &front() const {return _values;}
+};
+
+//tuple support
+template <typename class T, std::size_t N>
+struct std::tuple_size<array<T, N>>: std::integral_constant<std::size_t, N>
+{ };
+
+template<std::size_t I, class T, std::size_t N>
+struct std::tuple_element<I, array<T ,N>>
+{
+    using type =T;
+};
+
+template<std::size_t I, class T, std::size_t N>
+[[nodiscard]] const T &get(const array<T,N> & a){
+    return a[I];
+}
+
+int main()
+{
+    array<int, 5> data{2,3,4,5,6};
+    for (auto value:data)
+    {
+        fmt::print("{}", value);
+    }
+    const [a,b,c,d,e] = data;
+    fmt::print("{}",a+b+c+d+e);
+    return data[0];
+}
+```
+</details>
+
+
+## C++ Weekly - Ep 360 - Scripting C++ Inside Python With cppyy
+<details>
+<summary>
+Integrating C++ code inside python
+</summary>
+
+[Scripting C++ Inside Python With cppyy](https://youtu.be/TL83P77vZ1k)
+
+a way to run c++ code from python
+
+```python
+import cppyy
+cppyy.include("cppyy-test.hpp")
+cppyy.gbl.go()
+```
+we can run the code as a script, or in an interactive way - we access our code, structs, templates... all from python.
 </details>
