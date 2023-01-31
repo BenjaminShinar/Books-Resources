@@ -3277,3 +3277,38 @@ cppyy.gbl.go()
 ```
 we can run the code as a script, or in an interactive way - we access our code, structs, templates... all from python.
 </details>
+
+
+## C++ Weekly - Ep 361 - Is A Better `main` Possible?
+<details>
+<summary>
+Creating a `main` function with input arguments that we can operate on properly.
+</summary>
+
+[Is A Better `main` Possible?](https://youtu.be/zCzD9uSDI8c)
+
+could we make the **main** function more modern? get some type safety, be able to use range operations, etc...
+```cpp
+int better_main(std::span<const std::string_view> args)
+{
+    return 0;
+}
+```
+we could forward declare the better_main and use a vector as a contigues container.
+```cpp
+int main(const int argc, char** argv)
+{
+    [[nodiscard]] int better_main(std::span<const std::string_view>) noexcept;
+
+    std::vector<std::string_view> args (argv, std::next(argv, static_cast<std::ptrdiff_t>(argc)));
+
+    return better_main(args);
+}
+
+[[nodiscard]] int better_main([[maybe_undused]] std::span<const std::string_view> args) noexcept
+{
+    return 0;
+}
+```
+
+</details>
