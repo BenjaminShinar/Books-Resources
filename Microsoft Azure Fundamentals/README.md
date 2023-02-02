@@ -26,11 +26,10 @@ each learning path corresponds to one domain of the exam. a learning path is com
 > - Summarize geographic distribution concepts such as Azure regions, region pairs, and availability zones
 
 
-
 ## Describe Cloud Concepts
-<!-- <details> -->
+<details>
 <summary>
-
+Basic Cloud Stuff
 </summary>
 
 [Describe Cloud Concepts](https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/)
@@ -137,18 +136,26 @@ In this context, manageability means how we interact and control cloud resources
 </details>
 
 ### Describe Cloud Services Types
-<!-- <details> -->
+<details>
 <summary>
-
+In this module, you’ll be introduced to cloud service types. You’ll learn how each cloud service type determines the flexibility you’ll have with managing and configuring resources. You'll understand how the shared responsibility model applies to each cloud service type, and about various use cases for each cloud service type.
 </summary>
 
 #### Infrastructure as a Service
+
+Infrastructure as a service is the most flexible and configurable category of cloud services. it gives the user the most control and responsability over the resources. it's very much like renting hardware from the cloud provider.\
+The customer is responsible for installing the OS, the software, configuring networks and disk space, and managing the resources security.\
+Using IasS makes sense for development environments, where things are always in flux and rapidly changing. it is also suitable for 'lift-and-shift' migrations.
+
 #### Platform as a Service
+
+Playform as a service is a category of services where the cloud provider takes care of the OS, patching, disk drive and security, while leaving the user to worry about the business logic.\
+Examples of PaaS are customizable cloud applications and analytics and bussiness intelligence tools running in the cloud.
+
 #### Software as a Service
-
+Software as a service is the category that is the most managed, and the cloud provider takes the most responsability, the operating system, the software and security are all handled by the vendor, and the user just controls the data, devices and which accounts are accessing the service.\
+SaaS services are usually "complete" solutions dedicated for one single, well defined, task.
 </details>
-
-
 
 </details>
 
@@ -1553,34 +1560,8 @@ the data is collected at every level and layer: application, networking, data an
 > - Performance counters from Windows or Linux server machines, such as CPU, memory, and network usage
 
 </details>
-
 </details>
 
-## General Security and Network Security Features
-
-<!-- <details> -->
-<summary>
-
-</summary>
-
-
-</details>
-
-## Identity, Governance, Privacy, and Compliance Features
-
-<details>
-<summary>
-
-</summary>
-</details>
-
-## Microsoft Cost Management and Service Level Agreements
-
-<details>
-<summary>
-
-</summary>
-</details>
 
 ## Takeaways
 
