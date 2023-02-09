@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer cppyy
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy
  -->
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
@@ -3310,5 +3310,18 @@ int main(const int argc, char** argv)
     return 0;
 }
 ```
+
+</details>
+
+## C++ Weekly - Ep 362 - C++ vs Python vs Python (jit) vs Python With C++!
+<details>
+<summary>
+Comparing performance between C++ and python (with C++).
+</summary>
+
+[C++ vs Python vs Python (jit) vs Python With C++!](https://youtu.be/lhqP50YVT-I)
+
+
+coding conway's game of life. both in python and C++. checking normal python, compiled python (pypy), and cppyy (python which uses C++ objects). the real cost is the startup, but even just compiled python makes a huge difference.
 
 </details>
