@@ -1,15 +1,5 @@
 {
   "cSpell.words": [
-    "availbe",
-    "cbegin",
-    "cend",
-    "chrono",
-    "cmake",
-    "constexpr",
-    "cout",
-    "decltype",
-    "Deque",
-    "endl",
     "ifdef",
     "iostream",
     "kubectl",
@@ -23,9 +13,6 @@
     "nulltpr",
     "ostream",
     "precompile",
-    "printf",
-    "rvalues",
-    "struct",
     "t",
     "udemy",
     "unscoped"
@@ -61,5 +48,5 @@
     "vcproj",
     "wchar"
   ],
-  "cSpell.allowCompoundWords": true
+  "cSpell.allowCompoundWords": false
 }
