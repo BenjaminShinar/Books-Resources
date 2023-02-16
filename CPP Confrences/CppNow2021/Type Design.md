@@ -674,7 +674,7 @@ struct pre_incrementable
   template <typename Derived, typename ValueType>
   struct mixin
   {
-    friend Derived& operator++(Derived &self) noexcept(noexcept (++std::decalval<ValueType &>()))
+    friend Derived& operator++(Derived &self) noexcept(noexcept (++std::declval<ValueType &>()))
     {
       ++self.underlying_value();
       return self;

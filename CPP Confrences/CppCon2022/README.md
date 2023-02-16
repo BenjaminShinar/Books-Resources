@@ -14,6 +14,7 @@ ignore these words in spell check for this file
   - Functional Composable Operations with Unix-Style Pipes in C++ - Ankur Satle
   - Understanding Allocator Impact on Runtime Performance in C++ - Parsa Amini
   - Refresher on Containers, Algorithms and Performance in C++ - Vladimir Vishnevskii
+  - Optimizing A String Class for Computer Graphics in Cpp - Zander Majercik, Morgan McGuire
 - [Concurrency](Concurrency.md)
   - C++20’s Coroutines for Beginners - Andreas Fertig
   - Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet - Andreas Weis
@@ -33,6 +34,7 @@ ignore these words in spell check for this file
   - Taking a Byte Out of C++ - Avoiding Punning by Starting Lifetimes - Robert Leahy
   - Introduction to Hardware Efficiency in Cpp - Ivica Bogosavljevic
   - Killing C++ Serialization Overhead & Complexity - Eyal Zedaka
+  - Modern C++: C++ Patterns to Make Embedded Programming More Productive - Steve Bush
 - [Future of C++](Future%20of%20C++.md)
   - Contemporary C++ in Action - Daniela Engert
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
@@ -46,10 +48,11 @@ ignore these words in spell check for this file
   - C++ Lambda Idioms - Timur Doumler
   - Undefined Behavior in the STL - Sandor Dargo
   - C++ MythBusters - Victor Ciura
-  - C++ Function Multiversioning in Windows - Joe Bialek and Pranav Kant
+  - C++ Function MultiVersioning in Windows - Joe Bialek and Pranav Kant
   - Embracing Trailing Return Types and `auto` Return SAFELY in Modern C++ - Pablo Halpern
   - The Most Important Optimizations to Apply in Your C++ Programs - Jan Bielak
   - Back to Basics: RAII in C++ - Andre Kostur
+  - Back to Basics: C++ Testing - Amir Kirsh
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
   - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
   - Managing External API's in Enterprise Systems - Pete Muldoon
@@ -67,6 +70,8 @@ ignore these words in spell check for this file
   - Graph Algorithms and Data Structures in C++20 - Phil Ratzloff & Andrew Lumsdaine
   - Breaking Enigma With the Power of Modern C++ - Mathieu Ropert
   - MDSPAN - A Deep Dive Spanning C++, Kokkos & SYCL - Nevin Liber
+  - Fast, High-Quality Pseudo-Random Numbers for Non-Cryptographers in C++ - Roth Michaels
+  - GPU Performance Portability Using Standard C++ with SYCL - Hugh Delaney & Rod Burns
 - [Social Registration](Social%20Registration.md)
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
@@ -74,13 +79,14 @@ ignore these words in spell check for this file
   - The Hidden Performance Price of C++ Virtual Functions - Ivica Bogosavljevic
   - Using Modern C++ to Eliminate Virtual Functions - Jonathan Gopel
   - 10 Tips for Cleaner C++ 20 Code - David Sackstein
-- [Templates & Metaprogramming](Templates%20&%20Metaprogramming.md)
+- [Templates & MetaProgramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
   - High Speed Query Execution with Accelerators and C++ - Alex Dathskovsky
   - Taking Static Type-Safety to the Next Level - Physical Units for Matrices - Daniel Withopf
   - C++ for Enterprise Applications - Vincent Lextrait
-  - From C++ Templates to C++ Concepts - Metaprogramming: an Amazing Journey - Alex Dathskovsky
+  - From C++ Templates to C++ Concepts - MetaProgramming: an Amazing Journey - Alex Dathskovsky
+  - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
 - [Tooling](Tooling.md)
   - import CMake, CMake and C++20 Modules - Bill Hoffman
 - [Value Semantics](Value%20Semantics.md)
@@ -89,110 +95,3 @@ ignore these words in spell check for this file
   - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
 
 ## Lightning Talks
-
-### The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
-
-<details>
-<summary>
-Some edge cases and problems with the min max algorithms.
-</summary>
-
-[The Dark Corner of STL in Cpp: MinMax Algorithms](https://youtu.be/jBeTvNgW25M), [slides](https://github.com/HappyCerberus/cppcon22-talk).
-
-Free book about standard C++ algorithms available on github.
-
-why are the min/max algorithms so hard? aren't they simple?
-
-```cpp
-auto min = std::min(1,2); // 1
-auto max = std::max(1,2); // 2
-auto clamped = std::clamp(0,1,2); //1, value, min, max
-auto minmax = std::minmax(1,2);
-```
-
-but if we look at the templates, we see that minmax returns a pair.
-
-```cpp
-template<class T>
-const T& min(const T& a, const T& b);
-
-template<class T>
-const T& max(const T& a, const T& b);
-
-template<class T>
-const T& clamp(const T& v,const T& lo, const T& hi);
-
-template<class T>
-std::pair<const T&, const T&> min(const T& a, const T& b);
-```
-
-so if we write the code we get references to temporary elements, auto type deduction doesn't deduce reference type.
-
-```cpp
-std::pair<const int&, const int&> minMax =std::minmax(1,2);
-const int& min = std::min(1,2); // min is a dangling reference
-
-auto [x,y] = std::minmax(1,2); // still dangling
-std::pair<int,int> a = std::minmax(1,2); // this is ok.
-```
-
-to find this behavior, we need to run an address sanitizer.
-
-there are some variants of the min max algorithms, the c++20 range versions behave the same.
-
-c++14 has variant that take an initializer list, which return by value and not by reference.
-
-```cpp
-auto x = std::min({1,2});
-// ok, decltype(x) => int
-
-auto pair = std::minmax({1,2});
-// ok, decltype(pair) => std::pair<int, int>
-
-const int &z = std::max({1,2});
-// ok, lifetime extension
-```
-
-but there are problem, because it's impossible to move from an initializer list. so it fails for move only types, and can incur heavy costs for multiple copies.
-
-```cpp
-auto x = std::min({MoveOnly{}, MoveOnly{}});
-// wouldn't compile
-
-ExpensiveToCopy a,b;
-auto y = std::min({a,b});
-// 3 copies
-
-auto z = std::min(ExpensiveToCopy{},ExpensiveToCopy{});
-// 1 copy since c++17, copy-initialization from prvalue
-```
-
-next is the problem of **const correctness**. we have this code
-
-```cpp
-MyType a,b;
-if (b<a){
-  b.do_something();
-} else {
-  a.do_something();
-}
-```
-
-but we want it to be more simple, like this:
-
-```cpp
-MyType a,b;
-std::min(a,b).do_something();
-```
-
-this will only work if the method we call is const, because the return value of the algorithm is a const reference. we could use `const_cast<>`, but that isn't very readable, and we might have undefined behavior if the method mutates state.
-
-we would like to fix this:
-
-1. remove the need for `const_cast`
-2. remove the potential for dangling reference
-3. avoid excessive copies
-
-we can fix this by adding more overloads for the algorithms. then we get things better by using `auto` templates. there's something about the terinary operator here, so we need to call `std::common_reference_t` if we don't use it. we add _requires_ clause.
-
-</details>
