@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "enduml",
     "ifdef",
     "iostream",
     "kubectl",
@@ -13,6 +14,7 @@
     "nulltpr",
     "ostream",
     "precompile",
+    "startuml",
     "t",
     "udemy",
     "unscoped"
