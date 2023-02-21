@@ -15,6 +15,7 @@ ignore these words in spell check for this file
   - Understanding Allocator Impact on Runtime Performance in C++ - Parsa Amini
   - Refresher on Containers, Algorithms and Performance in C++ - Vladimir Vishnevskii
   - Optimizing A String Class for Computer Graphics in Cpp - Zander Majercik, Morgan McGuire
+  - Optimizing Binary Search - Sergey Slotin
 - [Concurrency](Concurrency.md)
   - C++20’s Coroutines for Beginners - Andreas Fertig
   - Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet - Andreas Weis
@@ -28,6 +29,7 @@ ignore these words in spell check for this file
   - Going Beyond Build Distribution - Using Incredibuild to Accelerate Static Code Analysis and Builds - Jonathan "Beau" Peck
   - Case For a Standardized Package Description Format for External C++ Libraries - Luis Caro Campos
   - C++ Coding with Neovim - Prateek Raman
+  - -memory-safe C++ - Jim Radigan
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
@@ -61,6 +63,7 @@ ignore these words in spell check for this file
   - Principia Mathematica - The Foundations of Arithmetic in C++
 - [Networking & Web](Networking%20&%20Web.md)
   - WebAssembly: Taking Your C++ and Going Places - Nipun Jindal & Pranay Kumar
+  - A Faster Serialization Library Based on Compile-time Reflection and C++ 20 - Yu Qi
 - [Resource Management](Resource%20Management.md)
   - Back to Basics: C++ Move Semantics - Andreas Fertig
   - Back to Basics: C++ Smart Pointers - David Olsen
@@ -91,6 +94,7 @@ ignore these words in spell check for this file
   - import CMake, CMake and C++20 Modules - Bill Hoffman
 - [Value Semantics](Value%20Semantics.md)
   - Back to Basics: Cpp Value Semantics - Klaus Iglberger
+  - Back to Basics: Master C++ Value Categories With Standard Tools - Inbal Levi
 - [Lighting Talks](#lightning-talks)
   - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
 
