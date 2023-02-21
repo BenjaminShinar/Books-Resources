@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore 
+// cSpell:ignore  Unmanaged
  -->
 
 # AZ-900 Microsoft Azure Fundamentals
@@ -14,7 +14,7 @@ udemy course [Learn the fundamentals of Azure, and get certified, with this comp
 ## Introduction
 <details>
 <summary>
-Course introdcution.
+Course introduction.
 </summary>
 
 > Foundational level knowledge of cloud services and how those services are provided with microsoft azure.
@@ -38,14 +38,14 @@ When we say "cloud", it usually means that we rent computing resources from some
 > - Databases
 > - Queues
 > - Content Delivery Network
-> - Batch Procssing Jobs
+> - Batch Processing Jobs
 > - Big Data (Hadoop)
 > - Media services
 > - Machine learning
 > - Chat Bots
 > - Cognitive Services
 
-and many more servies, some are basic and some are advanced.
+and many more services, some are basic and some are advanced.
 
 
 ### A Quick Look Into Azure
@@ -88,18 +88,18 @@ layers:
 - Devices
 - Data
 
-the responsibilities for each of the layers is divided between the customer and the cloud vendor. diffrent services have different seperation lines, some services give the user more control and some are more managed. in IaaS (infrastructure as a service), azure takes care of the physical layers, but the user controls updating the machines. in PaaS (platform as a Service), the vendor controls more aspects of the operating system and the networking, in SaaS (software as a service), the resource includes the application code, and the user just provides that data and interacts with it.
+the responsibilities for each of the layers is divided between the customer and the cloud vendor. different services have different separation lines, some services give the user more control and some are more managed. in IaaS (infrastructure as a service), azure takes care of the physical layers, but the user controls updating the machines. in PaaS (platform as a Service), the vendor controls more aspects of the operating system and the networking, in SaaS (software as a service), the resource includes the application code, and the user just provides that data and interacts with it.
 
 ### Public Cloud, Private Cloud, Hybrid Cloud
 
 Public cloud - computing services offered by a vendor over the public internet, anyone can purchase them. the vendor owns the hardware, the network and the infrastructure.\
 Private cloud - computing services accessible either by the public internet or internal network, but the hardware belongs to the customer. azure has **Azure Stack**, which is a way to run cloud services on-premises. the customer provides the hardware.\
 Sovereign clouds - government clouds,like us-gov or china.\
-Hybrid cloud - combining a private and public cloud, leverging cloud services together with on-premises operations. sliding scale of how much work in done locally and how much is done on the cloud. can be used for different workloads or for scaling.
+Hybrid cloud - combining a private and public cloud, leveraging cloud services together with on-premises operations. sliding scale of how much work in done locally and how much is done on the cloud. can be used for different workloads or for scaling.
 
 ### Cloud Pricing
 
-Pricing models, this can be complicated. when we run on-premises, we can calculate the cost by adding the hardware costs, netwokring, utilities and paying for employees to run it. when using a hosting service, the payment is usually decided up front.\
+Pricing models, this can be complicated. when we run on-premises, we can calculate the cost by adding the hardware costs, networking, utilities and paying for employees to run it. when using a hosting service, the payment is usually decided up front.\
 for the cloud, it's different, the price is usually decided by at several metrics.As in example, for CosmosDB: operations, consumed storage, access and backup.
 
 there are a number of free services (or free until a threshold)
@@ -124,7 +124,7 @@ other services are charged by time
 and some are charged by storage
 - Database Storages
 - Backups
-- Unmanged Disks
+- Unmanaged Disks
 - Network traffic (between regions)
 - Outbound traffic(above 5GB monthly)
 
@@ -143,24 +143,24 @@ some are charged by execution
 there are also regional differences, some regions cost more to operate in.
 </details>
 
-## Benfits of Cloud Computing
+## Benefits of Cloud Computing
 <details>
 <summary>
 
 </summary>
 
 - high availability
-- relability and predictability
+- reliability and predictability
 - security and governance
 - manageability
 
 > Benefits
 > - cost saving (both real and accounting)
 > - availability and scalability
-> - relability and predictability
+> - reliability and predictability
 > - security and governance
 > - manageability
-> - globabl reach
+> - global reach
 > - range or ready on-demand services
 > - range of tools
 
@@ -246,7 +246,7 @@ we can achieve high availability with scalability: handling a growth of users or
 </summary>
 </details>
 
-## Montiroing Tools
+## Monitoring Tools
 <details>
 <summary>
 
