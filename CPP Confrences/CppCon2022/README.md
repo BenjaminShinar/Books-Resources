@@ -16,6 +16,7 @@ ignore these words in spell check for this file
   - Refresher on Containers, Algorithms and Performance in C++ - Vladimir Vishnevskii
   - Optimizing A String Class for Computer Graphics in Cpp - Zander Majercik, Morgan McGuire
   - Optimizing Binary Search - Sergey Slotin
+  - Back to Basics: Standard Library Containers in Cpp - Rainer Grimm
 - [Concurrency](Concurrency.md)
   - C++20’s Coroutines for Beginners - Andreas Fertig
   - Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet - Andreas Weis
@@ -30,6 +31,7 @@ ignore these words in spell check for this file
   - Case For a Standardized Package Description Format for External C++ Libraries - Luis Caro Campos
   - C++ Coding with Neovim - Prateek Raman
   - -memory-safe C++ - Jim Radigan
+  - What's New in Conan 2.0 C/C++ Package Manager - Diego Rodriguez-Losada
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
@@ -75,6 +77,7 @@ ignore these words in spell check for this file
   - MDSPAN - A Deep Dive Spanning C++, Kokkos & SYCL - Nevin Liber
   - Fast, High-Quality Pseudo-Random Numbers for Non-Cryptographers in C++ - Roth Michaels
   - GPU Performance Portability Using Standard C++ with SYCL - Hugh Delaney & Rod Burns
+  - LLVM Optimization Remarks - Ofek Shilon
 - [Social Registration](Social%20Registration.md)
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
@@ -82,6 +85,7 @@ ignore these words in spell check for this file
   - The Hidden Performance Price of C++ Virtual Functions - Ivica Bogosavljevic
   - Using Modern C++ to Eliminate Virtual Functions - Jonathan Gopel
   - 10 Tips for Cleaner C++ 20 Code - David Sackstein
+  - Using Modern C++ to Revive an Old Design - Jody Hagins
 - [Templates & MetaProgramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
