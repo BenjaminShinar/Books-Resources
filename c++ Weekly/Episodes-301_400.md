@@ -3442,3 +3442,17 @@ int main(){
 ```
 we can attempt this with the fibonacci sequence, and in compiler explorer, we can check that we no longer get execution timeout.
 </details>
+
+## C++ Weekly - Ep 365 - Modulo (%): More Complicated Than You Think
+<details>
+<summary>
+Unexpected behavior for the modulo operator when used with negative numbers.
+</summary>
+
+[Modulo (%): More Complicated Than You Think](https://youtu.be/xVNYurap-lk)
+
+wat happens when using the modulo operator on negative numbers?\
+we have `%` `fmod`, `remainder` (`std::fmod`, `std::reminder`), on uses flooring, other using truncating.c and c++ uses the truncated version by default, the Dart programming language uses the "Euclidean" version, which always returns a positive number. python uses "floored" modulo, which works great for wrapping around in positional indexing. 
+
+
+</details>
