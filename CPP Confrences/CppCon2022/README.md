@@ -23,6 +23,7 @@ ignore these words in spell check for this file
   - C++ Concurrency TS-2 Use Cases and Future Direction - Michael Wong, Maged Michael, Paul McKenney
   - An Introduction to Multithreading in C++20 - Anthony Williams
   - A Lock-Free Atomic Shared Pointer in Modern Cpp - Timur Doumler
+  - A Pattern Language for Expressing Concurrency in Cpp - Lucian Radu Teodorescu
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
   - Back to Basics: Debugging in C++ - Mike Shah
@@ -63,6 +64,7 @@ ignore these words in spell check for this file
   - Back to Basics: C++ API Design - Jason Turner
 - [Math & Numbers](Math%20&%20Numbers.md)
   - Principia Mathematica - The Foundations of Arithmetic in C++
+  - What Is an Image? - Cpp Computer Graphics Tutorial, (GPU, GUI, 2D Graphics and Pixels Explained) - Will Rosecrans
 - [Networking & Web](Networking%20&%20Web.md)
   - WebAssembly: Taking Your C++ and Going Places - Nipun Jindal & Pranay Kumar
   - A Faster Serialization Library Based on Compile-time Reflection and C++ 20 - Yu Qi
@@ -86,6 +88,7 @@ ignore these words in spell check for this file
   - Using Modern C++ to Eliminate Virtual Functions - Jonathan Gopel
   - 10 Tips for Cleaner C++ 20 Code - David Sackstein
   - Using Modern C++ to Revive an Old Design - Jody Hagins
+  - Back to Basics: Object-Oriented Programming in C++ - Amir Kirsh
 - [Templates & MetaProgramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
@@ -94,6 +97,7 @@ ignore these words in spell check for this file
   - C++ for Enterprise Applications - Vincent Lextrait
   - From C++ Templates to C++ Concepts - MetaProgramming: an Amazing Journey - Alex Dathskovsky
   - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
+  - What Can Compiler Benchmarks Reveal About Meta-Programming Implementation Strategies - Vincent Reverdy
 - [Tooling](Tooling.md)
   - import CMake, CMake and C++20 Modules - Bill Hoffman
 - [Value Semantics](Value%20Semantics.md)
