@@ -33,6 +33,7 @@ ignore these words in spell check for this file
   - C++ Coding with Neovim - Prateek Raman
   - -memory-safe C++ - Jim Radigan
   - What's New in Conan 2.0 C/C++ Package Manager - Diego Rodriguez-Losada
+  - GitHub Features Every C++ Developer Should Know - Michael Price
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
@@ -80,6 +81,7 @@ ignore these words in spell check for this file
   - Fast, High-Quality Pseudo-Random Numbers for Non-Cryptographers in C++ - Roth Michaels
   - GPU Performance Portability Using Standard C++ with SYCL - Hugh Delaney & Rod Burns
   - LLVM Optimization Remarks - Ofek Shilon
+  - GPU Accelerated Computing & Optimizations on Cross-Vendor Graphics Cards with Vulkan & Kompute - Alejandro Saucedo
 - [Social Registration](Social%20Registration.md)
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
@@ -89,6 +91,7 @@ ignore these words in spell check for this file
   - 10 Tips for Cleaner C++ 20 Code - David Sackstein
   - Using Modern C++ to Revive an Old Design - Jody Hagins
   - Back to Basics: Object-Oriented Programming in C++ - Amir Kirsh
+  - Breaking Dependencies - C++ Type Erasure - The Implementation Details - Klaus Iglberger
 - [Templates & MetaProgramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
@@ -98,6 +101,7 @@ ignore these words in spell check for this file
   - From C++ Templates to C++ Concepts - MetaProgramming: an Amazing Journey - Alex Dathskovsky
   - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
   - What Can Compiler Benchmarks Reveal About Meta-Programming Implementation Strategies - Vincent Reverdy
+  - Nth Pack Element in C++ - A Case Study - Kris Jusiak
 - [Tooling](Tooling.md)
   - import CMake, CMake and C++20 Modules - Bill Hoffman
 - [Value Semantics](Value%20Semantics.md)
