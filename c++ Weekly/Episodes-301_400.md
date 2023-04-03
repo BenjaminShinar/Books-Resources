@@ -3454,5 +3454,151 @@ Unexpected behavior for the modulo operator when used with negative numbers.
 wat happens when using the modulo operator on negative numbers?\
 we have `%` `fmod`, `remainder` (`std::fmod`, `std::reminder`), on uses flooring, other using truncating.c and c++ uses the truncated version by default, the Dart programming language uses the "Euclidean" version, which always returns a positive number. python uses "floored" modulo, which works great for wrapping around in positional indexing. 
 
+</details>
+
+## C++ Weekly - Ep 366 - C++ vs Compiled Python (Codon)
+<details>
+<summary>
+more timing comparisons between c++ and compiled python
+</summary>
+
+[C++ vs Compiled Python (Codon)](https://youtu.be/vXahGgWfzcA)
+
+continuing an early episode about conway's game of life, Codon is a python compiler that creates native machine code. 
+
+codon doesn't use floor modulo.
+
+</details>
+
+## C++ Weekly - Ep 367 - Forgotten C++: `std::valarray`
+<details>
+<summary>
+
+</summary>
+
+[Forgotten C++: `std::valarray`](https://youtu.be/hxcrOwfPhkE)
+
+a vector-like container that provides easy vectorization. operations on the vector occur to all elements.
+
+```cpp
+#include <valarray>
+#include <vector>
+std::valarray<int> get_data();
+std::vector<int> get_vector_data();
+
+int use_val_array(){
+    auto data = get_data();
+    data += 4;  // add 4 to all elements
+}
+
+void use_vector(){
+    auto data = get_vector_data();
+    for (auto & item: data) {
+        item += 4; // add 4 to each element
+    }
+}
+```
+
+it's also possible to use `std::val_array` as the other operand, such as multiplying one by another. the standard allows operations to return other types, and it can also do lazy evaluation with them.
+
+it is "forgotten", as there weren't many updates for it over the years, it didn't even get `constexpr` support.
+</details>
+
+## C++ Weekly - Ep 368 - The Power of template-template Parameters: A Basic Guide
+<details>
+<summary>
+Passing a template type to a function, to be used inside a template.
+</summary>
+
+[The Power of template-template Parameters: A Basic Guide](https://youtu.be/s6Cub7EFLXo)
+
+```cpp
+#include <vector>
+#include <list>
+
+template<typename ResultType>
+auto get_data(){
+    // do something
+    ResultType result;
+    result.push_back(1);
+    result.push_back(2);    
+
+    return result;
+}
+
+int main(){
+    auto data_vec = get_data<std::vector<int>>();
+}
+```
+
+but in this case, we can still have out function push in floating point numbers, and the conversion will be silent. we just want to pass the container type, but not the data type. std::vector or list, but we choose the data itself.
+
+```cpp
+template<template<typename Contained,
+    typename Alloc=std::allocator<Contained>,
+    ResultType>
+auto get_data(){
+    // do something
+    ResultType<double> result;
+    result.push_back(1.0);
+    result.push_back(2.0);    
+
+    return result;
+}
+
+int main(){
+    auto data_vec = get_data<std::vector>(); //no need to pass in the data type itself, 
+}
+```
+
+we can now use `constexpr` to be more precise.
+
+```cpp
+template<template<typename Contained,
+    typename Alloc=std::allocator<Contained>,
+    ResultType>
+auto get_data(){
+    ResultType<double> result;
+    if constexpr(requires{result.reserve(1);}) { // is it possible to call reserve?
+        result.reserve(3);
+    }
+    result.push_back(1.0);
+    result.push_back(2.0);    
+    result.push_back(3.0);    
+
+    return result;
+}
+```
+for non primitives types, we should use `emplace_back`, rather than `push_back`.
+</details>
+
+## C++ Weekly - Ep 369 - llvm-mos: Bringing C++23 To Your Favorite 80's Computers
+<details>
+<summary>
+A project that compiles modern code into other languages assembly code.
+</summary>
+
+[llvm-mos: Bringing C++23 To Your Favorite 80's Computers](https://youtu.be/R30EQGjxoAc)
+
+a project that generates 6502 (and other forms) assembly code from modern C++ code.
+
+we can create a short example
+
+```cpp
+#include <cstdint>
+#include <cstdio>
+
+int main() {
+    volatile std::uint8_t *border= reinterpret_cast<volatile std::uint8_t *>(53280); // take a pointer to somewhere in memory
+
+    *border = 10;
+    std::puts("Hello World!");
+    for (int i=0; i<16000; ++i){
+        ++(*border);
+    }
+}
+```
+
+compile it, and load it into an emulator and see that the message is printed and the screen changes colors.
 
 </details>
