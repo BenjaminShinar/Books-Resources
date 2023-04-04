@@ -3602,3 +3602,64 @@ int main() {
 compile it, and load it into an emulator and see that the message is printed and the screen changes colors.
 
 </details>
+
+## C++ Weekly - Ep 370 - Do Constructors Exist?
+<details>
+<summary>
+Constructors don't actually exist!
+</summary>
+
+[Do Constructors Exist?](https://youtu.be/afDB4kpYnzY)
+
+
+we can create a pointer to member function with the `using` syntax and explicitly writing the function address.
+```cpp
+struct S{
+    S();
+    ~S();
+
+    int get();
+    int other_get();
+};
+
+int main(){
+    using mem = int(S::*)();
+    mem foo = &S::get;
+
+    S s;
+    (s.*foo)(); // call function
+
+    foo = &S::get_other; // reassign
+    (s.*foo)(); // call function, this time a different one!
+
+    s.~S(); // explicitly calling destructor, actually undefined behavior.
+}
+```
+
+but we couldn't do it with constructors or destructors.
+```cpp
+int main(){
+    using ctor_destructor = S (S::*)();
+    ctor_destructor ctor = &S::S; // Error! can't take address of constructor.
+    using mem_destructor = void (S::*)();
+    mem_destructor des = &S::~S; // Error! can't take address of destructor.
+}
+```
+we can't make a pointer to a constructor or a destructor. some example with templates
+
+```cpp
+struct S{
+    template<int>
+    S();
+    ~S();
+};
+
+int main(){
+    S s<int>; //can't be done.
+}
+
+```
+
+example with cast operator syntax that look like constructors.
+
+</details>
