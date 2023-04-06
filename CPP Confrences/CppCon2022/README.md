@@ -24,6 +24,8 @@ ignore these words in spell check for this file
   - An Introduction to Multithreading in C++20 - Anthony Williams
   - A Lock-Free Atomic Shared Pointer in Modern Cpp - Timur Doumler
   - A Pattern Language for Expressing Concurrency in Cpp - Lucian Radu Teodorescu
+  - C++ Coroutines, from Scratch - Phil Nash
+  - Sockets - Applying the Unix Readiness Model When Composing Concurrent Operations in C++ - Filipp Gelman
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
   - Back to Basics: Debugging in C++ - Mike Shah
@@ -34,6 +36,7 @@ ignore these words in spell check for this file
   - -memory-safe C++ - Jim Radigan
   - What's New in Conan 2.0 C/C++ Package Manager - Diego Rodriguez-Losada
   - GitHub Features Every C++ Developer Should Know - Michael Price
+  - New in Visual Studio Code! Clang-Tidy, makefile, CMake, GitHub & More - Marian Luparu, Sinem Akinci
 - [Education Coaching](Education%20Coaching.md)
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
@@ -82,6 +85,7 @@ ignore these words in spell check for this file
   - GPU Performance Portability Using Standard C++ with SYCL - Hugh Delaney & Rod Burns
   - LLVM Optimization Remarks - Ofek Shilon
   - GPU Accelerated Computing & Optimizations on Cross-Vendor Graphics Cards with Vulkan & Kompute - Alejandro Saucedo
+  - Fast C++ by using SIMD Types with Generic Lambdas and Filters - Andrew Drakeford
 - [Social Registration](Social%20Registration.md)
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
