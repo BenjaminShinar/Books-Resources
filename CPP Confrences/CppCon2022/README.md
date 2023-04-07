@@ -37,7 +37,11 @@ ignore these words in spell check for this file
   - What's New in Conan 2.0 C/C++ Package Manager - Diego Rodriguez-Losada
   - GitHub Features Every C++ Developer Should Know - Michael Price
   - New in Visual Studio Code! Clang-Tidy, makefile, CMake, GitHub & More - Marian Luparu, Sinem Akinci
-- [Education Coaching](Education%20Coaching.md)
+  - Personal Log - Where No Init Has Gone Before in C++ - Andrei Zissu
+  - "It's A Bug Hunt" - Armor Plate Your Unit Tests in Cpp - Dave Steffen
+  - Observability Tools C++: Beyond GDB and printf - Tools to Understand the Behavior of Your Program - Ivica Bogosavljevic
+- [Education & Coaching](Education%20%26%20Coaching.md)
+  - Reviewing Beginners' C++ Code - Patrice Roy
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
   - Taking a Byte Out of C++ - Avoiding Punning by Starting Lifetimes - Robert Leahy
