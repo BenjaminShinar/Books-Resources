@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Okun Kube fooa
+// cSpell:ignore Okun Kube fooa SVennam aaaabc
 -->
 
 # Books-Resources
@@ -38,7 +38,7 @@ IBM Kubernetes
 
 #### Kubernetes Explained
 
-Kubernetes is an orchastration tool to manage containerized applications
+Kubernetes is an orchestration tool to manage containerized applications
 
 Kubernetes master has the Kubernetes API, the customer worker nodes are also kubernetes managed, and each has a kubelet.
 
@@ -53,7 +53,7 @@ labels:
 
 we can deploy that manifest with kubectl, the kubernetes command line tool. this sends the configuration to a worker node.
 
-we can also define a templat in the manifest for how pods look
+we can also define a template in the manifest for how pods look
 
 ```yml
 kind: deployment
@@ -67,7 +67,7 @@ template:
 
 now we use kubernetes to manage that deployment and ensure that state, so it will create more pods like that.
 
-each pod has an ip address, but when a pod dies it gets a new ip address, if we want to talk to a pod, we need something to manage that. this is done with a service defintion. this is also in the yaml file, this creates a reliable way for the KubeDNS to communicate.
+each pod has an ip address, but when a pod dies it gets a new ip address, if we want to talk to a pod, we need something to manage that. this is done with a service definition. this is also in the yaml file, this creates a reliable way for the KubeDNS to communicate.
 
 ```yml
 kind: service
@@ -84,23 +84,23 @@ we have pods, deployments and services as resources of kubernetes.
 how are pods created by kubernetes?
 
 nodes are the machines, we have control nodes and compute nodes.
-if we want to make a pod, we use kubectl to talk with the kubeAPI server. the first thing that happens is authentication, and next the request is written to etcd (a keyvalue datastore), that is the source-of-truth for kubernetes.
+if we want to make a pod, we use kubectl to talk with the kubeAPI server. the first thing that happens is authentication, and next the request is written to etcd (a key-value datastore), that is the source-of-truth for kubernetes.
 
 the etcd defines the desired state for Kubernetes.
 
 the scheduler controls which workloads needs to be assigned to a worker node, it talks to the kubeAPI server.
 
-the compute nodes have a kubelet, which talks with the control plane and the kubeAPI, it's registered in the cluster. the compute nodes also have a container runtime engine (CRI - container runtime initiative,not only Docker), and a kube-proxy for communiation purposes.
+the compute nodes have a kubelet, which talks with the control plane and the kubeAPI, it's registered in the cluster. the compute nodes also have a container runtime engine (CRI - container runtime initiative,not only Docker), and a kube-proxy for communication purposes.
 
 the scheduler chooses to which compute node the work should be passed, it tells the kubeAPI which, and then that is written to the etcd. then we have a desired state.
 
-the last part of the Control node is the controller manager. it has the replication contoller and it also monitor the state of the world against the desired state. if it sees that a pod is missing, it knows how to request a new one to be created.
+the last part of the Control node is the controller manager. it has the replication controller and it also monitor the state of the world against the desired state. if it sees that a pod is missing, it knows how to request a new one to be created.
 
 - control node
   - kubeAPI server
   - etcd
   - scheduler
-  - conroller manager
+  - controller manager
 - compute node
   - kubelet
   - kube-proxy
@@ -146,7 +146,7 @@ service:
   port: 8080
 ```
 
-the chart makes it possible to pull values from an externa source.
+the chart makes it possible to pull values from an external source.
 
 ```yaml
 #deployment
@@ -158,7 +158,7 @@ type: { { values.service.type } }
 port: { { values.service.port } }
 ```
 
-the command that we run is, helm will inject the parametes from the chart and send them into a **Tiller** component on the kubernetes side.
+the command that we run is, helm will inject the parameters from the chart and send them into a **Tiller** component on the kubernetes side.
 
 ```sh
 helm install <myApp>
@@ -176,9 +176,9 @@ helm package
 
 we still use all the knowledge we got when we used docker, we build on top-of it to get a better deployment.
 
-it helps us with scaling up,orchestration replaces scripts that we would have written otherwise. deployment is easier, development is easier, and montiroing is done for us built-in.
+it helps us with scaling up,orchestration replaces scripts that we would have written otherwise. deployment is easier, development is easier, and monitoring is done for us built-in.
 
-a deployment is always alive, it's the desired state, no matter what happends, kubernetes will try to get back to that state.
+a deployment is always alive, it's the desired state, no matter what happens, kubernetes will try to get back to that state.
 
 #### Kubernetes Deployments: Get Started Fast
 
@@ -199,7 +199,7 @@ debugging
 
 #### Kubernetes and OpenShift: What's the Difference?
 
-openshift by redhad (not open source), OKD - origin kubernetes deployment.
+openshift by redhat (not open source), OKD - origin kubernetes deployment.
 
 kubernetes:source code, image registry, ci-cd cycle.
 
@@ -270,7 +270,7 @@ Dialog Box - don't use
 \
 \.
 
-defintion and tooltip
+definition and tooltip
 
 <dfn><abbr title="HyperText Markup Language">HTML</abbr></dfn> is the standard markup language for creating web pages.
 
@@ -280,20 +280,24 @@ defintion and tooltip
 - Unicode: <kbd>Alt</kbd> + four digits of decimal number.
 - HTML Entity:
   - <<kbd>&#</kbd>>\<Decimal Number><<kbd>;</kbd>> &#945;
-  - <<kbd>&#x</kbd>>\<Hexdecimal Number><<kbd>;</kbd>> &#x3B2;
+  - <<kbd>&#x</kbd>>\<Hexadecimal Number><<kbd>;</kbd>> &#x3B2;
   - <<kbd>&</kbd>>\<symbol name><<kbd>;</kbd>> &gamma;
 
 [some html symbols](https://www.w3schools.com/charsets/ref_utf_punctuation.asp)
 
-| symbol       | code     |
-| ------------ | -------- |
-| left arrrow  | &larr;   |
-| right arrrow | &rarr;   |
-| two arrows   | &#8644;  |
-| alpha        | &alpha;  |
-| Weird A      | &#x0041; |
-| plus minus   | &pm;     |
-| empty        | &empty;  |
+| symbol      | code     |
+| ----------- | -------- |
+| left arrow  | &larr;   |
+| right arrow | &rarr;   |
+| two arrows  | &#8644;  |
+| alpha       | &alpha;  |
+| Weird A     | &#x0041; |
+| plus minus  | &pm;     |
+| empty       | &empty;  |
+
+### Latex
+
+[latex symbols](https://www.cmor-faculty.rice.edu/~heinken/latex/symbols.pdf)
 
 </details>
 

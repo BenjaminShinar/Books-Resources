@@ -26,10 +26,12 @@ ignore these words in spell check for this file
   - A Pattern Language for Expressing Concurrency in Cpp - Lucian Radu Teodorescu
   - C++ Coroutines, from Scratch - Phil Nash
   - Sockets - Applying the Unix Readiness Model When Composing Concurrent Operations in C++ - Filipp Gelman
+  - Architecting Multithreaded Robotics Applications in C++ - Arian Ajdari
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
   - Back to Basics: Debugging in C++ - Mike Shah
   - C++ Dependencies Don’t Have To Be Painful - Why You Should Use a Package Manager - Augustin Popa
+  - import CMake, CMake and C++20 Modules - Bill Hoffman
   - Going Beyond Build Distribution - Using Incredibuild to Accelerate Static Code Analysis and Builds - Jonathan "Beau" Peck
   - Case For a Standardized Package Description Format for External C++ Libraries - Luis Caro Campos
   - C++ Coding with Neovim - Prateek Raman
@@ -40,14 +42,17 @@ ignore these words in spell check for this file
   - Personal Log - Where No Init Has Gone Before in C++ - Andrei Zissu
   - "It's A Bug Hunt" - Armor Plate Your Unit Tests in Cpp - Dave Steffen
   - Observability Tools C++: Beyond GDB and printf - Tools to Understand the Behavior of Your Program - Ivica Bogosavljevic
+  - Generating Parsers in C++ with Maphoon - Hans de Nivelle
 - [Education & Coaching](Education%20%26%20Coaching.md)
   - Reviewing Beginners' C++ Code - Patrice Roy
+  - Back to Basics: The C++ Core Guidelines - Rainer Grimm
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
   - Taking a Byte Out of C++ - Avoiding Punning by Starting Lifetimes - Robert Leahy
   - Introduction to Hardware Efficiency in Cpp - Ivica Bogosavljevic
   - Killing C++ Serialization Overhead & Complexity - Eyal Zedaka
   - Modern C++: C++ Patterns to Make Embedded Programming More Productive - Steve Bush
+  - Overcoming C++ Embedded Development Tooling Challenges - Marc Goodne
 - [Future of C++](Future%20of%20C++.md)
   - Contemporary C++ in Action - Daniela Engert
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
@@ -100,6 +105,7 @@ ignore these words in spell check for this file
   - Using Modern C++ to Revive an Old Design - Jody Hagins
   - Back to Basics: Object-Oriented Programming in C++ - Amir Kirsh
   - Breaking Dependencies - C++ Type Erasure - The Implementation Details - Klaus Iglberger
+  - Pragmatic Simplicity - Actionable Guidelines To Tame Cpp Complexity - Vittorio Romeo
 - [Templates & MetaProgramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
@@ -110,8 +116,6 @@ ignore these words in spell check for this file
   - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
   - What Can Compiler Benchmarks Reveal About Meta-Programming Implementation Strategies - Vincent Reverdy
   - Nth Pack Element in C++ - A Case Study - Kris Jusiak
-- [Tooling](Tooling.md)
-  - import CMake, CMake and C++20 Modules - Bill Hoffman
 - [Value Semantics](Value%20Semantics.md)
   - Back to Basics: Cpp Value Semantics - Klaus Iglberger
   - Back to Basics: Master C++ Value Categories With Standard Tools - Inbal Levi
