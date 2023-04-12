@@ -43,6 +43,9 @@ ignore these words in spell check for this file
   - "It's A Bug Hunt" - Armor Plate Your Unit Tests in Cpp - Dave Steffen
   - Observability Tools C++: Beyond GDB and printf - Tools to Understand the Behavior of Your Program - Ivica Bogosavljevic
   - Generating Parsers in C++ with Maphoon - Hans de Nivelle
+  - tipi.build A New C++ Package Manager - Damien Buhl
+  - Reproducible Developer Environments in C++ - Michael Price
+  - The Surprising Complexity of Formatting Ranges in Cpp - Barry Revzin
 - [Education & Coaching](Education%20%26%20Coaching.md)
   - Reviewing Beginners' C++ Code - Patrice Roy
   - Back to Basics: The C++ Core Guidelines - Rainer Grimm
@@ -61,6 +64,7 @@ ignore these words in spell check for this file
   - C++23 - What's In It For You? - Marc Gregoire
   - Understanding C++ coroutines by example: Generators - Pavel Novikov
   - 10 Years of Meeting C++ - Historical Highlights and the Future of C++ - Jens Weller
+  - Simulating Low-Level Hardware Devices in Cpp - Ben Saks
 - [General C++](General%20C++.md)
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
   - C++ Lambda Idioms - Timur Doumler
@@ -95,7 +99,6 @@ ignore these words in spell check for this file
   - LLVM Optimization Remarks - Ofek Shilon
   - GPU Accelerated Computing & Optimizations on Cross-Vendor Graphics Cards with Vulkan & Kompute - Alejandro Saucedo
   - Fast C++ by using SIMD Types with Generic Lambdas and Filters - Andrew Drakeford
-- [Social Registration](Social%20Registration.md)
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
   - How Microsoft Uses C++ to Deliver Office - Huge Size, Small Components - Zachary Henkel
@@ -106,6 +109,7 @@ ignore these words in spell check for this file
   - Back to Basics: Object-Oriented Programming in C++ - Amir Kirsh
   - Breaking Dependencies - C++ Type Erasure - The Implementation Details - Klaus Iglberger
   - Pragmatic Simplicity - Actionable Guidelines To Tame Cpp Complexity - Vittorio Romeo
+  - The Observer Design Pattern in Cpp - Mike Shah
 - [Templates & MetaProgramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
