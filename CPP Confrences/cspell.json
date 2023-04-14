@@ -2,9 +2,7 @@
   "version": "0.2",
   "ignorePaths": [],
   "dictionaryDefinitions": [],
-  "dictionaries": [
-    "cpp"
-  ],
+  "dictionaries": ["cpp"],
   "words": [
     "Ajdari",
     "alignas",
@@ -19,17 +17,15 @@
     "Cyclomatic",
     "declval",
     "fmap",
+    "Francesco",
     "godbolt",
-    "Goodne",
     "initializable",
     "invokable",
     "jthread",
     "linalg",
-    "Maphoon",
     "mdarray",
     "mdspan",
     "Nemo",
-    "Nivelle",
     "nodiscard",
     "nulllptr",
     "nullopt",
@@ -40,6 +36,10 @@
     "Xoshiro"
   ],
   "ignoreWords": [
+    "Maphoon",
+    "Goodne",
+    "Nivelle",
+    "Zoffoli",
     "Adelstein",
     "Akinci",
     "Alisdair",

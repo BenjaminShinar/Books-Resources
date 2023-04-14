@@ -3,6 +3,8 @@ ignore these words in spell check for this file
 // cSpell:ignore
 -->
 
+<link rel="stylesheet" type="text/css" href="../../markdown-style.css">
+
 # CppCon 2022
 
 [website](https://cppcon.org/), [youtube playlist](https://www.youtube.com/playlist?list=PLHTh1InhhwT6c2JNtUiJkaH8YRqzhU7Ag), [materials index](https://github.com/CppCon/CppCon2022).
@@ -27,6 +29,7 @@ ignore these words in spell check for this file
   - C++ Coroutines, from Scratch - Phil Nash
   - Sockets - Applying the Unix Readiness Model When Composing Concurrent Operations in C++ - Filipp Gelman
   - Architecting Multithreaded Robotics Applications in C++ - Arian Ajdari
+  - Smarter Cpp Atomic Smart Pointers - Efficient Concurrent Memory Management - Daniel Anderson
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
   - Back to Basics: Debugging in C++ - Mike Shah
@@ -46,6 +49,8 @@ ignore these words in spell check for this file
   - tipi.build A New C++ Package Manager - Damien Buhl
   - Reproducible Developer Environments in C++ - Michael Price
   - The Surprising Complexity of Formatting Ranges in Cpp - Barry Revzin
+  - How to Use C++ Dependency Injection to Write Maintainable Software - Francesco Zoffoli
+  - Cross-Building Strategies in the Age of C++ Package Managers - Luis Caro Campos
 - [Education & Coaching](Education%20%26%20Coaching.md)
   - Reviewing Beginners' C++ Code - Patrice Roy
   - Back to Basics: The C++ Core Guidelines - Rainer Grimm
@@ -75,6 +80,7 @@ ignore these words in spell check for this file
   - The Most Important Optimizations to Apply in Your C++ Programs - Jan Bielak
   - Back to Basics: RAII in C++ - Andre Kostur
   - Back to Basics: C++ Testing - Amir Kirsh
+  - Back to Basics: Name Lookup and Overload Resolution in C++ - Mateusz Pusz
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
   - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
   - Managing External API's in Enterprise Systems - Pete Muldoon
@@ -127,3 +133,10 @@ ignore these words in spell check for this file
   - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
 
 ## Lightning Talks
+
+<!-- <details> -->
+<summary>
+Lightening Talks
+</summary>
+
+</details>

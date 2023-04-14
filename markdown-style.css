@@ -1,0 +1,6 @@
+/* Markdown styles */
+cpp {
+  color: lightblue;
+  /* background-color: grey; */
+  /* this doesn't maintain angular brackets*/
+}
