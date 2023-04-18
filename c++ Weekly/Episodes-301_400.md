@@ -1,6 +1,8 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg
 -->
+
+<link rel="stylesheet" type="text/css" href="../markdown-style.css">
 
 ## C++ Weekly - Ep 301 - C++ Homework: _constexpr_ All The Things
 
@@ -3661,5 +3663,74 @@ int main(){
 ```
 
 example with cast operator syntax that look like constructors.
+
+</details>
+
+## C++ Weekly - Ep 371 - Best Practices for Using AI Code Generators (ChatGPT and GitHub Copilot)
+<details>
+<summary>
+some best practices for using AI-code generator.
+</summary>
+
+[Best Practices for Using AI Code Generators (ChatGPT and GitHub Copilot)](https://youtu.be/I2c969I-KmM)
+
+1. Assume the answer is wrong - even when it appears correct and is confident
+2. Assume the answer is stolen from somewhere - be concerned about copyrights
+3. Be explicit about the required guidelines - "prefer libfmt over iostreams"
+4. The answers represent the "average" quality of code on the internet - garbage in, garbage out.
+
+The tools (chatGPT) can be used as a "rubber duck" and help with clarifying the problem, and as jumping point for inspiration and starting. it can also be used as a "second set of eyes", like figuring out a compiler error.
+
+A very good use case is using the tools to generate a quick start for a project. like driver code, basic tests, cmake, etc... it's a good way to get started.
+
+</details>
+
+## C++ Weekly - Special Episode - Make Your Own Godbolt (Compiler-Explorer) With GPT-4 in 5 Minutes!
+<details>
+<summary>
+asking chatGPT to create a python program that compiles c++ code and generates the assembly.
+</summary>
+
+[Make Your Own Godbolt (Compiler-Explorer) With GPT-4 in 5 Minutes!](https://youtu.be/XD3b2HA_7BQ)
+
+more playing with chat-GPT.
+
+the first version is functional, it creates python code that runs and gives decent results in a very fast manner.
+
+</details>
+
+## C++ Weekly - Ep 372 - CPM For Trivially Easy Dependency Management With CMake?
+<details>
+<summary>
+Using a dependency manager in cmake.
+</summary>
+
+[CPM For Trivially Easy Dependency Management With CMake?](https://youtu.be/dZMU3iAPhtI)
+
+CPM - a dependency manager for cmake.
+
+the example from the [CPM.cmake github](https://github.com/cpm-cmake/CPM.cmake)
+
+```cmake
+cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+
+# create project
+project(MyProject)
+
+# add executable
+add_executable(main main.cpp)
+
+# add dependencies
+include(cmake/CPM.cmake)
+
+CPMAddPackage("gh:fmtlib/fmt#7.1.3")
+CPMAddPackage("gh:nlohmann/json@3.10.5")
+CPMAddPackage("gh:catchorg/Catch2@3.2.1")
+
+# link dependencies
+target_link_libraries(main fmt::fmt nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
+```
+
+before that we need to add the cpm.cmake to the project cmake, so there's a script for that.
 
 </details>

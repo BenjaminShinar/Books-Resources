@@ -4,6 +4,6 @@
     "dictionaryDefinitions": [],
     "dictionaries": ["cpp"],
     "words": ["Wconversion"],
-    "ignoreWords": ["smallpt","IIFE","lefticus"],
+    "ignoreWords": ["smallpt","IIFE","lefticus","libfmt","Godbolt", "fmtlib"],
     "import": []
 }
