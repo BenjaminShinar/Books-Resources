@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -3734,3 +3734,23 @@ target_link_libraries(main fmt::fmt nlohmann_json::nlohmann_json Catch2::Catch2W
 before that we need to add the cpm.cmake to the project cmake, so there's a script for that.
 
 </details>
+
+## C++ Weekly - Special Edition - Getting Started with Embedded Python
+<details>
+<summary>
+Showing off some devices which run embedded python.
+</summary>
+
+[Getting Started with Embedded Python](https://youtu.be/MIM_PTv_VjU)
+
+devices that run python:
+- MacroPad - acts as a keyboard or a mouse, 
+- BBC Micro:bit and Pico:ed - larger LED grid.
+- (external power source) addons
+- Calculators that run micro python and allow for programming.
+
+
+Microsoft has an online tool that uses these devices to teach code.
+</details>
+
+

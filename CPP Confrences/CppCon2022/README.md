@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore
+// cSpell:ignore JupyText
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -130,6 +130,7 @@ ignore these words in spell check for this file
   - Back to Basics: Cpp Value Semantics - Klaus Iglberger
   - Back to Basics: Master C++ Value Categories With Standard Tools - Inbal Levi
 - [Lighting Talks](#lightning-talks)
+  - Who is Looking for a C++ Job? - Jens Weller
   - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
 
 ## Lightning Talks
@@ -139,4 +140,96 @@ ignore these words in spell check for this file
 Lightening Talks
 </summary>
 
+### Who is Looking for a C++ Job? - Jens Weller
+<details>
+
+[Who is Looking for a C++ Job? - Jens Weller](https://youtu.be/0xI0H7djNOc)
+
+an online C++ job fair that happens a few time each year. showing up some data about applicants.
+</details>
+
+### -std=c++20 -- Will This C++ Code Compile? - Tulio Leao
+<details>
+
+[-std=c++20 -- Will This C++ Code Compile? - Tulio Leao](https://youtu.be/87_Ld6CMHAw)
+
+- using reserved keywords as variable names ("requires","concept")
+- identifiers for the standard library (such as "_TR")
+- incompatibility between <cpp>string</cpp> and <cpp>std::fs::path u8string()</cpp>. was ok in c++17, but not anymore.
+- redundant template-id on constructors
+- aggregate initialization of structs with deleted default constructors
+- removed <cpp>std::allocator</cpp> members and functions, previously deprecated, then obsolete, now removed, replace with <cpp>std::allocator_traits</cpp>
+- <cpp>std::accumulate</cpp> attempts to move the first element, so it won't work with non-const references.
+</details>
+
+### Programming is Fun in Cpp! - Pier-Antoine Giguère
+<details>
+
+[Programming is Fun in Cpp!](https://youtu.be/F9c1ZuSRdsM)
+
+playing with ray tracing and generating images.
+</details>
+
+### Effective APIs in Practice in C++ - Thamara Andrade
+<details>
+[Effective APIs in Practice in C++](https://youtu.be/YdZLsSDZ_Qc)
+
+tips to improve API and make he
+- better naming - for the give the unit name in the api
+- use strong types - explicit creation of the required object
+  - adding our literals
+- avoid easily swappable parameters - there is a clang tidy tool to help finding those cases
+- think about intent 
+- keep learning!
+</details>
+
+###  C++ on Fly - C++ on Jupyter Notebook - Nipun Jindal
+<details>
+
+[C++ on Fly - C++ on Jupyter Notebook](https://youtu.be/MtKdza3RJNM)
+
+A scratch pad in jupyter notebook - code and rich text. **Xeus** is an implementation of the jupyter Kernel protocol, and together with **cling** interferer, we can have a working C++ notebook.
+
+```sh
+conda create -n cling
+conda install xeus-cling -c conda-forge
+conda install xeus -c conda-forge
+conda activate cling
+
+jupyter notebook
+jupyter lab
+```
+
+there is also a docker setup.
+
+versioning with **JupyText**, quick sharing with **Binder**.
+</details>
+
+### Finding Whether a Number is a Power of 2 - Ankur Satle
+<details>
+
+[Finding Whether a Number is a Power of 2](https://youtu.be/Df-qEsWjzQw)
+
+a common interview question, counting "on" bits in number.
+
+```cpp
+constexpr bool is_pow_knr(std::unsigned_integral auto n){
+  return (n & (n-1)) == 0;
+}
+```
+
+bitset version isn't constexpr. in c++20 there is the <cpp>bit</cpp> header with built-in functions.
+</details>
+
+### The Decade Long Rewind: Lambdas in C++ - Pranay Kumar
+<details>
+
+[The Decade Long Rewind: Lambdas in C++](https://youtu.be/xBkDkCgQsAM).
+
+- C++11 introduced lambdas, unique typed closure which the compiler produces. it had capture, mutable, throws.
+- c++14 added default parameters, template parameters with `auto&&`,generalized capture inside the parentheses, and being able to return lambdas from function with the `auto` return type.
+- C++17 allowed lambdas to be constexpr, and fave a simple capture for with `[*this](){}`.
+- C++20 made lambda mre aligned with templates, following a similar syntax and allowing to capture variadic parameter pack.
+- C++23 allows for omitted empty parameters list, and makes recursive lambdas easier to use.
+</details>
 </details>
