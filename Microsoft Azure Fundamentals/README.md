@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore yamlc Intune Postgre nsight
+// cSpell:ignore yamlc Intune Postgre nsight azureuser IPADDRESS Passwordless multifactor agentless Kanban
  -->
 
 # Microsoft Azure Fundamentals
@@ -47,15 +47,15 @@ This module introduces you to cloud computing. It covers things such as cloud co
 #### What is Cloud Computing
 > Cloud computing is the delivery of computing services over the internet. Computing services include common IT infrastructure such as virtual machines, storage, databases, and networking.\
 > [...]\
-> Because cloud computing uses the internet to deliver these services, it doesn’t have to be constrained by physical infrastructure the same way that a traditional datacenter is. That means if you need to increase your IT infrastructure rapidly, you don’t have to wait to build a new datacenter—you can use the cloud to rapidly expand your IT footprint.
+> Because cloud computing uses the internet to deliver these services, it doesn’t have to be constrained by physical infrastructure the same way that a traditional data-center is. That means if you need to increase your IT infrastructure rapidly, you don’t have to wait to build a new data-center—you can use the cloud to rapidly expand your IT footprint.
 
 choose the power and size of the required computing power, but without paying for the upkeep and being able to change the machine at will. The two main resources are **Compute power** and **Storage**.
 
 #### Describe the Shared Responsibility Model
-Dividing the responsability between the cloud vendor (Microsoft Azure) and the customer. with a traditional corporate datacenter, the user is responsible for everything, to get the hardware, to put it in a locked room, to make sure it can't be accessed through the network, and to provide power and patch up the machines when there is an OS update. this is usually a full time job for the IT department.\
-With the shared responsability model, so of these tasks are offloaded to the cloud vendor - this depends on the service, but at the most basic level, the physical aspects of the hardware and netwokring are taken care of by the vendor. for some services that's all there is, like virtual machines require the user to set up the networking connections and to patch the OS if there is a security update. other services are more managed and the cloud vendor handles the machine instances (you just provide the code) and other services are provided by azure and just ingest the data the customer provides.
+Dividing the responsibility between the cloud vendor (Microsoft Azure) and the customer. with a traditional corporate data-center, the user is responsible for everything, to get the hardware, to put it in a locked room, to make sure it can't be accessed through the network, and to provide power and patch up the machines when there is an OS update. this is usually a full time job for the IT department.\
+With the shared responsibility model, so of these tasks are offloaded to the cloud vendor - this depends on the service, but at the most basic level, the physical aspects of the hardware and networking are taken care of by the vendor. for some services that's all there is, like virtual machines require the user to set up the networking connections and to patch the OS if there is a security update. other services are more managed and the cloud vendor handles the machine instances (you just provide the code) and other services are provided by azure and just ingest the data the customer provides.
 
-![Shared Responsability Model](https://learn.microsoft.com/en-us/training/wwl-azure/describe-cloud-compute/media/shared-responsibility-b3829bfe.svg)
+![Shared Responsibility Model](https://learn.microsoft.com/en-us/training/wwl-azure/describe-cloud-compute/media/shared-responsibility-b3829bfe.svg)
 
 #### Define Cloud Models
 
@@ -78,7 +78,7 @@ Azure Arc is a set of tools that provides ways to manage the cloud environment.
 
 #### Describe the Consumption-Based Model
 
-Capital Expenses (CapEx) - usually one-time, upfront investments. this can include buying infrastrcure, building the datacenter, etc...\
+Capital Expenses (CapEx) - usually one-time, upfront investments. this can include buying infrastructure, building the data-center, etc...\
 In contrast, Operational expense (OpEx) are ongoing, repeating costs. these are the running costs of operating and running the business.
 
 with cloud, there is almost no CapEx investment, the cost is only for the cloud services which the customer consumes. it's easy to scale up when more resources are needed, and once they aren't, they are released and there's no additional charge.
@@ -97,7 +97,7 @@ In this module, you’ll be introduced to some of the benefits that cloud comput
 
 #### High Availability and Scalability
 
-The two Considerations for cloud applications are availability and scalability. Availability is the 'uptime' - does the application respond at all times, without going dark for various reasons. scalability is a measure of how the application responds to increase in demand, making sure that even if demnad skyrockets tenfolds, the application will still operate.
+The two Considerations for cloud applications are availability and scalability. Availability is the 'uptime' - does the application respond at all times, without going dark for various reasons. scalability is a measure of how the application responds to increase in demand, making sure that even if demand skyrockets tenfolds, the application will still operate.
 
 ##### Availability
 the azure SLA defines the ensured uptime in percentages, and defines what downtime means. usually the SLA are 99% and above
@@ -109,7 +109,7 @@ SLA | allowed downtime (monthly)
 
 ##### Scalability
 
-scalability is the measure of adjusting resources to change in demand, rather than provision enough resources to handle the maximum demand level, and have those machine sit idly most of the time and cost money, scalability allows to provision more resources when demand increases, and release them when demnad is low. this relates to the consumption model of only paying for what's needed.
+scalability is the measure of adjusting resources to change in demand, rather than provision enough resources to handle the maximum demand level, and have those machine sit idly most of the time and cost money, scalability allows to provision more resources when demand increases, and release them when demand is low. this relates to the consumption model of only paying for what's needed.
 
 there are two forms of scaling resources:
 - vertical scaling (scale up/down) - increasing the power of the used machines - adding RAM, using more CPU cores, etc...
@@ -118,7 +118,7 @@ there are two forms of scaling resources:
 #### Reliability and Predictability
 > Reliability is the ability of a system to recover from failures and continue to function. It's also one of the pillars of the Microsoft Azure Well-Architected Framework.
 
-relability is how the application handles failures, this usually means having instances deployed accross different availability zones and regions, and having requests routed to running instances automatically.
+reliability is how the application handles failures, this usually means having instances deployed across different availability zones and regions, and having requests routed to running instances automatically.
 
 Predictability can either be about costs  or about performance.
 
@@ -129,7 +129,7 @@ Cost: being able to predict the cloud resources costs, track the spending, monit
 
 Azure cloud can help with compliance to governance (government and corporate regulations) by enforcing the resources adhere to certain standards, or by disallowing some resources to certain users.
 
-There are also various ways to enforce and audit cloud resources for security and best practices. as with the shared responsability model, the security concerns vary depending on the type of service, in some cases Azure takes care of nearly everyhing, and in other cases it's up to the user to handle patching and security updates.
+There are also various ways to enforce and audit cloud resources for security and best practices. as with the shared responsibility model, the security concerns vary depending on the type of service, in some cases Azure takes care of nearly everything, and in other cases it's up to the user to handle patching and security updates.
 
 #### Manageability
 In this context, manageability means how we interact and control cloud resources. it can mean how we manage resources - scaling, deploying, monitoring, receiving alerts and acting on them. it can also mean how we communicate with the resources: via the web portal, APIs or cli tools (such as powerShell)
@@ -143,17 +143,17 @@ In this module, you’ll be introduced to cloud service types. You’ll learn ho
 
 #### Infrastructure as a Service
 
-Infrastructure as a service is the most flexible and configurable category of cloud services. it gives the user the most control and responsability over the resources. it's very much like renting hardware from the cloud provider.\
+Infrastructure as a service is the most flexible and configurable category of cloud services. it gives the user the most control and responsibility over the resources. it's very much like renting hardware from the cloud provider.\
 The customer is responsible for installing the OS, the software, configuring networks and disk space, and managing the resources security.\
 Using IasS makes sense for development environments, where things are always in flux and rapidly changing. it is also suitable for 'lift-and-shift' migrations.
 
 #### Platform as a Service
 
-Playform as a service is a category of services where the cloud provider takes care of the OS, patching, disk drive and security, while leaving the user to worry about the business logic.\
-Examples of PaaS are customizable cloud applications and analytics and bussiness intelligence tools running in the cloud.
+Platform as a service is a category of services where the cloud provider takes care of the OS, patching, disk drive and security, while leaving the user to worry about the business logic.\
+Examples of PaaS are customizable cloud applications and analytics and business intelligence tools running in the cloud.
 
 #### Software as a Service
-Software as a service is the category that is the most managed, and the cloud provider takes the most responsability, the operating system, the software and security are all handled by the vendor, and the user just controls the data, devices and which accounts are accessing the service.\
+Software as a service is the category that is the most managed, and the cloud provider takes the most responsibility, the operating system, the software and security are all handled by the vendor, and the user just controls the data, devices and which accounts are accessing the service.\
 SaaS services are usually "complete" solutions dedicated for one single, well defined, task.
 </details>
 
@@ -177,7 +177,7 @@ This module introduces you to the basics of cloud computing and Azure, and how t
 
 #### What is Cloud Computing?
 
-cloud service: servers, sotrage, database, networking, software, analytics, intelligence.
+cloud service: servers, storage, database, networking, software, analytics, intelligence.
 
 pay only for the services used, and have them being managed. we can also easily scale if the requirements change.
 
@@ -194,7 +194,7 @@ Azure is microsoft's cloud platform:
 compute, storage, event driven azure functions, many types of relation databases. integration with on premises data centers (hybrid environment).
 
 azure uses virtualization, using a hypervisor on top of hardware to abstract running many instances of different machines.\
-in their data centers, each rack runs multiple machines with this hypervisor, in addition, each rack has a **Fabric Controller**, connected to the **orchestrator**, which are the managemet and networking points of the rack. the user interacts with the orchestrator, and through it to the fabric controller.
+in their data centers, each rack runs multiple machines with this hypervisor, in addition, each rack has a **Fabric Controller**, connected to the **orchestrator**, which are the management and networking points of the rack. the user interacts with the orchestrator, and through it to the fabric controller.
 
 The **Azure Portal** is the web portal, a simple web console that can do everything we need, such as creating resources, and do operations on the resources. we can create custom dashboards and monitor our applications.\
 The portal is replicated in each azure data center, so it's designed for resiliency and high availability.
@@ -207,7 +207,7 @@ The commonly used categories:
 
 - Compute
 - Networking
-- Sotrage
+- Storage
 - Mobile
 - Databases
 - Web
@@ -220,7 +220,7 @@ The commonly used categories:
 > Compute services are often one of the primary reasons why companies move to the Azure platform. Azure provides a range of options for hosting applications and services. Here are some examples of compute services in Azure.
 >
 > Networking:\
-> Linking compute resources and providing access to applications is the key function of Azure networking. Networking functionality in Azure includes a range of options to connect the outside world to services and features in the global Azure datacenters.
+> Linking compute resources and providing access to applications is the key function of Azure networking. Networking functionality in Azure includes a range of options to connect the outside world to services and features in the global Azure data-centers.
 >
 > Storage:\
 > Azure provides four main types of storage services.
@@ -306,15 +306,15 @@ We can
 
 there are three configurations of cloud deployment models: public, private and hybrid.\
 
-in a public cloud, the computing machines and storage are located in the datacenters of the hosting company, there is no capital (monterey) barrier to start or to expand, and all access is done via the internet.\
+in a public cloud, the computing machines and storage are located in the data-centers of the hosting company, there is no capital (monterey) barrier to start or to expand, and all access is done via the internet.\
 A private cloud is exclusively used by the purchasing company, and it can be hosted either on premises or at a 3rd part site. all hardware is purchased by the company, and maintained by them, this gives the company complete control over security.\
-a hybrid cloud deployment combines the two, allowing the company to control which servies run on the public cloud an which run on the private cloud (i.e. for legal reasons and compliance with regulations).
+a hybrid cloud deployment combines the two, allowing the company to control which services run on the public cloud an which run on the private cloud (i.e. for legal reasons and compliance with regulations).
 
 > **Public cloud:**\
 > Services are offered over the public internet and available to anyone who wants to purchase them. Cloud resources, such as servers and storage, are owned and operated by a third-party cloud service provider, and delivered over the internet.
 >
 > **Private cloud:**\
-> A private cloud consists of computing resources used exclusively by users from one business or organization. A private cloud can be physically located at your organization's on-site (on-premises) datacenter, or it can be hosted by a third-party service provider.
+> A private cloud consists of computing resources used exclusively by users from one business or organization. A private cloud can be physically located at your organization's on-site (on-premises) data-center, or it can be hosted by a third-party service provider.
 >
 > **Hybrid cloud:**\
 > A hybrid cloud is a computing environment that combines a public cloud and a private cloud by allowing data and applications to be shared between them.
@@ -329,7 +329,7 @@ Advantages of cloud computing (azure):
 >   - Scaling horizontally increases compute capacity by adding instances of resources, such as adding VMs to the configuration.
 > - Elasticity: You can configure cloud-based apps to take advantage of autoscaling, so your apps always have the resources they need.
 > - Agility: Deploy and configure cloud-based resources quickly as your app requirements change.
-> - Geo-distribution: You can deploy apps and data to regional datacenters around the globe, thereby ensuring that your customers always have the best performance in their region.
+> - Geo-distribution: You can deploy apps and data to regional data-centers around the globe, thereby ensuring that your customers always have the best performance in their region.
 > - Disaster recovery: By taking advantage of cloud-based backup services, data replication, and geo-distribution, you can deploy your apps with the confidence that comes from knowing that your data is safe in the event of disaster.
 
 when we consider the costs, there are two types of costs to consider, Capital Expenditure (CapEx) and Operational Expenditure (CapOx).
@@ -337,7 +337,7 @@ when we consider the costs, there are two types of costs to consider, Capital Ex
 > - Capital Expenditure (CapEx) is the up-front spending of money on physical infrastructure, and then deducting that up-front expense over time. The up-front cost from CapEx has a value that reduces over time.
 > - Operational Expenditure (OpEx) is spending money on services or products now, and being billed for them now. You can deduct this expense in the same year you spend it. There is no up-front cost, as you pay for a service or product as you use it.
 
-Buying infrastucure is considered CapEx, it is paid for upfront, in goes into the accounting books as an asset, the value of which decreases over time. Purchasing services from the cloud provider is considered OpEx, it effects the operations balance sheet of the company, as well as the net-profit and taxable income.
+Buying infrastructure is considered CapEx, it is paid for upfront, in goes into the accounting books as an asset, the value of which decreases over time. Purchasing services from the cloud provider is considered OpEx, it effects the operations balance sheet of the company, as well as the net-profit and taxable income.
 
 > Cloud Computing is consumption-based model, which means that end users only pay for the resources that they use. Whatever they use is what they pay for.\
 > A consumption-based model has many benefits, including:
@@ -349,15 +349,15 @@ Buying infrastucure is considered CapEx, it is paid for upfront, in goes into th
 
 #### Different Cloud Services
 
-Cloud services can be divided into different service models, based on how the responsability of managing them is distributed between the provider and the user. on one end, there is IaaS (Infrastructure-as-a-Service), which gives the user the most control over the resources, while at the other end there is SaaS (Software-as-a-Service), which is the most managed services where the provider takes care of most of the work, between them there is PaaS (Platform-as-a-Service).
+Cloud services can be divided into different service models, based on how the responsibility of managing them is distributed between the provider and the user. on one end, there is IaaS (Infrastructure-as-a-Service), which gives the user the most control over the resources, while at the other end there is SaaS (Software-as-a-Service), which is the most managed services where the provider takes care of most of the work, between them there is PaaS (Platform-as-a-Service).
 
-| Acronym | Full Name                   | Provider responsability                                  | User responsability                                | Example                |
+| Acronym | Full Name                   | Provider responsibility                                  | User responsibility                                | Example                |
 | ------- | --------------------------- | -------------------------------------------------------- | -------------------------------------------------- | ---------------------- |
-| Iaas    | Infrastructure-as-a-Service | hardware                                                 | perating system maintenance, network configuration | Azure virtual Machines |
+| Iaas    | Infrastructure-as-a-Service | hardware                                                 | operating system maintenance, network configuration | Azure virtual Machines |
 | PaaS    | Platform-as-a-Service       | Virtual machines, networking                             | Applications                                       | Azure App Services     |
 | SaaS    | Software-as-a-Service       | Virtual machines, networking, data storage, applications | Application data                                   | Microsoft Office 365   |
 
-in IaaS, you simply rent the infrastructure instead of buying it, everything else is like on premises data center, the customer has the most control over the resources, and can tailor them to its' needs. in PaaS, the cloud provder has more responsability, which means the client can focus on the application development. in SaaS, the client only provides the data to the application, but the application (software) is provided by the cloud host. so this is the easiest option to use, and it provides access to the most up-to-date software, but it limits what kinds of applications the client can run.
+in IaaS, you simply rent the infrastructure instead of buying it, everything else is like on premises data center, the customer has the most control over the resources, and can tailor them to its' needs. in PaaS, the cloud provider has more responsibility, which means the client can focus on the application development. in SaaS, the client only provides the data to the application, but the application (software) is provided by the cloud host. so this is the easiest option to use, and it provides access to the most up-to-date software, but it limits what kinds of applications the client can run.
 
 | Model                       | Storage          | networking       | Compute          | virtual machine  | operating System | runtime          | Applications     | Data & Access    |
 | --------------------------- | ---------------- | ---------------- | ---------------- | ---------------- | ---------------- | ---------------- | ---------------- | ---------------- |
@@ -388,7 +388,7 @@ the hierarchy begins at the management group, which has subscriptions, which hav
 
 #### Regions, Availability Zones, and Region Pairs
 
-> A region is a geographical area on the planet that contains at least one but potentially multiple datacenters that are nearby and networked together with a low-latency network. Azure intelligently assigns and controls the resources within each region to ensure workloads are appropriately balanced.
+> A region is a geographical area on the planet that contains at least one but potentially multiple data-centers that are nearby and networked together with a low-latency network. Azure intelligently assigns and controls the resources within each region to ensure workloads are appropriately balanced.
 
 There are also _special Azure regions_, which are used for legal and compliance purposes, some are US-based and some China based.
 
@@ -504,7 +504,7 @@ az upgrade
 pwsh # switch to powershell
 ```
 
-we can enter the interactive mode with `az interactive`, which allows us to run azure commands without the `az` command, and has autocompleteion.
+we can enter the interactive mode with `az interactive`, which allows us to run azure commands without the `az` command, and has autocompletion.
 
 ```sh
 version # az version
@@ -514,20 +514,20 @@ exit #exit az interactive mode
 
 #### Azure Physical Infrastructure
 
-physical infrastucure and management infrastructure
+physical infrastructure and management infrastructure
 
 the azure physical infrastructure is based on the azure data centers, which are are located all around the world
 
 [Azure Global infrastructure](https://infrastructuremap.microsoft.com/). data centers are grouped into azure availability zones and regions, and then into geographies.
 
-resources can be _zonal_ - pinned to a specific zone, _zone-redundant_ - automatically (or at request) duplicated across avalability zones, and _non-regional_ - which are always available, even in case of a region wide outage.
+resources can be _zonal_ - pinned to a specific zone, _zone-redundant_ - automatically (or at request) duplicated across availability zones, and _non-regional_ - which are always available, even in case of a region wide outage.
 
-An _avalability zone_ is s datacenter (sometiemes more) which is physically separated from than other data centers, it has it's own power, cooling, and networks.\
-Avalability zones allows for high availability and reddany in case of failure, and we can duplicate data across avalability zones (at a cost).
+An _availability zone_ is s data-center (sometimes more) which is physically separated from than other data centers, it has it's own power, cooling, and networks.\
+Availability zones allows for high availability and recovery in case of failure, and we can duplicate data across availability zones (at a cost).
 
-A _region_ contains at least (but usually more) availability zones (data centers), which are networked toegether. if one availability zone is down, the others continue to operate. azure also has the concept of _region pairs_, which is a pairing of two regions in the same geography. this allows for more redundancy, and azure keeps the two regions on different maintenance scheduling for extra safety.\
+A _region_ contains at least (but usually more) availability zones (data centers), which are networked together. if one availability zone is down, the others continue to operate. azure also has the concept of _region pairs_, which is a pairing of two regions in the same geography. this allows for more redundancy, and azure keeps the two regions on different maintenance scheduling for extra safety.\
 (some regions don't have a region pair or only have a one way backup).\
-lastly, there are _sovereign regions_, such as us-gov and china. us-gov regions are operated by employees with us security clearnance, while china regions are operated by a chinese company, rather than microsoft.
+lastly, there are _sovereign regions_, such as us-gov and china. us-gov regions are operated by employees with us security clearance, while china regions are operated by a chinese company, rather than microsoft.
 
 #### Azure Management Infrastructure
 
@@ -582,13 +582,13 @@ the resources used for vms are:
 
 - computing power: cpu cores, ram
 - storage: hard disk drives, ssd
-- netwokring: virtual networks, public ip address, ports
+- networking: virtual networks, public ip address, ports
 
 **Scaling: Scale Sets and Availability Sets**
 
 _scale sets_ allow us to create and manage identical groups of virtual machines, all running the same software and the same configurations. the scale set vms all run on the same routing parameters, and can be monitored to scale up or down based on schedule or demand. they sit behind a load balancer.
 
-_avaliability sets_ are a tool to deploy multiple vms in a way that ensures high availability. they are deployed in a way that prevents downtime. there is no additional costs for using avalability sets.
+_availability sets_ are a tool to deploy multiple vms in a way that ensures high availability. they are deployed in a way that prevents downtime. there is no additional costs for using availability sets.
 
 - update domain - separate machines so that they aren't updated at the same cycle, and there is a gap between updating each group.
 - fault domain - separate machines by power source and network switch.
@@ -598,8 +598,8 @@ _avaliability sets_ are a tool to deploy multiple vms in a way that ensures high
 >
 > - During testing and development. VMs provide a quick and easy way to create different OS and application configurations. Test and development personnel can then easily delete the VMs when they no longer need them.
 > - When running applications in the cloud. The ability to run certain applications in the public cloud as opposed to creating a traditional infrastructure to run them can provide substantial economic benefits. For example, an application might need to handle fluctuations in demand. Shutting down VMs when you don't need them or quickly starting them up to meet a sudden increase in demand means you pay only for the resources you use.
-> - When extending your datacenter to the cloud: An organization can extend the capabilities of its own on-premises network by creating a virtual network in Azure and adding VMs to that virtual network. Applications like SharePoint can then run on an Azure VM instead of running locally. This arrangement makes it easier or less expensive to deploy than in an on-premises environment.
-> - During disaster recovery: As with running certain types of applications in the cloud and extending an on-premises network to the cloud, you can get significant cost savings by using an IaaS-based approach to disaster recovery. If a primary datacenter fails, you can create VMs running on Azure to run your critical applications and then shut them down when the primary datacenter becomes operational again
+> - When extending your data-center to the cloud: An organization can extend the capabilities of its own on-premises network by creating a virtual network in Azure and adding VMs to that virtual network. Applications like SharePoint can then run on an Azure VM instead of running locally. This arrangement makes it easier or less expensive to deploy than in an on-premises environment.
+> - During disaster recovery: As with running certain types of applications in the cloud and extending an on-premises network to the cloud, you can get significant cost savings by using an IaaS-based approach to disaster recovery. If a primary data-center fails, you can create VMs running on Azure to run your critical applications and then shut them down when the primary data-center becomes operational again
 
 "lift and shift" - moving from physical server to the cloud.
 
@@ -647,7 +647,7 @@ vm - an abstraction layer for cpu, memory and storage, and operating system. but
 
 VM virtualize hardware, while containers virtualize the OS and runtime.
 
-Azure container instances are a form of PaaS, we can split a website into different parts (frontend, backend, database) and run each in a different container, thus providing greater flexability.
+Azure container instances are a form of PaaS, we can split a website into different parts (frontend, backend, database) and run each in a different container, thus providing greater flexibility.
 
 #### Azure Functions
 
@@ -655,7 +655,7 @@ Azure container instances are a form of PaaS, we can split a website into differ
 
 Azure functions are great for event driven operations, such as responding to an api. they can be scaled automatically. azure functions are stateless by default, but can also be stateful and maintain the context.
 
-Serverless computing is the idea that we separate the server management (instaling os, patching, updating) from the developers.
+Serverless computing is the idea that we separate the server management (installing os, patching, updating) from the developers.
 
 - no infrastructure management
 - scalability
@@ -663,11 +663,11 @@ Serverless computing is the idea that we separate the server management (instali
 
 #### Application Hosting Options
 
-(hosting - making applications accessable from the web, like a website)
+(hosting - making applications accessible from the web, like a website)
 
 at the basic level, we can host applications on either virtual machines or on containers, but there is also the option of sing Azure App Service.
 
-Azure App Service takes care of managing the infrastructure, provides automatic scaling and high avalability. it can integrate with github, azure devops or other code repository services for continues deployment model.\
+Azure App Service takes care of managing the infrastructure, provides automatic scaling and high availability. it can integrate with github, azure devops or other code repository services for continues deployment model.\
 we can run web apps (website), api apps (REST api) and webJobs, as well as mobile apps for ios and android.
 
 #### Azure Virtual Networking
@@ -694,7 +694,7 @@ Communication between azure resources - not only compute resources (virtual mach
 
 Communication with on-premises - linking the azure cloud resources with local resources which reside in the data center, using VPN (point to site, site to site or with azure expressRoute as a private, high speed, dedicated connection.
 
-Routing network traffic - control how traffic is routed in the virtual network, using route tables, gateways and other servies.
+Routing network traffic - control how traffic is routed in the virtual network, using route tables, gateways and other services.
 
 Filtering network traffic - using inbound and outbound security rules, and running a firewall.
 
@@ -822,9 +822,9 @@ VPN - virtual private network
 
 VPN Gateway is one type of a virtual network gateway, it is deployed in the a dedicated subnet of the virtual network and enables:
 
-- connection from on premises datacenter through site-to-site connection
+- connection from on premises data-center through site-to-site connection
 - connections from individual devices through point-to-site connections
-- connecting other virtual network thorugh network-to-network connection
+- connecting other virtual network thorough network-to-network connection
 
 there can only be one vpn gateway for each virtual network, but a vpn gateway can connect to multiple locations.\
 There are two ways to deploy a vpb gateway, _policy based_ or _route based_.
@@ -833,7 +833,7 @@ There are two ways to deploy a vpb gateway, _policy based_ or _route based_.
 - route based gateways use IPSec tunnels for routing, the routing can be static or dynamic, and it is the preferred approach and is more resilient to topology changes.
   - Connections between virtual networks
   - Point-to-site connections
-  - Multisite connections
+  - MultiSite connections
   - Coexistence with an Azure ExpressRoute gateway
 
 we might also want to maximize the resiliency of the vpn gateway, so it isn't effected by outages. there are different ways to ensure high availability
@@ -841,18 +841,18 @@ we might also want to maximize the resiliency of the vpn gateway, so it isn't ef
 - active/standby: two vpn gateways are created, but only one is active, when a failover or maintenance occurs, the standby is promoted and takes care of connections
 - active/active: support of BGP routing protocol, two active vpn gateways, each with a unique public ip address. two separate tunnels to the vpn gateways.
 - ExpressRoute Failover: combining expressRoute as the primary connection, and vpn gateway as the backup.
-- Zone Redundant gatways - spreading the vpn gateways across multiple availability zones, and using gateway SKU and standard public ip address (and not basic public ip address)
+- Zone Redundant gateways - spreading the vpn gateways across multiple availability zones, and using gateway SKU and standard public ip address (and not basic public ip address)
 
 #### Azure ExpressRoute
 
-ExpressRoute connects the on-premises networks into the cloud with a expressRoute circuit connectivity provider. the connection can be through vpn, ethernet or any other connection. Express Routes has built in redundancy for high avilability
+ExpressRoute connects the on-premises networks into the cloud with a expressRoute circuit connectivity provider. the connection can be through vpn, ethernet or any other connection. Express Routes has built in redundancy for high availability
 
-ExpresRoute can be used for global connectivity, if two datacenters are connected to the microsoft network, they can communicate over this network without going over to the public internet.\
+ExpressRoute can be used for global connectivity, if two data-centers are connected to the microsoft network, they can communicate over this network without going over to the public internet.\
 Using Border Gateway Protocol (BGP) allows for dynamic routing.
 
 > ExpressRoute supports four models that you can use to connect your on-premises network to the Microsoft cloud:
 >
-> - CloudExchange colocation
+> - CloudExchange collocation
 > - Point-to-point Ethernet connection
 > - Any-to-any connection
 > - Directly from ExpressRoute sites
@@ -861,7 +861,7 @@ Using Border Gateway Protocol (BGP) allows for dynamic routing.
 
 > Azure DNS is a hosting service for DNS domains that provides name resolution by using Microsoft Azure infrastructure. By hosting your domains in Azure, you can manage your DNS records using the same credentials, APIs, tools, and billing as your other Azure services.
 
-we can use Azure to manage DNS records, this means we get the benefits of azure in terms of relability, performance (from anywhere in the world) and ease of use with consolidating management at the azure platform. we can use azure RBAC to control access who can do what with the DNS records, monitor actions with audit logs and prevent modifications with policies.
+we can use Azure to manage DNS records, this means we get the benefits of azure in terms of reliability, performance (from anywhere in the world) and ease of use with consolidating management at the azure platform. we can use azure RBAC to control access who can do what with the DNS records, monitor actions with audit logs and prevent modifications with policies.
 
 Azure also supports alias record sets and custom domain names.
 
@@ -921,9 +921,9 @@ Redundancy means storing multiple copies of the data, protecting it from events 
   - Read-access geo-redundant storage (RA-GRS)
   - Read-access geo-zone-redundant storage (RA-GZRS)
 
-Data is always replicated three times in the primary region, the data can be replicated in the same avilability zone, which protects against rack failure (LRS - local redundancy storage), or across different availability zones (ZRS - Zone-redundant storage), which protects against disasters to the data center.
+Data is always replicated three times in the primary region, the data can be replicated in the same availability zone, which protects against rack failure (LRS - local redundancy storage), or across different availability zones (ZRS - Zone-redundant storage), which protects against disasters to the data center.
 
-if we wish to have better durability, we can also replicate the data to another region. the data is replicated to a single data center in the other zone (LRS). we can combine LRS and GRS with geo redundancy, controling how the data is replicated in the primary zone.\
+if we wish to have better durability, we can also replicate the data to another region. the data is replicated to a single data center in the other zone (LRS). we can combine LRS and GRS with geo redundancy, controlling how the data is replicated in the primary zone.\
 When we have the data replicated in a secondary region, the default behavior is to only use it as backup (disaster recovery), but we can also configure it to allow read access from applications (even when the primary region is running properly). the data might not be immediately up-to-date.
 
 | Type    | Primary Region | Secondary Region | Read Access? |
@@ -940,7 +940,7 @@ When we have the data replicated in a secondary region, the default behavior is 
 > - Azure Queues: A messaging store for reliable messaging between application components.
 > - Azure Disks: Block-level storage volumes for Azure VMs.
 
-Azure storage benfits:
+Azure storage benefits:
 
 - Durable and highly available
 - Secure
@@ -950,7 +950,7 @@ Azure storage benfits:
 
 ##### Blob Storage
 
-Storing unstructured data, such as text, photos, video or binary data. can store any format of files, and files of massive size. blob storage supports simultaneous uploads and downloads, and is often used for backup data or for data for analysis for other azure services. there are many ways to access data in blob storage, with direct URL access, REST api, cli tools (powershell, bash) and SDKs for multiple programing languages
+Storing unstructured data, such as text, photos, video or binary data. can store any format of files, and files of massive size. blob storage supports simultaneous uploads and downloads, and is often used for backup data or for data for analysis for other azure services. there are many ways to access data in blob storage, with direct URL access, REST api, cli tools (powershell, bash) and SDKs for multiple programming languages
 
 > Blob storage is ideal for:
 >
@@ -1031,11 +1031,11 @@ Azure migrate is a service that enables migration from an on-premises environmen
 Azure data box is a physical device that can store a large amount of data, which can then be used to migrate into an Azure cloud. we get the device by ordering it from azure, and we connect it to our network or one of the computers in the network. once connected, we can use the Data box as storage and populate it with data, and it is shipped back to azure, and the data is transferred to the cloud.\
 The device is physically hardened, shipped with tracking, and is wiped clean after each use to ensure the data is protected.
 
-Databoxes are used when there are network problems, when the volume of data is too large to transfer over the internet, and when it's important to migrate large amounts. it can also be used for disaster recovery with data from the cloud being transferred to the on-premises store. it can also be used for migrating between cloud vendors.
+DataBoxes are used when there are network problems, when the volume of data is too large to transfer over the internet, and when it's important to migrate large amounts. it can also be used for disaster recovery with data from the cloud being transferred to the on-premises store. it can also be used for migrating between cloud vendors.
 
 #### Azure File Movement Options
 
-Besides transfering entire services, it is also possible to work with individual files.
+Besides transferring entire services, it is also possible to work with individual files.
 
 _AzCopy_ is a command line utility that copies blobs or files from or to the storage account. it can also do one-way synchronization.
 
@@ -1076,14 +1076,14 @@ Azure AD provides:
 
 Azure AD can be used as an identity management for on-premises machines, this requires connecting the local Active directory with Azure AD, and it cab be done with **Azure AD Connect**.
 
-**Azure Active Directory Domain Services** is a managed domain service, which allows for directrory services to run on the cloud without having an on-premises machine to run them. this includes legacy applications and current services. it also integrates with the Azure AD tenant.
+**Azure Active Directory Domain Services** is a managed domain service, which allows for directory services to run on the cloud without having an on-premises machine to run them. this includes legacy applications and current services. it also integrates with the Azure AD tenant.
 
 AD DS creates a managed domain (a unique namespace) with windows server domain controller machines deployed to the selected region. data is synchronized to a degree.
 
 #### Azure Authentication Methods
 
-authentication is establishing the identity of the user (person/service/device), the user provides some sort of credentials as proof of identity. there are different forms of authentication, such as standard passwords, single sign-on (SSO), multifactor authentication and passwordles.\
-Tradionally, there is a tradeoff between the security of the password and the convenience of using it.
+authentication is establishing the identity of the user (person/service/device), the user provides some sort of credentials as proof of identity. there are different forms of authentication, such as standard passwords, single sign-on (SSO), multifactor authentication and passwordless.\
+Traditionally, there is a tradeoff between the security of the password and the convenience of using it.
 
 ##### Single Sign-on
 
@@ -1103,13 +1103,13 @@ Passwordless authentications is another form of identifying the user, it relies 
 
 Azure AD has three forms of passwordless authentication:
 
-- Windows Hello for bussiness - designated credentials tied to a specific PC, often using biometric and PIN (code) as the 2nd layer. Has built-in support for SSO and PKI (public key infrastructure) so it is a solid choice for large organizations.
+- Windows Hello for business - designated credentials tied to a specific PC, often using biometric and PIN (code) as the 2nd layer. Has built-in support for SSO and PKI (public key infrastructure) so it is a solid choice for large organizations.
 - Microsoft Authenticator App - an application that can be configured to provide MFA for multiple accounts and services.
 - FIDO2 security keys - a passwordless standard for authentication, often replacing password credentials with some kind of physical key (which is easier to use, harder to steal) such as a usb key, or a device with NFC/bluetooth.
 
 #### Azure External Identities
 
-an external Identity refers to a user (person/device/service) outside of the organization. common examples of external identities are those of vendors, suppliers, collabarators, partners, etc... they require some form of access to the organization resources, but it should be separate from the identity of those inside.
+an external Identity refers to a user (person/device/service) outside of the organization. common examples of external identities are those of vendors, suppliers, collaborators, partners, etc... they require some form of access to the organization resources, but it should be separate from the identity of those inside.
 
 External Users can occasionally "bring the own identity" by using an identity provider (like google or facebook) or their own corporate identity. External users can become "guest users", or have a two-way connection with the organization, gaining access to some resources according to policy.
 
@@ -1137,7 +1137,7 @@ roles:
 - contributor/custom
 - owner
 
-Rbac is hierarchical, permissions at a parent scope (such as subscription) apply to all chile scopes (resource groups, resources). it is possbile to have multiple roles apply at once, with the permissions combining.
+Rbac is hierarchical, permissions at a parent scope (such as subscription) apply to all chile scopes (resource groups, resources). it is possible to have multiple roles apply at once, with the permissions combining.
 
 #### Zero Trust Model
 
@@ -1155,7 +1155,7 @@ zero trust means:
 
 each layer is protected, and no single layer allows complete access even if it's breached. if a layer is breached, then a security team is alerted to take action.
 
-> - The **physical security** layer is the first line of defense to protect computing hardware in the datacenter.
+> - The **physical security** layer is the first line of defense to protect computing hardware in the data-center.
 > - The **identity and access** layer controls access to infrastructure and change control.
 > - The **perimeter** layer uses distributed denial of service (DDoS) protection to filter large-scale attacks before they can cause a denial of service for users.
 > - The **network** layer limits communication between resources through segmentation and access controls.
@@ -1165,7 +1165,7 @@ each layer is protected, and no single layer allows complete access even if it's
 
 ##### Physical Security
 
-This layer is about access to the physical hardware and the datacenters. controlled entirely by microsoft. preventing physical access means that other layers can't be bypassed.
+This layer is about access to the physical hardware and the data-centers. controlled entirely by microsoft. preventing physical access means that other layers can't be bypassed.
 
 ##### Identity & Access
 
@@ -1217,9 +1217,9 @@ Protecting the data being used by the applications, storing personal and custome
 
 #### Microsoft Defender for Cloud
 
-> Defender for Cloud is a monitoring tool for security posture management and threat protection. It monitors your cloud, on-premises, hybrid, and multicloud environments to provide guidance and notifications aimed at strengthening your security posture.
+> Defender for Cloud is a monitoring tool for security posture management and threat protection. It monitors your cloud, on-premises, hybrid, and multiCloud environments to provide guidance and notifications aimed at strengthening your security posture.
 
-A package of tools to harden resources, track security issues, protect against cyber attacks. this tool is integrated into azure. For on-premises datacenters, agents can be deployed to collect data. hybrid and environments can make use of Azure Arc. Protection cab be extended to resources running in other clouds as well.
+A package of tools to harden resources, track security issues, protect against cyber attacks. this tool is integrated into azure. For on-premises data-centers, agents can be deployed to collect data. hybrid and environments can make use of Azure Arc. Protection cab be extended to resources running in other clouds as well.
 
 Microsoft Defender for Cloud has capabilities to detect vulnerabilities and suggest security improvements of azure native resources:
 
@@ -1227,7 +1227,7 @@ Microsoft Defender for Cloud has capabilities to detect vulnerabilities and sugg
 - Azure data services - classify and protect data stored in databases(,Azure SQL, Azure Storage Account)
 - Network - limit exposure to brute force, close VM ports, secured access policies based on user, ip addresses, ports. using Just-In-Time VM access.
 
-Multicloud environments (using resources from other vendors, such as google GCP or amazon AWS) can be protected by Mircosoft Defender for cloud. this includes agentless protection, compliance assessments, container threat detection and protection for compute resources (windows and EC2 instances).
+MultiCloud environments (using resources from other vendors, such as google GCP or amazon AWS) can be protected by Microsoft Defender for cloud. this includes agentless protection, compliance assessments, container threat detection and protection for compute resources (windows and EC2 instances).
 
 ##### Assess, Secure, and Defend
 
@@ -1237,9 +1237,9 @@ Multicloud environments (using resources from other vendors, such as google GCP 
 > - Secure – Harden resources and services with Azure Security Benchmark.
 > - Defend – Detect and resolve threats to resources, workloads, and services.
 
-Continually assesing the state of the environment (virtual machines, container registries, SQL servers) for vulnerabilities, creating automatic reports with actionable suggestions.
+Continually assessing the state of the environment (virtual machines, container registries, SQL servers) for vulnerabilities, creating automatic reports with actionable suggestions.
 
-Security in the cloud is multilayered, security policies are built on top of azure policies, can range from affecting a subscription, a management group or the entire tennat.
+Security in the cloud is multilayered, security policies are built on top of azure policies, can range from affecting a subscription, a management group or the entire tenant.
 
 When resources are added or changed, Defender for Cloud can detect if they are configured according to best practices guidelines detailed in Azure Security Benchmark. and it provides a simple way to configure the resources to address problems. There is also a dashboard that displays how secured is the system.
 
@@ -1267,18 +1267,18 @@ This module explores methods to estimate, track, and manage costs in Azure.
 
 #### Factors That Can Affect Costs In Azure
 
-Using cloud infrastrcutere is about shifting cost from CapEx to OpEx. rather than spend money on investing in hardware, we can pay for (rent) infrastructure as we need it.
+Using cloud infrastructure is about shifting cost from CapEx to OpEx. rather than spend money on investing in hardware, we can pay for (rent) infrastructure as we need it.
 
 - Total Cost of Ownership (TCO) calculator to asses the cost of azure services as opposed to running them on premises
 - Pricing calculator - which azure services fit the budget
 - Azure advisor - monitoring costs and fining ways to save
 - Spending Limits - prevent over-spending
 
-There are many factors that impact the cost of running servies in Azure
+There are many factors that impact the cost of running services in Azure
 
 ##### Resource Type
 
-obviously, each resource has a different cost, and that cost is impacted by the region it is running in. the cost is effected by resource specific parameters, such as sotrage account (blob storage) performance and access tiers, or virtual machine compute power.
+obviously, each resource has a different cost, and that cost is impacted by the region it is running in. the cost is effected by resource specific parameters, such as storage account (blob storage) performance and access tiers, or virtual machine compute power.
 
 ##### Consumption
 
@@ -1286,7 +1286,7 @@ Azure has a "pay-as-you-go" billing structure, so the more a resource is used, t
 
 ##### Maintenance
 
-While scaling up is a major advnatage of using cloud infrastructure, it is also a source of extra costs. every time a resource is provisoned, it might provision additional resources with it (VM requires networking and storage). It is up to the user to periodically review the resources and make sure they are deprovisioned when no longer needed.
+While scaling up is a major advantage of using cloud infrastructure, it is also a source of extra costs. every time a resource is provisioned, it might provision additional resources with it (VM requires networking and storage). It is up to the user to periodically review the resources and make sure they are deprovisioned when no longer needed.
 
 ##### Geography
 
@@ -1298,7 +1298,7 @@ some traffic has costs, usually data going into Azure is free, and data leaving 
 
 ##### Subscription type
 
-Subscriptions can have different costs, allownances, access to services and free credit.
+Subscriptions can have different costs, allowances, access to services and free credit.
 
 ##### Azure Marketplace
 
@@ -1310,7 +1310,7 @@ Two Calculators that can give an estimate of costs.
 
 The _Pricing Calculator_ is designed to give an estimate of how much it would cost to provision resources.
 
-The _TCO Calculator_ (total cost of ownership) is deigned to help compare the costs of running workloads on premises against running them on the cloud. the user enter his current configuration of hardware and an estimate of labor/IT costs and is presented with a coresponding cost estimate of how much it would cost to run the workload in azure.
+The _TCO Calculator_ (total cost of ownership) is deigned to help compare the costs of running workloads on premises against running them on the cloud. the user enter his current configuration of hardware and an estimate of labor/IT costs and is presented with a corresponding cost estimate of how much it would cost to run the workload in azure.
 
 #### Exercise - Estimate Workload Costs by Using The Pricing Calculator
 
@@ -1331,14 +1331,14 @@ The Cost Management tool allows to quickly view the costs of provisioned resourc
 
 with this information, azure can create forecasts of costs and then the user can see if there is an expected spike. in addition, the user can create special alerts to monitor spending.\
 **Budget Alerts** can be used to notify when costs or usage exceeds a threshold or for some other conditions, alerts can be configured to send an email.\
-**Credit Alerts** are used to track the consumption of azure credit monetary commitments. this is relvent for organization with Enterprise Agreements.\
+**Credit Alerts** are used to track the consumption of azure credit monetary commitments. this is relevant for organization with Enterprise Agreements.\
 **Department Spending Quota Alerts** are used to notify when a spending quota threshold is reached for a department.
 
 Azure also has **Budgets**, which are spending limits based on a condition (subscription, resource group, service type,etc...) which can be configured and enforced.
 
 #### The Purpose of Tags
 
-Resources in Azure are orgainzed by the subscription (management group), the resource group by the location the resource belongs to. Tags allow for extra information that is fully customizable. resources of specific tags can be grouped together for billing and cost reports, they can be used to classify resources according to project, security level, compliance to government regulation and to track which department manages the resource.
+Resources in Azure are organized by the subscription (management group), the resource group by the location the resource belongs to. Tags allow for extra information that is fully customizable. resources of specific tags can be grouped together for billing and cost reports, they can be used to classify resources according to project, security level, compliance to government regulation and to track which department manages the resource.
 
 Tags can be enforced by azure policies, both in terms of requiring tags and for applying other policies. for example, a policy might dictate that every resource must have an owner tag and an impact tag, and the level of this tag limits which resources can be issued.
 
@@ -1359,7 +1359,7 @@ Azure Blueprint standardizes the creation of subscriptions and environments. it 
 
 a component in a blue print is called _Artifact_, artifacts can have configurable parameters, which can be limited according to policies. for example, an artifact can be a VM, and the parameter being the compute type.
 
-Blueprint have versions, so they can be updated with incremental improvements. Each resource created by a blueprint maintains the connection to the blueprint (and the version), which helpts with tracking and auditing deployments.
+Blueprint have versions, so they can be updated with incremental improvements. Each resource created by a blueprint maintains the connection to the blueprint (and the version), which helps with tracking and auditing deployments.
 
 #### Azure Policy
 
@@ -1367,7 +1367,7 @@ Blueprint have versions, so they can be updated with incremental improvements. E
 
 an *initiative* is a group of related azure policies. azure policies can detect resources that don't match it, and can prevent them from being created. we can define policies at different levels (management group, subscription, resource group) and they are inherited.
 
-There are default Azure policies for common resources, such as restricting the size of VM which can be provisoned. some policies can have automatic remediation steps (such as filling missing tags).it is possible to flag resources as exceptions.
+There are default Azure policies for common resources, such as restricting the size of VM which can be provisioned. some policies can have automatic remediation steps (such as filling missing tags).it is possible to flag resources as exceptions.
 
 #### Resource Locks
 > A resource lock prevents resources from being accidentally deleted or changed.
@@ -1477,7 +1477,7 @@ ways with which we can communicate with Azure
 - Azure Powershell
 - Azure Cli
 
-The azure portal is a browser based way of coomunicating with the resources on azure, it has graphical interfaces and wizards to help. it is the most simple way to navigate and understand the azure eco-system. there are ways to customize the portal. 
+The azure portal is a browser based way of communicating with the resources on azure, it has graphical interfaces and wizards to help. it is the most simple way to navigate and understand the azure eco-system. there are ways to customize the portal. 
 
 we can view reports and dashboard through the portal, and also access the azure cloudShell.
 
@@ -1502,8 +1502,8 @@ Azure ARM is the core deployment and management service in azure, it takes care 
 ARM templates are a way of managing resources in a declarative way, templates are json files which describe the resources and the relation that the user wants, and when the templates are fed to azure, the resources are created, always at the correct order and in the same state. ARM templates are Infrastructure as code.
 - Declarative - write configuration, not scripts
 - Repeatable - write once, use many times
-- Orchastration - deploy with one command, let azure decide which resources can be created at parallel.
-- Modularity - nest templates inside template, reuse templates accross different projects.
+- Orchestration - deploy with one command, let azure decide which resources can be created at parallel.
+- Modularity - nest templates inside template, reuse templates across different projects.
 - Extensibility - fine tune templates by running scripts as part of the deployment process.
 
 > With Azure Resource Manager, you can:
@@ -1519,7 +1519,7 @@ ARM templates are a way of managing resources in a declarative way, templates ar
 
 </details>
 
-### Montiroing Tools
+### Monitoring Tools
 
 <details>
 <summary>
@@ -1530,7 +1530,7 @@ This module covers tools that you can use to monitor your Azure environment.
 
 > Azure Advisor evaluates your Azure resources and makes recommendations to help improve **reliability**, **security**, and **performance**, achieve **operational excellence**, and reduce **costs**. Azure Advisor is designed to help you save time on cloud optimization. The recommendation service includes suggested actions you can take right away, postpone, or dismiss.
 
-avaliable both in the portal as a personalized dashboard and as an API.
+available both in the portal as a personalized dashboard and as an API.
 
 > - Reliability is used to ensure and improve the continuity of your business-critical applications.
 > - Security is used to detect threats and vulnerabilities that might lead to security breaches.
@@ -1540,7 +1540,7 @@ avaliable both in the portal as a personalized dashboard and as an API.
 
 #### Azure Service Health
 
-Azure Service health allows the user to keep track of the state of Azure and provisioned resources. it provides information about Azure in general - are they outgates in any region? is there a system-wide issue?. it also has service specific information - is one of the services undergoing maintanice or updates? and it has information about specific resources, and it can track the health and send alerts.\
+Azure Service health allows the user to keep track of the state of Azure and provisioned resources. it provides information about Azure in general - are they outages in any region? is there a system-wide issue?. it also has service specific information - is one of the services undergoing maintenance or updates? and it has information about specific resources, and it can track the health and send alerts.\
 The example given is monitoring the health of a virtual machine, and using the historical data of alerts to discover trends.
 
 #### Azure Monitor
@@ -1591,7 +1591,7 @@ Stuff Worth remembering
 - Azure Security Benchmark - security and compliance
   guidelines for azure.
 - Azure Advisor - evaluate resources and makes recommendations for reliability, security, and performance, operational excellence and costs.
-- Azure Service Health - track the state azure in general (outages) and of provisoned resources.
+- Azure Service Health - track the state azure in general (outages) and of provisioned resources.
 - Azure Monitor - collect data on resources, analyze the data, visualize the information (and act on the results).
 - Azure VMware Solution  
   
@@ -1623,7 +1623,7 @@ all commands begin with `az`, unless inside interactive mode. we exit interactiv
   - `az group list` - list resource group
 - Azure Virtual Machines - `az vm`
   - `az vm list` - list virtual machines in the default resource group
-    - `-g, --resource-group <group-name>` - list in a specifc resource group
+    - `-g, --resource-group <group-name>` - list in a specific resource group
   - `az vm create` - create virtual machine
     - `--resource-group`
     - `--name` - the name of the virtual machine
@@ -1637,7 +1637,7 @@ all commands begin with `az`, unless inside interactive mode. we exit interactiv
     - `--publisher`- extension publisher
     - `--version` - extension version
     - `--settings` - pass data in json format or path to json
-    - `--protected-seetings` - pass sensitive information, json format or path to json
+    - `--protected-settings` - pass sensitive information, json format or path to json
   - `az vm list-ip-addresses` - list ip addresses for virtual machine
     - `--resource-group`, `--query`, `--output`
     - `--vm-name <vm-name>` - virtual machine name
@@ -1692,7 +1692,7 @@ Table of Services in Azure
 | Azure Blob storage                                     | Storage service for very large objects, such as video files or bitmaps.                                                                                                                                                                                       | Storage    |
 | Azure File storage                                     | File shares that can be accessed and managed like a file server.                                                                                                                                                                                              | Storage    |
 | Azure Queue storage                                    | A data store for queuing and reliably delivering messages between applications.                                                                                                                                                                               | Storage    |
-| Azure Table storage                                    | Table storage is a service that stores non-relational structured data (also known as structured NoSQL data) in the cloud, providing a key/attribute store with a schemaless design.                                                                           | Storage    |
+| Azure Table storage                                    | Table storage is a service that stores non-relational structured data (also known as structured NoSQL data) in the cloud, providing a key/attribute store with a schema-less design.                                                                           | Storage    |
 | Azure Cosmos DB                                        | Globally distributed database that supports NoSQL options.                                                                                                                                                                                                    | Databases  |
 | Azure SQL Database                                     | Fully managed relational database with auto-scale, integral intelligence, and robust security.                                                                                                                                                                | Databases  |
 | Azure Database for MySQL                               | Fully managed and scalable MySQL relational database with high availability and security.                                                                                                                                                                     | Databases  |
@@ -1713,7 +1713,7 @@ Table of Services in Azure
 | IoT Edge                                               | Fully managed service that allows data analysis models to be pushed directly onto IoT devices, which allows them to react quickly to state changes without needing to consult cloud-based AI models.                                                          | IoT        |
 | Azure Synapse Analytics                                | Run analytics at a massive scale by using a cloud-based enterprise data warehouse that takes advantage of massively parallel processing to run complex queries quickly across petabytes of data.                                                              | Big Data   |
 | Azure HDInsight                                        | Process massive amounts of data with managed clusters of Hadoop clusters in the cloud.                                                                                                                                                                        | Big Data   |
-| Azure Databricks                                       | Integrate this collaborative Apache Spark-based analytics service with other big data services in Azure.                                                                                                                                                      | Big Data   |
+| Azure DataBricks                                       | Integrate this collaborative Apache Spark-based analytics service with other big data services in Azure.                                                                                                                                                      | Big Data   |
 | Azure Machine Learning Service                         | Cloud-based environment you can use to develop, train, test, deploy, manage, and track machine learning models. It can auto-generate a model and auto-tune it for you. It will let you start training on your local machine, and then scale out to the cloud. | AI         |
 | Azure ML Studio                                        | Collaborative visual workspace where you can build, test, and deploy machine learning solutions by using prebuilt machine learning algorithms and data-handling modules.                                                                                      | AI         |
 | Vision                                                 | Use image-processing algorithms to smartly identify, caption, index, and moderate your pictures and videos.                                                                                                                                                   | AI         |
@@ -1772,9 +1772,9 @@ which services in azure are comparable to aws services
 | ----------------------- | ------------------ | --------------------------- | ----------------------------------------- |
 | Virtual Machine         | Azure VM           | EC2                         | compute                                   |
 | General Storage         | Blob storage       | S3                          | object / blob storage                     |
-| General Storage Tiers   | Hot, Cool, Archive | S3 Standard, IA, Glacier    | storage tiers for costs and retrival time |
+| General Storage Tiers   | Hot, Cool, Archive | S3 Standard, IA, Glacier    | storage tiers for costs and retrieval time |
 | Event-Driven Serverless | Azure Functions    | Lambda                      |
-| Message Queue           | Queue storage      | SQS                         | asynchronous message handlng              |
+| Message Queue           | Queue storage      | SQS                         | asynchronous message handling              |
 | VM disk volume          | Azure Disks        | EBS - elastic block storage | storage volumes for virtual compute       |
 | File Storage            | Azure Files        | EFS - elastic file system   |
 | Physical data transfer  | Azure Data Box     | AWS SnowBall                | Data migration                            |
