@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore JupyText
+// cSpell:ignore JupyText Pessimizations
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -51,6 +51,7 @@ ignore these words in spell check for this file
   - The Surprising Complexity of Formatting Ranges in Cpp - Barry Revzin
   - How to Use C++ Dependency Injection to Write Maintainable Software - Francesco Zoffoli
   - Cross-Building Strategies in the Age of C++ Package Managers - Luis Caro Campos
+  - Nobody Can Program Correctly - Lessons From 20 Years of Debugging C++ Code - Sebastian Theophil
 - [Education & Coaching](Education%20%26%20Coaching.md)
   - Reviewing Beginners' C++ Code - Patrice Roy
   - Back to Basics: The C++ Core Guidelines - Rainer Grimm
@@ -61,6 +62,7 @@ ignore these words in spell check for this file
   - Killing C++ Serialization Overhead & Complexity - Eyal Zedaka
   - Modern C++: C++ Patterns to Make Embedded Programming More Productive - Steve Bush
   - Overcoming C++ Embedded Development Tooling Challenges - Marc Goodne
+  - Simulating Low-Level Hardware Devices in Cpp - Ben Saks
 - [Future of C++](Future%20of%20C++.md)
   - Contemporary C++ in Action - Daniela Engert
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
@@ -69,7 +71,7 @@ ignore these words in spell check for this file
   - C++23 - What's In It For You? - Marc Gregoire
   - Understanding C++ coroutines by example: Generators - Pavel Novikov
   - 10 Years of Meeting C++ - Historical Highlights and the Future of C++ - Jens Weller
-  - Simulating Low-Level Hardware Devices in Cpp - Ben Saks
+  - Reflection in C++ - Past, Present, and Hopeful Future - Andrei Alexandrescu
 - [General C++](General%20C++.md)
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
   - C++ Lambda Idioms - Timur Doumler
@@ -81,6 +83,7 @@ ignore these words in spell check for this file
   - Back to Basics: RAII in C++ - Andre Kostur
   - Back to Basics: C++ Testing - Amir Kirsh
   - Back to Basics: Name Lookup and Overload Resolution in C++ - Mateusz Pusz
+  - C++20’s `[[likely]]` Attribute - Optimizations, Pessimizations, and `[[unlikely]]` Consequences - Amir Kirsh, Tomer Vromen
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
   - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
   - Managing External API's in Enterprise Systems - Pete Muldoon
@@ -126,12 +129,18 @@ ignore these words in spell check for this file
   - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
   - What Can Compiler Benchmarks Reveal About Meta-Programming Implementation Strategies - Vincent Reverdy
   - Nth Pack Element in C++ - A Case Study - Kris Jusiak
+  - C++ Class Template Argument Deduction - History, Uses, & Enabling it for Classes - Marshall Clow
 - [Value Semantics](Value%20Semantics.md)
   - Back to Basics: Cpp Value Semantics - Klaus Iglberger
   - Back to Basics: Master C++ Value Categories With Standard Tools - Inbal Levi
 - [Lighting Talks](#lightning-talks)
   - Who is Looking for a C++ Job? - Jens Weller
-  - The Dark Corner of STL in Cpp: MinMax Algorithms - Simon Toth
+  - -std=c++20 -- Will This C++ Code Compile? - Tulio Leao
+  - Programming is Fun in Cpp! - Pier-Antoine Giguère
+  - Effective APIs in Practice in C++ - Thamara Andrade
+  - C++ on Fly - C++ on Jupyter Notebook - Nipun Jindal
+  - Finding Whether a Number is a Power of 2 - Ankur Satle
+  - The Decade Long Rewind: Lambdas in C++ - Pranay Kumar
 
 ## Lightning Talks
 
@@ -141,21 +150,24 @@ Lightening Talks
 </summary>
 
 ### Who is Looking for a C++ Job? - Jens Weller
+
 <details>
 
 [Who is Looking for a C++ Job? - Jens Weller](https://youtu.be/0xI0H7djNOc)
 
 an online C++ job fair that happens a few time each year. showing up some data about applicants.
+
 </details>
 
 ### -std=c++20 -- Will This C++ Code Compile? - Tulio Leao
+
 <details>
 
-[-std=c++20 -- Will This C++ Code Compile? - Tulio Leao](https://youtu.be/87_Ld6CMHAw)
+[-std=c++20 -- Will This C++ Code Compile?](https://youtu.be/87_Ld6CMHAw)
 
 - using reserved keywords as variable names ("requires","concept")
-- identifiers for the standard library (such as "_TR")
-- incompatibility between <cpp>string</cpp> and <cpp>std::fs::path u8string()</cpp>. was ok in c++17, but not anymore.
+- identifiers for the standard library (such as "\_TR")
+- incompatibility between <cpp>std::string</cpp> and <cpp>std::fs::path u8string()</cpp>. was ok in c++17, but not anymore.
 - redundant template-id on constructors
 - aggregate initialization of structs with deleted default constructors
 - removed <cpp>std::allocator</cpp> members and functions, previously deprecated, then obsolete, now removed, replace with <cpp>std::allocator_traits</cpp>
@@ -163,27 +175,32 @@ an online C++ job fair that happens a few time each year. showing up some data a
 </details>
 
 ### Programming is Fun in Cpp! - Pier-Antoine Giguère
+
 <details>
 
 [Programming is Fun in Cpp!](https://youtu.be/F9c1ZuSRdsM)
 
 playing with ray tracing and generating images.
+
 </details>
 
 ### Effective APIs in Practice in C++ - Thamara Andrade
+
 <details>
 [Effective APIs in Practice in C++](https://youtu.be/YdZLsSDZ_Qc)
 
 tips to improve API and make he
+
 - better naming - for the give the unit name in the api
 - use strong types - explicit creation of the required object
   - adding our literals
 - avoid easily swappable parameters - there is a clang tidy tool to help finding those cases
-- think about intent 
+- think about intent
 - keep learning!
 </details>
 
-###  C++ on Fly - C++ on Jupyter Notebook - Nipun Jindal
+### C++ on Fly - C++ on Jupyter Notebook - Nipun Jindal
+
 <details>
 
 [C++ on Fly - C++ on Jupyter Notebook](https://youtu.be/MtKdza3RJNM)
@@ -203,9 +220,11 @@ jupyter lab
 there is also a docker setup.
 
 versioning with **JupyText**, quick sharing with **Binder**.
+
 </details>
 
 ### Finding Whether a Number is a Power of 2 - Ankur Satle
+
 <details>
 
 [Finding Whether a Number is a Power of 2](https://youtu.be/Df-qEsWjzQw)
@@ -219,9 +238,11 @@ constexpr bool is_pow_knr(std::unsigned_integral auto n){
 ```
 
 bitset version isn't constexpr. in c++20 there is the <cpp>bit</cpp> header with built-in functions.
+
 </details>
 
 ### The Decade Long Rewind: Lambdas in C++ - Pranay Kumar
+
 <details>
 
 [The Decade Long Rewind: Lambdas in C++](https://youtu.be/xBkDkCgQsAM).
