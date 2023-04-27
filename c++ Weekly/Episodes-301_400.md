@@ -3753,4 +3753,26 @@ devices that run python:
 Microsoft has an online tool that uses these devices to teach code.
 </details>
 
+## C++ Weekly - Ep 373 - Design Patterns in "Modern" C++ (2023)
+<details>
+<summary>
+Giving some pointers towards implementing the observer pattern.
+</summary>
 
+[Design Patterns in "Modern" C++ (2023)](https://youtu.be/A_MsXney3EU)
+
+starting with the observer pattern, which can easily be done poorly. there are some libraries which do this already. most implementations rely on reference counting, which might not be the best idea.
+
+the observer pattern is meant to reduce coupling between components. 
+- signal and slot
+- published subscriber
+- observer and observable(subject)
+
+registering a callback on an 'event'.
+
+things to consider:
+1. are the relationships known at compile time?
+2. are the relationships dynamic or fixed? do we connect or remove observers after construction?
+3. can the connections outlive one another? are the calls lifetime dependant?
+
+</details>

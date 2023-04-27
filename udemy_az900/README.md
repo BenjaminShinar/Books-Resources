@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Unmanaged PaaS IaaS SaaS AZCOPY GZRS Passwordless Spendings functionapp eastus
+// cSpell:ignore Unmanaged PaaS IaaS SaaS AZCOPY GZRS Passwordless Spendings functionapp eastus Kusto
  -->
 
 # AZ-900 Microsoft Azure Fundamentals
@@ -238,6 +238,26 @@ Logical separation of resources, doesn't have to follow the physical grouping.
 - resources
 
 subscription is a unit of billing, users can have access to more than one subscription, and that access can be modified by the role. management groups can be nested, and control policies can be applied to management groups.
+
+### Resources and Resource Groups
+
+resources exist inside resource groups. resource is a generic term to an azure service we have access to, such as VM, storage accounts or databases. resources have a name, which sometimes should be globally unique. resources usually (but not always) are tied to a specific region. most resources have costs.
+
+each resource is tied to a subscription, which determines who is the billing address.
+
+Resource groups are associated with a region, but they can contain resources from other regions as well, all the resources in a resource group should be related to one another.\
+we can assign permission at the resource group level, but resource groups do not force security boundaries, a resource isn't limited to interact with resources in the same group.
+
+### Subscriptions
+
+subscriptions are the billing unit of Azure, a subscription has a payment method associated with it. users can work against different subscriptions, and can have different roles for each of them, there are different subscription plans, such as free, pay as you go, etc...
+
+usually, subscriptions are used to divide separate business units, such as divisions or geographical regions. they can also act as security boundaries, such as denying developers access to the finance subscription, or vice-versa.
+
+### Management Groups
+
+management group contain one or more subscriptions, and can contain nested management groups inside it. the top level is the "root" management group. management groups have azure policies (blueprints) that enforce security or limitations on resources inside the subscriptions.
+
 </details>
 
 ## Compute And Networking Services
@@ -734,14 +754,26 @@ there is also a resource called template spec, which can be stored and then we h
 
 <details>
 <summary>
-
+Monitoring logs, metrics and resource health
 </summary>
 
 ### Azure Advisor and Azure Service Health
 
+Azure advisor analyzes the resource used, and creates recommendation based on usage profiling, such as downgrading a VM if it's under utilized. it also detects open ports such as RDP. it will also recommend us ways to decrease cost and improve resiliency.
+
+The Azure Service Health is concerned the health of azure in general, rather than the specific Azure account. it gives us the ability to know if there are problems in azure and how they effect out resources. for example, we can get an alert if we have resources in regions that are experiencing outages or undergoing maintenance.
+
 ### Azure Diagnostics Settings
 
+Diagnostic settings is a storage of the metrics from our resources, we can save them into a storage account, or send them to the log analytics workspace, an event hub or a 3rd party solution.
+
+there is a "classic" diagnostic service which is being phased out. 
+
 ### Azure Monitor
+An dashboard that gives an overview about our resources, for most accounts, we can set alerts based on all sorts of queries, we can look at metrics and save those reports to the dashboard. there is a small charge for each rule and for the notification itself.
+
+there are built in reports for each type of resource, the queries are using the Kusto Query Language syntax. some queries can also create visualizations. we can gather them together into workbooks to create customized reports.
+
 </details>
 
 ## Practice Tests
