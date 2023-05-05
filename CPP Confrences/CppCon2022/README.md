@@ -52,6 +52,7 @@ ignore these words in spell check for this file
   - How to Use C++ Dependency Injection to Write Maintainable Software - Francesco Zoffoli
   - Cross-Building Strategies in the Age of C++ Package Managers - Luis Caro Campos
   - Nobody Can Program Correctly - Lessons From 20 Years of Debugging C++ Code - Sebastian Theophil
+  - Linux Debuginfo Formats - DWARF, ELF, dwo, dwp - What are They All? - Greg Law
 - [Education & Coaching](Education%20%26%20Coaching.md)
   - Reviewing Beginners' C++ Code - Patrice Roy
   - Back to Basics: The C++ Core Guidelines - Rainer Grimm
@@ -84,6 +85,8 @@ ignore these words in spell check for this file
   - Back to Basics: C++ Testing - Amir Kirsh
   - Back to Basics: Name Lookup and Overload Resolution in C++ - Mateusz Pusz
   - C++20’s `[[likely]]` Attribute - Optimizations, Pessimizations, and `[[unlikely]]` Consequences - Amir Kirsh, Tomer Vromen
+  - Cute C++ Tricks, Part 2.5 of N - Code You Should Learn From & Never Write - Daisy Hollman
+  - Back to Basics: Declarations in C++ - Ben Saks
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
   - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
   - Managing External API's in Enterprise Systems - Pete Muldoon
@@ -133,6 +136,7 @@ ignore these words in spell check for this file
 - [Value Semantics](Value%20Semantics.md)
   - Back to Basics: Cpp Value Semantics - Klaus Iglberger
   - Back to Basics: Master C++ Value Categories With Standard Tools - Inbal Levi
+  - Val: A Safe Language to Interoperate with C++ - Dimitri Racordon
 - [Lighting Talks](#lightning-talks)
   - Who is Looking for a C++ Job? - Jens Weller
   - -std=c++20 -- Will This C++ Code Compile? - Tulio Leao
