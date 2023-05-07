@@ -6,6 +6,9 @@
 
 udemy course [Learn the fundamentals of Azure, and get certified, with this complete beginner's AZ-900 course, includes practice test!](https://www.udemy.com/course/az900-azure/). by *Scott Duffy*.
 
+
+[extra tests](https://www.udemy.com/course/microsoft-azure-az-900-practice-tests-latest-2020/)
+
 > Learn the fundamentals of Azure, and get certified, with this complete beginner's AZ-900 course, includes practice test!
 
 [exam requirements](https://learn.microsoft.com/en-us/certifications/exams/az-900)
@@ -183,9 +186,21 @@ high availability - is there a downtime? is the service responsive when it's nee
 
 we can achieve high availability with scalability: handling a growth of users or work. we can added capacity to the application to handle the increased demand. azure has the concept of elasticity - if we can detect we are reaching the max capacity, then we can provision more compute power automatically, and when the demand drops, we release the resources, as they are not needed anymore.
 
-### Reliability and Predictability
-### Security, Governance and Monitoring
+### High availability
+- gradual deployment
+- testing and monitoring deployments
+- easy rollback plan
+- small deployment
+- frequent deployments
 
+redundancy:
+- availability sets
+- availability zones
+- cross region load balancing
+
+geographically distributed deployments. having a disaster recovery plan. load testing to find the limits of the application.
+
+### Scalability
 
 </details>
 
@@ -777,10 +792,404 @@ there are built in reports for each type of resource, the queries are using the 
 </details>
 
 ## Practice Tests
+<!-- <details> -->
+<summary>
+Practice tests
+</summary>
+
+### Practice Test 1 
 <details>
 <summary>
-
+First Exam
 </summary>
+
+#### Q01
+> What is the benefit of economics of scale?
+
+#### Q02
+> Best approach when copying data between two azure storage accounts?
+
+#### Q03
+> What are the benefits of Availability Sets for virtual machines?
+
+
+#### Q04
+> Can you have more than one azure subscription per company?
+
+#### Q05
+> Is Azure Active Directory a network gateway for load balancing user logins using a CDN?
+
+#### Q06
+> Availability zones per region
+
+
+Three Availability Zones per region.
+
+#### Q07
+> Manage multiple subscriptions into nested hierarchies
+
+#### Q08
+> Recommendations based on actual usage
+
+#### Q09
+> Azure resource groups
+
+#### Q10
+> Creating policies
+
+#### Q11
+> Azure public cloud
+
+#### Q12
+> Monitoring azure itself, not the customer resources
+
+#### Q13
+> Azure AD licenses
+ 
+Office365 License and Azure Active Directory Free
+#### Q14
+> Azure **blueprints**
+
+#### Q15
+> Azure Powershell and Azure CLI compatibility
+
+
+not compatible - different flavours.
+#### Q16
+> Azure VM images
+
+
+#### Q17
+> what makes a feature elastic
+
+#### Q18
+> login without password
+
+#### Q19
+> Azure sovereign Regions
+
+#### Q20
+> Consumption based vs time-based pricing model
+
+#### Q21
+> Cheapest storage redundancy option
+
+#### Q22
+> Managing resources in other vendors
+
+#### Q23
+> what are compute resources
+
+not just VMs, not limited to the Azure Marketplace.
+#### Q24
+> public and private endpoints on azure storage account
+
+#### Q25
+> Azure availability zones
+
+#### Q26
+> Split traffic 
+
+
+#### Q27
+> is Azure a public cloud only?
+
+Azure has private cloud offerings.
+#### Q28
+> Azure **scaleSets**
+
+Scale Sets allow managing virtual machines as a single unit.
+
+#### Q29
+> Cost of inbound traffic
+
+#### Q30
+> Azure policy usage for enforcement
+
+
+#### Q31
+> MultiFactor authentication
+
+
+#### Q32
+> Azure CloudShell (CLI, powershell)
+
+#### Q33
+> Azure preferred identity service
+
+
+#### Q34
+> Infrastructure as a service
+
+#### Q35
+> personalized windows desktop machine
+
+#### Q36
+> fastest connection to azure
+
+
+#### Q37
+> Features of Azure AD
+
+#### Q38
+> Required features for a virtual machine
+
+Virtual machines require
+- storage account
+- network interface card
+- virtual network
+
+#### Q39
+> Microsoft service trust portal
+
+#### Q40
+> Perimeter layer of security
+
+the firewall is part of the perimeter layer of security.
+
+#### Q41
+> Single signOn
+
+#### Q42
+> Total cost of ownership
+
+everything is part of te total cost of ownership
+
+#### Q43
+> read only resource lock
+
+#### Q44
+> Azure app service
+
+
+#### Q45
+> Zero trust
+
+#### Q46
+> network layer of security
+
+using subnets
+
+#### Q47
+> Infrastructure as a service
+
+#### Q48
+> Which service collects all logs?
+
+
+#### Q49
+> ARM abbreviation
+
+#### Q50
+> What is a public endpoint
+
+providing access from outside the virtual network
+
+</details>
+
+### Practice Test 2
+<!-- <details> -->
+<summary>
+Second Exam
+</summary>
+
+#### Q01
+> Private preview mode
+
+
+#### Q02
+> MultiFactor Authentication
+
+#### Q03
+> Monitoring Azure as a whole
+
+#### Q04
+> Azure cognitive services
+
+#### Q05
+> General Availability Mode
+
+#### Q06
+> Why is Azure App PaaS
+
+#### Q07
+> Which is preferable for tax optimization?
+
+
+#### Q08
+> Which is not IaaS?
+
+
+#### Q09
+> How to Store secrets in azure?
+
+
+#### Q10
+> What is Big Data?
+
+#### Q11
+> What is DDoS?
+
+#### Q12
+> Two features that Azure AD provides
+
+#### Q13
+> Creating custom Azure policies
+
+#### Q14
+> What happens if Azure doesn't live up to it's SLA?
+
+#### Q15
+> Azure Resource groups
+
+#### Q16
+> Public Cloud Model
+
+#### Q17
+> Collecting Logs
+
+#### Q18
+> Basic way of protecting an Azure Virtual network subnet
+
+#### Q19
+> what kinds of DDoS protection is provided by Azure
+
+Standard and Basic
+#### Q20
+> default free tier credits
+
+200 $ in credits
+#### Q21
+> IaaS responsibility
+
+
+#### Q22
+> The "network" layer of security
+
+#### Q23
+> Powershell and Cli compatibility
+
+#### Q24
+> how many regions?
+
+#### Q25
+> What is ISO
+
+
+#### Q26
+> "perimeter" layer of security
+
+#### Q27
+> Virtual machines Os
+
+windows and linux
+#### Q28
+> Azure Active Directory
+
+#### Q29
+> Azure MarketPlace
+
+#### Q30
+> Managing multiple subscriptions
+
+
+#### Q31
+> What makes a system "elastic"?
+
+#### Q32
+> Azure availability zones
+
+#### Q33
+> Public preview mode
+
+
+#### Q34
+> getting recommendations from azure based on usage
+
+#### Q35
+> Azure cloudShell
+
+
+#### Q36
+> Single SignOn
+
+#### Q37
+> Azure Policy example
+#### Q38
+> Azure as a private cloud
+
+#### Q39
+> Benefits of content delivery network (CDN)
+
+#### Q40
+> Azure AD Licenses
+
+#### Q41
+> Internet of things Devices
+
+
+#### Q42
+> Azure preferred identity service
+
+#### Q43
+> ARM abbreviation
+
+
+#### Q44
+> Does azure charge for inbound traffic?
+
+#### Q45
+> What are the benefits for economy of scale?
+
+#### Q46
+> Splitting traffic
+
+#### Q47
+> Consumption based pricing model
+
+#### Q48
+> What are compute resources
+
+#### Q49
+> Microsoft Service trust portal
+
+#### Q50
+> Azure subscriptions limit
+
+</details>
+
+### Topic to review:
+- Azure Availability Sets - VMs
+- Azure ScaleSets
+- RA-GRS?
+- General Availability
+- Azure Key Vault
+- Network Security Group
+- Support plans
+- Azure Monitor / Logs/ Insight?
+- Azure Mobile App
+- Azure Logic Apps?
+
+
+answers:
+- when possible, prefer hybrid over private cloud
+- Defender for cloud is posture management, identity is done via Azure AD
+- inbound data is free, and so is data inside the same az. transfer of data between region (inter-regions) is not free.
+- permissions from the resource group are inherited by the resources inside the group.
+- maximum 10000 management groups inside a single directory
+- PowerBI can work with azure DataLake and Azure SQL Data warehouse
+- a delete lock blocks adding a read-only lock
+- Azure App service hosts HTTP web applications.
+- Azure Event Grid is a message Broker.
+- we should usually have subscriptions for different divisions \ business regions
+- Azure advisor gives advices for cloud best practices and for cost, so if we care only about cost, then the Azure Cost Management and Billing service is better.
+- not all resources support tags
+- Azure insights is a sub service of the Azure Monitor.
+- Azure resource groups have a location (it's where the meta-date is stored), it does not restrict where the resources inside it go.
+- management groups tree max depth is six levels (without the root)
+- The SLA includes everything in the calculations
+
+
 </details>
 
 ## Takeaways

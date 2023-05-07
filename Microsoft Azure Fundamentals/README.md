@@ -1588,8 +1588,7 @@ Stuff Worth remembering
 - Azure File Sync - synchronize windows server with storage account
 - Microsoft Defender for Cloud - monitoring tool for security posture management and threat protection.
 - Azure Arc - Microsoft defender extension for on-premises resources
-- Azure Security Benchmark - security and compliance
-  guidelines for azure.
+- Azure Security Benchmark - security and compliance guidelines for azure.
 - Azure Advisor - evaluate resources and makes recommendations for reliability, security, and performance, operational excellence and costs.
 - Azure Service Health - track the state azure in general (outages) and of provisioned resources.
 - Azure Monitor - collect data on resources, analyze the data, visualize the information (and act on the results).
@@ -1602,6 +1601,73 @@ Stuff Worth remembering
   - Only the hot and cool access tiers can be set at the account level. The archive access tier isn't available at the account level.
   - Hot, cool, and archive tiers can be set at the blob level, during or after upload.
 - an *initiative* is a group of related azure policies
+- HD insight is PaaS service the runs big data analytics (apache, spark,kafka)
+- No formal support for private preview
+- Free tier gets basic support, standard supports cost 100$.
+- scaleSet manage VMs together with a load balancer
+- Active AD can support many azure subscriptions, but each subscription can only trust one AD
+- Azure gives a 12 months warning before ending services
+- Availability sets- fault tolerance of VMs. scaleSets are for scalability of VMs.
+- Azure DataBricks is optimized for Spark
+- no SLA for the **FREE** version of azure AD
+- Azure Blob Storage counts as IaaS
+- it's possible to move VMs between subscription without stopping them
+- Free plan - access to always free services, access to 12 months of additional services, and credits for 30 days
+- DevTest Lab is a service to manage deploying multiple VMs in a planned way.
+- Azure Table Storage is noSQL (like dynamo).
+- Regions have a least three availability zones
+- raising service quotas is free, but requires an action to open the limit.
+- Azure Container Registry does not support tagging
+- A private rack in Azure is called Azure Dedicated host.
+- 200 rules in network security group
+- max 50 tags
+- Azure Event hub is like kinesis, while Log monitor is like cloud Watch
+- fine grained control - RBAC
+- firewall don't encrypt data
+- **Initiatives** are a collection of azure policies
+- minimal distance between data centers is 300 miles
+- default action on network security group is **Deny**
+- password self reset requires AD Premium P1 edition
+- Zero trust model goes together with security policy
+- Alerts are governed by **alert rules**
+- subscriptions can be moved across management groups, but can't be merged
+- CosmosDB is PaaS
+- Azure AD supports up to 1,000,000 cloud only user accounts (can be raised even further)
+- resources inside a virtual network have default access to the internet
+- virtual networks can only have on vpn gateway
+- Azure Data Box Gateway is a constant stream of backup data into Azure
+- Azure Files Sync works in Premium and Standard accounts
+- we can bring in corporate users by using Azure AD B2C
+- Data Box Edge - a mini cloud
+- not all regions have availability zones.
+- costs are always at the cost management view, never the monitor
+- a VM has it's local disk storage as part of the pricing for that VM.
+- RBAC relies on azure AD
+- Data transfer inside the same region is free
+- Managed disks are like ssd devices.
+- Azure policy is default allow, explicit deny. RBAC is default deny, explicit allow
+- there is a limit to how many resources can be added to a subscription
+- NAS = azure files
+- Security Tokens are not keys, they are used for identity purposes.
+- Identity Protection is machine learning that evaluates risks, and allows investigating security events via the dashboard.
+- RBAC is around a scope
+- upfront payment, such as reserving capacity, is capEX
+- we can manage VMs with Azure Virtual machine configuration management service
+- subscriptions act as billing boundaries and access control boundaries
+- Azure Site recovery is for VMs, replicating between azure and on-premises
+- Azure VPN gateway is IaaS
+- Azure files back is done with Azure backup
+- best practices is done via the cloud adoption framework for azure
+- DataBox should be used for 40TB and more
+- shutting down VMs doesn't reduce costs
+- Kubernetes is IaaS
+
+
+support levels:
+- basic
+- developer
+- standard
+- profession direct
 
 ### Azure Cli
 
