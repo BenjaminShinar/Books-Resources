@@ -3776,3 +3776,46 @@ things to consider:
 3. can the connections outlive one another? are the calls lifetime dependant?
 
 </details>
+
+## C++ Weekly - Ep 374 - C++23's `out_ptr` and `inout_ptr`
+<details>
+<summary>
+Proxy object over pointer that we get from external sources
+</summary>
+
+[C++23's `out_ptr` and `inout_ptr`](https://youtu.be/DHKoN6ZBrkA)
+
+new features that will come out in c++23. they exist to make interaction with C apis easier.
+
+```cpp
+extern "C"{
+    void get_data(int **ptr) {
+        int* result = (int *)malloc*(sizeof(int));
+        *result=42;
+        *ptr=result;
+    }
+}
+
+int main() {
+    std::unique_ptr<int, decltype([](int *ptr) {free(ptr);})> something = std::make_unique<int>(1);
+    get_data(std::out_ptr(something));
+
+    std::cout<< *something << '\n';
+}
+```
+
+<cpp>std::out_ptr</cpp> creates a wrapper over the smart pointer and eventually calls the destructor and resets the pointer. a light-weight proxy object. because we allocate memory with malloc and remove it with delete we might get undefined behavior, so we need out smart pointer to call <cpp>free</cpp> as it's deleter. we do it by using lambda and decltype.
+</details>
+
+## C++ Weekly - Ep 375 - Using IPO and LTO to Catch UB, ODR, and ABI Issues
+<details>
+<summary>
+Tools to prevent ABI violations
+</summary>
+
+[Using IPO and LTO to Catch UB, ODR, and ABI Issues](https://youtu.be/Ii-zuK1cd90)
+
+having two versions of the same API, resulting in ABI violation.
+
+IPO is "Interprocedural optimization", LTO is "link time optimization", so if we enable them we can get warnings about those issues, so it's not only about better performance, it becomes something that helps us write better code.
+</details>
