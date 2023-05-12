@@ -19,6 +19,7 @@ ignore these words in spell check for this file
   - Optimizing A String Class for Computer Graphics in Cpp - Zander Majercik, Morgan McGuire
   - Optimizing Binary Search - Sergey Slotin
   - Back to Basics: Standard Library Containers in Cpp - Rainer Grimm
+  - Implementing Understandable World Class Hash Tables in C++ - Eduardo Madrid, Scott Bruce
 - [Concurrency](Concurrency.md)
   - C++20’s Coroutines for Beginners - Andreas Fertig
   - Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet - Andreas Weis
@@ -53,6 +54,7 @@ ignore these words in spell check for this file
   - Cross-Building Strategies in the Age of C++ Package Managers - Luis Caro Campos
   - Nobody Can Program Correctly - Lessons From 20 Years of Debugging C++ Code - Sebastian Theophil
   - Linux Debuginfo Formats - DWARF, ELF, dwo, dwp - What are They All? - Greg Law
+  - New in Visual Studio 2022 - Conformance, Performance, Important Features - Marian Luparu & Sy Brand
 - [Education & Coaching](Education%20%26%20Coaching.md)
   - Reviewing Beginners' C++ Code - Patrice Roy
   - Back to Basics: The C++ Core Guidelines - Rainer Grimm
@@ -94,9 +96,11 @@ ignore these words in spell check for this file
 - [Math & Numbers](Math%20&%20Numbers.md)
   - Principia Mathematica - The Foundations of Arithmetic in C++
   - What Is an Image? - Cpp Computer Graphics Tutorial, (GPU, GUI, 2D Graphics and Pixels Explained) - Will Rosecrans
+  - Quantifying Dinosaur Pee - Expressing Probabilities as Floating-Point Values in C++ - John Lakos
 - [Networking & Web](Networking%20&%20Web.md)
   - WebAssembly: Taking Your C++ and Going Places - Nipun Jindal & Pranay Kumar
   - A Faster Serialization Library Based on Compile-time Reflection and C++ 20 - Yu Qi
+  - Bringing a Mobile C++ Codebase to the Web - Li Feng
 - [Resource Management](Resource%20Management.md)
   - Back to Basics: C++ Move Semantics - Andreas Fertig
   - Back to Basics: C++ Smart Pointers - David Olsen
