@@ -58,6 +58,7 @@ ignore these words in spell check for this file
 - [Education & Coaching](Education%20%26%20Coaching.md)
   - Reviewing Beginners' C++ Code - Patrice Roy
   - Back to Basics: The C++ Core Guidelines - Rainer Grimm
+  - Rules for Radical Cpp Engineers - Improve Your C++ Code, Team, & Organization - David Sankel
 - [Embedded](Embedded.md)
   - Using C++14 in an Embedded “SuperLoop” Firmware - Erik Rainey
   - Taking a Byte Out of C++ - Avoiding Punning by Starting Lifetimes - Robert Leahy
@@ -115,6 +116,7 @@ ignore these words in spell check for this file
   - LLVM Optimization Remarks - Ofek Shilon
   - GPU Accelerated Computing & Optimizations on Cross-Vendor Graphics Cards with Vulkan & Kompute - Alejandro Saucedo
   - Fast C++ by using SIMD Types with Generic Lambdas and Filters - Andrew Drakeford
+  - C++ Algorithmic Complexity, Data Locality, Parallelism, Compiler Optimizations, & Some Concurrency - Avi Lachmish
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
   - How Microsoft Uses C++ to Deliver Office - Huge Size, Small Components - Zachary Henkel
@@ -126,6 +128,7 @@ ignore these words in spell check for this file
   - Breaking Dependencies - C++ Type Erasure - The Implementation Details - Klaus Iglberger
   - Pragmatic Simplicity - Actionable Guidelines To Tame Cpp Complexity - Vittorio Romeo
   - The Observer Design Pattern in Cpp - Mike Shah
+  - Breaking Dependencies - The Visitor Design Pattern in Cpp - Klaus Iglberger
 - [Templates & MetaProgramming](Templates%20&%20Metaprogramming.md)
   - Back to Basics: Templates in C++ - Nicolai Josuttis
   - Help! My Codebase has 5 JSON Libraries - How Generic Programming Rescued Me - Christopher McArthur
@@ -141,6 +144,7 @@ ignore these words in spell check for this file
   - Back to Basics: Cpp Value Semantics - Klaus Iglberger
   - Back to Basics: Master C++ Value Categories With Standard Tools - Inbal Levi
   - Val: A Safe Language to Interoperate with C++ - Dimitri Racordon
+  - A Tour of C++ Recognised User Type Categories - Nina Ranns
 - [Lighting Talks](#lightning-talks)
   - Who is Looking for a C++ Job? - Jens Weller
   - -std=c++20 -- Will This C++ Code Compile? - Tulio Leao
