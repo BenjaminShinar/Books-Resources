@@ -37,7 +37,7 @@
   ],
   "ignoreWords": [
     "Maphoon",
-    "Goodne",
+    "Goodner",
     "Nivelle",
     "Zoffoli",
     "Adelstein",
@@ -54,6 +54,7 @@
     "Bielak",
     "Bilger",
     "Bjarne",
+    "Abrahams",
     "Bogosavljevic",
     "Caro",
     "Chuanqi",
@@ -197,7 +198,11 @@
     "Hollman",
     "Feng",
     "Lachmish",
-    "ranns"
+    "ranns",
+    "Dietmar",
+    "Kühl",
+    "Ilya",
+    "Burylov"
   ],
   "import": []
 }

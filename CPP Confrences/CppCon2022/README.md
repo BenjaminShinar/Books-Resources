@@ -65,8 +65,9 @@ ignore these words in spell check for this file
   - Introduction to Hardware Efficiency in Cpp - Ivica Bogosavljevic
   - Killing C++ Serialization Overhead & Complexity - Eyal Zedaka
   - Modern C++: C++ Patterns to Make Embedded Programming More Productive - Steve Bush
-  - Overcoming C++ Embedded Development Tooling Challenges - Marc Goodne
+  - Overcoming C++ Embedded Development Tooling Challenges - Marc Goodner
   - Simulating Low-Level Hardware Devices in Cpp - Ben Saks
+  - Parallelism Safety-Critical Guidelines for C++ - Michael Wong, Andreas Weis, Ilya Burylov
 - [Future of C++](Future%20of%20C++.md)
   - Contemporary C++ in Action - Daniela Engert
   - Can C++ be 10x Simpler & Safer? - Herb Sutter
@@ -102,6 +103,7 @@ ignore these words in spell check for this file
   - WebAssembly: Taking Your C++ and Going Places - Nipun Jindal & Pranay Kumar
   - A Faster Serialization Library Based on Compile-time Reflection and C++ 20 - Yu Qi
   - Bringing a Mobile C++ Codebase to the Web - Li Feng
+  - Structured Networking in C++ - Dietmar Kühl
 - [Resource Management](Resource%20Management.md)
   - Back to Basics: C++ Move Semantics - Andreas Fertig
   - Back to Basics: C++ Smart Pointers - David Olsen
@@ -140,11 +142,13 @@ ignore these words in spell check for this file
   - What Can Compiler Benchmarks Reveal About Meta-Programming Implementation Strategies - Vincent Reverdy
   - Nth Pack Element in C++ - A Case Study - Kris Jusiak
   - C++ Class Template Argument Deduction - History, Uses, & Enabling it for Classes - Marshall Clow
+  - Binary Object Serialization with Data Structure Traversal & Reconstruction in Cpp - Chris Ryan
 - [Value Semantics](Value%20Semantics.md)
   - Back to Basics: Cpp Value Semantics - Klaus Iglberger
   - Back to Basics: Master C++ Value Categories With Standard Tools - Inbal Levi
   - Val: A Safe Language to Interoperate with C++ - Dimitri Racordon
   - A Tour of C++ Recognised User Type Categories - Nina Ranns
+  - Value Semantics: Safety, Independence, Projection, & Future of Programming - Dave Abrahams
 - [Lighting Talks](#lightning-talks)
   - Who is Looking for a C++ Job? - Jens Weller
   - -std=c++20 -- Will This C++ Code Compile? - Tulio Leao
@@ -153,6 +157,14 @@ ignore these words in spell check for this file
   - C++ on Fly - C++ on Jupyter Notebook - Nipun Jindal
   - Finding Whether a Number is a Power of 2 - Ankur Satle
   - The Decade Long Rewind: Lambdas in C++ - Pranay Kumar
+
+missing
+
+- Scalable and Low Latency Lock-free Data Structures - concurrency - Alexander Krizhanovsky
+- C++ in the World of Embedded Systems - embedded - Vladimir Vishnevskii
+- Using std::chrono Calendar Dates for Finance - math
+- Take Advantage of All the MIPS - SYCL and C++
+- Aliasing - Risks, Opportunities and Techniques
 
 ## Lightning Talks
 
@@ -265,4 +277,7 @@ bitset version isn't constexpr. in c++20 there is the <cpp>bit</cpp> header with
 - C++20 made lambda mre aligned with templates, following a similar syntax and allowing to capture variadic parameter pack.
 - C++23 allows for omitted empty parameters list, and makes recursive lambdas easier to use.
 </details>
+
+##
+
 </details>
