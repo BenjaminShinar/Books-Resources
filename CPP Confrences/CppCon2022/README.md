@@ -7,7 +7,7 @@ ignore these words in spell check for this file
 
 # CppCon 2022
 
-[website](https://cppcon.org/), [youtube playlist](https://www.youtube.com/playlist?list=PLHTh1InhhwT6c2JNtUiJkaH8YRqzhU7Ag), [materials index](https://github.com/CppCon/CppCon2022).
+[website](https://cppcon.org/), [youtube playlist](https://www.youtube.com/playlist?list=PLHTh1InhhwT6c2JNtUiJkaH8YRqzhU7Ag),[lightining talks playlists](https://www.youtube.com/playlist?list=PLHTh1InhhwT6U_8ehqxpB7-O1KF_5WwC4), [materials index](https://github.com/CppCon/CppCon2022).
 
 ## Topics
 
@@ -31,6 +31,7 @@ ignore these words in spell check for this file
   - Sockets - Applying the Unix Readiness Model When Composing Concurrent Operations in C++ - Filipp Gelman
   - Architecting Multithreaded Robotics Applications in C++ - Arian Ajdari
   - Smarter Cpp Atomic Smart Pointers - Efficient Concurrent Memory Management - Daniel Anderson
+  - Scalable and Low Latency Lock-Free Data Structures - Alexander Krizhanovsky
 - [Debugging & Logging & Testing](Debugging%20&%20Logging%20&%20Testing.md)
   - Compilation Speedup Using C++ Modules: A Case Study - Chuanqi Xu
   - Back to Basics: Debugging in C++ - Mike Shah
@@ -77,7 +78,6 @@ ignore these words in spell check for this file
   - Understanding C++ coroutines by example: Generators - Pavel Novikov
   - 10 Years of Meeting C++ - Historical Highlights and the Future of C++ - Jens Weller
   - Reflection in C++ - Past, Present, and Hopeful Future - Andrei Alexandrescu
-- [General C++](General%20C++.md)
 - [Idioms & Techniques](Idioms%20&%20Techniques.md)
   - C++ Lambda Idioms - Timur Doumler
   - Undefined Behavior in the STL - Sandor Dargo
@@ -91,6 +91,7 @@ ignore these words in spell check for this file
   - C++20’s `[[likely]]` Attribute - Optimizations, Pessimizations, and `[[unlikely]]` Consequences - Amir Kirsh, Tomer Vromen
   - Cute C++ Tricks, Part 2.5 of N - Code You Should Learn From & Never Write - Daisy Hollman
   - Back to Basics: Declarations in C++ - Ben Saks
+  - Aliasing in C++ - Risks, Opportunities and Techniques - Roi Barkan
 - [Interface Design & Portability](Interface%20Design%20&%20Portability.md)
   - Purging Undefined Behavior & Intel Assumptions in a Legacy C++ Codebase - Roth Michaels
   - Managing External API's in Enterprise Systems - Pete Muldoon
@@ -99,6 +100,7 @@ ignore these words in spell check for this file
   - Principia Mathematica - The Foundations of Arithmetic in C++
   - What Is an Image? - Cpp Computer Graphics Tutorial, (GPU, GUI, 2D Graphics and Pixels Explained) - Will Rosecrans
   - Quantifying Dinosaur Pee - Expressing Probabilities as Floating-Point Values in C++ - John Lakos
+  - Using `std::chrono` Calendar Dates for Finance in Cpp - Daniel Hanson
 - [Networking & Web](Networking%20&%20Web.md)
   - WebAssembly: Taking Your C++ and Going Places - Nipun Jindal & Pranay Kumar
   - A Faster Serialization Library Based on Compile-time Reflection and C++ 20 - Yu Qi
@@ -119,6 +121,7 @@ ignore these words in spell check for this file
   - GPU Accelerated Computing & Optimizations on Cross-Vendor Graphics Cards with Vulkan & Kompute - Alejandro Saucedo
   - Fast C++ by using SIMD Types with Generic Lambdas and Filters - Andrew Drakeford
   - C++ Algorithmic Complexity, Data Locality, Parallelism, Compiler Optimizations, & Some Concurrency - Avi Lachmish
+  - Take Advantage of All the MIPS - SYCL & C++ - Wong, Delaney, Keryell, Liber, Chlanda
 - [Software Design](Software%20Design.md)
   - How C++23 Changes the Way We Write Code - Timur Doumler
   - How Microsoft Uses C++ to Deliver Office - Huge Size, Small Components - Zachary Henkel
@@ -157,14 +160,6 @@ ignore these words in spell check for this file
   - C++ on Fly - C++ on Jupyter Notebook - Nipun Jindal
   - Finding Whether a Number is a Power of 2 - Ankur Satle
   - The Decade Long Rewind: Lambdas in C++ - Pranay Kumar
-
-missing
-
-- Scalable and Low Latency Lock-free Data Structures - concurrency - Alexander Krizhanovsky
-- C++ in the World of Embedded Systems - embedded - Vladimir Vishnevskii
-- Using std::chrono Calendar Dates for Finance - math
-- Take Advantage of All the MIPS - SYCL and C++
-- Aliasing - Risks, Opportunities and Techniques
 
 ## Lightning Talks
 
@@ -276,6 +271,65 @@ bitset version isn't constexpr. in c++20 there is the <cpp>bit</cpp> header with
 - C++17 allowed lambdas to be constexpr, and fave a simple capture for with `[*this](){}`.
 - C++20 made lambda mre aligned with templates, following a similar syntax and allowing to capture variadic parameter pack.
 - C++23 allows for omitted empty parameters list, and makes recursive lambdas easier to use.
+</details>
+
+### C++20 - A New Way of Meta-Programming? - Kris Jusiak
+
+<details>
+
+[C++20 - A New Way of Meta-Programming?](https://youtu.be/zRYlQGMdISI).
+
+five game changing features of meta programming
+
+1. Design by introspection - `if constexpr (requires{ t.foo; })`
+2. Immediately invoked function expression inside compile-time expressions.
+3. Fixed String - passing the type of string as template argument.
+4. reflection `to_tuple` -
+5. `constexpr std::vector`
+
+</details>
+
+### `find-move-candidates` in Cpp - Chris Cotter
+
+<details>
+
+[find-move-candidates in Cpp](https://youtu.be/F8wbpi2kTmY), [github](https://github.com/bloomberg/clangmetatool)
+
+this code does unnecessary copies, when it could be using <cpp>std::move</cpp>.
+
+```cpp
+std::vector<std::string> fields;
+for (int i: views::iota(0,1000))
+  fields.push_back(/*...*/);
+
+Data data;
+data.set_fields(fields);
+
+Request request;
+request.set_data(data);
+```
+
+so there's a tool that helps find candidates for that and will suggest moving data when it's safe to do so.
+
+</details>
+
+### Const Mayhem in C++ - Ofek Shilon
+
+<details>
+
+[Const Mayhem in C++](https://youtu.be/cuQKiXZUmyA)
+
+can't create a `const` object when there is no default constructor. but that's only if the constructor is defined inside the class deceleration.\
+an example of a const method that modifies values without being mutable - abusing pointers.
+
+```cpp
+struct C {
+  int m_i;
+  int* m_p = &m_i;
+  void const_method() const { ++(*m_p); } // m_i is modified
+};
+```
+
 </details>
 
 ##
