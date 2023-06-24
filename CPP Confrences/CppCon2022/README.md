@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore JupyText Pessimizations
+// cSpell:ignore
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -153,185 +153,33 @@ ignore these words in spell check for this file
   - A Tour of C++ Recognised User Type Categories - Nina Ranns
   - Value Semantics: Safety, Independence, Projection, & Future of Programming - Dave Abrahams
 - [Lighting Talks](#lightning-talks)
-  - Who is Looking for a C++ Job? - Jens Weller
-  - -std=c++20 -- Will This C++ Code Compile? - Tulio Leao
-  - Programming is Fun in Cpp! - Pier-Antoine Giguère
-  - Effective APIs in Practice in C++ - Thamara Andrade
-  - C++ on Fly - C++ on Jupyter Notebook - Nipun Jindal
+  - How to Win at Coding Interviews - David Stone
+  - Best Practices Every C++ Programmer Needs to Follow - Oz Syed
+  - A New Way of Meta-Programming? - Kris Jusiak
+  - MP: Template Meta-Programming in C++ - Kris Jusiak
+  - The Future of C++ - Neil Henderson
+  - Dependency Injection for Modern C++ - Tyler Weaver
+  - Cute Approach for Polymorphism in C++ - Liad Aben Sour Asayag
+  - Finding the Average of 2 Integers - Tomer Vromen
+  - The Lambda Calculus in C++ Lambdas - David Stone
+  - `find-move-candidates` in Cpp - Chris Cotter
+  - Modernizing SFML in Cpp - Chris Thrasher
   - Finding Whether a Number is a Power of 2 - Ankur Satle
+  - Const Mayhem in C++ - Ofek Shilon
+  - Who is Looking for a C++ Job? - Jens Weller
+  - Effective APIs in Practice in C++ - Thamara Andrade
+  - Standard Standards for C++ - Ezra Chung
+  - Ref, C++ const ref, immutable ref? - Francesco Zoffoli
+  - C++ Debug Performance is Improving: What Now? - Vittorio Romeo
+  - Embrace Leaky Abstractions in C++ - Phil Nash
+  - 10 Things an Entry-Level Software Engineer Asks You to Do - Katherine Rocha
+  - C++ on Fly - C++ on Jupyter Notebook - Nipun Jindal
+  - Using This Correctly it's `[[unlikely]]` at Best - Staffan Tjernstrom
+  - Programming is Fun in Cpp! - Pier-Antoine Giguère
+  - Adventures in Benchmarking Timestamp Taking in Cpp - Nataly Rasovsky
+  - `-std=c++20` -- Will This C++ Code Compile? - Tulio Leao
+  - `majsdown`: Metaprogramming? In my Slides? - Vittorio Romeo
   - The Decade Long Rewind: Lambdas in C++ - Pranay Kumar
-
-## Lightning Talks
-
-<!-- <details> -->
-<summary>
-Lightening Talks
-</summary>
-
-### Who is Looking for a C++ Job? - Jens Weller
-
-<details>
-
-[Who is Looking for a C++ Job? - Jens Weller](https://youtu.be/0xI0H7djNOc)
-
-an online C++ job fair that happens a few time each year. showing up some data about applicants.
-
-</details>
-
-### -std=c++20 -- Will This C++ Code Compile? - Tulio Leao
-
-<details>
-
-[-std=c++20 -- Will This C++ Code Compile?](https://youtu.be/87_Ld6CMHAw)
-
-- using reserved keywords as variable names ("requires","concept")
-- identifiers for the standard library (such as "\_TR")
-- incompatibility between <cpp>std::string</cpp> and <cpp>std::fs::path u8string()</cpp>. was ok in c++17, but not anymore.
-- redundant template-id on constructors
-- aggregate initialization of structs with deleted default constructors
-- removed <cpp>std::allocator</cpp> members and functions, previously deprecated, then obsolete, now removed, replace with <cpp>std::allocator_traits</cpp>
-- <cpp>std::accumulate</cpp> attempts to move the first element, so it won't work with non-const references.
-</details>
-
-### Programming is Fun in Cpp! - Pier-Antoine Giguère
-
-<details>
-
-[Programming is Fun in Cpp!](https://youtu.be/F9c1ZuSRdsM)
-
-playing with ray tracing and generating images.
-
-</details>
-
-### Effective APIs in Practice in C++ - Thamara Andrade
-
-<details>
-[Effective APIs in Practice in C++](https://youtu.be/YdZLsSDZ_Qc)
-
-tips to improve API and make he
-
-- better naming - for the give the unit name in the api
-- use strong types - explicit creation of the required object
-  - adding our literals
-- avoid easily swappable parameters - there is a clang tidy tool to help finding those cases
-- think about intent
-- keep learning!
-</details>
-
-### C++ on Fly - C++ on Jupyter Notebook - Nipun Jindal
-
-<details>
-
-[C++ on Fly - C++ on Jupyter Notebook](https://youtu.be/MtKdza3RJNM)
-
-A scratch pad in jupyter notebook - code and rich text. **Xeus** is an implementation of the jupyter Kernel protocol, and together with **cling** interferer, we can have a working C++ notebook.
-
-```sh
-conda create -n cling
-conda install xeus-cling -c conda-forge
-conda install xeus -c conda-forge
-conda activate cling
-
-jupyter notebook
-jupyter lab
-```
-
-there is also a docker setup.
-
-versioning with **JupyText**, quick sharing with **Binder**.
-
-</details>
-
-### Finding Whether a Number is a Power of 2 - Ankur Satle
-
-<details>
-
-[Finding Whether a Number is a Power of 2](https://youtu.be/Df-qEsWjzQw)
-
-a common interview question, counting "on" bits in number.
-
-```cpp
-constexpr bool is_pow_knr(std::unsigned_integral auto n){
-  return (n & (n-1)) == 0;
-}
-```
-
-bitset version isn't constexpr. in c++20 there is the <cpp>bit</cpp> header with built-in functions.
-
-</details>
-
-### The Decade Long Rewind: Lambdas in C++ - Pranay Kumar
-
-<details>
-
-[The Decade Long Rewind: Lambdas in C++](https://youtu.be/xBkDkCgQsAM).
-
-- C++11 introduced lambdas, unique typed closure which the compiler produces. it had capture, mutable, throws.
-- c++14 added default parameters, template parameters with `auto&&`,generalized capture inside the parentheses, and being able to return lambdas from function with the `auto` return type.
-- C++17 allowed lambdas to be constexpr, and fave a simple capture for with `[*this](){}`.
-- C++20 made lambda mre aligned with templates, following a similar syntax and allowing to capture variadic parameter pack.
-- C++23 allows for omitted empty parameters list, and makes recursive lambdas easier to use.
-</details>
-
-### C++20 - A New Way of Meta-Programming? - Kris Jusiak
-
-<details>
-
-[C++20 - A New Way of Meta-Programming?](https://youtu.be/zRYlQGMdISI).
-
-five game changing features of meta programming
-
-1. Design by introspection - `if constexpr (requires{ t.foo; })`
-2. Immediately invoked function expression inside compile-time expressions.
-3. Fixed String - passing the type of string as template argument.
-4. reflection `to_tuple` -
-5. `constexpr std::vector`
-
-</details>
-
-### `find-move-candidates` in Cpp - Chris Cotter
-
-<details>
-
-[find-move-candidates in Cpp](https://youtu.be/F8wbpi2kTmY), [github](https://github.com/bloomberg/clangmetatool)
-
-this code does unnecessary copies, when it could be using <cpp>std::move</cpp>.
-
-```cpp
-std::vector<std::string> fields;
-for (int i: views::iota(0,1000))
-  fields.push_back(/*...*/);
-
-Data data;
-data.set_fields(fields);
-
-Request request;
-request.set_data(data);
-```
-
-so there's a tool that helps find candidates for that and will suggest moving data when it's safe to do so.
-
-</details>
-
-### Const Mayhem in C++ - Ofek Shilon
-
-<details>
-
-[Const Mayhem in C++](https://youtu.be/cuQKiXZUmyA)
-
-can't create a `const` object when there is no default constructor. but that's only if the constructor is defined inside the class deceleration.\
-an example of a const method that modifies values without being mutable - abusing pointers.
-
-```cpp
-struct C {
-  int m_i;
-  int* m_p = &m_i;
-  void const_method() const { ++(*m_p); } // m_i is modified
-};
-```
-
-</details>
-
-##
-
-</details>
+  - Cpp Change Detector Tests - Guy Bensky
+  - Developer Grief - Thamara Andrade
+  - Now in Our Lifetimes Cpp - Staffan Tjernstrom

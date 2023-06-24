@@ -4,8 +4,8 @@
   "dictionaryDefinitions": [],
   "dictionaries": ["cpp"],
   "words": [
-    "Ajdari",
     "alignas",
+    "Metaprogramming",
     "Architecting",
     "ccmake",
     "Chrono",
@@ -206,7 +206,19 @@
     "Dietmar",
     "Kühl",
     "Ilya",
-    "Burylov"
+    "Burylov",
+    "Syed",
+    "Liad",
+    "Aben",
+    "Asayag",
+    "Staffan",
+    "Tjernstrom",
+    "Nataly",
+    "Rasovsky",
+    "Ajdari",
+    "majsdown",
+    "Pessimizations",
+    "Bensky"
   ],
   "import": []
 }
