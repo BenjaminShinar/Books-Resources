@@ -898,15 +898,15 @@ int main()
 }
 ```
 
-| type/keyword                 | compile-time calculation | const | static | example                                           | notes                                                                        |
-| ---------------------------- | ------------------------ | ----- | ------ | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `constexpr`                  | up to the compiler       | yes   | no     | `constexpr auto value = get_value(1);`            |
-| `constexpr static`           | yes                      | yes   | yes    | `constexpr static auto value = get_value(1);`     | must be static const                                                         |
-| `constinit static`           | yes                      | no    | yes    | `constinit static auto value = get_value(1);`     | must be static                                                               |
-| `consteval` function         | yes                      | no    | no     | `auto value = get_value_consteval(5)`             | argument must be compile time constants, function can't be used in run time. |
-| template parameter           | yes                      | no    | no     | `auto value = make_compile_time<get_value(10)>()` | using templates                                                              |
+| type/keyword                  | compile-time calculation | const | static | example                                           | notes                                                                        |
+| ----------------------------- | ------------------------ | ----- | ------ | ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `constexpr`                   | up to the compiler       | yes   | no     | `constexpr auto value = get_value(1);`            |
+| `constexpr static`            | yes                      | yes   | yes    | `constexpr static auto value = get_value(1);`     | must be static const                                                         |
+| `constinit static`            | yes                      | no    | yes    | `constinit static auto value = get_value(1);`     | must be static                                                               |
+| `consteval` function          | yes                      | no    | no     | `auto value = get_value_consteval(5)`             | argument must be compile time constants, function can't be used in run time. |
+| template parameter            | yes                      | no    | no     | `auto value = make_compile_time<get_value(10)>()` | using templates                                                              |
 | wrapping `consteval` function | yes                      | no    | no     | `auto value = as_constant(get_value(10))`         | inner function can be reused                                                 |
-| `consteval invoke` wrapper   | yes                      | no    | no     | with moveable and callable                        |
+| `consteval invoke` wrapper    | yes                      | no    | no     | with moveable and callable                        |
 
 </details>
 
@@ -2061,6 +2061,7 @@ note: a capture-less lambda is implicitly convertible to function pointer. but a
 </details>
 
 ## C++ Weekly - Ep 333 - A Simplified `std::function` Implementation
+
 <details>
 <summary>
 trying to make an implementation of std::function in c++20.
@@ -2068,10 +2069,10 @@ trying to make an implementation of std::function in c++20.
 
 [A Simplified `std::function` Implementation](https://youtu.be/xJSKk_q25oQ)
 
-
-remember, *std::function* is not a lambda or function pointer.
+remember, _std::function_ is not a lambda or function pointer.
 
 we start with a forward template deceleration, and then we specialize on it. we want to make sure the signature is correct, is that the template arguments are the same. we want the compiler to throw an error if we pass something which isn't a valid function signature (and return type).
+
 ```cpp
 template <typename T>
 class function;
@@ -2096,10 +2097,10 @@ next, we want to overload the operator(), to make sure this is a callable. we ne
 
 template <typename T, typename ... Param>
 class function<Ret (Param....)>
-{   
+{
     public:
     function(Ret (*f)(Param...)) : callable{std::make_unique<callable_impl<Ret (*)(Param....)>>(f)}; //constructor
-    
+
     Ret operator()(Param... param) {
         return callable->call(param...); // unpack parameters
     }
@@ -2136,12 +2137,12 @@ int main()
 }
 ```
 
-
 we might need to add many more ctors, like one for function objects.
+
 ```cpp
 template <typename T, typename ... Param>
 class function<Ret (Param....)>
-{   
+{
     public:
     function(Ret (*f)(Param...)) : callable{std::make_unique<callable_impl<Ret (*)(Param....)>>(f)}; //constructor for function pointers
 
@@ -2149,10 +2150,13 @@ class function<Ret (Param....)>
     function(FunctionObject fo) : callable{std::make_unique<callable_impl<FunctionObject>>(std::move(fo))}; //constructor for function object
 };
 ```
-we could also use `std::invoke` instead. we might need a *Clone* method,  also forwarding and unwrapping references.
+
+we could also use `std::invoke` instead. we might need a _Clone_ method, also forwarding and unwrapping references.
+
 </details>
 
 ## C++ Weekly - Ep 334 - How to Put a Lambda in a Container
+
 <details>
 <summary>
 Three Ways to put lambdas in a container
@@ -2163,6 +2167,7 @@ Three Ways to put lambdas in a container
 it's actually possible to put a lambda in a container, but it's not straight forward.
 
 pushing only a single lambda, even if another lambda has a similar structure
+
 ```cpp
 #include <vector>
 
@@ -2175,7 +2180,8 @@ int main()
 }
 ```
 
-converting to a std::function,  has some massive overhead.
+converting to a std::function, has some massive overhead.
+
 ```cpp
 #include <vector>
 #include <functional>
@@ -2186,7 +2192,7 @@ int main()
     std::vector<std::function<int(int)>> data;
     data.push_back(l);
     data.push_back([](auto k){return k;});
-    
+
 }
 ```
 
@@ -2223,9 +2229,11 @@ int main()
 ```
 
 there is a danger of ODR (one defintion rule) violation, so it's probably better to create a callable directly.
+
 </details>
 
 ## C++ Weekly - Ep 335 - Projects That Need Your Help! - Channel News and Updates
+
 <details>
 <summary>
 Some updates and general information.
@@ -2243,6 +2251,7 @@ Going over the Repositories and the Best Practice book. There will be a workshop
 </details>
 
 ## C++ Weekly - Ep 336 - C++23's Awesome std::stacktrace Library
+
 <details>
 <summary>
 A new library in c++23, able to show the stacktrace in runtime.
@@ -2251,6 +2260,7 @@ A new library in c++23, able to show the stacktrace in runtime.
 [C++23's Awesome std::stacktrace Library](https://youtu.be/9IcxniCxKlQ)
 
 in compiler explorer with `-std=c++2b --lstdc++_libbacktrace` and all debug symbols enabled
+
 ```cpp
 #include <stacktrace>
 #include <string>
@@ -2262,6 +2272,7 @@ int main()
     std::cout << std::to_string(trace) <<'\n';
 }
 ```
+
 the output isn't perfect, some levels are are empty, the function name isn't shown properly, etc...
 
 if we add a function call, it seems that there is no inlining (the library might prevent them in some way). we can put the stack trace print into a strcut
@@ -2276,6 +2287,7 @@ struct S{
 ```
 
 we can't currently do a stacktrace from a compile time context. but if we make it part of the function default value, then it's called outside of the function initiation
+
 ```cpp
 void func3 ([[maybe_unused]] S s =S{})
 {
@@ -2287,6 +2299,7 @@ int main()
     func3();
 }
 ```
+
 next is playing with lambda.
 
 if we look at the API, the class allocator aware (we can use polymorphic allocators), it has many of the characteristics of a container. it uses a class called 'stacktrace_entry' which is similar, but not exactly like 'source_location' class.
@@ -2296,6 +2309,7 @@ this class will probably change until c++23 is released.
 </details>
 
 ## C++ Weekly - Ep 337 - C23 Features That Affect C++ Programmers
+
 <details>
 <summary>
 C23 changes which can be useful to c++ programmers.
@@ -2314,15 +2328,14 @@ a new version of **C**, which will have changes which can be useful for c++ prog
 
 </details>
 
-
 ## C++ Weekly - Ep 338 - Analyzing and Improving Build Times
+
 <details>
 <summary>
 Tools and tips to optimize build time.
 </summary>
 
 [Analyzing and Improving Build Times](https://youtu.be/Iybb9wnpF00)
-
 
 Cmake options, `-ftime-trace` clang compile time trace flag, a json file is created. we go to "chrome://tracing" and load the file. we see a graph.
 
@@ -2332,10 +2345,10 @@ Cmake options, `-ftime-trace` clang compile time trace flag, a json file is crea
 
 the example in the video is chai-script, so not all of those options are viable.
 
-
 </details>
 
 ## C++ Weekly - Ep 339 - `static constexpr` vs `inline constexpr`
+
 <details>
 <summary>
 inline static data at file (global) scope.
@@ -2378,16 +2391,18 @@ const int *get_data()
 if we look at the file sizes, the both files now have the large sizes. and if we link them together, the size doubles.
 
 if we change the header file to `inline constexpr`.
+
 ```cpp
 //header.hpp
 inline constexpr int data[10000000];
 ```
 
 each compiled file is still very large, but the linker merges them together, so the output file only contains one 'copy' of this data.
+
 </details>
 
-
 ## C++ Weekly - Ep 340 - Finally! A Simple String Split in C++!
+
 <details>
 <summary>
 A language standard split string capability 
@@ -2415,9 +2430,11 @@ int main()
 in c++23, the std::string_view will be able to take the range and construct a string out of it.
 
 the ranges views are lazily evaluated, so there might be some issues with `constexpr` functions.
+
 </details>
 
 ## C++ Weekly - Ep 341 - `std format` vs lib `{fmt}`
+
 <details>
 <summary>
 comparing between the standard library format library and the {fmt} package.
@@ -2426,7 +2443,6 @@ comparing between the standard library format library and the {fmt} package.
 [std format vs lib {fmt}](https://youtu.be/zc6B-j0S9Iw)
 
 `std <format>` is what we get with the compiler, while `lib {fmt}` is what it was based on.
-
 
 1. `{fmt}` is available today
 2. `<format>` is currently only available only on visual studio,
@@ -2463,9 +2479,11 @@ int main()
     std::puts(str.date());
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 342 - C++20's Ranges: A Quick Start
+
 <details>
 <summary>
 Ranges help us solve common problems and avoid bugs.
@@ -2473,19 +2491,17 @@ Ranges help us solve common problems and avoid bugs.
 
 [C++20's Ranges: A Quick Start](https://youtu.be/sZy9XcGHmI4)
 
-
 std::ranges are wrappers which help us write better code for our common algorithms.
-
 
 > 1. handy adapters for common algorithms
 > 1. pipe-able range views
 > 1. simple solutions to annoying problems
 > 1. lazy transform has interesting implications
-> 
+>
 > all of these are constexpr capable
 
-
 we start with a buggy implementation, in this case the `get_data()` function returns a temporary object each time, so we should get a iterator mismatch runtime error.
+
 ```cpp
 #include <algorithm>
 #include <vector>
@@ -2505,6 +2521,7 @@ int main()
 ```
 
 we could fix it by being explicit
+
 ```cpp
 bool test_data()
 {
@@ -2513,7 +2530,9 @@ bool test_data()
     return result;
 }
 ```
+
 but ranges help us avoid this.
+
 ```cpp
 bool test_data()
 {
@@ -2536,17 +2555,20 @@ bool test_data()
 ```
 
 we can also use it for simple data wrangling, like skipping the first element.
+
 ```cpp
 #include <format>
 void iterate_data()
 {
-    for (const auto &elem : get_data() | std::ranges::views::drop(1) 
+    for (const auto &elem : get_data() | std::ranges::views::drop(1)
     {
         fmt::print("{}\n",elem);
     }
 }
 ```
-lazy evaluation also helps us  with transformations. we use explicit template parameters for lambda (introduced in c++20).
+
+lazy evaluation also helps us with transformations. we use explicit template parameters for lambda (introduced in c++20).
+
 ```cpp
 void iterate_with_index()
 {
@@ -2559,11 +2581,11 @@ void iterate_with_index()
     }
 }
 ```
+
 </details>
 
-
-
 ## C++ Weekly - Ep 343 - Digging Into Type Erasure
+
 <details>
 <summary>
 Hiding away the concrete type.
@@ -2574,6 +2596,7 @@ Hiding away the concrete type.
 type erasure allows us to "hide" types in runtime, inheritance is one such way to do so in c++. we could run `dynamic_cast<>` and check if it fits to one specific type, but that's all.
 
 the `std::function` is type-erased, it can take a function, a function pointer, a lambda, or anything which is callable, even combining the `std::bind_front`.
+
 ```cpp
 int use_function(const std::function<int(int,int)> &f)
 {
@@ -2582,10 +2605,10 @@ int use_function(const std::function<int(int,int)> &f)
 ```
 
 > Type Erasure: hide the exact type of an object wen you work with it.
+>
 > - simpler and faster to compile interfaces.
 > - can work with any type that might be declared in the future.
 > - compilation firewall to prevent recompiling the entire library for adding a new type.
-
 
 we create an `animal_view` type, which has constructor that takes a reference, and it works with anything that has a `speak` function. defined to it. it works like an interface.
 
@@ -2597,9 +2620,9 @@ class animal_view{
             [](const void *obj) {return static_cast<const Speakable *>(obj)->speak();}
             }
         {
-        }      
+        }
 
-        void speak() const 
+        void speak() const
         {
             speak_impl(object);
         }
@@ -2623,9 +2646,11 @@ int main()
     do_animal_things(animal_view{Sheep{}});
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 344 - `decltype(auto)`: An Overview of How, Why and Where
+
 <details>
 <summary>
 "Perfect returning" for types.
@@ -2633,10 +2658,10 @@ int main()
 
 [`decltype(auto)`: An Overview of How, Why and Where](https://youtu.be/E5L66fkNlpE)
 
-
 `decltype(auto)` deduces the **exact** type of an expresion.
 
-in this example, what is the type of *i*? it changes depending on how we set the callsite variable.
+in this example, what is the type of _i_? it changes depending on how we set the callsite variable.
+
 ```cpp
 #include <type_traits>
 
@@ -2694,7 +2719,7 @@ int main()
 }
 ```
 
-we can get in trouble if we use parentheses in  the return statement.
+we can get in trouble if we use parentheses in the return statement.
 
 ```cpp
 auto get_value() -> decltype(auto){
@@ -2709,6 +2734,7 @@ so it's suggested to not use parentheses when returning values from functions.
 </details>
 
 ## C++ Weekly - Ep 345 - No Networking in C++20 or C++23! Now What?
+
 <details>
 <summary>
 Some recommended libraries for networking.
@@ -2719,17 +2745,19 @@ Some recommended libraries for networking.
 The networking features weren't part of the c++ standard library in either c++20 or c++23.
 
 we finally have package managers for c++, and we can use them go get networking libraries!
+
 - conan
 - hunter
 - vcpkg
- 
+
 There are c++ libraries for networking:
- - ASIO - which is the closest thing to what we are expecting to get from the standard
- - QT - a framework\utility library with a lot of stuff, including networking 
- - Poco - utility library - networking focused
- - ACE - low level
- - uvw - wrapper around C libuv library
- 
+
+- ASIO - which is the closest thing to what we are expecting to get from the standard
+- QT - a framework\utility library with a lot of stuff, including networking
+- Poco - utility library - networking focused
+- ACE - low level
+- uvw - wrapper around C libuv library
+
 there are libraries which wrap around libcurl, such as **cpr**. which is meant to be C++ version of python **Request** library.
 
 for message passing, there is **ZeroMQ**, and there's **asio-grpc** for asynchronous interface, and there are web-sockets libraries, and REST libraries.
@@ -2737,6 +2765,7 @@ for message passing, there is **ZeroMQ**, and there's **asio-grpc** for asynchro
 </details>
 
 ## C++ Weekly - Ep 346 - C++23's `bind_back`
+
 <details>
 <summary>
 binding parameters to an object.
@@ -2744,7 +2773,7 @@ binding parameters to an object.
 
 [C++23's `bind_back`](https://youtu.be/pDiP2frdMnI)
 
-a new c++23 feature, *std::bind_back* 
+a new c++23 feature, _std::bind_back_
 
 ```cpp
 
@@ -2777,9 +2806,11 @@ int main()
 ```
 
 we can use it in algorithms or in a range, it can sometimes replace a lambda.
+
 </details>
 
 ## C++ Weekly - Ep 347 - This PlayStation Jailbreak NEVER SHOULD HAVE HAPPENED
+
 <details>
 <summary>
 Implicit type conversion created a bug.
@@ -2787,7 +2818,7 @@ Implicit type conversion created a bug.
 
 [This PlayStation Jailbreak NEVER SHOULD HAVE HAPPENED](https://youtu.be/rWCvk4KZuV4)
 
-there was ps5 jail break, which was a C vulnerability, a heap buffer size over flow. 
+there was ps5 jail break, which was a C vulnerability, a heap buffer size over flow.
 
 [CVE report](https://hackerone.com/reports/1340942)
 
@@ -2804,9 +2835,11 @@ int main()
 ```
 
 this might have been avoided if the correct warning flags: `-Werror -Wall -Wextra -Wconversion`.
+
 </details>
 
 ## C++ Weekly - Ep 348 - A Modern C++ Quick Start Tutorial - 90 Topics in 20 Minutes
+
 <details>
 <summary>
 c++ topics and examples of how they are used in lambdas.
@@ -2871,7 +2904,7 @@ topics in c++
 - recursive lambdas
 - deducing `this`
 - recursive functions
-- trivially copyable  types
+- trivially copyable types
 - higher order functions
 - dangling references
 - undefined behavior
@@ -2907,6 +2940,7 @@ topics in c++
 </details>
 
 ## C++ Weekly - Ep 349 - C++23's `move_only_function`
+
 <details>
 <summary>
 Passing a type erased function which owns non-copyable data.
@@ -2914,7 +2948,7 @@ Passing a type erased function which owns non-copyable data.
 
 [C++23's `move_only_function`](https://youtu.be/OJtGOJI0JEw)
 
-a new c++23 feature. 
+a new c++23 feature.
 
 when we try to use std::function, it can't be used with a lambda that owns a non-copyable capture, such as a unique pointer, or any move-only element.
 
@@ -2925,7 +2959,7 @@ void register_callback(std::function<int (int)> callback);
 
 int main()
 {
-    
+
     std::function<int (int)> cb{
         [i= std::make_unique<int(42)>](const int val) {return val + *i;}
     };
@@ -2933,7 +2967,8 @@ int main()
     register_callback(cb);
 }
 ```
-*std::move_only_function* was created to over come this limitation.
+
+_std::move_only_function_ was created to over come this limitation.
 
 ```cpp
 #include <functional>
@@ -2957,6 +2992,7 @@ we can't a move of const object, so if we want, we can create the lambda as a te
 </details>
 
 ## C++ Weekly - Ep 350 - The Right Way to Write C++ Code in 2022
+
 <details>
 <summary>
 Best Practices for working with C++ code today.
@@ -2971,25 +3007,27 @@ many of these examples are up on the best practices repo.
 Continuos Build Enviornment:\
 github, gitlab, jenkins, there are many
 
-use as many compilers as you can, compilers can have different warnings 
+use as many compilers as you can, compilers can have different warnings
+
 - gcc
 - clang
 - MSVC (cl.exe)
 - clang.cl
 
-
 testing enviornment:
+
 - docTest
 - Catch2
 - gtest
 - boost
 
 test coverage analysis and reporting, preferably integrated with the build enviornment. it should have historical tracking to catch regressions.
+
 - coveralls
 - codecov.io
 
-
 static analysis, as many as possible.
+
 - at least all the warnings treated as errors (`-Werror`, `-Wconversion`)
 - `gcc -fanalyzer`
 - `cl.exe /analyze`
@@ -2999,6 +3037,7 @@ static analysis, as many as possible.
 - PVS studio
 
 runtime analysis during testing
+
 - Address sanitizer
 - Undefined behavior sanitizer
 - Memory sanitizer
@@ -3008,10 +3047,12 @@ runtime analysis during testing
 - Debug Checked Iterators from the compiler
 
 Fuzz Testing - random input to the API
+
 - used together with runtime analysis
 - trying to feed the API weird data
 
 Ship with Hardening enabled
+
 - control flow guard (visual studio)
 - `_FORTIFY_SOURCE` (GCC)
 - stack protector
@@ -3019,6 +3060,7 @@ Ship with Hardening enabled
 </details>
 
 ## C++ Weekly - Ep 351 - Your 5 Step Plan For Deeper C++ Knowledge
+
 <details>
 <summary>
 5 things to do in order to get better understanding of c++.
@@ -3035,6 +3077,7 @@ create a `std::function implementation`, get an understanding of type erasure, l
 </details>
 
 ## C++ Weekly - Ep 352 - Not Doing This Should Be Illegal! (Always Fuzz Your C++!)
+
 <details>
 <summary>
 Fuzz testing
@@ -3046,10 +3089,10 @@ fuzz testing is a way of testing software for vulnerabilities, we use a tool to 
 
 example of a bug, not checking for string ending, and how using fuzz testing finds the bug. another example with rotating bits in an integer. another example of how fuzzing would have found earlier bugs.
 
-
 </details>
 
 ## C++ Weekly - Ep 353 - Implicit Conversions Are Evil
+
 <details>
 <summary>
 Implicit conversions when we don't expect them
@@ -3070,9 +3113,11 @@ slicing when converting from derived class to base class.
 implicit conversion from std::shared_ptr to `const std::shared_ptr`.
 
 there are many sharp edges, and many places where we can fall into. it can create non-trivial objects and cost us in performance.
+
 </details>
 
 ## C++ Weekly - Ep 354 - Can AI And ChatGPT Replace C++ Programmers?
+
 <details>
 <summary>
 Chatting with GPT and asking him to create c++ code.
@@ -3086,13 +3131,13 @@ we even ask it to write clang-tidy stuff.
 </details>
 
 ## C++ Weekly - Ep 355 - 3 Steps For Safer C++
+
 <details>
 <summary>
 Static Analysis, Sanitizers and Fuzzing
 </summary>
 
 [3 Steps For Safer C++](https://youtu.be/dSYFm65KcYo)
-
 
 these steps depend on us having tests and ci-cd integration
 
@@ -3101,7 +3146,7 @@ these steps depend on us having tests and ci-cd integration
   - fix all existing warning
   - build both `release` and `debug`
   - add `clang-tidy`(without project-specific options)
-  - increase warning level `-Weverything`, `-Wall` 
+  - increase warning level `-Weverything`, `-Wall`
 - Satirizers
   - address sanitizers
   - undefined behavior
@@ -3110,9 +3155,10 @@ these steps depend on us having tests and ci-cd integration
 - Add fuzzing
   - finds all the thing we don't think about
   - first with all user-facing apis
-</details>
+  </details>
 
 ## C++ Weekly - Ep 356 - The Python Enabled Calculators of 2022
+
 <details>
 <summary>
 The Future of Programming Education - Calculators with Python
@@ -3128,6 +3174,7 @@ showing different calculators, going over how they behave and how they support p
 </details>
 
 ## C++ Weekly - Ep 357 - `typename` VS `class` In Templates
+
 <details>
 <summary>
 Which should be used?
@@ -3150,6 +3197,7 @@ but there are some cases which require using one or the other. this has been tru
 </details>
 
 ## C++ Weekly - Ep 358 - C23's `#embed` and C++23's `#warning`
+
 <details>
 <summary>
 New pre-processor directives in upcoming C and C++ standards.
@@ -3184,10 +3232,11 @@ C++23 provides the `#warning` directive, which we can use to write warnings at c
 #warning "Project not tested on 8bit platforms"
 #endif
 ```
+
 </details>
 
-
 ## C++ Weekly - Ep 359 - _std::array_'s Implementation Secret (That You Can't Use!)
+
 <details>
 <summary>
 Simple Implementation of the standard array.
@@ -3198,6 +3247,7 @@ Simple Implementation of the standard array.
 the array type is meant to allow a typesafe way to view arrays, unlike C-arrays, which devolve into pointers.
 
 this video is a basic implementation an array.
+
 - template for type and size
 - indexing operator (square brackets)
 - initialization (without constructors)
@@ -3205,8 +3255,8 @@ this video is a basic implementation an array.
 - allowing for range-based for-loops - tons of accessors
 - structured binding support (tuple_size, get)
 
-
 the standard array has publicly accessible internal C-array, but using it directly is undefined behavior.
+
 ```cpp
 #include <cstdint>
 #include <fmt/format.h>
@@ -3259,10 +3309,11 @@ int main()
     return data[0];
 }
 ```
+
 </details>
 
-
 ## C++ Weekly - Ep 360 - Scripting C++ Inside Python With cppyy
+
 <details>
 <summary>
 Integrating C++ code inside python
@@ -3277,11 +3328,13 @@ import cppyy
 cppyy.include("cppyy-test.hpp")
 cppyy.gbl.go()
 ```
+
 we can run the code as a script, or in an interactive way - we access our code, structs, templates... all from python.
+
 </details>
 
-
 ## C++ Weekly - Ep 361 - Is A Better `main` Possible?
+
 <details>
 <summary>
 Creating a `main` function with input arguments that we can operate on properly.
@@ -3290,13 +3343,16 @@ Creating a `main` function with input arguments that we can operate on properly.
 [Is A Better `main` Possible?](https://youtu.be/zCzD9uSDI8c)
 
 could we make the **main** function more modern? get some type safety, be able to use range operations, etc...
+
 ```cpp
 int better_main(std::span<const std::string_view> args)
 {
     return 0;
 }
 ```
+
 we could forward declare the better_main and use a vector as a contiguous container.
+
 ```cpp
 int main(const int argc, char** argv)
 {
@@ -3316,6 +3372,7 @@ int main(const int argc, char** argv)
 </details>
 
 ## C++ Weekly - Ep 362 - C++ vs Python vs Python (jit) vs Python With C++!
+
 <details>
 <summary>
 Comparing performance between C++ and python (with C++).
@@ -3323,12 +3380,12 @@ Comparing performance between C++ and python (with C++).
 
 [C++ vs Python vs Python (jit) vs Python With C++!](https://youtu.be/lhqP50YVT-I)
 
-
 coding conway's game of life. both in python and C++. checking normal python, compiled python (pypy), and cppyy (python which uses C++ objects). the real cost is the startup, but even just compiled python makes a huge difference.
 
 </details>
 
 ## C++ Weekly - Ep 363 - A (Complete?) Guide To C++ Unions
+
 <details>
 <summary>
 Overview of unions.
@@ -3337,6 +3394,7 @@ Overview of unions.
 [A (Complete?) Guide To C++ Unions](https://youtu.be/Lu1WsdQOi0E)
 
 unions can be anonymous (nameless)
+
 ```cpp
 int main() {
     union {
@@ -3347,7 +3405,7 @@ int main() {
 }
 ```
 
-we can get some warnings from the compiler if we run it in compile time expression. a union is not aggregated, it has only a single active member. the size of the union is the largest member. there is no default active member. unions can have 
+we can get some warnings from the compiler if we run it in compile time expression. a union is not aggregated, it has only a single active member. the size of the union is the largest member. there is no default active member. unions can have
 
 ```cpp
 consteval auto use_union()
@@ -3369,6 +3427,7 @@ int main() {
 ```
 
 we can't do placement new inside a constexpr context, but in c++23 we could use `std::construct_at`. but it's not a good solution.
+
 ```cpp
  union U{
         constexpr U(){}
@@ -3393,6 +3452,7 @@ it's better to use std::variant and std::optional in most cases. we don't want t
 </details>
 
 ## C++ Weekly - Ep 364 - Python-Inspired Function Cache for C++
+
 <details>
 <summary>
 Creating a cache wrapper for C++
@@ -3400,7 +3460,7 @@ Creating a cache wrapper for C++
 
 [Python-Inspired Function Cache for C++](https://youtu.be/lHnYSkZ7Cis)
 
-single function cache, similar to the `@cache` decorator from the *functools* module.
+single function cache, similar to the `@cache` decorator from the _functools_ module.
 
 it is quite complicated, we need somewhere to store everything (function, parameters)
 
@@ -3421,7 +3481,7 @@ auto cache(Func func, Params && ... params)
 
     // this is not thread safe, basically a global
     static std::map<param_set, result_type> cached_values;
-    
+
     using value_type = decltype(cached_values)::value_type; // std::pair<const param_set, result_type>
 
     auto iter = cached_values.find(key);
@@ -3442,10 +3502,13 @@ int main(){
     return x;
 }
 ```
+
 we can attempt this with the fibonacci sequence, and in compiler explorer, we can check that we no longer get execution timeout.
+
 </details>
 
 ## C++ Weekly - Ep 365 - Modulo (%): More Complicated Than You Think
+
 <details>
 <summary>
 Unexpected behavior for the modulo operator when used with negative numbers.
@@ -3454,11 +3517,12 @@ Unexpected behavior for the modulo operator when used with negative numbers.
 [Modulo (%): More Complicated Than You Think](https://youtu.be/xVNYurap-lk)
 
 wat happens when using the modulo operator on negative numbers?\
-we have `%` `fmod`, `remainder` (`std::fmod`, `std::reminder`), on uses flooring, other using truncating.c and c++ uses the truncated version by default, the Dart programming language uses the "Euclidean" version, which always returns a positive number. python uses "floored" modulo, which works great for wrapping around in positional indexing. 
+we have `%` `fmod`, `remainder` (`std::fmod`, `std::reminder`), on uses flooring, other using truncating.c and c++ uses the truncated version by default, the Dart programming language uses the "Euclidean" version, which always returns a positive number. python uses "floored" modulo, which works great for wrapping around in positional indexing.
 
 </details>
 
 ## C++ Weekly - Ep 366 - C++ vs Compiled Python (Codon)
+
 <details>
 <summary>
 more timing comparisons between c++ and compiled python
@@ -3466,13 +3530,14 @@ more timing comparisons between c++ and compiled python
 
 [C++ vs Compiled Python (Codon)](https://youtu.be/vXahGgWfzcA)
 
-continuing an early episode about conway's game of life, Codon is a python compiler that creates native machine code. 
+continuing an early episode about conway's game of life, Codon is a python compiler that creates native machine code.
 
 codon doesn't use floor modulo.
 
 </details>
 
 ## C++ Weekly - Ep 367 - Forgotten C++: `std::valarray`
+
 <details>
 <summary>
 
@@ -3504,9 +3569,11 @@ void use_vector(){
 it's also possible to use `std::val_array` as the other operand, such as multiplying one by another. the standard allows operations to return other types, and it can also do lazy evaluation with them.
 
 it is "forgotten", as there weren't many updates for it over the years, it didn't even get `constexpr` support.
+
 </details>
 
 ## C++ Weekly - Ep 368 - The Power of template-template Parameters: A Basic Guide
+
 <details>
 <summary>
 Passing a template type to a function, to be used inside a template.
@@ -3523,7 +3590,7 @@ auto get_data(){
     // do something
     ResultType result;
     result.push_back(1);
-    result.push_back(2);    
+    result.push_back(2);
 
     return result;
 }
@@ -3543,13 +3610,13 @@ auto get_data(){
     // do something
     ResultType<double> result;
     result.push_back(1.0);
-    result.push_back(2.0);    
+    result.push_back(2.0);
 
     return result;
 }
 
 int main(){
-    auto data_vec = get_data<std::vector>(); //no need to pass in the data type itself, 
+    auto data_vec = get_data<std::vector>(); //no need to pass in the data type itself,
 }
 ```
 
@@ -3565,16 +3632,19 @@ auto get_data(){
         result.reserve(3);
     }
     result.push_back(1.0);
-    result.push_back(2.0);    
-    result.push_back(3.0);    
+    result.push_back(2.0);
+    result.push_back(3.0);
 
     return result;
 }
 ```
+
 for non primitives types, we should use `emplace_back`, rather than `push_back`.
+
 </details>
 
 ## C++ Weekly - Ep 369 - llvm-mos: Bringing C++23 To Your Favorite 80's Computers
+
 <details>
 <summary>
 A project that compiles modern code into other languages assembly code.
@@ -3606,6 +3676,7 @@ compile it, and load it into an emulator and see that the message is printed and
 </details>
 
 ## C++ Weekly - Ep 370 - Do Constructors Exist?
+
 <details>
 <summary>
 Constructors don't actually exist!
@@ -3613,8 +3684,8 @@ Constructors don't actually exist!
 
 [Do Constructors Exist?](https://youtu.be/afDB4kpYnzY)
 
-
 we can create a pointer to member function with the `using` syntax and explicitly writing the function address.
+
 ```cpp
 struct S{
     S();
@@ -3639,6 +3710,7 @@ int main(){
 ```
 
 but we couldn't do it with constructors or destructors.
+
 ```cpp
 int main(){
     using ctor_destructor = S (S::*)();
@@ -3647,6 +3719,7 @@ int main(){
     mem_destructor des = &S::~S; // Error! can't take address of destructor.
 }
 ```
+
 we can't make a pointer to a constructor or a destructor. some example with templates
 
 ```cpp
@@ -3667,6 +3740,7 @@ example with cast operator syntax that look like constructors.
 </details>
 
 ## C++ Weekly - Ep 371 - Best Practices for Using AI Code Generators (ChatGPT and GitHub Copilot)
+
 <details>
 <summary>
 some best practices for using AI-code generator.
@@ -3686,6 +3760,7 @@ A very good use case is using the tools to generate a quick start for a project.
 </details>
 
 ## C++ Weekly - Special Episode - Make Your Own Godbolt (Compiler-Explorer) With GPT-4 in 5 Minutes!
+
 <details>
 <summary>
 asking chatGPT to create a python program that compiles c++ code and generates the assembly.
@@ -3700,6 +3775,7 @@ the first version is functional, it creates python code that runs and gives dece
 </details>
 
 ## C++ Weekly - Ep 372 - CPM For Trivially Easy Dependency Management With CMake?
+
 <details>
 <summary>
 Using a dependency manager in cmake.
@@ -3736,6 +3812,7 @@ before that we need to add the cpm.cmake to the project cmake, so there's a scri
 </details>
 
 ## C++ Weekly - Special Edition - Getting Started with Embedded Python
+
 <details>
 <summary>
 Showing off some devices which run embedded python.
@@ -3744,16 +3821,18 @@ Showing off some devices which run embedded python.
 [Getting Started with Embedded Python](https://youtu.be/MIM_PTv_VjU)
 
 devices that run python:
-- MacroPad - acts as a keyboard or a mouse, 
+
+- MacroPad - acts as a keyboard or a mouse,
 - BBC Micro:bit and Pico:ed - larger LED grid.
 - (external power source) addons
 - Calculators that run micro python and allow for programming.
 
-
 Microsoft has an online tool that uses these devices to teach code.
+
 </details>
 
 ## C++ Weekly - Ep 373 - Design Patterns in "Modern" C++ (2023)
+
 <details>
 <summary>
 Giving some pointers towards implementing the observer pattern.
@@ -3763,7 +3842,8 @@ Giving some pointers towards implementing the observer pattern.
 
 starting with the observer pattern, which can easily be done poorly. there are some libraries which do this already. most implementations rely on reference counting, which might not be the best idea.
 
-the observer pattern is meant to reduce coupling between components. 
+the observer pattern is meant to reduce coupling between components.
+
 - signal and slot
 - published subscriber
 - observer and observable(subject)
@@ -3771,6 +3851,7 @@ the observer pattern is meant to reduce coupling between components.
 registering a callback on an 'event'.
 
 things to consider:
+
 1. are the relationships known at compile time?
 2. are the relationships dynamic or fixed? do we connect or remove observers after construction?
 3. can the connections outlive one another? are the calls lifetime dependant?
@@ -3778,6 +3859,7 @@ things to consider:
 </details>
 
 ## C++ Weekly - Ep 374 - C++23's `out_ptr` and `inout_ptr`
+
 <details>
 <summary>
 Proxy object over pointer that we get from external sources
@@ -3805,9 +3887,11 @@ int main() {
 ```
 
 <cpp>std::out_ptr</cpp> creates a wrapper over the smart pointer and eventually calls the destructor and resets the pointer. a light-weight proxy object. because we allocate memory with malloc and remove it with delete we might get undefined behavior, so we need out smart pointer to call <cpp>free</cpp> as it's deleter. we do it by using lambda and decltype.
+
 </details>
 
 ## C++ Weekly - Ep 375 - Using IPO and LTO to Catch UB, ODR, and ABI Issues
+
 <details>
 <summary>
 Tools to prevent ABI violations
@@ -3818,4 +3902,228 @@ Tools to prevent ABI violations
 having two versions of the same API, resulting in ABI violation.
 
 IPO is "Interprocedural optimization", LTO is "link time optimization", so if we enable them we can get warnings about those issues, so it's not only about better performance, it becomes something that helps us write better code.
+
+</details>
+
+## C++ Weekly - Ep 376 - Ultimate CMake C++ Starter Template (2023 Updates)
+
+<details>
+<summary>
+2023 update for cmake starter template with the current best practice.
+</summary>
+
+[Ultimate CMake C++ Starter Template (2023 Updates)](https://youtu.be/ucl0cw9X3e8), [cmake_template](https://github.com/cpp-best-practices/cmake_template) repository.
+
+the previous templates (gui_stater_template, cmake_conan_boilerplate_template) are archived, and replaced with the new cmake_template repository.
+
+it has tooling support by default for address sanitizer, undefined behavior, IPO (link-time optimizer) and some others. it's also changed from conan package management to CPM. it also has "hardening" options, such as control flow guards, and using checks on vector index operations to avoid undefined behavior. these options make it harder for other to exploit weaknesses in the binary.
+
+integrations with github actions for packaging, code quality checks, etc...
+
+</details>
+
+## C++ Weekly - Ep 377 - Looking Forward to C++26: What C++ Needs Next
+
+<details>
+<summary>
+Jason's opinions on what C++ should have.
+</summary>
+
+[Looking Forward to C++26: What C++ Needs Next](https://youtu.be/L4PqCIMmc-A)
+
+- More <cpp>constexpr</cpp> - more containers, more adapters, we get some of it in C++23, but there still gaps.
+- Pattern Matching - enumerations, strings, tuples
+- Contracts - another attempt, telling the compiler about pre and post conditions
+- Reflection - compile time reflection, even for compile time `enum` to `string` conversion.
+- removal of implicit conversions from the standard libary - this will never happen because it will break a lot of existing code.
+</details>
+
+## C++ Weekly - Ep 378 - Should You Ever `std::move` An `std::array`?
+
+<details>
+<summary>
+calling move on a std::array to move the sub objects.
+</summary>
+
+[Should You Ever `std::move` An `std::array`?](https://youtu.be/56DMwqKffi0)
+
+it's preferable to avoid moving. it's not that <cpp>std::move</cpp> is bad, it's just that not using it is better.
+
+it's ok in this case:
+
+```cpp
+struct Holder {
+    Holder(std::string data): data{std::move(data_);}
+
+    private:
+    std::string data;
+};
+```
+
+if the object is and <cpp>std::array</cpp> of integers, then there's nothing happening. but if it's an array of strings, the move does help! because it calls the move operation on each element. there is even a clang tidy check for the "copy and move" idiom.
+
+</details>
+
+## C++ Weekly - Ep 379 - clang-tidy's "Easily Swappable Parameters" Warning - And How to Fix It!
+
+<details>
+<summary>
+a new clang-tidy check that warns about parameters that are easy to confuse between on another.
+</summary>
+
+[clang-tidy's "Easily Swappable Parameters" Warning - And How to Fix It!](https://youtu.be/Zq4yYPG7Erc)
+
+a new clang-tidy check that warns about parameters that are easy to confuse between on another.
+
+```cpp
+#include <algorithm>
+auto someClamp(int min, int max, int value);
+
+int main(int argc)
+{
+    return someClamp(1,100, argc);
+}
+```
+
+but how do we handle this warning? we are really working on three integers. we can use strongly typed types, or use enum conversion which would force us to initialize our variables with the correct type.
+
+```cpp
+enum Min: int;
+enum Max: int;
+```
+
+another option is to create a object for the function.
+
+```cpp
+struct Range {
+    int min;
+    int max;
+};
+
+auto myClamp(Range range, int value)->int;
+int main(int argc)
+{
+    return myClamp(Range{1,100}, argc);
+}
+```
+
+this might be more efficient, as the compiler is allowed more leeway of how to pass the struct into function.
+
+</details>
+
+## C++ Weekly - Ep 380 - What Are `std::ref` and `std::cref` and When Should You Use Them?
+
+<details>
+<summary>
+//TODO: add Summary
+</summary>
+
+[What Are `std::ref` and `std::cref` and When Should You Use Them?](https://youtu.be/YxSg_Gzm-VQ)
+
+shortcuts for creating reference wrappers, <cpp>std::reference_wrapper\<Type></cpp> and <cpp>std::reference_wrapper\<const Type></cpp>.
+
+```cpp
+#include <functional>
+
+void func(int &i){
+    ++i;
+}
+
+int main()
+{
+    int local_i = 0;
+    auto bound = std::bind(func, local_i);
+    bound();
+    bound();
+    return local_i;
+}
+```
+
+this returns zero, not 2, because <cpp>std::bind</cpp> takes a copy, if we want to make it pass a reference, we need to create a reference wrapper.
+
+```cpp
+int main()
+{
+    int local_i = 0;
+    //auto bound = std::bind(func, std::reference_wrapper<int>(local_i)); // long form
+    auto bound = std::bind(func, std::ref(local_i)); // long form
+    bound();
+    bound();
+    return local_i;
+}
+```
+
+it also allows us to make member variables a reference. which is better than using a normal reference member declaration in how it handles moves and other operations.
+
+```cpp
+struct Data{
+    std::reference_wrapper<int> value;
+};
+```
+
+a third case is when using the standard library algorithms. they normally take the callable object by copy, so our original object isn't modifed.
+
+```cpp
+int main() {
+    const std::array<int, 5> data{1,2,3,4,5};
+    auto accumulator = [sum=0] (int value) mutable {
+        sum += value;
+        return sum;
+    };
+    std::for_each(data.begin(), data.end(), accumulator);
+    return accumulator(0); // returns zero?
+}
+```
+
+had we used <cpp>std::ref</cpp> when passing the lambda, then we would get the intended value.
+
+</details>
+
+## C++ Weekly - Ep 381 - C++23's `basic_string::resize_and_overwrite`
+
+<details>
+<summary>
+filling the value of a string with a function to avoid unnecessary initialization of it.
+</summary>
+
+[C++23's `basic_string::resize_and_overwrite`](https://youtu.be/Ymm0yN_QUQA)
+
+another feature meant for interacting with external data, such as files or C functions. if we have something like this:
+
+```cpp
+#include <string>
+
+std::string make_data() {
+    std::string result(10000,0);
+    unsigned char current_c = 0;
+    /* fill the data*/
+    for (auto &c : result) {
+        c = current_c;
+        ++current_c;
+    }
+    return result;
+}
+```
+
+we can replace it with a callable object, which avoids the <cpp>memset</cpp> step, and we communicate to the reader that we don't care about the inital value of the string.
+
+```cpp
+std::string make_data() {
+    std::string result;
+    result.resize_and_overwrite(10000,[](char *ptr, std::size_t size){
+        unsigned char current_c = 0;
+
+        for(std::size_t idx =0; idx < size; ++idx)
+        {
+            ptr[idx]= current_c;
+            ++current_c;
+        }
+
+        return size;
+    });
+
+    return result;
+}
+```
+
 </details>
