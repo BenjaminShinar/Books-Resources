@@ -1,0 +1,120 @@
+:source-highlighter: highlightjs
+:highlightjs-theme: github-dark
+
+== Ten Minute Training
+
+https://www.youtube.com/playlist?list=PLLWMQd6PeGY1MtyfNc0RbJSrC9LRUmT-6[playList]
+
+=== Constant Interpolation in C# 10 and .NET 6 In 10 Minutes or Less
+.String interpolation in constant time situations
+[%collapsible]
+====
+new constant evaluation of strings in C# 6.0, we can use string interpolation. better to `const` then `readonly`.
+
+[source, csharp]
+----
+const string companyName = "Acme"; // no problem
+const string productName = $"{companyName} Anvils";  // new for C# 10
+const string productDescription = $"{productName} are the best way to crush your enemies";
+----
+
+one place where we can use this is for attributes,allowing them to have custom text.
+[source, csharp]
+----
+[Obsolete($"This is no longer used for {companyName}")]
+void SayHi()
+{
+
+}
+----
+====
+
+=== Date and Time in C# 10 and .NET 6 In 10 Minutes or Less
+.Simplified Objects for Data and Time
+[%collapsible]
+====
+until C# 10, we had a combined object for Date and Time. now we can have separate objects, which we can work on in different ways. such as taking the month and the day of the week for date only objects, and it will also not have weird rollOver behavior depending on timezones. it's not a full dateTime object. +
+the timeOnly object is also just for time, without caring about timezones and other stuff.
+
+
+[source, CSharp]
+----
+var  dateTime = DateTime.Now;
+Console.WriteLine(dateTime);
+DateOnly dateOnly = DateOnly.FromDateTime(DateTime.Now);
+TimeOnly timeOnly = TimeOnly.FromDateTime(DateTime.Now);
+----
+
+====
+
+=== Deconstructor Updates in C# 10 and .NET 6 In 10 Minutes or Less
+.Mix and Match tuple unpacking
+[%collapsible]
+====
+
+we start with tuple, we can do tuple de-construction and unpack it, we can also declare the variable ahead of time and unpack it, but until C#10, we couldn't combine them.
+[source, CSharp]
+----
+var person = (FirstName: "Time", LastName: "Corey");
+(string fName, string lName) = person; // inline declaration worked in c#9
+
+string fn;
+string ln;
+
+(fn,ln) = person; // declared ahead of time
+(fn, string lastName) = person; // mix and match styles
+
+----
+
+====
+
+=== File Scoped Namespaces in C# 10 and .NET 6 In 10 Minutes or Less
+
+.A Different way of marking the namespace
+[%collapsible]
+====
+
+file scoped namespace, in the past, we had all of our code inside a namespace, in a block scope manner, so everything was indented inside the file.
+
+[source, csharp]
+----
+namespace OldWay
+{
+  public class oldClass
+  {
+
+  }
+}
+----
+
+the new way allows us to declare namespaces just for the file, which allows us to start writing code from the left most side of the file.
+
+NOTE: we can only have one namespace per file this way, which is how it should be anyway
+
+[source, csharp]
+----
+namespace newWay;
+public class newWay
+{
+
+}
+----
+====
+
+=== Global Usings in C# 10 and .NET 6 In 10 Minutes or Less
+
+.Summary
+[%collapsible]
+====
+
+we can move all the `using` statements into a single file, and then it's implicitly used everywhere.
+
+when we mark a using statement with `global using`, then it will available for all other files in the project. the bast way to do this is to combine the global statements into a single file.
+
+this can also work with `global using static` to drop some boiler plate code.
+
+CAUTION: there is a reason that we have namespace, we should make sure to avoid namespace pollution and confusion,
+
+
+====
+

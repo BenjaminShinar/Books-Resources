@@ -1,0 +1,65 @@
+= IAmTimCorey
+:source-highlighter: highlightjs
+:highlightjs-theme: github-dark
+
+General folder for videos and courses by TimCorey
+
+https://www.iamtimcorey.com[Website], https://www.youtube.com/@IAmTimCorey[youtube channel]
+
+
+
+== Some AsciiDoc Stuff
+
+https://docs.asciidoctor.org/asciidoc/latest/asciidoc-vs-markdown/[quick guid to compare with markdowns]
+
+[source, csharp]
+----
+protected string X(){
+
+} 
+----
+c++ code
+
+[source ,cpp]
+----
+int main() {
+    union {
+        int i;
+        float f;
+    };
+    i = 42; // unnamed union
+}
+----
+
+
+`+http://localhost:8080+`
+`+/issue/{id}+`
+
+
+line break with `+` +
+(the plus symbol)
+
+.block title
+* a
+* b
+* c
+
+----
+quoted text
+----
+
+
+admonition styles
+
+NOTE: An admonition draws the reader's attention to auxiliary information.
+
+IMPORTANT: Don't forget the children!
+
+TIP: Look for the warp zone under the bridge.
+
+CAUTION: Slippery when wet.
+
+WARNING: The software you're about to use is untested.
+
+IMPORTANT: Sign off before stepping away from your computer.
+
