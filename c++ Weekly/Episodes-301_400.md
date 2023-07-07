@@ -4127,3 +4127,33 @@ std::string make_data() {
 ```
 
 </details>
+
+## C++ Weekly - Ep 382 - The Static Initialization Order Fiasco and C++20's `constinit`
+
+<details>
+<summary>
+A strange case of initialization order
+</summary>
+
+[The Static Initialization Order Fiasco and C++20's `constinit`](https://youtu.be/rEwijXgC_Kg)
+
+using compiler explorer project mode, we set up a provider/consumer classes. assuming a global provider and consumer (it's not a good idea), because the static globals rely on one another, the order matters and depending on it, the global consumer might not have the global provider available. if we play with the cmake file, then we can manipulate the behavior.
+
+`constinit` comes into play if we want to guarantee that the initialization happens when the program starts, it requires a `constexpr` constructor.
+
+</details>
+
+## C++ Weekly - Ep 383 - C++ Cross Training
+
+<details>
+<summary>
+Becoming a better C++ programmer through learning other programmes
+</summary>
+
+[C++ Cross Training](https://youtu.be/9RxPRr-fk7Q)
+
+"becoming a better runner by practicing a different sport"
+
+it's also one of the item in best practices book, and there will a python book.
+
+</details>

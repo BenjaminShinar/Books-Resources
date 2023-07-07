@@ -14,7 +14,7 @@ ignore these words in spell check for this file
 Understanding the tools available, and creating spending alerts.
 </summary>
 
-Billing and cost managemtent.
+Billing and cost management.
 
 - estimate and plat aws costs
 - receive alerts if costs exceed or approach a threshold

@@ -15,7 +15,10 @@
     "nulltpr",
     "ostream",
     "precompile",
+    "plantuml",
     "startuml",
+    "startsalt",
+    "endsalt",
     "t",
     "udemy",
     "unscoped"

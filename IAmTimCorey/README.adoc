@@ -7,7 +7,6 @@ General folder for videos and courses by TimCorey
 https://www.iamtimcorey.com[Website], https://www.youtube.com/@IAmTimCorey[youtube channel]
 
 
-
 == Some AsciiDoc Stuff
 
 https://docs.asciidoctor.org/asciidoc/latest/asciidoc-vs-markdown/[quick guid to compare with markdowns]
@@ -63,3 +62,14 @@ WARNING: The software you're about to use is untested.
 
 IMPORTANT: Sign off before stepping away from your computer.
 
+****
+text inside a box
+****
+
+.Grocery list
+* Milk
+* Eggs
+* Bread
+
+
+kbd:[F11]

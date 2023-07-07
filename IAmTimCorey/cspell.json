@@ -3,7 +3,7 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": ["csharp"],
-  "words": ["Deconstructor"],
-  "ignoreWords": [],
+  "words": ["Deconstructor", "Blazor"],
+  "ignoreWords": ["Corey", "appsettings"],
   "import": []
 }

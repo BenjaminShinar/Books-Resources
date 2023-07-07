@@ -1,9 +1,10 @@
 :source-highlighter: highlightjs
 :highlightjs-theme: github-dark
+:title: Ten Minute Training
 
 == Ten Minute Training
 
-https://www.youtube.com/playlist?list=PLLWMQd6PeGY1MtyfNc0RbJSrC9LRUmT-6[playList]
+https://www.youtube.com/playlist?list=PLLWMQd6PeGY1MtyfNc0RbJSrC9LRUmT-6[youtube playlist]
 
 === Constant Interpolation in C# 10 and .NET 6 In 10 Minutes or Less
 .String interpolation in constant time situations
@@ -103,7 +104,7 @@ public class newWay
 
 === Global Usings in C# 10 and .NET 6 In 10 Minutes or Less
 
-.Summary
+.Removing Boilerplate import statements
 [%collapsible]
 ====
 
@@ -114,7 +115,223 @@ when we mark a using statement with `global using`, then it will available for a
 this can also work with `global using static` to drop some boiler plate code.
 
 CAUTION: there is a reason that we have namespace, we should make sure to avoid namespace pollution and confusion,
+====
 
+=== Null Parameter Checks in C# 10 and .NET 6 In 10 Minutes or Less
+
+.Easy Null Check and throwing exceptions
+[%collapsible]
+====
+
+
+if we want to protect against null values, we usually use check manually for null and throw `ArgumentNullException`. but now we can do it directly.
+[source, csharp]
+----
+string? info = null;
+void SayHi(string message)
+{
+  ArgumentNullException.ThrowIfNull(message); 
+  Console.WriteLine($"Hello {message}");
+}
+----
+====
+
+=== Hot Reload in .NET 6 In 10 Minutes or Less
+
+.Hot reload works anywhere
+[%collapsible]
+====
+hot reloading means the application is updated as code changes but without restarting it. there is a "fire" icon in visual studio. the state of the program remains.
+
+it should work on Blazor and also older c# projects, like WPF.
+
+this makes the development loop much faster.
+
+since this works with 'dot.net watch' (the command line version), then hot reload will also work with visual studio code.
+====
+
+=== Intro to Tuples in C# In 10 Minutes or Less
+
+.Using Tuples as a return type
+[%collapsible]
+====
+
+returning more than one value, we could use out parameters (like `out ref`) or create a specific class for it. but it's easier to return a tuple.
+
+we can name the resulting parameters and the refer to it as the named elements (rather than item1 and item2) or unpack it directly. we can also use the discard character - the underscore `_` if we don't care about one of the values.
+
+[source, csharp]
+----
+
+(string address, bool isValid) ValidateAddress(string address)
+{
+  return ("as", false);
+}
+----
+====
+
+=== Parameter and Variable Tooltips in Visual Studio In 10 Minutes or Less
+
+.Visual Studio Editor Hints
+[%collapsible]
+====
+
+in the settings menu, we can turn on "inline variable hints", which would display the names of the positional parameters. we can also display inline type hints when we use the `var` keyword. this is very good for LINQ expressions
+
+[source, csharp]
+----
+(string message, int length) SayHello(string firstName, string lastName)
+{
+  string output = $"Hello {firstName} {lastName}";
+  return (output, output.Length);
+}
+----
+====
+
+=== Implicit Usings in .NET 6 In 10 Minutes or Less
+.Auto Generated `Using`s
+[%collapsible]
+====
+
+we no longer need to write directly `using System;` to use the console. the most common import statements are auto generated into the "global usings" file.  it will have the `global using global::System;` statement and it will be directly available from all files. we can turn this feature off by modifying the the project file and disabling it. we can also add and remove them with "ItemGroup" attributes and even give them aliases in a global way.
+
+[source, xml]
+----
+<ItemGroup>
+  <Using Remove="System"/>
+  <Using Include="System.Data"/>
+  <Using Include="SomeProject.Data.SQL" Alias="SQLDA"/>
+</ItemGroup>
+----
+====
+
+=== Tweaking Kestrel
+
+.Setting how launching web servers works
+[%collapsible]
+====
+Kestrel and IIS are ways of creating local web servers. we can tweak the setting in the "launchSettings.json" file. we can change the profiles, the ports (http and https) and environment variables. 
+====
+
+=== Custom Naming Styles in Visual Studio 2022
+.Customizing Naming styles and warning
+[%collapsible%open]
+====
+We can change the Code style suggestion and auto generations of code. we can create new styles and assign severities for them.
+====
+
+=== The New MongoDB Analyzer In 10 Minutes or Less
+
+.Analyzing MongoDB C# code
+[%collapsible]
+====
+A roselyn analyzer, so we need to install the package from nuget "MongoDb.analyzer". This helps us analyze C# code queries and show us the raw query, and it tells us if the query is recognized by mongoDB or if it's broken somehow.
+
+if we want to change the settings, we need a file "mongodb.analyzer.json" at the root folder.
+====
+
+=== Getting a MongoDB Atlas Connection String In 10 Minutes or Less
+
+.Connecting to Mongo AtlasDB
+[%collapsible]
+====
+we go to the AtlasDB web console and grab the connection string for an application and take the C# version. we can also grab a code sample from there.
+
+we need to replace the "<password>" and database as the default database. in visualStudio we add the string to the launch settings or at the user secrets file.
 
 ====
 
+=== Editorconfig In Visual Studio In 10 Minutes or Less
+
+.Per Project Configurations
+[%collapsible]
+====
+Some settings shouldn't be global, but set for each project. such as editor preferences, code styles, etc... rather than have all developers set their IDE in the same way, we can push the changes into a editorConfig file and have them as part of the source control.
+====
+
+=== Intro to Core WCF In 10 Minutes or Less
+
+.WCF is now compatible with .Net Core
+[%collapsible]
+====
+
+CoreWCF is a way to bring existing WCF code into .Net Core and move away from .Net framework. WCF is Windows Communication Foundation, and should have been replaced with gRPC. the CoreWCF comes with new templates 
+====
+
+=== Intro to Core WCF In 10 Minutes or Less
+
+.Features Worth knowing
+[%collapsible]
+====
+An api project type
+
+* authentication
+* docker
+* controllers
+* openAPI Support (swagger)
+** xml code comments
+** web console
+* built-in dependency injection
+* the "appsettings.json"
+** normal
+** development phase overrides
+** user only secrets
+* default logger service
+* data validation of models
+** `[Required]`
+** `[MinLength]`
+
+====
+
+=== NET 7 Update: Simplified LINQ Ordering In 10 Minutes or Less
+
+.Simplified Ordering in LINQ statements
+[%collapsible]
+====
+
+when there is a default ordering for objects (IComparable) then we can use the default ordering in LINQ.
+
+[source, csharp]
+----
+var ages = new List<int>() {51, 87, 23, 84};
+var sortedOld = ages.OrderBy(x => x);
+var sortedNew = ages.Order();
+----
+there is also `OrderDescending()`.
+====
+
+=== .NET 7 Update: Nullable Models in MVC in 10 Minutes or Less
+
+.Views can accept nullable models.
+[%collapsible]
+====
+nullable page and view models in Blazor apps. MVC is model-view-controller. +
+we can now have nullable views and handle this case.
+
+[source, cshtml]
+----
+@model List<string>?
+
+@{
+  ViewData["Title"] = "ToDo";
+}
+
+<h1>ToDo</h1>
+
+@if(Model is null)
+{
+  <p>You have no ToDo items</p>
+}
+else
+{
+  <ul>
+  @foreach (var todo in Model)
+  {
+    <li>@todo</li>
+  }
+  </ul>
+}
+----
+in the example code, we have a null list (not empty), so we can protect against null values
+
+====
