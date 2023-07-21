@@ -335,3 +335,261 @@ else
 in the example code, we have a null list (not empty), so we can protect against null values
 
 ====
+
+=== .NET 7 Update: Blank Templates for Blazor in 10 Minutes or Less
+
+.Blank Templates For Blazor.
+[%collapsible]
+====
+
+new templates for blazor Web Assembly in .Net 7, we can use an "full" template or an "empty" one, the full template had a starting application (weather forecast) with some example pages to work from, the empty template is cleaner and is trimmed down.
+
+the full templates are great for starting and learning good practices, and the blank template is for more advanced users.
+====
+
+=== .NET 7 Update: Nanoseconds in DateTime in 10 Minutes or Less
+
+.Access to MicroSeconds and NanoSeconds in Time Objects.
+[%collapsible]
+====
+
+added direct access for micro and nano seconds properties of time objects such as DateTime, TimeStamp, DateTimeOffset and TimeOnly. + 
+before .Net7 we had those values from calculating the ticks, the level of precision didn't increase, and we get nano seconds in precision of hundred nanoseconds (0,100,...,800,900). 
+
+[source, csharp]
+----
+DateTime demo = DateTime.Now;
+Console.WriteLine($"Ticks: {demo.Ticks}");
+Console.WriteLine($"Micro Seconds: {demo.Microsecond}");
+Console.WriteLine($"Nano Seconds: {demo.Nanosecond}");
+----
+
+====
+
+=== .NET 7 Update: Creating Tar Files in C# in 10 Minutes or Less
+
+.Support for Tar Archive Files Operations.
+[%collapsible]
+====
+
+windows uses zip files, but unix machines use tar files for archive. wc can create and extract from the tar files.
+[source, csharp]
+----
+using System.Formats.Tar;
+
+TarFile.CreateFromDirectory(@"c:\temp\TarDemo\Source", @"c:\temp\TarDemo\Demo.tar", false); // string literal
+
+TarFile.ExtractToDirectory(@"c:\temp\TarDemo\Demo.tar",@"c:\temp\TarDemo\Extracted", false); // not overwriting existing files
+----
+====
+
+=== .NET 7 Update: Raw String Literals in 10 Minutes or Less
+
+.Raw String Literals with Custom Starting Markers.
+[%collapsible]
+====
+Raw string literals, csharp 11. verbatim strings have problem with indentations and how the date differs in the code and values. raw string literals use the three double quotes like python multi-line strings. if we want to use three consecutive quotes inside the text, we can simply decide to use four quotes as the start and end markers. if we wnt string interpolation, we can use the "$" sign, and if we have curly braces as part of the text, we can use "$$" in the starting string so only double curly braces will be interpolated.
+
+[source, csharp]
+----
+string rawString;
+rawString = @"C:\Test{hello}"; // verbatim 
+rawString = @$"C:\Test{hello}"; // verbatim with string interpolation
+rawString ="""
+{
+  "Json":{
+    "Inner":"abc",
+    "Other": 111,
+    "Third":["a","b","c"]
+  }
+}
+"""; // raw string literal
+
+var level = "waring";
+rawString =$$""""
+{
+  "Json":{
+    "Inner":"""abc",
+    "Level": "{{level}}",
+    "Other": 111,
+    "Third":["a","b","c"]
+  }
+}
+""""; // raw string literal with interpolation
+----
+
+====
+
+=== .NET 7 Update: Required Properties in 10 Minutes or Less
+
+.Require New Objects to Initialize Property Members. 
+[%collapsible]
+====
+ensuring properties have values, without requiring a constructor, otherwise we might get un intended null values. however, we need to mark our constructors and indicate the fullfil the requirements with `[SetsRequiredMembers]`.
+
+old way
+[source, csharp]
+----
+public class Person{
+  public string FirstName {get; set;}
+  public string LastName {get; set;}
+  public Person(string first, string last)
+  {
+    FirstName = first;
+    LastName = last
+  }
+  public Person()
+  {
+    FirstName = "first";
+    LastName = "last"
+  }
+}
+----
+
+new way - marking properties as "required" so any creation must assign values to it
+[source, csharp]
+----
+public class Person {
+  public required string FirstName {get; set;}
+  public required string LastName {get; set;}
+
+  [SetsRequiredMembers]
+  public Person(string first, string last)
+  {
+    FirstName = first;
+    LastName = last
+  }
+}
+----
+====
+
+=== .NET 7 Update: Blazor Loading Animation in 10 Minutes or Less
+
+.Pre Configured Loading Animation in Blazor Apps.
+[%collapsible]
+====
+Just for blazor web assembly, not for blazor web server.
+
+There is circle graph that fills up in percentages to display loading progress in blazor apps.
+
+we can modify the starting animation in the "index.html" file. this is exposed via a css variable.
+====
+
+=== .NET 7 Update: Blazor Virtualization Update in 10 Minutes or Less
+
+.Virtualizing Table Elements in Blazor Apps
+[%collapsible]
+====
+The suggestion site uses Blazor and has virtualization to render the suggestion list. objects are loaded and unloaded at runtime. in the "inspect"
+
+but in some cases it can't do this virtualization simply. we can't add "div" elements to a table directly, so we add `<Virtualize>` and add "SpacerElement" to determine which type of element to virtualize.
+
+[source, cshtml]
+----
+<tbody>
+  <Virtualize Items="@forecasts" Context="forecast" OverScanCount="50" SpacerElement="tr">
+    <tr>
+      <td>@forecast.Data.ToShortDateString()</td>
+      <td>@forecast.TemperatureC</td>
+      <td>@forecast.TemperatureF</td>
+      <td>@forecast.Summary</td>
+    </tr>
+  </Virtualize>
+</tbody>
+----
+this makes the fetching faster and needs less memory.
+====
+
+=== .NET 7 Update: List Patterns in 10 Minutes or Less
+
+.Pattern Matching on Lists And Arrays
+[%collapsible]
+====
+[source, csharp]
+----
+csv = "some,text,data";
+string[] info = csv.Split(',');
+
+if (info is [var id, _, _)])
+{
+  Console.WriteLine($"Id is {id} and has exactly three values");
+}
+else {
+  Console.WriteLine("bad input");
+}
+----
+if we want to match zero or more matches, we can use `..` (two dots) to discard zero or more variables, and we can also capture afterwards, so we could take the first three and last three elements, and discard all the rest.
+
+we can also validate directly on values.
+
+[source, csharp]
+----
+csv = "1,sue,storm,dis,dis,final";
+string[] info = csv.Split(',');
+
+if (info is ["1" or "2", var firstName, var lastName), .., var last])
+{
+  Console.WriteLine($"Id is {id} and has exactly three values");
+}
+else {
+  Console.WriteLine("bad input");
+}
+----
+====
+
+=== .NET 7 Update: Newlines in String Interpolation in 10 Minutes or Less
+
+.We Can Break Our String Interpolation Code Into Different Lines.
+[%collapsible]
+====
+
+[source, csharp]
+----
+int age = 44;
+string ageText = age switch
+{
+  > 80 => "old",
+  > 60 => "getting old"
+  > 20 => "a good age"
+  _    => "young"
+};
+
+Console.writeLine($"The user is {age} years old, which is {ageText}");
+----
+we can replace it with a single line and perform the switch case inside. now we can break through our string interpolation and make it more readable.
+
+[source, csharp]
+----
+int age = 44;
+Console.writeLine($"The user is {age} years old, which is {age switch
+  {
+    > 80 => "old",
+    > 60 => "getting old"
+    > 20 => "a good age"
+    _    => "young"
+  }
+}".);
+----
+====
+
+=== Running RabbitMQ Locally with Docker
+
+.Running RabbitMQ Locally on a Docker Container
+[%collapsible]
+====
+RabbitMQ is an open source message broker for publisher/subscriber pattern.
+
+Using docker-desktop is the easiest way
+
+[source, shell]
+----
+docker container run -d -h rmq --name rabbit-server -p 8080:15672 -p 5672:5672 rabbitMQ:3-management
+----
+
+* `-d, --detached` for detached, so it's not tied to the terminal which ran it.
+* `-h, --hostname` the name of the hosting container.
+* `--name` is the container name.
+* `-p, --port` maps port from the hosting machine to the container.
+
+we can navigate to rabbitMQ server in our browser with the default user name and password (both "guest").
+====

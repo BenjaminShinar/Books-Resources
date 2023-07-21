@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore ambda runtimes typeof
+// cSpell:ignore ambda runtimes typeof attributedefinitions keyschema provisionedthroughput Connor onfig ontext lient ccess policydocument evnt ateway
  -->
 
 ## .NET Workloads on AWS Lambda
@@ -146,7 +146,7 @@ dotnet lambda delete-serverless HelloLambdaAPI
 
 <details>
 <summary>
-//TODO: add Summary
+Running A Lambda on AWS.
 </summary>
 
 Lambdas can be very simple (just returning a string) or very complex (full web applications with step functions).
@@ -373,34 +373,341 @@ if the lambda is simple enough, then it can be better to use _AWS Lambda Functio
 
 ### Working With other AWS Services
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Connecting the lambda to other services.
 </summary>
+Having A Lambda function interact with other AWS services.
+
+##### Access AWS RDS database Servers From a Lambda Function
+If we have a database hosted somewhere on the web or in a data center, accessing it from the lambda is no different then accessing them from the local machine. All that we need is to have a connection string and the password.
+
+if the database is not publicly accessible (hosted on the cloud) then we might need to connect the lambda to the VPC which holds the database.
+
+##### Access AWS Services From a Lambda Function
+If our Lambda needs to interact with other AWS services (S3, DynamoDB, Kinesis), then we need to use AWS SDKs to interact with them in the code,  and we need our lambda to use an IAM role with appropriate permissions.
+
+##### Allow Other Services To Invoke Lambda Functions
+If we want **Other** services to trigger the lambda (such as when an item is added to the S3 bucket), then we need to define a resource based policy and allow them permissions to the lambda.
+
+#### Tutorial 7: Accessing AWS Services from a Lambda Function
+
+<details>
+<summary>
+Accessing A DynamoDB table from the lambda.
+</summary>
+
+we will create a DynamoDB table and a Lambda to interact with it. Permissions in AWS are managed by policies. we can have an inlined policy attached directly to the role, or have a stand-alone reusable policy that we can attach to roles as needed. When granting permissions, we should keep the scope of actions to the minimum required. in this case, we need the "dynamodb:GetItem" and "dynamodb:DescribeTable" permissions.
+
+we first create the dynamoDB table with a powershell command. the table is called "People". we then populate it with some elements
+
+```sh
+# create table
+aws dynamodb create-table --table-name People --attributedefinitions AttributeName=PersonId,AttributeType=N --keyschema AttributeName=PersonId,KeyType=HASH --provisionedthroughput ReadCapacityUnits=1,WriteCapacityUnits=1
+
+# add items
+aws dynamodb put-item --table-name People --item
+'{\"PersonId\":{\"N\":\"1\"},\"State\":{\"S\":\"MA\"},
+\"FirstName\": {\"S\":\"Alice\"}, \"LastName\":
+{\"S\":\"Andrews\"}}'
+aws dynamodb put-item --table-name People --item
+'{\"PersonId\":{\"N\":\"2\"},\"State\":{\"S\":\"MA\"},
+\"FirstName\": {\"S\":\"Ben\"}, \"LastName\":
+{\"S\":\"Bradley\"}}'
+aws dynamodb put-item --table-name People --item
+'{\"PersonId\":{\"N\":\"3\"},\"State\":{\"S\":\"MA\"},
+\"FirstName\": {\"S\":\"Claire\"}, \"LastName\":
+{\"S\":\"Connor\"}}'
+```
+
+next we create the code for the lambda function in C#.
+```sh
+dotnet new lambda.EmptyFunction -n LambdaFunctionDynamoDB 
+cd LambdaFunctionDynamoDB /src/LambdaFunctionDynamoDB
+dotnet add package AWSSDK.DynamoDBv2
+```
+we replace the starting code with the following code. it uses the modern style of top level namespace. the function handler creates a client to connect with dynamoDB table and reads one value from the table, it then returns a string from the value. the "Person" class is the type of objects in the DynamoDB table, with the PersonId being the HashKey.
+
+```csharp
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.Lambda.Core;
+
+[assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
+namespace LambdaFunctionDynamoDB;
+
+public class Function
+{
+  public async Task<string> FunctionHandler(ILambdaContext lambdaContext)
+  {
+    AmazonDynamoDBConfig clientConfig = new AmazonDynamoDBConfig();
+    AmazonDynamoDBClient client = new AmazonDynamoDBClient(clientConfig);
+    DynamoDBContext dynamoDbContext = new DynamoDBContext(client);
+
+    Person person = await dynamoDbContext.LoadAsync<Person>(1);
+
+    return $"{person.FirstName} {person.LastName} lives in {person.State}";
+  }
+}
+
+[DynamoDBTable("People")]
+public class Person
+{
+  [DynamoDBHashKey]
+  public int PersonId {get; set;}
+  public string State {get; set;}
+  public string FirstName {get; set;}
+  public string LastName {get; set;}
+}
+```
+
+next, we deploy the lambda and create the IAM Role, for now we won't give it appropriate permissions so we could see the error message when we invoke it.
+```sh
+dotnet lambda deploy-function LambdaFunctionDynamoDB
+dotnet lambda invoke-function LambdaFunctionDynamoDB 
+```
+we get an error about missing permissions, so we need the policy. we create a new file "DynamoDBAccessPolicy.json" in the "/src/LambdaFunctionDynamoDB" folder. in the *Resource* section we need to fix the arn to be that of our DynamoDB table.
+
+```json
+{
+"Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem" 
+      ],
+      "Resource": "arn:aws:dynamodb:us-east-1:YOUR_ACCOUNT_NUMBER:table/people"
+    }
+  ]
+}
+```
+we now update the role with this inline policy. we deploy again and invoke it.
+```sh
+aws iam put-role-policy --role-name LambdaFunctionDynamoDB
+Role --policy-name LambdaFunctionDynamoDB Access --policydocument file://DynamoDBAccessPolicy.json
+
+dotnet lambda deploy-function LambdaFunctionDynamoDB 
+dotnet lambda invoke-function LambdaFunctionDynamoDB
+dotnet lambda delete-function LambdaFunctionDynamoDB
+```
+
+this will now work! and we will receive the correct response from the lambda. we Won't need to attach the policy to the role until we delete it, change the table arn or if we need more permissions.
+
+some methods in the SDKs of services specify which permissions are needed for them as part of the methods metadata (intellisense).
+</details>
+
+#### Tutorial 8: Allowing Other Services to Invoke Lambda Functions
+
+<details>
+<summary>
+Triggering The Lambda Through a Different AWS Service.
+</summary>
+In this Tutorial, Our lambda Function will be invoked by the S3 service. it will also use the serverless lambda templates with an API gateway. the API gateway should have permissions to invoke the lambda.
+
+we start by creating the s3 bucket in the "us-east-1" region
+
+```sh
+aws s3api create-bucket --bucket my-unique-bucket-name-lambdaCourse --create-bucket-configuration LocationConstraint=us-east-1
+```
+next we create the lambda code, we use the S3 event handler template
+
+```sh
+dotnet new lambda.S3 -n S3EventHandler
+cd S3EventHandler/src/S3EventHandler
+```
+we replace the code in the "function.cs" file. the code takes an S3 event, if it's not a deletion event, it pulls the object metadata and prints the type of the object. for deletions, it just prints which object was deleted. 
+
+```csharp
+public async Task FunctionHandler(S3Event evnt, ILambdaContext context)
+{
+  context.Logger.LogInformation($"A S3 event has been received, it contains {evnt.Records.Count} records.");
+  foreach (var s3Event in evnt.Records)
+  {
+    context.Logger.LogInformation($"Action: {s3Event.
+    EventName}, Bucket: {s3Event.S3.Bucket.Name}, Key: {s3Event.
+    S3.Object.Key}");
+    if (!s3Event.EventName.Value.Contains("Delete"))
+    {
+      try
+      {
+        var response = await this.S3Client.
+        GetObjectMetadataAsync(s3Event.S3.Bucket.Name, s3Event.
+        S3.Object.Key);
+        context.Logger.LogInformation( $"The file type is {response.Headers.ContentType}");
+      }
+      catch (Exception e)
+      {
+        context.Logger.LogError(e.Message);
+        context.Logger.LogError($"An exception occurred while retrieving {s3Event.S3.Bucket.Name}/{s3Event.S3.Object.Key}. Exception - ({e.Message})");
+      }
+    }
+    else
+    {
+      context.Logger.LogInformation($"You deleted {s3Event.S3.Bucket.Name}/{s3Event.S3.Object.Key}");
+    }
+  }
+}
+```
+
+we deploy the lambda, create the role for it and add the permissions to access the S3 bucket. like before, we create a file with policy. this policy allows the "GetObject" on all objects in the specified bucket.
+
+```json
+{
+ "Version": "2012-10-17",
+ "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::my-unique-bucket-nameLambda-course/*"
+    }
+  ]
+}
+```
+
+this time, we create the policy outside the role, so we first create the policy, and then attach the policy to the role.
+
+```sh
+dotnet lambda deploy-function S3EventHandler
+
+aws iam create-policy --policy-name S3AccessPolicyForCourseBucket --policy-document file://S3AccessPolicyForCourseBucket.json
+
+aws iam attach-role-policy --role-name S3EventHandlerRole --policy-arn arn:aws:iam::<ACCOUNT_NUMBER>:policy/S3AccessPolicyForCourseBucket
+```
+
+we could also attach the policies through the web console. in the lambda function page, under the <kbd>Configuration</kbd> tab, we can choose the execution role, and the click <kbd>Add permissions</kbd>and <kbd>Attach policies</kbd>. here we can either attach an existing policy or choose to <kbd>Create Policy</kbd> directly. In the wizard we select *S3* as the service, *GetObject* as the action, and enter the *ARN of the bucket* as the Resource, we allow access to any object in the bucket with the wildcard `*` symbol for the Object Name. we then create the policy and attach it to the lambda.
+
+next we need to set the S3 bucket to call the lambda. in the bucket <kbd>Properties</kbd> tab we click <kbd>Create event notification</kbd>. in the wizard, we give the event a name, and select the checkboxes for "all object create events" and "all object removal events". we don't need a filter for the object name. for the Destination option, we choose *Lambda function* and select the lambda which we created.
+
+we can navigate back to the lambda page, under <kbd>Configuration</kbd> tab and <kbd>Permissions</kbd> we can look at the resource-based policies and see that the policy allows the S3 bucket to trigger the lambda.
+
+To test the behavior, we will put an object in the bucket and then delete it, we will then look at the lambda logs to see the text printed from our code. if we have the AWS extension for the IDE, we could also read the logs from there.
+
+```sh
+aws s3api put-object --bucket my-unique-bucket-name-lambdaCourse --key Hello.txt --body Hello.txt --content-type "text/plain"
+aws s3api delete-object --bucket my-unique-bucket-name-lambdaCourse --key Hello.txt
+```
+
+we then delete the lambda (and the bucket)
+```sh
+dotnet lambda delete-function LambdaFunctionDynamoDB
+```
+</details>
 
 </details>
 
 ### Testing And Debugging Lambda Functions
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Ways To Test and Debug Lambda Functions
 </summary>
+
+#### Local Testing
+
+<details>
+<summary>
+Ways to test code locally.
+</summary>
+
+The easiest way to test the code is by writing **Unit Tests** and run them  in the project. There is also the option of using the **AWS .Net Mock Lambda Test Tool** which is available as part of the *AWS SDK*. Containers can be tested with the **Runtime Interface Emulator**.
+
+There are tools such as *LocalStack* which help with testing lambda locally, but the best way is to deploy the lambda and test them on the cloud.
 
 </details>
 
-### Conclusion
 
-<!-- <details> -->
+#### Tutorial 9: Testing with the xUnit Test Project Template
+
+<details>
 <summary>
-//TODO: add Summary
+Running the Projects' unit tests.
 </summary>
+When we create a .Net Lambda Function solution, it also creates a unit test project for us. we can either run the test from the command line or from the IDE.
+
+```sh
+dotnet new lambda.EmptyFunction -n FunctionWithTestProject
+cd FunctionWithTestProject/test/FunctionWithTestProject.Tests
+dotnet test
+```
+
+our unit tests should target the code we write, and we can use mocking libraries like any other project. 
+
+</details>
+
+#### Tutorial 10: Testing with the AWS .NET Mock Lambda Test Tool
+
+<details>
+<summary>
+Sending Payloads to the lambda
+</summary>
+
+The tool allows to define payloads to the lambda and run it. it also supports a Web UI mode.
+
+we first install (or update) the tool, then we can navigate to the folder we with the function in it and run the tool in a command line mode.
+
+```sh
+dotnet tool install -g Amazon.Lambda.TestTool-6.0
+dotnet tool update -g Amazon.Lambda.TestTool-6.0
+dotnet lambda-test-tool-6.0 --no-ui --payload '\"hello\"'
+```
+if we drop the "no-ui" flag, then we launch the browser with an interface to define our workload and and choose from examples (such as simulating events from other services).
+</details>
+
+#### Tutorial 11: Containers and the Runtime Interface Emulator
+
+<details>
+<summary>
+Testing Of Containerized Workloads
+</summary>
+
+The Runtime Interface Emulator allows us to test functions running in containers.
+we first create a container based project
+
+```sh
+dotnet new serverless.image.EmptyServerless --name TestingFunctionWithRIE
+```
+we open the "Function.cs" file and replace the `GET` method
+
+```csharp
+public APIGatewayProxyResponse Get(APIGatewayProxyRequest request,  ILambdaContext context)
+{
+  context.Logger.LogInformation($"Get method invoked. You requested {request.PathParameters['Id']}");
+  var response = new APIGatewayProxyResponse
+  {
+    StatusCode = (int)HttpStatusCode.OK,
+    Body = $"You were looking for something with an Id of : {request.
+    PathParameters['Id']}",
+    Headers = new Dictionary<string, string> {
+      { "Content-Type","application/json"}
+    }
+  };
+
+  return response;
+}
+```
+now we build the project, the image and then run it in docker.
+
+```sh
+cd TestingFunctionWithRIE/src/TestingFunctionWithRIE 
+dotnet build -c Release -o .\bin\Release\lambda-publish\ 
+docker build -t testing_function_with_rie:latest
+docker run -it -p 9000:8080 testing_function_with_rie:latest
+TestingFunctionWithRIE::TestingFunctionWithRIE.Functions::Get
+```
+
+we can send it request with any REST client we like, such a Postman or the built-in rest clients.
+</details>
+
 
 </details>
 
 ### Takeaways
 
-<!-- <details> -->
+<details>
 <summary>
 Things worth remembering
 </summary>
@@ -433,12 +740,21 @@ dotnet lambda delete-serverless --function-name <function name>
 aws --version
 aws s3api create-bucket --bucket <bucket-name>
 aws s3api create-bucket --bucket <bucket-name> --create-bucket-configuration LocationConstraint=<bucket base region>
+aws s3api put-object --bucket <bucket-name>  --key <object key> --body <object body> --content-type "text/plain"
+aws s3api delete-object --bucket <bucket-name> --key <object key>
 
 aws cloudformation describe-stack-resources -stack-name <stack name>
 aws cloudformation describe-stack-resources -stack-name <stack name> --query
 'StackResources[].[{ResourceType:ResourceType,
 LogicalResourceId:LogicalResourceId,
 PhysicalResourceId:PhysicalResourceId}]'
+
+aws dynamodb create-table --table-name <table name> --attributedefinitions AttributeName=<required attribute name> ,AttributeType=<required attribute type> --keyschema AttributeName=<key name>,KeyType=<key type> --provisionedthroughput ReadCapacityUnits=1,WriteCapacityUnits=1
+aws dynamodb put-item --table-name <table name> --item
+'{\"Key\":{\"N\":\"1\"},\"otherField\":{\"S\":\"Other Value\"}}'
+
+aws iam put-role-policy --role-name <role name>
+Role --policy-name <policy name> Access --policydocument <file path>
 ```
 
 </details>

@@ -4157,3 +4157,103 @@ Becoming a better C++ programmer through learning other programmes
 it's also one of the item in best practices book, and there will a python book.
 
 </details>
+
+## C++ Weekly - Ep 384 - Lambda-Only Programming
+
+<details>
+<summary>
+(not a best practices video), making everything a lambda.
+</summary>
+
+[Lambda-Only Programming](https://youtu.be/z5ndvveb2qM)
+
+creating a flat map (dictionary) as a lambda expression.
+
+```cpp
+auto flat_map = [data= std::vector<std::pair<int, int>>()] (int input_key) mutable -> auto & {
+    for (auto &[key, value]: data) {
+        if (key == input_key) {
+            return value.second;
+        }
+    }
+
+    return data.emplace_back(input_key, 0).second;
+};
+```
+
+and now we try making it into a variadic set, we need to expand and use the fold operation. we can also add `constexpr` when appropiate.
+
+```cpp
+auto flat_map_v2 = [data= std::vector<std::pair<int, int>>()] (auto ...&&input_key) mutable -> auto & {
+    if constexpr (sizeof...(input_key) == 1) {
+        for (auto &[key, value]: data) {
+            if (key == (input_key, ...)) {
+                return value.second;
+            }
+        }
+        return data.emplace_back((input_key, ...), 0).second;
+    } else {
+        return data;
+    }
+};
+```
+
+we can also declare types in the lambda capture expression as an immediately invoked expression and use it in the lambda itself.
+
+</details>
+
+## C++ Weekly - Ep 385 - The Important Parts of C++20
+
+<details>
+<summary>
+A quick run down of what c++20 features are viable to use.
+</summary>
+
+[The Important Parts of C++20](https://youtu.be/N1gOSgZy7h4)
+
+**Designated initializers** - specify values to struct initialization by key using the dot notation. can't leave an uninitialized value or initialize them out of order.
+
+Three way comparison (**spaceship operator**). requires the <cpp>\<compare></cpp> header.
+
+**Concept** and **auto concepts** allow us to constrain our function to use only certain types.
+
+The **Format** header allows for nice string formatting.
+
+The **Source Location** header gives us library support (rather than macro support) for knowing where we are inside the source code itself, such as file and function.
+
+There were also **Calender** updates to <cpp>std::chrono</cpp> to make working with time and dates easier.
+
+<cpp>Ranges</cpp> were added and they have simplified working with lists in a standardized way without worrying about edge cases. we also got <cpp>std::span</cpp> to work with continues data.
+
+Many more containers and algorithms were made compatible with <cpp>constexpr</cpp>, and there were additions to multithreading programming, such as <cpp>std::latch</cpp>, <cpp>std::barrier</cpp> and built-in semaphores.
+
+<cpp>Modules</cpp> are new and important, but the tooling support is still lacking. <cpp>Coroutines</cpp> still require much boilerplate code to get working.
+
+```cpp
+struct S {
+    int i;
+    int j;
+    float f;
+    constexpr auto operator<=>(const S &) const = default;
+};
+
+void designated_initializers() {
+    S s{.i=5,.j=42 .f=3.14f};
+}
+
+auto auto_concepts(std::integral auto lhs, std::integral auto rhs) {
+    return lhs + rhs;
+}
+
+std::string make_log(int id, std::string_view description) {
+    return std::format("Event {}: {}", id,description);
+}
+
+void use_ranges(const std::vector<int> &vec) {
+    for (const auto &val : vec | std::ranges::views::drop(2))
+    {
+        // do things
+    }
+}
+```
+</details>
