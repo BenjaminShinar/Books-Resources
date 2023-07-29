@@ -593,3 +593,186 @@ docker container run -d -h rmq --name rabbit-server -p 8080:15672 -p 5672:5672 r
 
 we can navigate to rabbitMQ server in our browser with the default user name and password (both "guest").
 ====
+
+=== Adding Blazor Components with Drag and Drop
+
+.Drag and Drop Blazor Components.
+[%collapsible]
+====
+all blazor pages are components, and instead of writing `<ComponentName />`, we can drag it from the solution explorer.
+
+[source, csharp]
+----
+@code {
+  [Parameter]
+  [EditorRequired]
+  public int StartingValue {get; set;}
+  private int currentValue = 0;
+  private void IncrementCount()
+  {
+    currentCode++;
+  }
+}
+----
+we can also annotate the component with the `[EditorRequired]`attribute and then it's also added by default when dragging and dropping, so it will show up `<ComponentName StartingValue="8" />`
+
+====
+
+=== Blazor Code Separation - Easily Moving Code to a Code Behind File
+
+.Moving CSharp Component Code Into Separate Files.
+[%collapsible]
+====
+Separating application code from html and blazor code. rather than having `@code` blocks in the components, we can move them to "*.razor.cs" files as the code-behind. we can right click the code block and visual studio creates a partial class. + 
+Because it's a partial class, dependency injection using the blazor syntax still work, even if the injection doesn't show up in the code behind file.
+====
+
+=== Correct String Initialization in C#
+
+.Different Options to Initialize a String.
+[%collapsible]
+====
+
+when we create a string value, we can give it some non-value value.
+[source, csharp]
+----
+string? test1 = null;
+string? test2 = string.Empty;
+string? test3 = "";
+string? test4 = default;
+----
+
+the equivalent cases are `null` and `default` as one case, and `string.Empty` and `""` as the other case. +
+Using the null value indicates the absence of a value, and the empty string is the "starting" value. sometimes it makes sense to not have a value, and sometimes its preferable to make sure there always a value there. +
+There is one situation where we have to use `""` and not `string.Empty`, this is inside switch statement, which must have a value. and we can't use `string.Empty` as a default value for function parameters.
+====
+
+=== Shortcut for Wrapping Element in a Div in ASP.NET Core
+
+.Making Wrapped Elements in Blazor Easier.
+[%collapsible]
+====
+
+When we want to wrap and element inside a 'div' element, we can use kbd:[Alt + Shift + W] to instantly wrap the selected tag with a new tag (default div). this works for any level of nesting.
+
+====
+
+=== Debugging Lists in Visual Studio - viewing, sorting, and exporting
+
+.Easier Way to Debug Lists.
+[%collapsible]
+====
+
+when we look at the debugger at a list, we see the type, and we only see the values when hovering. but if we click the kvd:[view] option, we get a window with a visualizer, which we can sort and filter, and even export.
+
+we can also use records (unchanging data), which has the `toString` default-created and also show the equality contract.
+====
+
+=== Using http Files in Visual Studio to Test and Document APIs
+
+.Http Files Define a Series of API Calls
+[%collapsible]
+====
+
+having an ".http" file that tests and documents apis (including external ones). we can have pages that automatically run calls on the api with our predetermined values.
+
+[source, http]
+----
+@rootUrl=https://localhost:7197
+
+GET {{rootUrl}}/People
+
+### 
+
+POST {{rootUrl}}/People
+content-Type: application/json
+{
+  "id": 4,
+  "firstName": "jane",
+  "lastName": "Jones"
+}
+
+### 
+
+PUT {{rootUrl}}/People/4
+content-Type: application/json
+{
+  "id": 4,
+  "firstName": "Jane",
+  "lastName": "Smith"
+}
+
+###
+
+DELETE {{rooUrl}}/people/4
+
+###
+----
+
+it can work as a mix between documentation and testing, like having a test plan you can execute from code.
+
+====
+
+=== Sticky Scroll is Back! Colorized Braces Are Also Now Available!
+
+.Visual Studio Code Navigation Tips.
+[%collapsible]
+====
+
+features that return to Visual studio to make navigation easier.
+
+. sticky scroll: still in preview mode (17.6 version), grouping the current scope, freezing the top level statements that our code is nested in.
+. colorized braces - different colors for pairs of braces. keep track of which brace goes with which.
+====
+
+=== Dev Tunnels Visual Studio in 10 Minutes or Less
+
+.Directing Traffic to Local Machine With A Public Address.
+[%collapsible]
+====
+allowing others to access applications without publishing them. even if they are running on local host.
+
+when running the application, we can create a dev tunnel that will direct traffic to local machine. this is done via the microsoft account, either allowing everybody or just people in the organization to access it. we can use a temporary tunnel (changes when visual studio restarts) or permanent one (reuses the same address). +
+when we launch our app, we get a microsoft message informing us it's running a dev tunnel. the address will now be a public address, and we can share it with other people.
+
+====
+
+=== New File Dialog Tips and Tricks for Visual Studio in 10 Minutes or Less
+
+.New Intelligent File Template Creations.
+[%collapsible]
+====
+
+right clicking and selecting "add new item" (or kbd:[Ctrl + Shift + A]), we get the new dialog.
+it knows the naming convention (like cs file, interfaces) and can create the proper template.
+we can always use the older look and see all templates. +
+we can create multiple files by separating them with commas, or create a folder by passing the path.
+
+====
+
+=== How To Return a Record ID from SQL to C# on Insert
+
+.Working The Stored Procedures for SQL.
+[%collapsible]
+====
+
+working with SQL tables. we have a stored procedure with an output parameter. this is not the same as the return value (which should be the status code).
+
+[source, sql]
+----
+CREATE PROCEDURE [dbo].[spPeople_Insert]
+  @id int output,
+  @firstName nvarchar(50)
+AS
+begin
+  INSERT into People (firstName)
+  values (@firstName);
+
+  set @id = SCOPE_IDENTITY();
+
+  return 1; 
+end
+----
+
+working with Dapper and the new "microsoft.Data.SqlClient" package. we use `DynamicParameters` to connect our code with the stored procedure, we create parameters and their types and execute the procedure. and because we set the value in our procedure, we can use it in the application code.
+====

@@ -4257,3 +4257,23 @@ void use_ranges(const std::vector<int> &vec) {
 }
 ```
 </details>
+
+## C++ Weekly - Ep 386 - C++23's Lambda Attributes
+
+<details>
+<summary>
+putting attributes on lambdas
+</summary>
+
+[C++23's Lambda Attributes](https://youtu.be/YlmxNJnone0)
+
+in c++23, we can stick attributes onto lambda, like the <cpp> [[nodiscard]] </cpp> on the return value, we can also have attribute that apply to the *type of the function*. there is also the attributes we can stick on the parameters
+```cpp
+int main()
+{
+    auto l = [] () {return 42;};
+    auto l_23 = [] [[nodiscard]] () [[gnu::deprecated]] {return 42;}; //c++23  
+}
+```
+
+</details>

@@ -2,7 +2,7 @@
   "version": "0.2",
   "ignorePaths": [],
   "dictionaryDefinitions": [],
-  "dictionaries": ["csharp"],
+  "dictionaries": ["csharp", "sql"],
   "words": ["Deconstructor", "Blazor"],
   "ignoreWords": ["Corey", "appsettings"],
   "import": []
