@@ -4277,3 +4277,19 @@ int main()
 ```
 
 </details>
+ 
+ ## C++ Weekly - Ep 387 - My Customized C++ Programming Keyboard!
+
+<details>
+<summary>
+Programming a device into a a CPP macro keypad.
+</summary>
+
+[My Customized C++ Programming Keyboard!](https://youtu.be/LwxBLG8aGlo)
+
+A macro pad device that's been programmed to handle repetitive c++ code. a python code that handles key presses events.
+
+(in my opinion, code snippets are easier)
+
+
+</details>

@@ -776,3 +776,101 @@ end
 
 working with Dapper and the new "microsoft.Data.SqlClient" package. we use `DynamicParameters` to connect our code with the stored procedure, we create parameters and their types and execute the procedure. and because we set the value in our procedure, we can use it in the application code.
 ====
+
+=== Fluent Assertions in Unit Testing in C#
+
+.Making Unit Tests Assertions Easier to Read.
+[%collapsible]
+====
+
+A 3rd party library from nuget that makes writing assertions together to comprehend.
+
+[source, sharp]
+----
+[Theory]
+[InlineData("Eddie", "Van Haley", "Eddie Van Haley")]
+public void TestEdgeCaseNames(string firstName, string lastName, string fullName)
+{
+  // arrange
+  SampleClass sampleClass = new SampleClass(fullName);
+
+  // fluent assertion
+  sampleClass.LastName.Should().Be(lastName);
+
+  // multiple assertions
+  sampleClass.LastName.Should()
+    .StartWith(lastName.Substring(0,3))
+    .And.EndWith(lastName.Substring(lastName.Length - 3))
+    .And.Contain(" ");
+}
+----
+
+we can also combine this with the `AssertionScope` to get all the errors from the test (not just the first error).
+
+====
+
+=== Dependency Injection in Minimal APIs in C#
+
+.Dependency Injection Into Minimal APIs
+[%collapsible]
+====
+
+dependency injection, route parameters, 
+
+
+we start with a simple case:
+[source, csharp]
+----
+var app = WebApplication.CreateBuilder(args).Build();
+app.UseHttpsRedirection();
+
+app.MapGet("/person/{id:int}", (int id) =>
+{
+  return new PersonRecord(id, "Tim", "Corey");
+});
+
+app.MapPost("/person", (PersonRecord person) =>
+{
+  return person;
+});
+
+app.Run();
+
+record PersonRecord(int Id, string FirstName, string LastName);
+----
+
+next we add dependency injection and use the configuration file (the appsettings file), each method gets the dependency injection, rather the entire class.
+
+[source, csharp]
+----
+
+app.MapGet("/person/{id:int}", (int id, IConfiguration config) =>
+{
+  return new PersonRecord(id,
+  config.GetValue<string>("TestInfo:FirstName"),
+  config.GetValue<string>("TestInfo:LastName"));
+});
+
+app.MapPost("/person", (PersonRecord person, IConfiguration config) =>
+{
+  int id = config.GetValue<int>("TestInfo:Id");
+  var newPerson = person with {Id = id}; // records are immutable
+  return newPerson;
+});
+----
+====
+
+
+== Misc
+
+.Stuff Worth Keeping
+[%collapsible%open]
+====
+
+[source, csharp]
+----
+//sample csharp code block
+----
+ 
+
+====
