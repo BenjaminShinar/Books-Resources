@@ -1069,6 +1069,7 @@ do
   done
 done
 ```
+
 </details>
 
 ### Case Construct
@@ -1102,6 +1103,7 @@ Structured statement
 </summary>
 
 this is a structured while loop that displays the options. it uses the `$PS3` variable to display the prompt each time
+
 ```sh
 PS3='Pick a color' # prompt
 select color in "brown" "grey" "black" "red" "green"
@@ -1110,6 +1112,7 @@ do
   break
 done
 ```
+
 </details>
 
 </details>
@@ -1131,6 +1134,7 @@ Print formatted string
 </summary>
 
 printing a formatted string
+
 ```sh
 declare -r PI=3.145926
 printf "Second Decimal is %1.2f\n" $PI
@@ -1147,6 +1151,7 @@ Reading data into a variables
 </summary>
 
 variables on the read command.
+
 - `-s` - silent, don't echo input
 - `-n <number>` - limit to a number of characters
 - `-p <prompt>` - text prompt
@@ -1175,6 +1180,7 @@ do
   echo $line
 done <wood.txt
 ```
+
 </details>
 
 ### `eval`
@@ -1201,10 +1207,11 @@ eval $process # execute as the string as a command
 Change the values of shell options a variables.
 </summary>
 
- we use dash `-` to set them and plus `+` to remove them (contrary to common sense). running `set` alone displays all the option.
+we use dash `-` to set them and plus `+` to remove them (contrary to common sense). running `set` alone displays all the option.
 
-for example, we can choose to store or not store  commands in the shell history.
- ```sh
+for example, we can choose to store or not store commands in the shell history.
+
+```sh
 history
 set +o history # stop recording command in history"
 history
@@ -1218,6 +1225,7 @@ history
 ```
 
 we can also set the shell variables, instead of passing positional parameters. this is done with `--` and the parameters.
+
 ```sh
 echo "before setting"
 echo "\$1 = $1"
@@ -1235,7 +1243,7 @@ echo $#
 set -- $var # set positional variables to to the values of bar
 i=1
 while [ $i -le $# ]
-do 
+do
   echo $i
 done
 echo $#
@@ -1245,6 +1253,7 @@ echo "\$1 = $1"
 echo "\$2 = $2"
 echo "\$3 = $3"
 ```
+
 we can unset (delete) declared variables with `unset`, we simply pass the name, not the value.
 
 ```sh
@@ -1262,7 +1271,6 @@ echo $var
 <summary>
 Parsing options that are passed to the script
 </summary>
-
 
 ```sh
 while getopts :dm option
@@ -1290,8 +1298,8 @@ shift $(($OPTIND -1)) # get next position parameter
 ```
 
 we then call this script with the options (flags) and see the behavior.
-</details>
 
+</details>
 
 ### `shopt`
 
@@ -1319,15 +1327,17 @@ Getting the type of the command
 </summary>
 
 check if a command exists, what is it's type and is it an alias to some other command.
+
 ```sh
 type cd
 type git
 type ls
 type lala
 ```
+
 </details>
 
-###  `jobs`, `disown`, `fg`, `wait` and `kill`
+### `jobs`, `disown`, `fg`, `wait` and `kill`
 
 <details>
 <summary>
@@ -1335,6 +1345,7 @@ running jobs in the background
 </summary>
 
 we can see the running jobs in the background, and remove them with `disown`.
+
 ```sh
 sleep 15 & # run in background
 jobs
@@ -1360,10 +1371,10 @@ ls()
 ls # call fake command
 command ls # calls shell command
 ```
-</details>
 
 </details>
 
+</details>
 
 ## Section 10: Regular Expressions
 
@@ -1444,20 +1455,276 @@ bash doesn't support regular expressions natively (some commands do). instead, i
 - `[b-t]` - match a range of characters
 - `{w*, *oo*}` - match either of the conditions
 
-
 the `echo` command can also do some globing (file name expansion). we can the options in the shell command options `shopt`.
 
 </details>
 
 </details>
 
-## Section 11: Functions
+## Section 11: Input Output Redirection
 
-## Section 12: Arrays
+<details>
+<summary>
+Input and Output redirection with file descriptors
+</summary>
 
-## Section 13: Lists
+stdout, stdin, stderr
 
-## Section 14: Debugging
+taking the content from one file (actual file, pipe, command, etc...) and passing it to another.
+
+| Name   | Description                      | File descriptor      |
+| ------ | -------------------------------- | -------------------- |
+| stdin  | standard input stream (keyboard) | file descriptor `#0` |
+| stdout | standard output (screen)         | file descriptor `#1` |
+| stderr | standard error output            | file descriptor `#2` |
+
+we redirect output by specifying the origin, the redirection and the the destination.
+
+`2>&1` - redirect the error stream (2) into the normal output(1). which is useless usually, but we can also redirect into files, which makes more sense
+`echo "hello" 1>someFile.txt`, or redirect all the error into the void descriptor of `&/dev/null` (silencing the errors).
+
+```sh
+FILE=wood.txt
+echo "this line is sent to $FILE" 1>$FILE 
+someCommand # no command, error
+someCommand 2>>$FILE # redirect error to file
+cat $FILE
+>> $FILE 2>&1 # create a file and redirect error to stdout
+someCommand >> wood2.txt 2>&1
+```
+
+when we assign a file descriptor, we create a "cursor" inside the file, 
+```sh
+echo 12345 > fd.txt # create file
+exec 3<> fd.txt # assign file descriptor 3 to the the file
+read -n 2 <&3 # read two characters
+echo -n . >&3  # write a dot at the file descriptor cursor location, without adding a new line
+exec 3>&- # close the file assignment
+cat fd.txt
+```
+
+more redirection:
+```sh
+exec 4<&0 # link fd 4 with stdin
+exec <$1 # read from parameter 1
+
+exec 7>&1 # link fd 7 to stdout
+exec >$2 # write into parameter 2
+
+tr a-z A-Z # convert lower case to upper
+
+exec 1>&7 7>&- # restore stdout and close fd 7
+exec 0>&4 4>&- # restore stdin and close fd 4
+```
+
+this won't work, as the piping command creates a sub shell with a new definition of "count".
+```sh
+count=0
+cat wood.txt | while read line;
+  do 
+  {
+    echo $line
+    ((count ++))
+  }
+  done
+echo "Number of lines read is $count"
+```
+instead, we set the redirection with a file description
+
+```sh
+count=0
+exec 3<>wood.txt
+while read line <&3
+  do 
+  {
+    echo $line
+    ((count ++))
+  }
+  done
+
+exec 3>&-
+echo "Number of lines read is $count"
+```
+</details>
+
+## Section 12: Functions
+
+<details>
+<summary>
+Reusable pieces of code
+</summary>
+
+### Function Definitions
+
+<details>
+<summary>
+Defining a function
+</summary>
+
+A function can be called only after it was defined, but it can call an inner function that hasn't been defined yet, as long as it's defined before the function itself is called.
+
+```sh
+function_name()
+{
+  echo "command"
+}
+# or in a one liner with semi colons
+function_name2(par1) { echo "command1"; echo "command2"; echo $par1 }
+
+function_name
+function_name2 "parameter"
+
+function_name3(){
+  function_name4
+}
+
+function_name4(){
+  echo "4 was called"
+}
+
+function_name3
+```
+
+the function can't be empty, but we can add the `;` as the null command. we can define functions inside functions (nested function), but they must be called in the order of the nesting to be defined.
+
+function names can contain underscores (and even be just called `_`). 
+
+</details>
+
+### Function Parameters And Return Status
+
+<details>
+<summary>
+passing function arguments, getting the exit status
+</summary>
+
+we can pass nameless argument and use the `$1` syntax, or we can name the parameters.
+
+the exit status of a function is either zero when successful, or not zero when failed. the return value is the return value of the last command, or the value in the `return` statement.
+
+The global `$?` can only hold values up to 255.
+if we need a value number larger than that, we can assign the return value to some variable.
+
+</details>
+</details>
+
+## Section 13: Arrays
+
+<details>
+<summary>
+arrays are a collection of values
+</summary>
+
+simple declarations
+```sh
+arr[0]=20
+arr[1]=3
+
+echo ${arr} # same as arr[0]
+echo ${arr[0]} # arr[0]
+echo ${arr[1]} # arr[1]
+echo ${arr[*]} # all elements
+echo ${arr[@]} # all elements?
+echo ${#arr[@]} # number of elements
+```
+
+or with a property declaration
+```sh
+declare -a arr
+arr=( 11 22 33)
+# or with initialization out of order 
+arr([0]=first [1]="second" [7]=45)
+```
+
+there are some operation that work on arrays:
+```sh
+arr=( zero one two )
+echo ${arr[0]}
+echo ${arr[1]}
+echo ${arr[2]}
+
+declare -a colors
+read -a colors # read from user input into the array variable
+```
+we can `unset` a single element of an array, or to delete the array itself. an array can empty (has zero size).
+
+```sh
+FILE=wood.txt
+declare -a arr_file
+arr_file=(`cat $FILE` ) # load content of file into array
+echo ${arr_file[*]}
+size=${#arr_file[*]}
+echo "array size is $size"
+```
+
+an example of sorting an array with *bubble sort*
+
+```sh
+swap()
+{
+  local tmp=${colors[$1]}
+  Colors[$1]=${colors[$2]}
+  Colors[$2]=$tmp
+  return
+}
+
+declare -a colors
+colors=(red black blue white brown)
+size=${#colors[@]}
+
+for (( last = $size -1 ; last >0 ; last --))
+do
+  for (( i = 0 ; i < last ; i++))
+  do
+    [[ ${colors[$i]} > ${colors[$((i+1))]} ]] && swap $i $((i+1))
+  done
+done
+
+echo "colors sorted ${colors[*]}"
+```
+
+</details>
+
+## Section 14: Lists
+
+<details>
+<summary>
+Replacements for conditional statements
+</summary>
+
+using the `&&` and `||` instead of the "if-then-else" structure. short-circuiting.
+
+the "and" list executes the next command only if the previous command was true, the "or" list will execute the next command if the previous was not true.
+
+</details>
+
+## Section 15: Debugging
+
+<details>
+<summary>
+Different methods to debug scripts
+</summary>
+
+we can grab the error code from the last status result with `$?`. we can check the script by calling `sh -n script.sh` to check for script errors without running it at all. \
+if we add the `-v` flag for verbosity when running the script, we will see where the script failed and previous lines it ran. we can add the `-x` flag when running any script to print each command and the output to the standard output.
+
+A more advanced way to debug scripts it to tack signals. we call the `trap` function to set an action when a specific signal occurs
+
+```sh
+trap 'echo "listing variables: m=$m n=$n o=$o"' EXIT
+
+m=1
+n=4
+o=5
+let "sum = $m+$n+$o"
+
+echo "the sum is $sum"
+```
+
+to remove the trap, we can use `trap - EXIT` (trap minus sign and the signal name), which will unload the command from the signal. we can also set it to the **DEBUG** symbol, which will make it run after every statement.
+
+</details>
+
 
 ## TakeAways
 
@@ -1469,20 +1736,32 @@ Things worth remembering
 `#!/bin/bash` - at the top of the script
 
 when using echo, add `-e` flag to escape special characters such at new lines and vertical tabs
-special characters.
+special characters. `-n` disables the automatic new line when writing.
+
 ```sh
 echo "aaa \t bbb \n ccc"
 echo -e "aaa \t bbb \n ccc"
 echo $((1+3)) # numeric operation
+echo -n "abc" > someFile.txt # not adding ew line
+echo "def" >> someFile.txt
+```
+
+inside a script
+```sh
+echo "Usage`basename $0` how to use"
 ```
 
 reading variables from input:\
 `read -s -n 3 -p "enter your selection\n" num`
+
 - `-s` - silent, don't echo input
 - `-n <number>` - limit to a number of characters
 - `-p <prompt>` - text prompt
+
 ### Special Characters Meanings
+
 special characters
+
 - `#` - hash mark
   - comment
   - part of the `#!/bin/bash` definition
@@ -1553,6 +1832,7 @@ special characters
   - convert all to uppercase (`echo ${var,,}`)
 
 ### Conditions
+
 conditionals:
 
 - `-n $1` - variable exists
@@ -1565,6 +1845,7 @@ conditionals:
 - `-s "$file"` - file is not zero size
 
 case statement
+
 ```sh
 read a
 case "$a" in
@@ -1575,7 +1856,8 @@ case "$a" in
 esac
 ```
 
-`select` is a like a *while* loop that prompts and can choose a value from the list with a number
+`select` is a like a _while_ loop that prompts and can choose a value from the list with a number
+
 ```sh
 PS3='Pick a color' # prompt
 select color in "brown" "grey" "black" "red" "green"
@@ -1585,6 +1867,8 @@ do
 done
 ```
 
+`awk` - is a way to specify format and break down the print format.
+- `-F` - specify field delimiter
 ### Built-in variables
 
 variables that are pre-build
