@@ -4278,7 +4278,7 @@ int main()
 
 </details>
  
- ## C++ Weekly - Ep 387 - My Customized C++ Programming Keyboard!
+## C++ Weekly - Ep 387 - My Customized C++ Programming Keyboard!
 
 <details>
 <summary>
@@ -4291,5 +4291,17 @@ A macro pad device that's been programmed to handle repetitive c++ code. a pytho
 
 (in my opinion, code snippets are easier)
 
+</details>
 
+## C++ Weekly - Ep 388 - My `constexpr` Revenge Against Lisp
+
+<details>
+<summary>
+A scripting language based on modern C++.
+</summary>
+
+[My constexpr Revenge Against Lisp](https://youtu.be/NQEE0k9i7FA), [github](https://github.com/lefticus/cons_expr).
+
+"Concepts of Programming Languages" book. Lisp (recursive only programming), looking at chai-script again, and re-inventing it into **cons_expr** - a modern scripting language which works with `constexpr` behavior.\
+The tests run in compile time and runtime. has a gui thing that shows the internal, and this supports lisp-like expressions.
 </details>
