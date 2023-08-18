@@ -860,6 +860,18 @@ app.MapPost("/person", (PersonRecord person, IConfiguration config) =>
 ----
 ====
 
+=== 4 Things I Like in The New Visual Studio 2022 17.7 Update
+
+.Changes to Visual Studio
+[%collapsible]
+====
+
+The file comparison is now built-in into the IDE, allowing to compare any two files, even if they don't belong to the same project. +
+Copying text from a file removes the outmost indentations, so the pasted code starts at the start of the line. +
+Github Actions have a `create workflow` wizard. +
+When viewing file trees, there is now a **Collapse All Descendants** option.
+
+====
 
 == Misc
 

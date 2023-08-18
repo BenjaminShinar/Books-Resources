@@ -371,8 +371,8 @@ The EC2 machine can be configured with different resources, effecting the power 
 | Storage optimized     | Storage optimized instances are designed for workloads that require high sequential read and write access to large datasets on local storage. They are optimized to deliver tens of thousands of low-latency random I/O operations per second (IOPS) to applications that replicate their data across different instances. | NoSQL databases (Cassandra, MongoDB and Redis), in-memory databases, scale-out transactional databases, data warehousing, Elasticsearch, and analytics                                                                                                                   |
 | HPC optimized         | High performance computing (HPC) instances are purpose built to offer the best price performance for running HPC workloads at scale on AWS.                                                                                                                                                                                | Ideal for applications that benefit from high-performance processors, such as large, complex simulations and deep learning workloads                                                                                                                                     |
 
+Instances are also created in specific locations, meaning which Availability Zone hosts them. applications should be designed for speed and high availability.
 
-Instances are also created in specific locations, meaning which Availability Zone hosts them. applications should be designed for speed and high availability. 
 </details>
 
 #### Amazon EC2 Instance Lifecycle
@@ -389,6 +389,7 @@ Virtual Machine life cycle and pricing.
 Provisioning and removing instances, scaling the compute power as needed, so the application always has enough compute resources, but without paying extra for unused compute power.
 
 EC2 instances have life cycle (states)
+
 1. it starts from an AMI in the **PENDING** state
 2. moving to **RUNNING** state
 3. rebooting the instance temporarily to the **REBOOTING** state before returning th **RUNNING**
@@ -396,10 +397,9 @@ EC2 instances have life cycle (states)
 5. pausing (stop-and hibernate), which saves the machine to memory, so after **STOPING** and **STOPPED**, it can return to **RUNNING** immediately.
 6. terminating the instance **SHUTTING DOWN** and **TERMINATED** which removes all data from it.
 
-there is a service called *termination protection* which can recover data from terminated instances for a limited period of time.
+there is a service called _termination protection_ which can recover data from terminated instances for a limited period of time.
 
 EC2 machines are charged for the **RUNNING** and **STOPPING** state.
-
 
 > 1. When you launch an instance, it enters the **pending** state. When an instance is pending, billing has not started. At this stage, the instance is preparing to enter the running state. Pending is where AWS performs all actions needed to set up an instance, such as copying the AMI content to the root device and allocating the necessary networking components.
 > 2. When your instance is **running**, it's ready to use. This is also the stage where billing begins. As soon as an instance is running, you can take other actions on the instance, such as reboot, terminate, stop, and stop-hibernate.
@@ -410,18 +410,17 @@ EC2 machines are charged for the **RUNNING** and **STOPPING** state.
 when in the stop-and-hibernate state, the state of the machine is saved to the EBS (elastic block storage) volume, so it's quicker to recover. however, it also incurs costs. not all instances can hibernate.
 
 ##### Pricing
+
 pricing depends on the instance compute power and other factors.
 
 - **On-Demand Instances** are EC2 machine that are provisioned directly, without up-front payment or commitments. they are used for flexibility, for short term workloads that can not be interrupted, and for testing and developing.
 - **Spot Instances** have flexible start and end time, and can run when demand to EC2 machines is low, and therefore have lower costs. they are used for workloads which can happen at flexible times, can be stopped and resumed (or are stateless). the user can set a limit on spending, and bid for the price in which they want to provision a machine, and once the price falls to that level, then the instance is provisioned. pricing is set by AWS based on capacity.
 - **Saving Plans** are long term contracts with AWS to provision resources over a long period of time (one year or 3 years), this provides a significant discount over "on-demand" instances, if the workloads have consistent and steady usage pattern and the user can make those up-front payment.
 - **Reserved Instances** also have 1 year or 3 year plans, but with different payment options (all upfront, partial upfront, no upfront). they provided a cheaper alternative to "on-demand" instances when there is an expectation for steady workloads:
-  - *Standard Reserved Instances*
-  - *Convertible Reserved Instances* - allow for changing the instance type to a stronger machine at a discounted price
-  - *Scheduled Reserved Instance* - reserving only for a window of time.
-- **Dedicated Host** - a physical EC2 server that is only used by the client, and can help with cost reduction by incorporating software licenses and it might be part of compliance requirements. can be purchased on demand (hourly) or reserved for a discount. 
-
-
+  - _Standard Reserved Instances_
+  - _Convertible Reserved Instances_ - allow for changing the instance type to a stronger machine at a discounted price
+  - _Scheduled Reserved Instance_ - reserving only for a window of time.
+- **Dedicated Host** - a physical EC2 server that is only used by the client, and can help with cost reduction by incorporating software licenses and it might be part of compliance requirements. can be purchased on demand (hourly) or reserved for a discount.
 
 </details>
 
@@ -435,8 +434,7 @@ Demo of Creating the EC2 web server.
 (video)
 
 launching the EC2 on the default VPC. <kbd>Launch Instance</kbd>, provide name, choose AMI template, instance type and size (some belong to the free tier, while some have GPU), we can use a key-pair for ssh connection. under the network settings, we use the default the VPC and subnets, with the gateway for public internet access. with choose to auto-assign a public ip address.\
-Under firewall options, we can set the Security group or create a new one, we can then add storage if needed. under advanced details, we can set the IAM instance profile with the role, and we paste the provided bash script into the "User data" section to have it run when the machine is booted. the script contains installation of packages and running the program itself. 
-
+Under firewall options, we can set the Security group or create a new one, we can then add storage if needed. under advanced details, we can set the IAM instance profile with the role, and we paste the provided bash script into the "User data" section to have it run when the machine is booted. the script contains installation of packages and running the program itself.
 
 </details>
 
@@ -453,6 +451,7 @@ some applications work better with container compute, rather than EC2 compute. f
 
 Containers are a standardized method of isolating processes and running them, which allows for portability and flexibility across machines as all the needed requirements are part of the container image. containers are similar in some regards to virtual machines, but they are more lightweight (and spin up faster), as they don't each maintain a copy of the operating system.\
 In AWS containers can be run on EC2 machines, this could be done manually, but it becomes hard to manage as the number of machines scales. for theses cases, it's recommended to use an orchestrating service. the orchestrator handles:
+
 > - How to place your containers on your instances
 > - What happens if your container fails
 > - What happens if your instance fails
@@ -461,6 +460,7 @@ In AWS containers can be run on EC2 machines, this could be done manually, but i
 ##### Managing containers with Amazon ECS
 
 ECS is an amazon service that manages containers end-to-end. the containers are defined as "tasks" and can rn either on EC2 machines or on fargate instances.
+
 - cluster - logical grouping of services, tasks and capacity providers in a region.
 - Service - one or more identical tasks. checks and replaces unhealthy tasks.
 - Task - one or more containers, specify compute, networking, IAM and configurations.
@@ -468,7 +468,8 @@ ECS is an amazon service that manages containers end-to-end. the containers are 
 when using an EC2 to run ECS, the ECS agent is installed and manages the compute instance. this can be done for Linux and Windows machines. ECS cluster can manage launching and stopping containers, scaling containers, placing the container across the cluster, and assigning permissions. Tasks are defined as json documents with the image, containers and resources required for the container.
 
 ##### Using Kubernetes with Amazon EKS
-EKS is the AWS service for running kubernetes clusters. Kubernetes is an open-source platform for managing containers, and it is popular and supported by many cloud vendors. 
+
+EKS is the AWS service for running kubernetes clusters. Kubernetes is an open-source platform for managing containers, and it is popular and supported by many cloud vendors.
 
 </details>
 
@@ -488,7 +489,6 @@ AWS serverless services hide away the server running the application, and don't 
 
 Running a server on EC2 still requires the user to handle the OS, security patching, networking, storage and scaling. the serverless model abstracts away those issues and lets AWS handle them, while the user can focus more on the application and the value it provides. Serverless also has built-in scaling, high availability and fault tolerance.
 
-
 </details>
 
 #### Serverless with AWS Fargate
@@ -503,6 +503,7 @@ Run Containers on Managed Compute Clusters
 (video)
 
 AWS fargate are compute instances which can be used instead of EC2 instances. instead of setting up EC2 machines to hold the containers, the containers are deployed to a managed cluster which does everything for you. Fargate supports spot and reserved instances for reduced costs. Fargate clusters have built on scaling options and use "per-per-use" modeling to avoid paying for under-utilized EC2 machines
+
 </details>
 
 #### Serverless with AWS Lambda
@@ -565,15 +566,151 @@ Recap Questions.
 
 <details>
 <summary>
-//TODO: add Summary
+Networking and VPCs.
 </summary>
 
-Introduction to Networking
-Amazon VPC
-Amazon VPC Routing
-Amazon VPC Security
-Demonstration: Relaunching the Employee Directory Application in Amazon EC2
-Module 3 Knowledge Check
+#### Introduction to Networking
+
+<details>
+<summary>
+Networking is how you connect computers around the world and allow them to communicate with one another.
+</summary>
+
+(video)
+
+we focus on the network VPC and it's components. when we created an EC2 machine, we put it into a vpc. we used a default vpc that AWS creates for us. the default VPC has inbound access from the internet, so it's dangerous to use it all the time. some services don't require VPCs, but it's still important to learn about it.
+
+> Networking defined \
+> Networking is how you connect computers around the world and allow them to communicate with one another. In this course, you’ve already seen a few examples of networking. One is the AWS Global Infrastructure. AWS has built a network of resources using data centers, Availability Zones, and Regions.
+
+networking with analogy to letters and postal services, we need the letter (contents), but we also need the "from" and "to" addresses. in the digital world, this process is called _routing_, and it uses ip addresses.
+
+**ipv4 notations** groups 32 bits into four groups of eight, and separates them by dots. so we have four units of numbers between zero and 255. the **CIDR notation** is a way to express ranges of ip addresses. it uses fixed and flexible parts. for example. _192.168.1.0/24_ the number after the slash is the number of **fixed** bits (masked bits), and the rest are flexible, this means that there are 8 flexible bits in this. so the smaller the number, the larger the range.
+aws supports ranges from `/28` (which has 16 ip options : $2^{32-28}=16$) and up to `/16`, ($2^{32-16}=65,536$).
+
+</details>
+
+#### Amazon VPC
+
+<details>
+<summary>
+A virtual private cloud (VPC) is an isolated network that you create in the AWS Cloud, similar to a traditional network in a data center.
+</summary>
+
+> To maintain redundancy and fault tolerance, create at least two subnets configured in two Availability Zones.
+
+(video)
+VPC - virtual private cloud, a boundary around applications and resources, from the internet and from other aws resources. VPC go inside an Availability Zone and have an IP range (CIDR), we will use oregon and 10.1.0.0/16. under the services bar, we choose <kbd>VPC</kbd> and then <kbd>create VPC</kbd>, we choose the name and the ip range. inside the vpc, we divide the resources into logical groups called _subnets_. we can separate subnets and have one public and open to internet access, and one private. The subnet lives inside a VPC, is attached to a specific Availability Zone, and has an ip range that is a subset of the VPC range (such as 10.1.1.0/24 for the public subnet, and 10.1.3.0/24 for the private subnet). inside the vpc page, we choose <kbd>Create Subnet</kbd>, choose the name, the vpc, the Availability Zone and provide the CIDR range.\
+All the resources in the vpc are isolated from others, so to allow Internet connectivity, we need an **Internet Gateway** (attached to the vpc). <kbd>Create Internet Gateway</kbd>, then <kbd>Attach to VPC</kbd>. if we want to limit internet access and only allow access from a specific location, we can use **Virtual Private Gateway** (VPN). ideally we would want to have duplicated resources in a different Availability Zone for high availability.
+
+If VPCs are like local networks, the subnets are similar to virtual local networks, we use subnets to isolate the access to resources inside the vpc, public subnets are connected to outside AWS, while private subnets only communicate with resources in the AWS VPC.
+
+AWS has five reserved ip addresses
+
+| IP address | Reserved For              |
+| ---------- | ------------------------- |
+| 10.0.0.0   | Network Address           |
+| 10.0.0.1   | VPC local router          |
+| 10.0.0.2   | DNS server                |
+| 10.0.0.3   | Future use                |
+| 10.0.2.255 | Network broadcast address |
+
+> The five reserved IP addresses can impact how you design your network. A common starting place for those who are new to the cloud is to create a VPC with an IP range of /16 and create subnets with an IP range of /24. This provides a large amount of IP addresses to work with at both the VPC and subnet levels.
+
+##### Gateways:
+
+Internet gateways act like a modem - they connect the VPC to the external internet. Virtual private gateways are VPN, they connect only to a matching customer gateway (a device or software) and provide encrypted communication between the two sides. There s also **AWS Direct Connect**, which is a physical connection between the on-premises data center and AWS metacenter, which has high speed and doesn't travel through the public internet at all.
+
+</details>
+
+#### Amazon VPC Routing
+
+<details>
+<summary>
+Routing External Traffic to the subnets.
+</summary>
+
+> A route table contains a set of rules, called routes, that determine where network traffic from your subnet or gateway is directed.
+
+(video)
+
+once the traffic got to the internet gateway, we need to route it to the correct subnet and resources. this is done via the **Route Table**, it contains rules (routes) that move traffic around. a route table can at the vpc level or the subnet level. aws creates a default main route-table, which only allows connections between the local vpcs. in the route table <kbd>Routes</kbd> table, we can see the routing to the subnets (10.1.0.0/16). the connection from the internet gateway to the subnets determines if they are public or private, if a route exists, then it's a public subnet, otherwise it's private.\
+in our app we create custom route tables, we click <kbd>Create Route Table</kbd>, give it a name and a vpc, and the <kbd>edit routes</kbd> and  <kbd>add routes</kbd>, and select the target type from the drop down.
+
+| Destination | Target           |
+| ----------- | ---------------- |
+| 10.1.0.0/16 | local            |
+| 0.0.0.0/0   | internet gateway |
+
+we next need to associate the table with the subnets, so we click <kbd>Edit subnet Associations</kbd> and choose the public subnets.
+
+
+> Main route table:\
+> When you create a VPC, AWS creates a route table called the main route table. A route table contains a set of rules, called routes, that are used to determine where network traffic is directed. AWS assumes that when you create a new VPC with subnets, you want traffic to flow between them. Therefore, the default configuration of the main route table is to allow traffic between all subnets in the local network. \
+> The following rules apply to the main route table:
+> 
+> - You cannot delete the main route table.
+> - You cannot set a gateway route table as the main route table.
+> - You can replace the main route table with a custom subnet route table.
+> - You can add, remove, and modify routes in the main route table.
+> - You can explicitly associate a subnet with the main route table, even if it's already implicitly associated.
+
+in addition to the main route table, we can also specify more granular behavior by using a custom route table. associating a route table with a subnet will replace the main one.
+</details>
+
+#### Amazon VPC Security
+
+<details>
+<summary>
+Security With Access Control Lists and Security Groups.
+</summary>
+
+> Cloud security at AWS is the highest priority. You benefit from a data center and network architecture that is built to meet the requirements of the most security-sensitive organizations.
+
+(video)
+
+any new VPC is isolated from internet access, because it doesn't have an internet gateway associated with the route table. but once we connect the subnet to the external internet, we need to add security. the two options available for us are **Access Control Lists (ACL)** and **Security Groups**. \
+An ACL is like a firewall on the subnet level. the control inbound and outbound traffic. we can specify which access types are allowed (HTTP, HTTPS, SSH, etc..) by creating inbound rules and specifying the source. in ACL, we also need to open the corresponding outbound rules. this is because ACL are considered *stateless*.\
+Security groups are created at the EC2 level, and they are mandatory (every EC2 has them). the default Security group behavior is to block inbound requests and allow outbound. if we want to allow requests from the internet to reach us, we need to open inbound rules(such as port 80 and 443 for http and https). security groups are *stateful*, so if there is an inbound rule that allows traffic, outbound traffic to the same destination will be allowed as well.
+Security groups only have "allow" rules, while ACL have both "allow" and "deny" rules, and can control inbound and outbound traffic separately.
+
+Networks ACLs have default inbound and outbound rules which allow all traffic (internal and external) to flow, we can customize the rules as we like to allow access from each kind of protocol based on the ip source, and deny all other traffic.
+
+EC2 security groups also have defaults, for security groups, the default behavior is to deny inbound access and allow all outbound, but since they are stateful, then any connection that was initially established by the EC2 machine will allow inbound traffic. Security groups only have "Allow" rules, and not "Deny" rules.
+</details>
+
+#### Demonstration: Relaunching the Employee Directory Application in Amazon EC2
+
+<details>
+<summary>
+Demo.
+</summary>
+
+(video)
+
+Creating a vpc, 4 subnets, route table, internet gateway. in the VPC dashboard.
+We start by clicking <kbd>Create a VPC</kbd>, choose VPC only. choose cidr range of 10.1.0.0/16. next we choose <kbd>Create subnet</kbd>, select the new vpc, choose name, Availability Zone and cidr range (10.1.1.0/24, 10.1.2.0/24), we do this twice - two subnets for each Availability Zone - one private and one public. the cidr ranges should not overlap with one another.\
+Next we <kbd>create internet gateway</kbd>, click <kbd>Attach to VPC</kbd> and select our new vpc. Internet gateways have one-to-one relationship, an internet gateway can only be attached a to a single VPC. we next <kbd>Create Route Table</kbd> for the public subnets, and we attach it to VPC. we next click <kbd>Edit routes</kbd> and <kbd>Add route</kbd> and choose the destination as 0.0.0.0/0 (every ip address) and the target as our internet gateway. now we have two routes, the default route inside the vpc and the route to the internet. we next need to associate the route table with the subnets so we click <kbd>Edit subnet association</kbd> and choose the public subnets.. subnets without explicit associations use the main route table.\
+We navigate back to the EC2 dashboard, we select the existing machine, and under <kbd>Actions</kbd>, we select <kbd>Image and Template</kbd> and <kbd>Launch more like this</kbd>. this will populate a wizard with the same values as the original, and here we can modify the VPC and the subnets, and set "auto-assign public IP" to true. now we need to choose a different security group, because the security groups are attached to the VPC. so we <kbd>Create a security group</kbd> and allow HTTP and HTTPS access. if we can access it from the public ip address, then it means we did things correctly.
+
+
+</details>
+
+#### Module 3 Knowledge Check
+
+<details>
+<summary>
+Recap Questions.
+</summary>
+
+> - Q: Which of the following can a route table be attached to?
+> - A: Subnets (or entire VPC).
+> - Q: Which of the following is true for a security group's **default** setting?
+> - A: It blocks all inbound traffic and allows all outbound traffic.
+> - Q: A network access control list (network ACL) filters traffic at the Amazon EC2 instance level.
+> - A: False (subnet level).
+
+</details>
 
 </details>
 

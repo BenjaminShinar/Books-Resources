@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico subspan
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -4304,4 +4304,36 @@ A scripting language based on modern C++.
 
 "Concepts of Programming Languages" book. Lisp (recursive only programming), looking at chai-script again, and re-inventing it into **cons_expr** - a modern scripting language which works with `constexpr` behavior.\
 The tests run in compile time and runtime. has a gui thing that shows the internal, and this supports lisp-like expressions.
+</details>
+
+## C++ Weekly - Ep 389 - Avoiding Pointer Arithmetic
+
+<details>
+<summary>
+Alternatives to Pointer Arithmetic.
+</summary>
+
+[Avoiding Pointer Arithmetic](https://youtu.be/YahYVRS1Ktg)
+
+don't write code like this
+```cpp
+void func(const char* argv, const std::size_t argc) {
+    const std::vector<char> args(argv, argv + argc); // pointer arithmetic
+}
+```
+one option is using <cpp>std::next</cpp>. which hides the arithmetics away.
+```cpp
+void func(const char* argv, const std::size_t argc) {
+    const std::vector<char> args(argv,
+        std::next(argv, static_cast<std::ptrdiff_t>(argc)));
+}
+```
+
+a different option is by using <cpp>std::span</cpp>. which has the advantage that it can work with ranges and pipings, as well as having <cpp>.subspan()</cpp> method.
+
+```cpp
+for (const auto &arg : std::span<const char>(argv, argc)) {
+    std::cout << arg << '\n';
+}
+```
 </details>
