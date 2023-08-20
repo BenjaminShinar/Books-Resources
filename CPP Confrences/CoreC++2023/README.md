@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore objdump
+// cSpell:ignore objdump Browsable Guttag
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -153,6 +153,248 @@ instead of packaging the same common libraries, we can have one shared version o
 > - Hijacking class methods is complicated
 
 we do this by passing two flags `--Wl` which instructs gcc to pass a command to the linker, and `--wrap=<mangled name>` which replaces the symbol with a symbol that is defined with the same name. (the demo didn't work so great).
+</details>
+
+## Bjarne Stroustrup :: Approaching C++ Safety
+
+<details>
+<summary>
+Different Notions of Safety and How to Achieve it.
+</summary>
+
+[Approaching C++ Safety](https://youtu.be/eo-4ZSLn3jc)
+
+### The Challenge of Safety
+
+The NSA guide says that software should be written in memory safe languages, and it doesn't mention C++ as a memory safe language.
+
+the C++ language is "strongly typed, weakly checked language", which is nice and well, but it doesn't scale up. but we don't want to limit what kind of applications can be written, and without adding run-time overhead.
+
+
+> Type and Resource Safety
+> - Every object is accessed according to the type with which is was defined (type safety).
+> - Every object is properly constructed and destroyed (resource safety).
+> - Every pointer either points to a valid object or is the <cpp>nullptr</cpp> (memory safety).
+> - Every reference through a pointer is not through teh <cpp>nullptr</cpp> (often a run-time check).
+> - Every access through t a subscripted pointer is in-range (often a run-time check).
+
+
+the solution must serve a wide variety of user/areas, it can't break existing code, it can't defer to another language, and it can't rely on all the developers "magically" improving. the challenge is to have a type-safe c++ language and to convince developers to use C++ in a safe way.
+
+### C++ Evolution
+C++ stared with two goals - efficient use of hardware (like C), and managing complexity (based on simula). it also meant enforcing argument type checking. a different jey idea is to "represent concepts in code". <cpp>RAII</cpp> - resource acquisition is initialization, not only memory resources, also file handles, locks, sockets, shaders.\
+In the early 80's, Object oriented programming was emerging, encapsulation, abstraction, overloading. then we have  templates, containers, algorithms, smart pointers and exceptions.
+
+### C++ Core Guidelines
+
+> - no implicit violations of he static type system.
+> - provide as good support for user-defined types as for built-in types
+> - say what you mean - emphasizes  declarative styles and abstractions.
+> - syntax matters (often in perverse ways) - in general, verbosity is to be avoided.
+> - leave no room for a lower-level language (except assembler).
+> - preprocessor usage should be eliminated.
+> - 
+> - make simple tasks simple.
+> - make error handling regular.
+
+(module <cpp>std</cpp> is better than `#include`).
+
+the core guidelines are designed to be an answer to the question "what is good modern C++?". a useful answer that many people can use, and not just language experts. this is something that can be sometimes achieved with static analyzers.
+
+but people don't like coding rules, and those coding rules usually don't provide good advice. it should be:
+> - Good
+>   - Comprehensive
+>   - Browsable
+>   - Supported by tools
+>   - Suitable for gradual adoption
+> - Modern
+>   - "Compatibility and legacy code be dammed! (initially)"
+> - Prescriptive
+>   - Not punitive
+> - Teachable
+>   - Rationales and examples
+> - Flexible
+>   - Adaptable to many communities and tasks
+> - Non-proprietary
+>   - But assembled with taste and responsiveness
+
+In the guidelines, the first rules are high-level conceptual ideas to defined the mental framework, these rules can't be "checked" by machines. the rest of the rules are "lower-level" rules, which can be automated and checked statically. if we can't remove un-safe stuff from the language (such as pointers), we can still hide it behind a zero cost abstraction (a span) and enforce that those unsafe operations are never used directly.
+
+dangling pointers - example of unsafe code that usually works, until it doesn't (when the memory was recycled for some reason).
+
+```cpp
+void (X* p)
+{
+   // ...
+   delete p;
+}
+
+void g()
+{
+   X* q = new X;
+   f(q); // delete is called here
+   // do stuff
+   q->use(); // will crash, or read random memory,
+}
+```
+> Owners and Pointers:
+> - Every object has one owner.
+> - An object can have many pointers to it.
+> - No pointer can outlive the scope of he owner it points to.
+> - An owner is responsible for owners in its object.
+
+dangling pointers, pointers to local data, invalidations when re-allocation happens.
+
+there are problems that require run-time checking.
+
+### C++ Profiles
+how to guarantee safety? making everybody follow the best guidelines without having them magically follow all the rules.
+
+> Different notions of safety:
+> - Logic errors
+> - Resource Leaks
+> - Concurrency Issues
+> - Memory Corruption
+> - type Errors
+> - Overflows and Unanticipated Conversions
+> - Timing Errors
+> - Allocation Unpredictability
+> - Termination Errors 
+
+these things can't be done by the compiler alone, and not everything could be achieved from static analysis. A safety profile is a set of rules that gauntness a safety result, such as bounds safe, type safe or memory safe, we want to be sure that unsafe code is never executed.
+
+There is a problem of mixing profiles, between libraries and between languages.
+
+</details>
+
+## Inbal Levi :: Let's talk about C++'s Abstraction Layers
+
+<details>
+<summary>
+A mental model of abstraction layers and how they interact together.
+</summary>
+
+[Let's talk about C++'s Abstraction Layers](https://youtu.be/wODpT8HJn-E)
+
+### What Are Abstraction Layers?
+
+software development is all about communicating logic to the computer, to achieve that, we need some level of abstraction (rather than writing assembly and machine code).
+
+examples of abstractions: iterating, messaging. we can have under abstraction (not using enough) and over abstraction (not having enough data).
+
+> The essences of Abstraction is **preserving information that is relevant** in a given context, and **forgetting information** that is irrelevant **in that context**.\
+> ~ John V.Guttag
+
+Types and pointer arithmetic also implement abstractions, advancing a pointer "moves" the pointer to a different location based on the types.
+
+
+### Abstraction Layers Model For C++
+
+analyzing keywords, concepts and elements in the language and identify layers and borders between them, and find which are dangerous.
+
+```cpp
+int main()
+{
+   int i = 0;
+   std::cout << & i; // 0x7ffc8584005c
+   *(*int)0x7ffc8584005c = 1; // undefined behavior
+   return i;
+}
+```
+
+in this example, we have three topic:
+- the invalidity of the address.
+- the duality of int and memory address
+- the UB created by using the address.
+
+we can say that have problem with the memory layout, the type system and memory contorl. lets add to it the "program and source code" topic, and we eventually have an hierarchy of concepts and how the relate to one another. with this classification in tact, we can say which statement relates to which layer.
+
+```cpp
+#include <sstream>
+
+int main()
+{
+   auto iss = std::istringstream("0 1 2");
+   auto j = 0;
+   while (iss >> j){
+      std::cout << "j: " << j << '\n';
+   }
+}
+```
+this print zero, one, two, as we expect. but let's add ranges.
+```cpp
+#include <sstream>
+#include <ranges>
+
+int main()
+{
+   auto iss = std::istringstream("0 1 2");
+   for (auto i : rn::istream_view<int>(iss) || rv::take(1)) {
+      std:::cout << "j inside loop: " << i << '\n';
+   }
+
+   auto j = 0;
+   iss >> j;
+   std:::cout << "j after loop: " << j << '\n';
+}
+```
+
+In this example we see zero and then 2. this is contrary to our expectations (zero and one). the problem is that ranges take ownership.
+
+### Existing Solutions
+we need to be wary of the boundaries and be careful at spots where the interact with.
+
+1. solution 1 - write better code, use better guidelines, enforce with tooling.
+2. solution 2 - use a "different language" for new features - always write at the modern langrage style. 
+
+### Future Solutions - How Can We Do Better?
+apply the layers model to our tools and give better error messages. classifying tokens according to layers, and warning when we combine layers that don't fit together. in the problematic example, we can warn that we move from the I.O abstraction layer to the rangers layer, and then we try moving back.
+
+coroutines example:
+
+```cpp
+Task doWork(); // Coroutine
+
+struct Task {
+   struct promise_type {
+      HandleWrap get_return_object() {return HandleWrap(this);}
+      std::suspend_always initial_suspend()
+      {
+         //..
+      }
+      struct HandleWrap {
+         void resume() {
+            std::cout << "work\n";
+            mHandle->resume();
+         }
+      };
+   };
+};
+
+int main()
+{
+   auto work_handle = doWork();
+   work_handle.resume();
+}
+```
+
+this is similar to <cpp>std::execution</cpp>> that is planned for c++26.
+
+```cpp
+scheduler auto sch = thread_pool.scheduler();
+sender auto begin = schedule(sch);
+sender auto doWork = then(schedule(sch),[](){
+   std::cout << "Work\n";
+});
+
+int main()
+{
+   this_thread::sync_wait(dorWork);
+}
+```
+
+Because the implementers knew how similar the two ideas are, they designed the scheduler so it will fit with coroutines. but they still run into issues and limitations. other proposal should also follow and consider how their features interact with existing and other future features. tools can help us identify those interaction points.
+
 </details>
 
 ##
