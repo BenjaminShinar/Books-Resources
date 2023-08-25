@@ -1,0 +1,6 @@
+{
+  "MD013": false,
+  "MD033": {
+    "allowed_elements": ["summary", "details","cpp","cloud", "link", "kbd"]
+  }
+}

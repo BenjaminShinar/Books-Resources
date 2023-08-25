@@ -619,7 +619,7 @@ AWS has five reserved ip addresses
 
 > The five reserved IP addresses can impact how you design your network. A common starting place for those who are new to the cloud is to create a VPC with an IP range of /16 and create subnets with an IP range of /24. This provides a large amount of IP addresses to work with at both the VPC and subnet levels.
 
-##### Gateways:
+##### Gateways
 
 Internet gateways act like a modem - they connect the VPC to the external internet. Virtual private gateways are VPN, they connect only to a matching customer gateway (a device or software) and provide encrypted communication between the two sides. There s also <cloud>AWS Direct Connect</cloud>, which is a physical connection between the on-premises data center and AWS metacenter, which has high speed and doesn't travel through the public internet at all.
 
@@ -964,48 +964,49 @@ Choosing the right service for the use case. practice questions. Whether to use 
 4. A shared platform with customizations - ~~this is probably <cloud>EBS snapshots</cloud> or <cloud>AMI</cloud>. we have a base image that we want to re-use again and again.~~ the actual answer is <cloud>Elastic File System</cloud>. we want to mount this to multiple instances of EC2 when they are booted.
 
 > <cloud>Amazon EC2 instance store</cloud>\
-> Instance store is ephemeral block storage. This is pre-configured storage that exists on the same physical server that hosts the EC2 instance and cannot be detached from Amazon EC2. *You can think of it as a built-in drive for your EC2 instance*.\
+> Instance store is ephemeral block storage. This is pre-configured storage that exists on the same physical server that hosts the EC2 instance and cannot be detached from Amazon EC2. _You can think of it as a built-in drive for your EC2 instance_.\
 > Instance store is generally well suited for temporary storage of information that is constantly changing, such as buffers, caches, and scratch data. It is not meant for data that is persistent or long lasting. If you need persistent long-term block storage that can be detached from Amazon EC2 and provide you more management flexibility, such as increasing volume size or creating snapshots, you should use Amazon EBS.
-> 
+>
 > <cloud>Amazon EBS</cloud>\
-> Amazon EBS is meant for data that changes frequently and must persist through instance stops, terminations, or hardware failures. Amazon EBS has two types of volumes: *SSD-backed* volumes and *HDD-backed* volumes.\
+> Amazon EBS is meant for data that changes frequently and must persist through instance stops, terminations, or hardware failures. Amazon EBS has two types of volumes: _SSD-backed_ volumes and _HDD-backed_ volumes.\
 > The performance of SSD-backed volumes depends on the IOPs and is ideal for transactional workloads, such as databases and boot volumes. \
 > The performance of HDD-backed volumes depends on megabytes per second (MBps) and is ideal for throughput-intensive workloads, such as big data, data warehouses, log processing, and sequential data I/O.\
 > Here are a few important features of Amazon EBS that you need to know when comparing it to other services.
-> 
+>
 > - It is block storage.
 > - You pay for what you provision (you have to provision storage in advance).
 > - EBS volumes are replicated across multiple servers in a single Availability Zone.
 > - Most EBS volumes can only be attached to a single EC2 instance at a time.
-> 
+>
 > <cloud>Amazon S3</cloud>
 > If your data doesn’t change often, Amazon S3 might be a cost-effective and scalable storage solution for you. Amazon S3 is ideal for storing static web content and media, backups and archiving, and data for analytics. It can also host entire static websites with custom domain names.\
 > Here are a few important features of Amazon S3 to know about when comparing it to other services:
+>
 > - It is object storage.
 > - You pay for what you use (you don’t have to provision storage in advance).
 > - Amazon S3 replicates your objects across multiple Availability Zones in a Region.
 > - Amazon S3 is not storage attached to compute
-> 
+>
 > <cloud>Amazon EFS</cloud>\
 > Amazon EFS provides highly optimized file storage for a broad range of workloads and applications. It is the only cloud-native shared file system with fully automatic lifecycle management. Amazon EFS file systems can automatically scale from gigabytes to petabytes of data without needing to provision storage. Tens, hundreds, or even thousands of compute instances can access an Amazon EFS file system at the same time. \
 > Amazon EFS Standard storage classes are ideal for workloads that require the highest levels of durability and availability. EFS One Zone storage classes are ideal for workloads such as development, build, and staging environments.\
 > Here are a few important features of Amazon EFS to know about when comparing it to other services:
+>
 > - It is file storage.
 > - Amazon EFS is elastic, and automatically scales up or down as you add or remove files. And you pay only for what you use.
 > - Amazon EFS is highly available and designed to be highly durable. All files and directories are redundantly stored within and across multiple Availability Zones.
 > - Amazon EFS offers native lifecycle management of your files and a range of storage classes to choose from.
->   
+>
 > <cloud>Amazon FSx</cloud>\
 > Amazon FSx provides native compatibility with third-party file systems. You can choose from NetApp ONTAP, OpenZFS, Windows File Server, and Lustre. With Amazon FSx, you don't need to worry about managing file servers and storage. This is because Amazon FSx automates time consuming administration task such as hardware provisioning, software configuration, patching, and backups. This frees you up to focus on your applications, end users, and business.\
 > Amazon FSx file systems offer feature sets, performance profiles, and data management capabilities that support a wide variety of use cases and workloads. Examples include machine learning, analytics, high performance computing (HPC) applications, and media and entertainment.
-> 
+>
 > | File System                        | Description                                                                                 |
 > | ---------------------------------- | ------------------------------------------------------------------------------------------- |
 > | Amazon FSx for NETAPP ONTAP        | Fully managed shared storage built on the NetApp popular ONTAP file system                  |
 > | Amazon FSx for OpenZFS             | Fully managed shared storage built on the popular OpenZFS file system                       |
 > | Amazon FSx for Windows File Server | Fully managed shared storage built on Windows Server                                        |
 > | Amazon FSx for Lustre              | Fully managed shared storage built on the world's most popular high-performance file system |
-
 
 </details>
 
@@ -1045,79 +1046,216 @@ Recap Questions.
 
 <details>
 <summary>
-//TODO: add Summary
+Databases on AWS - RDS, DynamoDB and others.
 </summary>
+
+> A high-performing database is crucial to any organization. Databases support the internal operations of companies and store interactions with customers and suppliers.
 
 #### Introduction to Databases on AWS
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Relation Database introduction, managed and un-managed options.
 </summary>
 
+(video)
+
+we want to store our demo app data in a database, we chose to use relational database for that. RDBMS stands for relational database management system. we can install databases on EC2 instances, which is great for migration from on-premises. but it still requires managing the machine, installing and updating the software. a different option is to have AWS take care of this and use a specialized database service.
+
+There are several kinds of databases. the first and most basic are relation databases, they store data in tables, rows and columns. data in one table can be "linked" to data in another table. these link form the relationship between the data. relational databases require strict schemas of data detailing the tables, the columns types and hoe they relate to one another, changing the schema after the fact is difficult.
+
+- MySQL
+- PostgresSQL
+- Oracle
+- Microsoft SQL Server
+- <cloud>Amazon Aurora</cloud>
+
+Communication with Relational databases is done via **SQL** (structure query language), which allows for querying data and "jointing" multiple tables.\
+Using relational databases provides benefits like the ability for complex and detailed SQL queries, reduced memory needs since there is no redundant data store. it is also highly popular and supported, and allows for transactional integrity. common use cases for relational databases are when using application that have a fixed schema hat doesn't change often, and when persistent storage is required and there is a need for high data integrity.
+
+Databases on the cloud can be managed or un-managed, this choice shifts the responsibilities of managing the database between the cloud vendor and the user. **un-managed** databases run on <cloud>EC2</cloud> machines in the cloud just like any other software, and the user is responsible to manage the instance, install and update the database software, and apply any patches to it. this is all before doing the actual work of managing the data and creating schemas and queries. **managed databases** push some of the work onto the cloud vendor, this includes the machine OS, configuring it for high-availability, scaling, backups, and other tasks. This leaves the user with the smaller task of managing the data itself.
 
 </details>
 
 #### Amazon RDS
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+AWS Relational Databases.
 </summary>
 
+> With Amazon Relational Database Service (Amazon RDS), you can focus on tasks that differentiate your application instead of infrastructure-related tasks, like provisioning, patching, scaling, and restoring.
+
+(video)
+
+<cloud>Amazon RDS</cloud> is a service that allows us to create and manage the databases. for our example, we will use the most simple and default options. so we click <kbd>Create Database</kbd>, and then <kbd>Easy create</kbd> to accept the default behavior and the "best practices" it supports. we next choose the database engine, AWS supports some common engines, but also has <cloud>Amazon Aurora</cloud>.\
+Amazon Aurora is a RDS engine that was designed to take advantage of the cloud capabilities, it can be up to five times more efficient than other engines in some cases. however, in our demo APP we can use the simpler "MySQL" engine. we next choose the instance size and type, and give the instance name and choose the database administrator user name and password. this creation can take a few minutes.\
+A RDS instance is placed inside a subnet in a VPC, which means it goes into an Availability Zone. the best practice is to always deploy applications across Availability Zones for high availability. this can be achieved with aws <cloud>Multi-AZ deployment</cloud>, which sets up a second instance with data replication. it also controls the fail-over transfer between the instances when the primary one fails. the endpoint doesn't change, so there is no need for code changes.
+
+Amazon RDS supports popular RDBMS engines. commercial and open source, and has it's own unique cloud native engine.
+
+- Commercial engines:
+  - Oracle
+  - SQL Server
+- Open Source:
+  - MySQL
+  - PostgresSQL
+  - MariaDB
+- Cloud Native
+  - Aurora
+
+managed databases still run on virtual machine instances, so the user is required to choose a type of machine and the size of the instance, for most engines, storage is handled by <cloud>AWS EBS (elastic block storage)</cloud>, so that's another thing the user needs to choose, but not manage directly. The storage can be "general purpose SSD" (for most cases), "Provision IOPS SSD" (i.o intensive workloads) and "magnetic" (backwards compatibility, not recommended to use anymore).\
+A RDS instance resides in a VPC subnet, so it's limited to a single Availability Zone. the subnet should be private (not have a route to internet gateway), and only be reachable from the application backend. in addition, the subnet should be restricted with <cloud>Access Control Lists (ACL)</cloud> and <cloud>Security Groups</cloud>.
+
+##### Backups
+
+Databases should be backed up on a regular basis, AWS provides automated backups for the DB instance, and has retention period of up to 35 days. this means that at any time, it's possible to perform a "point in time recovery" and re-create a RDS instance at the same state it was when the backup was done. There are also manual backups, which are user-initiated and aren't deleted automatically. this can be because of regulatory requirements.
+
+##### High Availability
+
+Databases should be deployed with high availability in mind, which means redundancy across Availability Zones. <cloud>Multi-AZ</cloud>
+deployment creates a primary and secondary RDS instances with replication between them. only the primary database answers queries, and the secondary database is on "standby" mode until something happens to the primary one and it's then "promoted". data sent to the database goes through a DNS name, so when a failover happens, the name in the DNS is updated to point to the new instance.
+
+##### Security
+
+RES security is handled on different layers, this includes IAM security to handle resource configuration, creation and deletions. Security Groups and Access control lists for network security of traffic coming in and out of the RDS. data backups and snapshots can be encrypted at rest
+and communication with the instance should be done over a secure layer, such as SSL or TLS.
 
 </details>
 
 #### Purpose-Built Databases
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Other types of databases.
 </summary>
 
+> AWS offers more than 15 purpose-built engines to support diverse data models, including relational, key-value, document, in-memory, graph, time series, wide column, and ledger databases.
+
+(video)
+
+The important thing is to choose the right database for the data and the application, no one database fits all needs. AWS has different databases for all sorts of purposes. for our demo app, we might not even need the capabilities of the relational database, since we don't have "joins" or aggregate actions, all we need is a lookup table. in addition to that, the RDS is charged based on the runtime, and since it's not going to see much traffic, it's not the ideal payment model (and we have virtually no usage of it outside of working hours).\
+To avoid these issues, we can use <cloud>Amazon DynamoDB</cloud> instead, this is a NoSQL database which works for key-value pair and documents. it's highly scalable and charges based on usage (number of actions and the size of the data). There are also other databases, such as <cloud>Amazon DocumentDB</cloud> which is great for a CRM application, and can acts as a storage for catalogues and user profiles. if we had a social network, we could go with <cloud>Amazon Neptune</cloud>, a graph database for social networks, recommendations (also good for fraud detection). <cloud>Amazon QLDB (Quantum Ledger DataBase)</cloud> is an immutable ledger database (for banking, shipping, finance) which doesn't allow entires to be removed or modified.\
+Every Database fits for a different use-case, and using the purpose build options removes some of the complexity of learning a new database.
+
+##### AWS DynamoDB
+
+A fully managed NoSQL database with fast, consistence performance. it works great for high scale applications and serverless workloads.
+
+##### AWS ElasticCache
+
+A fully managed in-memory cache with two engines: <cloud>Redis</cloud> and <cloud>Memcached</cloud>. it takes care of instance failover, backups and software upgrades.\
+<cloud>Amazon MemoryDB for Redis</cloud> is a Redis-compatible AWS service with ultra-fast performance.
+
+##### AWS DocumentDB
+
+This document Database is MongoDB compatible, it stores rich documents and allows for queries and aggregation. it's suited for content management, profile management, and web and mobile applications.
+
+##### AWS KeySpaces
+
+This service is an <cloud>Apache Cassandra</cloud> compatible database for high-scale and high performance applications. it uses the same query language and drivers.
+
+##### AWS Neptune
+
+A fully managed Graph database for data with high connectivity and relations.
+
+##### AWS TimeStream
+
+Serverless, scalable database for time-series based data, good for Internet of Things data with large number of events.
+
+##### AWS Quantum Ledger Database
+
+Cryptographically verifiable immutable ledger database.
 
 </details>
 
 #### Amazon DynamoDB
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Digging Deeper into DynamoDB.
 </summary>
 
+> With Amazon DynamoDB, you have a fully managed service that handles the operations work.
+
+(video)
+
+Amazon DynamoDB is a serverless database (no need to manage the instances running it). the tables in dynamoDB don't need to have relations to one another, they are "stand-alone" tables, each containing items (like rows). AWS handles storing the data and scaling it. the data is stored redundantly across Availability Zones and mirrors the data across drives. it is also highly responsive and very scalable. it doesn't require a rigid schema and doesn't have constraints. elements in the table aren't required to have the same structure, and each can have different attributes. queries on dynamoDB tables are simpler and focus on a single table. this makes the response time quicker and faster to scale.\
+For our demo application, we will replace the RDS database for a dynamoDB table. in our web portal, we click <kbd>Create Table</kbd>, give the table a name and choose a partition key and an optional sorting key. we can <kbd>Explore Table Items</kbd> and see the items in the table.
+
+DynamoDB is a fully managed, scalable and high performant database. AWS handles the scaling, replication and configuration of the data storage. data is separated inside tables, and is stored by AWS in SSD devices with high availability and data durability built-in.\
+A table stores Items (similar to rows), where each item has attributes (like as fields or columns). one attribute is the primary Key that manages how data is stored. additional indexes can be created to increase flexibility when querying.
+
+##### DynamoDB Use Cases
+
+> You might want to consider using DynamoDB in the following circumstances:
+>
+> - You are experiencing scalability problems with other traditional database systems.
+> - You are actively engaged in developing an application or service.
+> - You are working with an OLTP workload.
+> - You care deploying a mission-critical application that must be highly available at all times without manual intervention.
+> - You require a high level of data durability, regardless of your backup-and-restore strategy.
+
+concrete cases can be for software applications that support user-content metadata and cache which requires high concurrency and a large number of concurrent requests (millions per second). one example can be storing media metadata, like analysis and interactive content. this is beneficial due to the lower latency and multi-region replication.\
+Other uses are storing user data for a game platform, and for online shopping with inventory tracking when there is high traffic.
+
+##### DynamoDB Security
+
+DynamoDb handles security through IAM, encryption at test using <cloud>AWS Key Management Service</cloud>. network is protected via the AWS global network security procedures (not inside a VPC), and is backed up across multiple facilities in the region. Requests to DynamoDB with a managed key can be monitored by <cloud>AWS Cloud Trail</cloud> and can then be exported to an S3 bucket. IAM roles use temporary access keys and should be configured to use only the least privileged permissions that they need.
 
 </details>
 
 #### Choosing the Right Database Service
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+How to choose AWS Database services based on requirements.
 </summary>
 
+> Choose the database service that is the best fit for the job to help you optimize scale, performance, and costs when designing applications.
+
+| AWS Service(s)                                                 | Database Type | Use Cases                                                                                          |
+| -------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------- |
+| Amazon RDS, Aurora, Amazon Redshift                            | Relational    | Traditional applications, ERP, CRM, e-commerce                                                     |
+| DynamoDB                                                       | Key-value     | High-traffic web applications, e-commerce systems, gaming applications                             |
+| Amazon ElastiCache for Memcached, Amazon ElastiCache for Redis | In-memory     | Caching, session management, gaming leaderBoards, geoSpatial applications                          |
+| Amazon DocumentDB                                              | Document      | Content management, catalogs, user profiles                                                        |
+| Amazon KeySpaces                                               | Wide column   | High-scale industrial applications for equipment maintenance, fleet management, route optimization |
+| Neptune                                                        | Graph         | Fraud detection, social networking, recommendation engines                                         |
+| TimeStream                                                     | Time series   | IoT applications, Development Operations (DevOps), industrial telemetry                            |
+| Amazon QLDB                                                    | Ledger        | Systems of record, supply chain, registrations, banking transactions                               |
+
+Most production grade application combine different databases, rather than use one database for all needs. This is part of the "micro-services" architecture model.
 
 </details>
 
 #### Demonstration: Implementing and Managing Amazon DynamoDB
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Demo of creating A dynamoDB table.
 </summary>
 
+(video)
+
+in the <cloud>EC2</cloud> services, we select one machine, <kbd>Actions</kbd>, and launch a clone of the instance by selection <kbd>More like this</kbd> and adjusting the settings (we want a public IP). when the instance is ready, we can copy the public ip and navigate into it to see that it's ready.\
+In the <cloud>DynamoDB</cloud> service, we can <kbd>Create Table</kbd>, give it the names "Employees" and a partition key "id", we ignore the sort key option for now. and then click <kbd>Create Table</kbd> to create it. now in our application, we can add employees and see that it's been updated in the directory and in the S3 bucket and the dynamoDB table.
 
 </details>
 
 #### Module 5 Knowledge Check
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Recap
 </summary>
 
+> - Q: With Amazon RDS, you can scale components of the service. What does this mean?
+> - A: You can increase or decrease specific database configurations independently. (Scaling components of the service means you can alter memory, processor size, allocated storage, or IOPS individually without modifying other configurations you set in your database.)
+> - Q: An organization needs a fully managed database service to build an application that requires high concurrency and connections for millions of users and millions of requests per second. Which AWS database service should the organization use?
+> - A: <cloud>Dynamodb</cloud>
 
 </details>
-
 
 </details>
 

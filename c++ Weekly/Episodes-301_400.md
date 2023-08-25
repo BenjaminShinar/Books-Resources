@@ -18,14 +18,14 @@ another c++ homework assignment,after "auto everything" and "const everything". 
 if we use compiler explorer, we can will see how the binary changes and more stuff becomes pre-calculated. it's theoretically possible to make everything at compile time, but it will require work (hint: the sqrt function). then only writing the file is at runtime.
 
 </details>
- 
+
 ## C++ Weekly - Ep 302 - It's Not Complicated, It's *std::complex*
 
  <details>
  <summary>
  a numeric type for complex number, with all the operators.
  </summary>
- 
+
  [It's Not Complicated, It's std::complex](https://youtu.be/s_1SymtU0BI)
 
 inside the "complex" header of the standard library. been here since forever, but still being worked on. the equality operator was removed and replace with the spaceship operator.\
@@ -45,7 +45,7 @@ a side note: some math functions still don't have constexpr support, as those de
  <summary>
  an home exercise to make everything with lambdas.
  </summary>
- 
+
  [C++ Homework: Lambda All The Things](https://youtu.be/_xvAmEbK1vE)
 
 continuing the homework series. now we want to make everything a lambda expression.\
@@ -63,7 +63,7 @@ note: don't forget to have warnings on, use -std=c++20, and clear up the formatt
  <summary>
  different ways and forms of checking a condition during compile time.
  </summary>
- 
+
  [C++23's `if consteval`](https://youtu.be/AtdlMB_n2pI)
 
 - C++17: `if constexpr`
@@ -231,7 +231,7 @@ auto my_string= "Hello World"sv; //string view
 ```
 
 </details>
- 
+
 ## C++ Weekly - Ep 306 - What Are Local Functions, and Do They Exist in C++?
 
 <details>
@@ -447,7 +447,7 @@ std::uint8_t result3 = static_cast<std::uint8_t>(value1-value2)) >>3 ; // now it
 
 shifting logic.
 
-```
+```none
 //signed
 // 11000000 >> 1
 // 11100000
@@ -2405,7 +2405,7 @@ each compiled file is still very large, but the linker merges them together, so 
 
 <details>
 <summary>
-A language standard split string capability 
+A language standard split string capability
 </summary>
 
 [Finally! A Simple String Split in C++!](https://youtu.be/V14xGZAyVKI)
@@ -2917,7 +2917,7 @@ topics in c++
 - deduction guides
 - algorithms
 - ranges
-- /<functional/> header
+- \<functional> header
 - virtual member function
 - member function pointers
 - special member functions
@@ -3057,6 +3057,7 @@ Ship with Hardening enabled
 - `_FORTIFY_SOURCE` (GCC)
 - stack protector
 - **UBSan** `-fsanitize-minimal-runtime`
+
 </details>
 
 ## C++ Weekly - Ep 351 - Your 5 Step Plan For Deeper C++ Knowledge
@@ -3936,6 +3937,7 @@ Jason's opinions on what C++ should have.
 - Contracts - another attempt, telling the compiler about pre and post conditions
 - Reflection - compile time reflection, even for compile time `enum` to `string` conversion.
 - removal of implicit conversions from the standard libary - this will never happen because it will break a lot of existing code.
+
 </details>
 
 ## C++ Weekly - Ep 378 - Should You Ever `std::move` An `std::array`?
@@ -4256,6 +4258,7 @@ void use_ranges(const std::vector<int> &vec) {
     }
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 386 - C++23's Lambda Attributes
@@ -4267,7 +4270,8 @@ putting attributes on lambdas
 
 [C++23's Lambda Attributes](https://youtu.be/YlmxNJnone0)
 
-in c++23, we can stick attributes onto lambda, like the <cpp> [[nodiscard]] </cpp> on the return value, we can also have attribute that apply to the *type of the function*. there is also the attributes we can stick on the parameters
+in c++23, we can stick attributes onto lambda, like the <cpp> [[nodiscard]] </cpp> on the return value, we can also have attribute that apply to the _type of the function_. there is also the attributes we can stick on the parameters
+
 ```cpp
 int main()
 {
@@ -4277,7 +4281,7 @@ int main()
 ```
 
 </details>
- 
+
 ## C++ Weekly - Ep 387 - My Customized C++ Programming Keyboard!
 
 <details>
@@ -4316,12 +4320,15 @@ Alternatives to Pointer Arithmetic.
 [Avoiding Pointer Arithmetic](https://youtu.be/YahYVRS1Ktg)
 
 don't write code like this
+
 ```cpp
 void func(const char* argv, const std::size_t argc) {
     const std::vector<char> args(argv, argv + argc); // pointer arithmetic
 }
 ```
+
 one option is using <cpp>std::next</cpp>. which hides the arithmetics away.
+
 ```cpp
 void func(const char* argv, const std::size_t argc) {
     const std::vector<char> args(argv,
@@ -4336,4 +4343,40 @@ for (const auto &arg : std::span<const char>(argv, argc)) {
     std::cout << arg << '\n';
 }
 ```
+
+</details>
+
+## C++ Weekly - Ep 390 - `constexpr` + `mutable` ?!
+
+<details>
+<summary>
+Combining compile time objects with mutability.
+</summary>
+
+[`constexpr` + `mutable` ?!](https://youtu.be/67DenIV45xY?si=a3QV45xM67VQgMrG)
+
+combining <cpp>constexpr</cpp> and <cpp>mutable</cpp> expressions. we might want to do it with a lambda.
+
+```cpp
+struct Lambda {
+    int i = 0;
+
+    constexpr auto ()() {
+        return ++i;
+    }
+};
+
+int main()
+{
+    auto l = [i = 0]() mutable {
+        return ++i;
+    };
+    l();
+    return l();
+}
+```
+
+the two are equivelent, we could remove the <cpp>mutable</cpp> mark from the lambda and add <cpp>const</cpp> to the member function and then we couldn't change the return value.
+
+(more about compile time members, constructors and mutability).
 </details>

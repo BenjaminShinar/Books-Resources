@@ -16,6 +16,7 @@ Israel C++ Convention.
 ## David Sankel :: The Semicolon is a Lie
 
 <details>
+
 <summary>
 Historical tour of how programming evolves and moves away from directly translating source code into machine code.
 </summary>
@@ -27,8 +28,7 @@ programming history, David's history and how they intersect.
 > 1. Computers are fast
 > 2. Programming is an illusion
 
-**TI 99/4A computer**
-
+TI 99/4A computer:\
 Texas instruments old "computers" came with manuals of the code to type into it and then you could run the "games".
 
 | Metric           | TI 99/4a  | 386 sx      | Pentium       | Z600                                     |
@@ -71,6 +71,7 @@ one example is the **C-why** tool which explains why code compilation fails. it 
 > - Source Identification - what files or resources do we need to access?
 
 the cycle is:
+
 1. Analyze what we have.
 2. Determine what else we need.
 3. Collect what we need.
@@ -91,11 +92,13 @@ Virtual Templated Function don't actual exist, but we can get around it.
 [Virtual Templated Methods](https://youtu.be/Z-WzYbTm8k0)
 
 > the use case:
+>
 > - I want to decouple my debugging/logging by using dependency injection.
 > - but I also want to support types that I don't know in advance.
 > - Templated virtual functions would have been great.
 
 our other options would be:
+
 1. using inheritance instead of templates.
 2. Break into two functions:
    1. use template to reduce to a common type.
@@ -119,6 +122,7 @@ Some Stuff About the Linker and the Linking Process.
 Linkage errors aren't the same as compiling errors, the compiler turns the source code into a machine code (object file), the linker takes all the object files and system libraries and creates the executable.
 
 The Linker's Responsibilities are:
+
 - Layout Code
 - Layout Data
 - Resolve Symbols
@@ -132,27 +136,32 @@ if we want to link with a library (static archive) we pass the library with `-L`
 C++ bring some complexity to the table, function overloading and templates create name mangling. there are also C function that we need to define as <cpp>extern</cpp>, and there are inline class method defintions, which relate to ODR. there is a special memory location for <cpp>thread_local</cpp> data. we can even use unicode identifiers (🦆).
 
 > Common errors:
->- "undefined reference"
->  - missing library object file in linkage command
->  - missing <cpp>extern "C"</cpp>
->  - wrong linkage order (it's the opposite of how `# include` works)
->  - "abi::cxx11" or "__cxx11" - libstdc++ dual ABI mismatch
->  - missing destructor, in virtual classes, must be defined, even if <cpp>~Class() =0;</cpp>
->- "multiple definitons" - probably a function defined in the header
->- "linker out of memory" - are you creating to many types?
+>
+> - "undefined reference"
+>   - missing library object file in linkage command
+>   - missing <cpp>extern "C"</cpp>
+>   - wrong linkage order (it's the opposite of how `# include` works)
+>   - "abi::cxx11" or "\_\_cxx11" - libstdc++ dual ABI mismatch
+>   - missing destructor, in virtual classes, must be defined, even if <cpp>~Class() =0;</cpp>
+> - "multiple definitons" - probably a function defined in the header
+> - "linker out of memory" - are you creating to many types?
 
 ### LTO - Link Time Optimization
+
 all modern compilers support LTO, it requires a special flag in both compilation and linkage (so the object file keeps some information), and it's not always worth doing it.
 
 ### Share Libraries
+
 instead of packaging the same common libraries, we can have one shared version of it in the memory and use it for all programs, but it can lead to "DLL hell". we can also have dynamic linking loader, or use <cpp>dlopen</cpp>. there is also the issue of **Wrapping/Hijacking**, we can tell the linker to call a wrapper object instead of calling the function directly,and then we can use the wrapper to redirect the calls.
 
 > Caveats:
+>
 > - Hijacking inside a library doesn't always work
 > - Hijacking non-function symbols is not officially supported
 > - Hijacking class methods is complicated
 
 we do this by passing two flags `--Wl` which instructs gcc to pass a command to the linker, and `--wrap=<mangled name>` which replaces the symbol with a symbol that is defined with the same name. (the demo didn't work so great).
+
 </details>
 
 ## Bjarne Stroustrup :: Approaching C++ Safety
@@ -170,30 +179,30 @@ The NSA guide says that software should be written in memory safe languages, and
 
 the C++ language is "strongly typed, weakly checked language", which is nice and well, but it doesn't scale up. but we don't want to limit what kind of applications can be written, and without adding run-time overhead.
 
-
 > Type and Resource Safety
+>
 > - Every object is accessed according to the type with which is was defined (type safety).
 > - Every object is properly constructed and destroyed (resource safety).
 > - Every pointer either points to a valid object or is the <cpp>nullptr</cpp> (memory safety).
 > - Every reference through a pointer is not through teh <cpp>nullptr</cpp> (often a run-time check).
 > - Every access through t a subscripted pointer is in-range (often a run-time check).
 
-
-the solution must serve a wide variety of user/areas, it can't break existing code, it can't defer to another language, and it can't rely on all the developers "magically" improving. the challenge is to have a type-safe c++ language and to convince developers to use C++ in a safe way.
+The solution must serve a wide variety of user/areas, it can't break existing code, it can't defer to another language, and it can't rely on all the developers "magically" improving. the challenge is to have a type-safe c++ language and to convince developers to use C++ in a safe way.
 
 ### C++ Evolution
+
 C++ stared with two goals - efficient use of hardware (like C), and managing complexity (based on simula). it also meant enforcing argument type checking. a different jey idea is to "represent concepts in code". <cpp>RAII</cpp> - resource acquisition is initialization, not only memory resources, also file handles, locks, sockets, shaders.\
-In the early 80's, Object oriented programming was emerging, encapsulation, abstraction, overloading. then we have  templates, containers, algorithms, smart pointers and exceptions.
+In the early 80's, Object oriented programming was emerging, encapsulation, abstraction, overloading. then we have templates, containers, algorithms, smart pointers and exceptions.
 
 ### C++ Core Guidelines
 
 > - no implicit violations of he static type system.
 > - provide as good support for user-defined types as for built-in types
-> - say what you mean - emphasizes  declarative styles and abstractions.
+> - say what you mean - emphasizes declarative styles and abstractions.
 > - syntax matters (often in perverse ways) - in general, verbosity is to be avoided.
 > - leave no room for a lower-level language (except assembler).
 > - preprocessor usage should be eliminated.
-> - 
+> -
 > - make simple tasks simple.
 > - make error handling regular.
 
@@ -202,6 +211,7 @@ In the early 80's, Object oriented programming was emerging, encapsulation, abst
 the core guidelines are designed to be an answer to the question "what is good modern C++?". a useful answer that many people can use, and not just language experts. this is something that can be sometimes achieved with static analyzers.
 
 but people don't like coding rules, and those coding rules usually don't provide good advice. it should be:
+
 > - Good
 >   - Comprehensive
 >   - Browsable
@@ -237,7 +247,9 @@ void g()
    q->use(); // will crash, or read random memory,
 }
 ```
+
 > Owners and Pointers:
+>
 > - Every object has one owner.
 > - An object can have many pointers to it.
 > - No pointer can outlive the scope of he owner it points to.
@@ -248,9 +260,11 @@ dangling pointers, pointers to local data, invalidations when re-allocation happ
 there are problems that require run-time checking.
 
 ### C++ Profiles
+
 how to guarantee safety? making everybody follow the best guidelines without having them magically follow all the rules.
 
 > Different notions of safety:
+>
 > - Logic errors
 > - Resource Leaks
 > - Concurrency Issues
@@ -259,7 +273,7 @@ how to guarantee safety? making everybody follow the best guidelines without hav
 > - Overflows and Unanticipated Conversions
 > - Timing Errors
 > - Allocation Unpredictability
-> - Termination Errors 
+> - Termination Errors
 
 these things can't be done by the compiler alone, and not everything could be achieved from static analysis. A safety profile is a set of rules that gauntness a safety result, such as bounds safe, type safe or memory safe, we want to be sure that unsafe code is never executed.
 
@@ -287,7 +301,6 @@ examples of abstractions: iterating, messaging. we can have under abstraction (n
 
 Types and pointer arithmetic also implement abstractions, advancing a pointer "moves" the pointer to a different location based on the types.
 
-
 ### Abstraction Layers Model For C++
 
 analyzing keywords, concepts and elements in the language and identify layers and borders between them, and find which are dangerous.
@@ -303,6 +316,7 @@ int main()
 ```
 
 in this example, we have three topic:
+
 - the invalidity of the address.
 - the duality of int and memory address
 - the UB created by using the address.
@@ -321,7 +335,9 @@ int main()
    }
 }
 ```
+
 this print zero, one, two, as we expect. but let's add ranges.
+
 ```cpp
 #include <sstream>
 #include <ranges>
@@ -342,12 +358,14 @@ int main()
 In this example we see zero and then 2. this is contrary to our expectations (zero and one). the problem is that ranges take ownership.
 
 ### Existing Solutions
+
 we need to be wary of the boundaries and be careful at spots where the interact with.
 
 1. solution 1 - write better code, use better guidelines, enforce with tooling.
-2. solution 2 - use a "different language" for new features - always write at the modern langrage style. 
+2. solution 2 - use a "different language" for new features - always write at the modern langrage style.
 
 ### Future Solutions - How Can We Do Better?
+
 apply the layers model to our tools and give better error messages. classifying tokens according to layers, and warning when we combine layers that don't fit together. in the problematic example, we can warn that we move from the I.O abstraction layer to the rangers layer, and then we try moving back.
 
 coroutines example:
@@ -397,6 +415,105 @@ Because the implementers knew how similar the two ideas are, they designed the s
 
 </details>
 
-##
+## Hana Dusíková :: Lightning Updates
+
+<details>
+<summary>
+Updating user applications fast and safely.
+</summary>
+
+[Lightning Updates](https://youtu.be/8zyTovAXXkQ?si=munNqdzIVNkmiQIT)
+
+the basic requirement is:
+
+> "I need to update an object on 100's of millions of clients, quickly and whenever I want"
+
+the thing we want to update can be:
+
+- an executable
+- resources (database, model, textures)
+- the state of the application or part of it
+
+the state should be
+
+- immutable
+- consistent and secure
+- representable with a data structure
+
+the update mechanism can be replacement of everything, additional overlays, or differential.
+
+$$
+state_{n+1} = state_{n} + difference_{(n,n+1)}
+$$
+
+We can represent this a as a matrix or as a graph. but not all clients update everything in the same order, we don't want to have to go through all of the small updates each time, we would rather have points of major updates. we can do a search to find how to go from one point (version) to another. we represent the link between states as either a filename with a version or name of the release, or we identify each release as with the hash of the contents themselves. this hash value can act as a pointer, a unique value for the content, which makes the data immutable and easy to cache (can be stored on an edge location). each update includes snapshots of deltas of previous updates. this makes the search easier.
+
+### Model of the Graph with Vocabulary Types
+
+we want to mark the objects we use, the "nouns". a hash is just a bunch of bytes.
+
+```cpp
+template <size_t N> using hash = std::array<std::byte, N>;
+template <size_t N> using hash_view = std::span<const std::byte, N>; // non-owning
+```
+
+or we can a have a strong type
+
+```cpp
+template <size_t N> struct hash {
+   std::array<std::byte, N> value{};
+
+   // constructors
+   hash() = default;
+   hash(const hash &) = default;
+   hash(hash &&) = default;
+   explicit hash(std::array<std::byte, N> in) noexcept: value{in} {}
+
+   // comparisons
+   friend auto operator <=>(hsh, hash) = default;
+   friend book operator ==(hsh, hash) = default;
+
+   // iterable
+   auto begin() const noexcept {
+      return value.begin();
+   }
+
+   auto end() const noexcept {
+      return value.end();
+   }
+
+   auto begin() noexcept {
+      return value.begin();
+   }
+
+   auto end() noexcept {
+      return value.end();
+   }
+};
+
+// same with hash_view
+```
+
+The above can be simplified by using inheritance, and we add the tagged hash over it, with sha256 options as well. we need a metadata type, it contains the hash of the subject, timestamps, links to previous state and snapshots, we also have some other objects like metadata, delta links, snapshots, etc..\
+We need a way to serialize and deserialize the objects.
+
+after we created the objects, we need a way to use them, these are the "verbs" we use, such as `unwrap_and_validate` which act on raw bye data and check if the object is what we expect it to be. there are unique methods to validating each of the inner types (tags, identifier, snapshots, metadata).
+
+### State
+
+we represent the state as a struct with metadata and a shared pointer to the subject. we can find the path between two links (for update) by using the `select_next` method to find it.
+
+$$
+\begin{align*}
+state_m = state_n + path_{(n,m)} \\\
+state_m = state_n + delta_{(n,n+1)} + ... + delta_{(m-1, m)} + metadata_m
+\end{align*}
+$$
+
+this gives us a user api for updating any kind of object.
+
+</details>
+
+## Separator
 
 </details>
