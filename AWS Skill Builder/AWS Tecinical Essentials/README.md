@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Seph
+// cSpell:ignore Seph Datagram
  -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -1263,16 +1263,324 @@ Recap
 
 <details>
 <summary>
-//TODO: add Summary
+Monitoring gives you insights into your applications that help you detect, investigate, and remediate problems faster.
 </summary>
 
-Monitoring
-Amazon CloudWatch
-Solution Optimization
-Traffic Routing with Elastic Load Balancing
-Amazon EC2 Auto Scaling
-Demonstration: Making the Employee Directory Application Highly Available
-Employee Directory Application Redesign
-Module 6 Knowledge Check
+#### Monitoring
+
+<details>
+<summary>
+Monitoring and the Potential Benefits.
+</summary>
+
+(video)
+
+it's important to know how are process and services are operating, it's possible to wait for users to see the problem and open a ticket to report it, but that means the problem is severe enough to effect the customers, and not all issues are visible by the end users. a better approach is to actively monitor the state of components. we collect metrics, logs, and watch network traffic. monitoring tolls collect this data and help us make sense out of it. services have different kinds of metrics, such as cpu utilization for EC2 instances, or concurrent connections for databases. we first collect the metrics to establish a baseline, and when things differ from the baseline, we can trigger automatic actions, such as alerts to inform us to investigate, or even remediation actions. <cloud>Amazon CloudWatch</cloud> is a centralized service to handle the monitoring.
+
+> Monitoring provides a near real-time pulse on your system and helps answer the previous questions. You can use the data you collect to watch for operational issues caused by events like overuse of resources, application flaws, resource misconfiguration, or security-related events. Think of the data collected through monitoring as outputs of the system, or metrics.
+
+AWS resources crete data, each data point is a metric, and metrics over time become statistics. for example, <cloud>EC2 machines</cloud> have data about CPU utilization. an increase in the metric can mean increased actions because of high volume of requests, but it can also happen when an error has occurred and the process keeps retrying it again and again.\
+Other Services have different metrics:
+
+> - <cloud>S3</cloud>
+>   - Size of objects stored in a bucket
+>   - Number of objects stored in a bucket
+>   - Number of HTTP request made to a bucket
+> - <cloud>RDS</cloud>
+>   - Database connections
+>   - CPU utilization of an instance
+>   - Disk space consumption
+> - <cloud>EC2</cloud>
+>   - CPU utilization
+>   - Network utilization
+>   - Disk performance
+>   - Status checks
+
+##### Benefits
+
+monitoring benefits us by allowing us to:
+
+- **Respond Proactively**, instead of waiting for a problem to happen and then be reported about by the end user, it's better to be aware of signs that signal the problem is coming and to respond to them before it escalates.
+- **Improve Performance** by identifying bottlenecks and inefficient architecture, we can view how all of our resources work and determine if changes are needed.
+- **Detect Security Threats and Events**, when we establish a baseline of behavior, we can spot anomalies that can indicate an attack such as high volume traffic or connections from unusual addresses.
+- **Make Data-Driven Decisions** - metrics also help us know which resources are used and by who, this can be a way to know which features are used and by which users. this is important for business decision.
+- **Create Cost-Effective Solutions** - by monitoring our resources, we can see if there are over or underused, and decide how to rightsize them to fit the actual usage, rather than overpay for an underutilized strong machine.
+
+</details>
+
+#### Amazon CloudWatch
+
+<details>
+<summary>
+Cloud Watch, CloudWatch Logs and Alarms.
+</summary>
+
+> Amazon <cloud>CloudWatch</cloud> is a monitoring and observability service that collects your resource data and provides actionable insights into your applications.
+
+(video)
+
+inside the aws portal, we go to the <cloud>CloudWatch</cloud> service. our goal is to monitor our <cloud>EC2</cloud> machine CPU utilization and set an alert if it goes over 60% for a period of time. some services send metrics automatically, so to view them we first need to <cloud>Create A Dashboard</cloud>. we can customize the dashboard to show us what we're interested in. a widget can use either metrics or logs as the data source. in our case, we want to monitor the metric of the CPU utilization for a specific EC2 instance. <cloud>CloudWatch Alarms</cloud> allow us to set boundaries for metrics, and have actions triggered when the thresholds are reached. we click <cloud>Create Alarm</cloud> and select the metric, and choose the time period that the metric must exceed the threshold for the alarm to trigger (so it won't trigger for each sudden random spike). and alarm can be in one of three states:
+
+- ALARM - The metric is outside the defined threshold. This might be an operational issue.
+- OK - The metric is within the defined threshold. Everything appears to be operating like normal.
+- INSUFFICENT_DATA - The alarm has just started, the metric is not available, or not enough data is available for the metric to determine the alarm state.
+
+we can set an action for each transition, a good way to send messages is by using <cloud>AWS SNS (Simple Notification Service)</cloud>.
+
+AWS <cloud>CloudWatch</cloud> is a monitoring and observability service that collects logs and metrics from resources and provides insight on them and allows us to set actions to respond. Many services send basic data to cloudwatch without additional charge. this is **Basic Monitoring** (once every five minutes). **Detailed Monitoring** can send more metrics at higher rates (every minute) but costs more.\
+Metrics are comprised of "Dimensions", a dimension is a key-value pair. dimensions are used to identify and filter data points, since many resources publish their identity as a dimension.
+
+##### Custom Metrics
+
+in addition to the aws provided metrics, we can also create custom metrics that are specific to our application. we can then publish the metrics to cloud watch and use the same tools to monitor them. custom metrics can be sent in resolutions of up to one second (as opposed to once every five minutes for default metrics). common custom metrics are webpage load times, request error rates, number of process or threads, and amount of work performed by the application.
+
+##### CloudWatch Dashboards
+
+Dashboards provide a visualization of the data, and can be customized to fit the specific needs. a dashboard can be used to track the state of a complete application or a sub-component of it. CloudWatch also has APIs for external tools to analyze the data.
+
+##### CloudWatch Logs
+
+CloudWatch also acts as an unified storage for logs generated by applications. logs can also be filtered and transformed into metrics to be displayed in a dashboard. some services (such as <cloud>Lambda</cloud>) integrate easily with cloudWatch logs and only require IAM permissions, while other require more work, such as <cloud>EC2 instances</cloud> which need to download a cloudWatch agent.
+
+CloudWatch Logs have **Groups**, which are collected across resource with the same retention and permission settings. each group has many **Streams**, which each belong to a different resource. each stream has **Events**, which are records of activities recorded into the logs with a timestamp.
+
+##### CloudWatch Alarms
+
+CloudWatch can configure alarms based on metrics. these alarms are based on metrics and conditions, and invoke actions. when a metric goes outside a determined threshold for a period of time, the state changes. we can set an action to happen on a state change.
+
+example flow of setting up and alarm for HTTP 500 responses from cloudWatch logs.
+
+</details>
+
+#### Solution Optimization
+
+<details>
+<summary>
+High Availability Solutions.
+</summary>
+
+> Design your system to have no single point of failure by using automated monitoring, failure detection, and failover mechanisms.
+
+(video)
+
+When we learn about an issue from monitoring, we want to respond to by fixing the problem and prevent it from happening again. in our demo application, we have some services with high availability by design (<cloud>S3</cloud>, <cloud>DynamoDB</cloud>), but also the <cloud>EC2</cloud> instance, which is the weak point. if it goes down, then our application is gone. to cover this problem we want to have redundant machines at different Availability Zones, so if one goes down, then our application is still served by a machine in another Availability Zone. if we have a high volume of requests, our instances might not be enough to handle all of them. in this case we can increase the instances vertically by using stronger machines, or increase horizontally by deploying more copies and distributing the workload amongst them (this is scaling up-down and scaling in-out). vertical scaling has an upper limit, while horizontal scaling doesn't.\
+we don't need to manually deploy more instances (and shut them down), we can use <cloud>EC2 auto-scaling groups</cloud> to define rules to deploy more instances and shut them down, it also helps us remove instance which failed and replace them with healthy instances. but if we have some many instances, we need some way to access them. this is done by an <cloud>Elastic Load Balancer</cloud>. we don't use the public ip addresses for each instance, we replace it with the load balancers' static ip and it then distributes the requests.
+
+> The availability of a system is typically expressed as a percentage of uptime in a given year or as a number of nines. In the following table is a list of availability percentages based on the downtime per year and its notation in nines.
+
+| Availability (%)                                | Downtime (per year) |
+| ----------------------------------------------- | ------------------- |
+| 90% (one nine of availability)                  | 36.53 days          |
+| 99% (two nines of availability)                 | 3.65 days           |
+| 99.9% (three nines of availability)             | 8.77 hours          |
+| 99.95% (three and a half nines of availability) | 4.38 hours          |
+| 99.99% (four nines of availability)             | 52.60 minutes       |
+| 99.995% (four and a half nines of availability) | 26.30 minutes       |
+| 99.999% (five nines of availability)            | 5.26 minutes        |
+
+we use redundancy to increase availability, this means more copies and more replications across more data centers, so if one component fails, there's always something to replace it.
+
+In our demo app, the EC2 instance is the single-point of failure. it's the connection to the <cloud>S3</cloud> bucket and the <cloud>DynamoDB</cloud> table, and it's the only service which isn't highly-available by design. we solve this issue by replicating the server across Availability Zone, this creates two difficulties:
+
+- we need to make sure both instances are identical, we achieve this by automating the creation of the instance as much as possible.
+- the second issue is to direct customers to the correct instance. this could be done setting a dns record and switching it over, but that takes time to propagate, a better solution is to use a load balancer to direct the traffic.
+
+There are two types of high availability configurations, we can have an active-passive setting, which has only one instance available at a time, and the other is on standby mode. this means that all requests are handled by one of them, so it's easier for stateful applications (when session data is stored on the server). the other option is an active-active configuration, where both instances are up at the same time, and both serve requests. this configuration has no downtime between the failure of one instance and the warmup of another.
+
+</details>
+
+#### Traffic Routing with Elastic Load Balancing
+
+<details>
+<summary>
+Load Balancing Traffic.
+</summary>
+
+> The Elastic Load Balancing (ELB) service can distribute incoming application traffic across EC2 instances, containers, IP addresses, and Lambda functions.
+
+(video)
+
+When we have multiple instances, we need to distribute the request towards them. The ELB is the entry and exit point of each traffic request, and while it looks like a single point of failure, it's actually highly-available by design and it auto-scales to fit the need in case of high traffic (it's also regional, so it's not bound to any Availability Zone). there are different types of load balancers to choose from:
+
+- <cloud>Application Load Balancer</cloud> - Layer 7 (HTTP/ HTTPS)
+- <cloud>Network Load Balancer</cloud> - Layer 4 (TCP/ UDP/ TLS)
+- <cloud>Gateway Load Balancer</cloud> - Layer 3+4 (usually for 3rd part applications).
+
+our Demo app uses Http requests, so we will use an <cloud>Application Load Balancer (ALB)</cloud>. it has a _listener_ on port 80 and port 443 with the correct protocol. we also have a _target group_ which is the resources we want to direct the traffic into, it must have health check option. the final component is the _rule_ which defines how to route traffic.\
+We create Load Balancers from the EC2 page, <kbd>Create Load Balancer</kbd>, we choose the application load balancer and make it an internet facing, rather than internal (which routes traffic from and to private ip addresses). we select the VPC and which availability zones, subnets and the security groups we want to route to. then we configure the listeners
+and <kbd>create target group</kbd> and select which resources are in it. once the load balancer is created, we can gran the public ip from it and navigate to it.
+
+> Load balancing refers to the process of distributing tasks across a set of resources. In the case of the Employee Directory application, the resources are EC2 instances that host the application, and the tasks are the requests being sent. You can use a load balancer to distribute the requests across all the servers hosting the application.
+
+A load balancer can direct traffic to many types of targets (instances, containers, lambda functions, and other Ip addresses). it's highly available and scales by default, and it can even direct traffic to targets outside the AWS ecosystem, such as on-premises servers.
+
+##### Health Checks
+
+A Load Balancer requires a way to know which instances are healthy and which are not so it would only direct traffic at healthy targets. for ec2 machines, it possible to try and connect to them with a TCP connection, and for web servers, it's possible to send a request to a monitoring route and have it return an expected response. Load balancers can interact with scaling groups to replace un healthy instances with new ones, and to make sure instances being shut down when scaling in don't have active connections.
+
+##### Types of Load Balancers
+
+> - Application Load Balancer
+>   - User authorization
+>   - Rich metrics and logging
+>   - Redirects
+>   - Fixed response
+> - Network Load Balancer
+>   - TCP and User Datagram Protocol (UDP) connection based
+>   - Source IP preservation
+>   - Low latency
+> - Gateway Load Balancer
+>   - Health checks
+>   - Gateway Load Balancer Endpoints
+>   - Higher availability for third-party virtual applications
+
+The <cloud>Application Load Balancer</cloud> uses Layer 7, and fits well for HTTP and HTTPS requests. it can monitor the request URL path, method and headers and provide granular rules based on it. it can also have custom fixed responses to the client (such as an error message, redirects) without burdening the backend server. It also has HTTPS encryption and certificates and can authenticate users through several protocols and block un-authorized requests before they reach the backend. if needed, the ALB can use http cookies to support sticky sessions and make sure the same instance handles additional traffic from the same user.
+
+The <cloud>Network Load Balancer</cloud> functions at Layer 4, and routes data based on the IP protocol data. this means that sticky sessions are supported, it preserves the client-side source ip address and provides lower latency. it also supports static and custom ip addresses, and allows <cloud>Route 53</cloud> to direct traffic to load balancers in other regions.
+
+The <cloud>Gateway Load Balancer</cloud> handles third party applications such as firewalls and packet inspections systems. it can be monitored from CloudWatch metrics and connect internet gateways, <cloud>VPC</cloud> and other resources over a private network.
+
+</details>
+
+#### Amazon EC2 Auto Scaling
+
+<details>
+<summary>
+Auto Scaling EC2 machines.
+</summary>
+
+> Amazon EC2 Auto Scaling helps you maintain application availability. You can automatically add or remove EC2 instances using scaling policies that you define.
+
+(video)
+
+There will come a time when we have more traffic than our current two EC2 instances can handle. when that happens, we would want to add more instances, but not do it in a manual way. this can be done with <cloud>EC2 Auto Scaling</cloud>. we need to have an <cloud>EC2 Launch Template</cloud> to have identical instances. we follow the same configuration as when creating an instance. we need an <cloud>Auto Scaling Group</cloud> and link it with the launch template and a load balancer. we select a minimum, maximum and desired capacity. then we need a <cloud>Scaling Policy</cloud> which is similar to CloudWatch Alarm. in our demo app, we have an option to simulate stress and see how new instances are added.
+
+Adding Capacity is done differently depending on our configuration, with an active-passive configuration, we scale vertically, so we first terminate the passive instance, relaunch it with a stronger instance type, and shift the traffic to it. now we also need to change the other instance (now the passive one) because they should always match. when the traffic volume is down, we can repeat the same behavior and replace our instances with weaker ones. this is a harder process with more steps.\
+For an Active-Active configuration, we just need to scale horizontally and add instances, there is no need to stop any instance and it could be done by autoscaling group much easier.
+
+The Cloud Model is especially efficient for scaling based on demand. with on-premises servers, the number of machines is limited, and once a machine is purchased, it is used even when the traffic is low. in the cloud world, we only pay for resources as we need them, so there is no limit to how many resources we provision, and there are no "wasted" machines that we only need during peak traffic.
+
+##### EC2 Auto Scaling
+
+we can scale based on demand, on schedule, use AI and Machine Learning to predict how many instances will be needed. auto scaling groups can also replace unhealthy EC2 instances automatically. When a new EC2 instance is added, the Load balancer first checks that it passes the health check before directing traffic to it.
+
+Auto Scaling requires a launch templates (or a launch configuration, which is no longer recommended), the template defined the instance type and size, which subnets it goes into, security group and other parameters. the scaling group holds all the instances created by the template, and it has minimum, maximum and desired capacity fields, and it has Scaling Policies.
+
+##### Scaling Policies
+
+Simple Scaling Policy is a one-time action that is invoked (usually by an cloudWatch Alarm). here are no additional actions after it. A Step Scaling Policy continues to respond to Alarms after taking action, even if the health check is still in progress. Target Scaling Policies allow to directly track a single metric and try to respond (scaling out or in) to keep the metric at the desired range. for example, if the metric is CPU utilization at 60%, then if the utilization reaches 80% it will scale out and add instances, and if the metric is at 40% it will scale in and remove instances.\
+When removing instances, the oldest instance is always the one removed.
+
+</details>
+
+#### Demonstration: Making the Employee Directory Application Highly Available
+
+<details>
+<summary>
+Demo of creating Application Load Balancer
+</summary>
+
+(video)
+
+making our demo application highly available, we want to first add a load balancer to direct traffic to our instances. we will use an <cloud>Application Load Balancer</cloud>, and we make it internet-facing under the same <cloud>VPC</cloud> and select the Availability Zone and the subnets (which should have internet gateways), and select the proper <cloud>Security Group</cloud> (with inbound http access). under the _listeners_, we <kbd>Create Target Group</kbd> in the sme VPC, and we can set how the health check is performed and what constitutes as a healthy instance and what isn't. we also need to <kbd>Register Targets</kbd> and select the EC2 instance. after creating it and waiting for a few minutes, the load balancer will become active and show the instance as healthy. now we can the the address from the load balancer and navigate to it in the browser.\
+The next thing we want is scaling, so we first want to <cloud>Create Launch Template</cloud>, we mark the checkbox that we wish to use the template with auto-scaling (so it will leave some stuff open). then we need to define the template with the AMI, instance type, storage, IAM role and user data script.\
+We next want to <cloud>Create Auto Scaling Group</cloud> and we link it with launch template we created, and we choose the VPC and subnets, and we can override parameters from the launch template. under the advanced options, we can <kbd>Attach to Existing Load Balancer</kbd> and choose the one we created. we can configure the group size, the "desired" capacity is the number of instances when first created. we choose the <kbd>Target Tracking Scaling Policy</kbd> and set the metric to average CPU utilization and set the target value to 60%. we can notifications for <cloud>SNS</cloud> and have it trigger based on events.\
+Before testing the application, we check the <cloud>EC2 Target Group</cloud> and we see that the new instances and the manually created machine are in it. in our demo application there is a stress test functionality to simulate heavy load to trigger the scaling policy.
+
+</details>
+
+#### Employee Directory Application Redesign
+
+<details>
+<summary>
+Suggesting A serverless re-design.
+</summary>
+
+(video)
+
+we look at our application final design, and suggesting a re-design for an entirely serverless architecture. our current design combines the presentation and application layer. we can separate this by moving the presentation layer into S3 (which will use JavaScript for dynamic content and requests), and we switch the application layer into <cloud>AWS Lambda</cloud> and <cloud>API Gateway</cloud>. we could also use <cloud>Route 53</cloud> and <cloud>CloudFront</cloud> to have a DNS address and cache the results closer to the user.
+
+This saves us the networking aspects, such as VPC, subnets and policies. we also don't have to worry about scaling our instances and applying security patches.
+
+</details>
+
+#### Module 6 Knowledge Check
+
+<details>
+<summary>
+Recap
+</summary>
+
+> - Q: What are the three components of Amazon EC2 Auto Scaling?
+> - A: Launch template, scaling policies, Amazon EC2 Auto Scaling group
+> - Amazon EC2 Auto Scaling requires you to specify three main components. One component is a launch template or a launch configuration you can use as a configuration template for the EC2 instances. Another component is an Amazon EC2 Auto Scaling group you can use to specify your minimum, maximum, and desired capacity of your instances. The third component refers to scaling policies you can use to configure a group to scale based on the occurrence of specified conditions or on a schedule.
+> - Q: Which features are included with Elastic Load Balancing (ELB)? (Select TWO.)
+> - A: Directing incoming traffic to instances, Integrating with Amazon EC2 Auto Scaling
+> - ELB integrates seamlessly with Amazon EC2 Auto Scaling. ELB is notified and can begin to direct traffic to a new EC2 instance as soon as it is added to the Amazon EC2 Auto Scaling group.
+> - Q: What are the possible states of an Amazon Cloudwatch alarm?
+> - A: OK, ALARM, INSUFFICIENT_DATA
+
+</details>
+
+</details>
+
+### Innovation With AWS
+
+<details>
+<summary>
+Amazon Code Whisperer
+</summary>
+
+> Amazon <cloud>CodeWhisperer</cloud> is a machine learning-powered code generator that provides you with code recommendations in real time. As you write code, Amazon CodeWhisperer analyzes your code and comments as you write code in your integrated development environment (IDE). CodeWhisperer then automatically generates suggestions based on your existing code and comments. Additionally, CodeWhisperer analyzes the surrounding code, ensuring the generated code matches your style, naming conventions, and seamlessly integrates into the existing context.
+
+(video)
+
+code creation based on existing code and comments, best practices for security and performance, optimized for amazon API. can track for cases where the generated code is similar to the training set and suggests proper attribution. supports Python, Java and JavaScript and is integrated into popular IDEs.
+
+</details>
+
+### End Of Course Assessment
+
+<details>
+<summary>
+Final Recap Questions
+</summary>
+
+> - Q: Who is responsible for ensuring the security of AWS Regions, Availability Zones, and data centers?
+> - A: AWS
+> - AWS is responsible for security of the cloud. This means AWS protects and secures the infrastructure that runs the services offered in the AWS Cloud. AWS is responsible for protecting and securing AWS Regions, Availability Zones, and data centers, down to the physical security of the buildings.
+> - Q: Which of the following statements about containers and virtual machines is correct?
+> - A: Containers share an operating system (OS) kernel.
+> - Containers are designed to be lightweight compared to virtual machines. Containers share an OS kernel with the host OS. However, they have their own copies of any libraries they require to be self-contained at the software level.
+> - Q: Which of the following elements are contained in an AWS Identity and Access Management (IAM) policy? (Select THREE.)
+> - A: Effect, Action, Resource
+> - Most IAM policies are stored in AWS as JSON documents. They have several policy elements, including a Version, Effect, Action, and Resource.
+> - Q: Users in a company are authenticated in the corporate network, and they want to use AWS services without signing in again. Which AWS authentication option should the company use?
+> - A: AWS Identity and Access Management (IAM) role.
+> - Instead of creating an IAM user for each employee that needs access to an AWS account, you should use IAM roles to federate users.
+> - Q: Which actions must be completed so resources in a public subnet can communicate with the internet? (Select TWO.)
+> - A: Attach an internet gateway to the virtual private cloud (VPC). Create a route in a route table to the internet gateway.
+> - To facilitate internet connectivity for your VPC, you must create an internet gateway, attach it to the VPC, and create a route to the internet gateway.
+> - Q: Which of the following components are **NOT** required to launch an Amazon EC2 instance? (Select TWO.)
+> - A: User data, Tenancy.
+> - When launching an EC2 instance, user data and tenancy are optional features you can include. Instance type, storage type, and the OS are required elements for launching an EC2 instance.
+> - Q: What is a typical use case for Amazon Elastic Block Store (Amazon EBS)?
+> - A: Block storage for an Amazon EC2 instance
+> - Amazon EBS is a block-level storage device that you can attach to an EC2 instance.
+> - Q: An employee at a healthcare facility is tasked with storing 7 years of patient information that is rarely accessed. Their boss wants them to consider one of the Amazon S3 storage tiers to store the information. Which storage tier should they use?
+> - A: S3 Glacier Deep Archive
+> - S3 Glacier Deep Archive is the lowest-cost Amazon S3 storage class. It supports long-term retention and digital preservation for data that might be accessed once or twice a year. It is designed for customers—particularly those in highly regulated industries, such as the financial services, healthcare, and public sectors. These customers often retain data sets for 7–10 years or longer to meet regulatory compliance requirements.
+> - Q: Which database task is the customer's responsibility when using Amazon Relational Database Service (Amazon RDS)?
+> - A: Optimizing the database
+> - When using Amazon RDS, customers are no longer responsible for the underlying environment the database runs on. Instead they can focus on optimizing the database. This is because Amazon RDS has components that are managed by AWS.
+> - Q: A Multi-Availability Zone database (DB) deployment is beneficial when a customer wants to increase the availability of their database. What are other benefits of a Multi-AZ deployment? (Select TWO.)
+> - A: Automatic failover, Protect db performance
+> - Running a Multi-AZ DB deployment with high availability can enhance availability during planned system maintenance by providing automatic DB failover. It can also help protect DB performance by backing up from your standby instance while your primary DB is backing up. If using a Multi-AZ DB deployment with one standby, your standby DB instance is only a passive failover target for high availability.
+> - Q: What are the main components that make up Elastic Load Balancing (ELB)?
+> - A: Rule, listener, target group
+> - The ELB service is made up of these main components: rules, listeners, and target groups. Listeners will contain rules, which are used by the listeners to route requests to the target groups.
+> - Q: Which Elastic Load Balancing (ELB) load balancer type should be used for an application that uses a rule based on a website's domain to choose target groups?
+> - A: Application Load Balancer
+> - An Application Load Balancer makes routing decisions based on the HTTP and HTTPS protocol. This includes the URL path and host, HTTP headers and method, and the source IP address of the client.
 
 </details>

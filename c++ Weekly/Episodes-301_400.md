@@ -4380,3 +4380,27 @@ the two are equivelent, we could remove the <cpp>mutable</cpp> mark from the lam
 
 (more about compile time members, constructors and mutability).
 </details>
+
+## C++ Weekly - Ep 391 - Finally! C++23's std::views::enumerate
+
+<details>
+<summary>
+Enumerate over collections.
+</summary>
+
+[Finally! C++23's std::views::enumerate](https://youtu.be/HuRbLPRh-Nk?si=6HHyZcAkCmCrb7Cl)
+
+C++ 23 will finally have an _enumerate_ capability: <cpp>std::ranges::views::enumerate</cpp> returns both the index (as long) and the value.
+
+```cpp
+int main()
+{
+    std::array<std::string_view, 5> data {"Jason", "Was", "Here", "To", "Enumerate!"};
+    for (const auto [index, str] : data | std::ranges::views::enumerate)
+    {
+        std::cout << index << " " << str << '\n';
+    }
+}
+```
+
+</details>
