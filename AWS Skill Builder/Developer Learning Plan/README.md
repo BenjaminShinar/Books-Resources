@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore elbv2
+// cSpell:ignore elbv2 Neumann cgroups
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -355,9 +355,9 @@ now we can change the application, commit the change and look at the web console
 
 ### Deep Dive on Container Security
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Some information about linux containers and namespaces. what is shared and what is not.
 </summary>
 
 > Security should be the first concern for any project – maintaining the confidentiality, integrity and availability of your architecture. Containers present a unique middle ground between full instance management and pure services.
@@ -366,8 +366,135 @@ security in linux containers, without focusing on any specific implementation or
 
 The risks are: Confidentiality, integrity, availability.
 
+- Segregation(Confidentiality)
+  - Container to Container
+  - Process to Process
+  - Container to outside
+- Access
+  - Who/When/Where
+  - Logging
+  - Start/Stop
+  - Content
+- Resource Usage
+
+The Von Neumann Computer model, input, output, cpu (control unit, Registers, ALU - arithmetics logic unit), and with external memory. there are system libraries and application code which the user interacts with, and there are many other components that are part of the kernel, and the libraries interact with them through system calls.
+
+When we have many applications, we want to run them together and have efficient CPU and memory usage. we focus on the applications and the security boundaries.\
+Linux namespace are hierarchical, process can share some namespaces and have some unique namespace. in the PID(process) namespace, each process has a global pid and a local one. the first process in the namespace has zero process id, so it is the strongest process in that namespace. all namespaces still live on the same memory management.
+
+We get into a namespace with the `clone(2)` command, and we can still `fork(2)` inside it. there are some problems with having an ssh client inside a container.
+
+We manage cpu and memory in control groups (cgroups), they use policy based-scheduling. its sometimes possible to have CPU affinity for a namespace, but it's not always enforced. memory limitation is also difficult. Pages (dirty, used, empty) are also a global topic. Context migration are when the process is moved to another CPU, both context migrations and context switches have heavy memory costs.
+
+The network namespace puts interfaces into namespaces, processes in the same net space can talk to the interface. Routing, forwarding, filters and bridging still happen in the kernel. in <cloud>AWS VPC</cloud>, <cloud>ENI</cloud> devices are mapped onto instances, which are then mapped to network namespaces that the application uses.
+
+The Mount namespace controls the filesystem, it maps paths between the local namespace up to the root file system. The user namespace maps users from inside the namespace to outside users, but it's not recommended to use for managing users.
+
+> - Linux Containers, as of today, sit on a shared Kernel
+> - They sit on a shared platform,
+> - They can influence each other quite easy.
+> - Even if process-to-process isolation tight, it's just one layer.
+> - Networking is always a discussion.
+
 </details>
 
-### a
+### Amazon Elastic Container Service (ECS) Primer
+
+<details>
+<summary>
+Basic ECS overview.
+</summary>
+
+> This course goes beyond the basic concepts and benefits of containerization and teaches you more about the Amazon Elastic Container Service (ECS). You will learn about the implementation of containers on AWS using ECS and complementary services, such as the Amazon Elastic Container Registry (ECR). You will also learn about common microservices scenarios.
+
+The goals of the course are:
+
+- Familiarity with the <cloud>ECS (Elastic Container Service)</cloud>
+- Understanding the difference between <cloud>EC2</cloud> and <cloud>Fargate</cloud> launch types
+- Integrating <cloud>ECS</cloud> with other services
+- Enforcing security on <cloud>ECS tasks</cloud>
+
+#### What is Amazon ECS
+
+review of containers and microservice architecture.
+
+containers are a form of virtualization, happening at the operating system level, more lightweight than virtualizing complete operating systems. containers use Images, which are immutable "blueprints" to create containers from.\
+Containers are strongly associated with microservice architecture, as they provide small scale applications with clearly defined apis. this fits well with the goals of having decoupling, agile and quick development.
+
+#### Ecs Scalability and Micro Architecture
+
+a host can easily run one or two containers on itself, but when there are tens of hosts and thousands of containers, things become messy. this gets worse with production environments, which need to be resilient, highly available, and support CI-CD for rapid development. this turns into a cluster management problem, and requires container management (orchestration) service.\
+Theses service control health check, load balancing, monitoring, logging, networking, and replacing containers as needed. there are several tools, such as <cloud>ECS</cloud>, <cloud>Docker Swarm</cloud> or<cloud>Kubernetes</cloud>. <cloud>ECS</cloud> is highly available, high performance, AWS native orchestrator tool, it's highly integrated with other AWS services, and can schedule with its' own schedule or use a custom one.
+
+there are two types of configurations: services and tasks. there are also two types of launch profiles, <cloud>EC2</cloud> and <cloud>Fargate</cloud>.\
+Fargate launch type is closer to serverless architecture, as AWS manages provisioning the compute resources, EC2 launch types are better when the running instance is important and when usage requirements are known. they can also be mixed together.
+
+#### ECS Components
+
+<cloud>ECS tasks</cloud> are the smallest unit in ECS, they have a set of containers, and run once (or at intervals). for long running applications, services provide ability to scale out and scale in, and are aware of the Availability Zone they are in, so they support high availability spreads and can have a load balancer to manage traffic.
+
+Tasks (either standalone or in a service) are defined in <cloud>Task Definition</cloud> files. those are the blueprints for creating tasks. they contain the name, memory resources, mounting points and what containers are running in the task (with which image).
+task definitions also define which launch type is used: EC2 or Fargate.
+
+With EC2 launch types, Tasks are hosted on EC2 instances, which run a docker agent and an ecs agent, those agent send telemetry to the ECS back-plane. with fargate launch type, AWS manages the instances directly, saving the need for configuring the cluster.
+
+#### Task Placements
+
+when we use EC2 launch type, the task scheduler should place the task onto one of the instances. this is chosen based on a few filters:
+
+- Cluster Constrains - CPU, memory, networking requirements
+- Custom Constraints - location (Availability Zone), instance type, <cloud>AMI</cloud>
+- Placement Strategies - best effort
+
+those constrains are defined in the task definition, the placement strategies are best-effort, so a task can run on a instance even if it doesn't fit the placement strategy.
+
+- Random
+- BinPack - least available instance in terms of CPU and memory, trying to max out utilization.
+- Spread - spread across instances based on some metric, such as Availability Zone.
+
+there are also placement constraints, **bindings**, which can prevent a placement. they are not "best-effort".
+
+- distinctInstance - only one task allowed on an instance (like kubernetes daemonSet)
+- memberOf - based on an expression (such as instance type or Availability Zone)
+
+services also use placement strategies and constraints. and they have the "distinctInstance" option.
+
+(examples of placing instances)
+
+#### ECS Integration With Other AWS Services
+
+Service | Purpose
+---|---
+<cloud>ECR</cloud> | Container Images
+<cloud>SQS</cloud> | Decoupling
+<cloud>SNS</cloud> | Decoupling
+<cloud>ELB</cloud> | Load Balancing
+<cloud>Route53</cloud>| DNS
+<cloud>IAM</cloud>| Authentication and Authorization
+<cloud>Secret Manager</cloud> | passwords and other secrets
+<cloud>API Gateway</cloud> | exposing services
+<cloud>Code Pipeline</cloud> | CI-CD
+<cloud>CloudWatch</cloud> | Monitoring and logging
+
+<cloud>ECR</cloud> is an cloud based AWS native image registry, highly available, secure, with at-rest encryption and fully integrated with <cloud>IAM</cloud> and the <cloud>ECS</cloud>.
+
+ECS are compatible with DNS and can register themselves at route53 and expose themselves to other services.
+
+example of ci-cd with <cloud>AWS CodeCommit</cloud>, <cloud>CodePipeline</cloud>, <cloud>CodeBuild</cloud>, <cloud>ECR</cloud>, and <cloud>CloudFormation</cloud>.
+
+when there are new versions, it's possible to use "blue-green" deployment, with "green" being the new version, and "blue" being the old. both are running at the same time, and the load balancer directing traffic at them. this lessens the risk of deploying changes. ECS can also <cloud>autoscaling groups</cloud> and policies to scale up and down instances based on demand.
+
+#### Security Enforcement on ECS
+
+Each task has it's own IAM role, which gives it the specific permissions it needs, following the principle of least privilege. Tasks can retrieve secret from the <cloud>Parameter Store</cloud> and the <cloud>Secret Manager</cloud>, this is done again with <cloud>IAM roles</cloud>.
+
+there are two additional scheduling strategies:
+
+- replicas - always have a consistent number of tasks running.
+- daemon (EC2 only) - always have the task running once on each of the EC2 instances.
+
+</details>
+
+### Separator
 
 </details>

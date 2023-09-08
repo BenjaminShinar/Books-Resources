@@ -7,7 +7,7 @@ ignore these words in spell check for this file
 
 <details>
 <summary>
-Things worth remembering, rule-of-thumb recomendations
+Things worth remembering, rule-of-thumb recommendations
 </summary>
 
 Resilient:
@@ -27,15 +27,15 @@ Performant:
 Security:
 
 - Lock down the root user.
-- Security Group (statefull) _allow_. Network ACL (stateless) _allow and explicitly deny_.
-- Perfer IAM roles over access keys.
+- Security Group (stateful) _allow_. Network ACL (stateless) _allow and explicitly deny_.
+- Prefer IAM roles over access keys.
 
 Cost Optimization:
 
 - If you know it's going to be on, reserve it.
 - Any unused CPU time is a waste of money.
 - Use the most cost effective data storage service and class.
-- Deterimine the most cost effective EC2 pricing model and instance type for each workload.
+- Determine the most cost effective EC2 pricing model and instance type for each workload.
 
 Operation Excellence:
 
@@ -60,9 +60,9 @@ Sample Questions
 > - Amazon S3
 > - EBS throughput optimized HDD volume
 
-The answer is **EBS Cold HDD Volume**, we want _block storage_, which elimates the S3 (and glacier) options, and _low cost_, which pushes towards cold storage rather than the costly IOPS.
+The answer is **EBS Cold HDD Volume**, we want _block storage_, which eliminates the S3 (and glacier) options, and _low cost_, which pushes towards cold storage rather than the costly IOPS.
 
-> Which of the following AWS services faclitate the implementation of loosely coupled architecture (select two)?
+> Which of the following AWS services facilitate the implementation of loosely coupled architecture (select two)?
 >
 > - AWS CloudFormation
 > - Amazon Simple Queue Service
@@ -75,20 +75,20 @@ Aws CloudFormation creates services, CloudTrail is a logging(auditing) tool, and
 
 > Your web service has a performance SLA to respond to 99% of requests in < 1 second. Under normal and heavy operations, distributing requests over four instances meets performance requirements. What architecture ensures cost efficient high availability of your service if an availability zone becomes unreachable?
 >
-> - Deploy the serice on four servers in a single Avalability Zone.
-> - Deploy the serice on six servers in a single Avalability Zone.
-> - Deploy the serice on four servers across two Avalability Zones.
-> - Deploy the serice on eight servers across two Avalability Zones.
+> - Deploy the service on four servers in a single Availability Zone.
+> - Deploy the service on six servers in a single Availability Zone Zone.
+> - Deploy the service on four servers across two Availability Zone Zones.
+> - Deploy the service on eight servers across two Availability Zone Zones.
 
 ~~The Answer is 8 servers across two availability zones, so if one fails, we still have 4 servers running.~~\
 Actually four servers in two AZ, because the the question mentions cost effectiveness, and high availability
 
 > Your web service has a performance SLA to respond to 99% of requests in < 1 second. Under normal and heavy operations, distributing requests over four instances meets performance requirements. What architecture ensures cost efficient fault tolerant operation of your service if an availability zone becomes unreachable?
 >
-> - Deploy the serice on four servers in a single Avalability Zone.
-> - Deploy the serice on six servers in a single Avalability Zone.
-> - Deploy the serice on four servers across two Avalability Zones.
-> - Deploy the serice on eight servers across two Avalability Zones.
+> - Deploy the service on four servers in a single Availability Zone.
+> - Deploy the service on six servers in a single Availability Zone.
+> - Deploy the service on four servers across two Availability Zones.
+> - Deploy the service on eight servers across two Availability Zones.
 
 This time the question focuses on fault tolerance, which is a higher bar - it matches the SLA.
 
@@ -139,7 +139,7 @@ The answers are:
 
 > Which of the following two are features of amazon EBS (elastic block storage) (select 2)?
 >
-> - Data stored on Amazon EBS is automatically replicated within an Avalability Zone.
+> - Data stored on Amazon EBS is automatically replicated within an Availability Zone.
 > - Amazon EBS data is automatically backed up to tape
 > - Amazon EBS volumes can be encrypted
 > - Data on Amazon EBS volumes is lost when the attached instance is stopped.
@@ -155,7 +155,7 @@ EBS is not instance store, so it's not ephemeral, and can persist. backing up to
 
 The answer is MYSQL, MariaDB, PostgreSQL, and Aurora. meaning the microsoft SQL server and Oracle don't support.
 
-> Which AWS datbase service is best suited for non relational databases
+> Which AWS database service is best suited for non relational databases
 >
 > - Amazon Redshift
 > - Amazon Relation Database Service
@@ -178,11 +178,11 @@ Product catalog is a definite answer, ~~shopping Cart might be, and maybe also b
 > - MySQL
 > - MemcacheD
 > - Redis
-> - Couchbase
+> - Codebase
 
 the answers are memcached and Redis.
 
-> Which services work together to enable auto scaling of EC2 instaces?
+> Which services work together to enable auto scaling of EC2 instances?
 >
 > - Auto Scaling and Elastic Load balancer
 > - Auto Scaling and Cloud Watch
@@ -202,7 +202,7 @@ The answer is probably all three services, we need the Auto Scaling to perform t
 
 the answer is **Launch Configuration**, it can use all the others inside it, which can be used by it to create the new instances.
 
-> A radio station runs a contest where every day at noon they make an announcement that generates an immediate spike in traffic that requires 8 EC2 instances to process. All other times the webside requires 2 EC2 instances.\
+> A radio station runs a contest where every day at noon they make an announcement that generates an immediate spike in traffic that requires 8 EC2 instances to process. All other times the website requires 2 EC2 instances.\
 > Which is the most cost effective way to meet these requirements?
 >
 > - Create an Auto scaling Group with a minimum Capacity of 2 and scale up based on CPU utilization.
@@ -210,37 +210,37 @@ the answer is **Launch Configuration**, it can use all the others inside it, whi
 > - Create an Auto scaling Group with a minimum Capacity of 2 and set a schedule to scale up at 11:40 am.
 > - Create an Auto scaling Group with a minimum Capacity of 2 and scale up based on memory utilization.
 
-we first elimate the option of always having 8 instances (cost effective). next, the schedule option uses the "Scale Up" terminology, so it's probably a diversion. so either CPU utilization or memory utilization. ~~lets go with memory utilization.~~ this wrong, because,memory utilizations is not metric cloud watch can monitor. and also there's a delay in creating instances, so we need to be prepared before hand.
+we first eliminate the option of always having 8 instances (cost effective). next, the schedule option uses the "Scale Up" terminology, so it's probably a diversion. so either CPU utilization or memory utilization. ~~lets go with memory utilization.~~ this wrong, because,memory utilizations is not metric cloud watch can monitor. and also there's a delay in creating instances, so we need to be prepared before hand.
 
 > An application Runs on EC@ instances in an Auto Scaling Group. the application runs optimally on 9 EC2 instances and must have at least 6 running instances to maintain minimally acceptable performance for a short period of time. which is the most cost-effective auto scaling group configuration that meets the requirements?
 >
-> - A desired capacity of 9 instances across 2 Avalability Zones.
-> - A desired capacity of 9 instances across 3 Avalability Zones.
-> - A desired capacity of 12 instances across 2 Avalability Zones.
-> - A desired capacity of 1 instances across 1 Avalability Zones.
+> - A desired capacity of 9 instances across 2 Availability Zones.
+> - A desired capacity of 9 instances across 3 Availability Zones.
+> - A desired capacity of 12 instances across 2 Availability Zones.
+> - A desired capacity of 1 instances across 1 Availability Zones.
 
-The answer is 9 instances across 3 AZ, if one AZ fails, we still have 6 instances running, and the autoScaling group will launch the instances at the remaning AZ if needed.
+The answer is 9 instances across 3 AZ, if one AZ fails, we still have 6 instances running, and the autoScaling group will launch the instances at the remaining AZ if needed.
 
 > Which of the following ar characteristics of the auto scaling service on AWS (select 3)?
 >
 > - Sends traffic to healthy instances.
 > - Responds to changing conditions by adding or termination Amazon EC2 instances.
 > - Collects and tracks metrics and sets alarms.
-> - Deliever push notifications.
+> - Deliver push notifications.
 > - Launches instances from a specified Amazon Machine Image (AMI).
 > - Enforces a minimum number of running Amazon EC instances.
 
 the answer are responding, enforcing a minimum, and launching instances. collecting data and metrics in cloudWatch, sending traffic is ELB, notifications are SNS.
 
-> The Web tier for an application is running on 6 EC2 instances spread across 2 availability Zones. the data tier is a mySQL database running on an EC2 instances. what changes will increase the avalability of the Application (select 2)?
+> The Web tier for an application is running on 6 EC2 instances spread across 2 availability Zones. the data tier is a mySQL database running on an EC2 instances. what changes will increase the availability of the Application (select 2)?
 >
 > - migrate the MySQl database to a multi-AZ RDS MySQL database instance.
 > - increase the instance size of the web tier EC2 instance.
-> - Launch the web tier Ec2 instances in an auto sacling group.
-> - Turn on CloudTrail in the AWS accout of the application.
+> - Launch the web tier Ec2 instances in an auto sacking group.
+> - Turn on CloudTrail in the AWS account of the application.
 > - Turn on cross zone load balancing on the classic Load Balancer.
 
-CloudTrail is user action auding, it has nothing to do with avalability. the instance size of the web-tier doesn't effect availability either. using a multi-AZ database will help if the AZ falls, and an auto-scaling group for the web-tier applications will keep them at the correct amount of instances.
+CloudTrail is user action auditing, it has nothing to do with availability. the instance size of the web-tier doesn't effect availability either. using a multi-AZ database will help if the AZ falls, and an auto-scaling group for the web-tier applications will keep them at the correct amount of instances.
 cross zone load balancing won't really help.
 
 > Your AWS account administrator has left your company today. The administrator had access to the root user and a personal IAM administrator account. with these accounts, he generated IAM users and keys.\
@@ -253,9 +253,9 @@ cross zone load balancing won't really help.
 > - Delete rhe administrator IAM user
 > - Relaunch all EC2 instances with new roles
 
-The answer is first to change root password (and add MFA), also delete the IAM user which he used. launching EC2 roles aren't connected to identities, so there's no point in creating new ones. IAM users are separeate from the user which created them. rotating keys and password for IAM users can help(if he still has access to them). there probably isn't a way to restrict root user access.
+The answer is first to change root password (and add MFA), also delete the IAM user which he used. launching EC2 roles aren't connected to identities, so there's no point in creating new ones. IAM users are separate from the user which created them. rotating keys and password for IAM users can help(if he still has access to them). there probably isn't a way to restrict root user access.
 
-> You have deployed an instance running a webserver in a subnet in your VPC. When you try to connect to it through a browser using HTTP over the internet the connection times out.\
+> You have deployed an instance running a web server in a subnet in your VPC. When you try to connect to it through a browser using HTTP over the internet the connection times out.\
 > Which of these steps could fix the problem (select 3)?
 >
 > - Check that the VPC contains an internet gateway and the subnets route table is routing 0.0.0.0/0 to the internet gateway.
@@ -272,12 +272,12 @@ Virtual private gateway is about VPN and connecting to outside data centers.
 > - Creating Tables in a MySQL RDS database
 > - Configuring a VPC security group
 > - Logging into a .NET application
-> - Creating an Orcale RDS database
+> - Creating an Oracle RDS database
 > - Creating an Amazon S3 bucket
 
-Logging into .Net applications have nothing to do with IAM, it's not an AWS resource. creating resources can be conrolled by AWS policies, so buckets and RDS databases. configuring VPCs is probably also an AWS action, while creating tables inside a MySQL table is governed by the authentication and authorization model of the database.
+Logging into .Net applications have nothing to do with IAM, it's not an AWS resource. creating resources can be controlled by AWS policies, so buckets and RDS databases. configuring VPCs is probably also an AWS action, while creating tables inside a MySQL table is governed by the authentication and authorization model of the database.
 
-> You want to create a group of EC2 instances in an application tier subnet that accepts HTTP trafficonly from instances in the web tier (a group of instances in a different subnet sharing a web-tier security group), which of the following will achieve this?
+> You want to create a group of EC2 instances in an application tier subnet that accepts HTTP traffic only from instances in the web tier (a group of instances in a different subnet sharing a web-tier security group), which of the following will achieve this?
 >
 > - adding a load balancer in front of the web-tier instances
 > - association each instance in the application tier with a security group that allows inbound HTTP traffic from the web-tier security group
@@ -310,7 +310,7 @@ zero alarms, cloud watch needs to see 3 occurrences of the metric before trigger
 >
 > - Use VPC FlowLogs
 > - Use CloudWatch Metrics
-> - Use CloudWatch Logs to get the webserver logs from EC2 instance
+> - Use CloudWatch Logs to get the web server logs from EC2 instance
 > - Web application on AWS never have 404 errors
 
 ~~probably flow logs?~~ get the cloudWatch logs from EC2 instances and extract from that. VPC flowLogs capture layer 3 and 4 logs, not layer 7.

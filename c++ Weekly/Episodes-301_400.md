@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico subspan
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico subspan Bloaty McBloatface rodata dynstr fullsymbols
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -4403,4 +4403,16 @@ int main()
 }
 ```
 
+</details>
+
+## C++ Weekly - Ep 392 - Google's Bloaty McBloatface
+
+<details>
+<summary>
+A binary size profiler by google.
+</summary>
+
+[Google's Bloaty McBloatface](https://youtu.be/MY5DTDc3e-I?si=9EuZ6lQM7fg4Ye8w)
+
+a tool for profiling binary files, like identifying which parts of the binary contribute most to the its size (or virtual memory). such as the ".text" section for functions, ".rodata" for readonly data, ".strtab" and ".dynstr" for strings, and also how much of the binary is debug data. it's also possible to check which function takes up the most space by passing the `-d fullsymbols` flag
 </details>

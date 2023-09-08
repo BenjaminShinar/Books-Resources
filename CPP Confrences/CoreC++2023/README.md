@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore objdump Browsable Guttag
+// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -511,6 +511,193 @@ state_m = state_n + delta_{(n,n+1)} + ... + delta_{(m-1, m)} + metadata_m
 $$
 
 this gives us a user api for updating any kind of object.
+
+</details>
+
+## Michael Kerrisk :: Understanding Linux User Namespaces
+
+<details>
+<summary>
+Overview of Linux namespaces and capabilites.
+</summary>
+
+[Understanding Linux User Namespaces](https://youtu.be/XgThPoL9mPE?si=hDZEVQLJFEafIw63)
+
+user namespace are important for building unprivileged containers in linux.
+
+Namespace "wrap" around some global system resource to provide isolation, there are currently eight types of linux namespaces (the most resent one is from 2020).
+
+> - UTS: isolate system identifiers (e.g., `hostname`, `domainname`)
+> - Mount: isolate mount point list
+> - IPC: isolate interprocess communication resources
+> - PID: isolate PID number space
+> - Network: isolate network resources such as firewall and routing rules, socket port numbers (`/proc/net`, `/sys/class/net`)
+> - (and others: cgroup, time, user)
+
+each namespace type can have multiple instance, but at system boot, there is one of each, this is the **inital namespace**. a process resides in one namespace instance (of each of the types).
+
+for example, the UTS (comes from the ancient "unix time sharing") namespace isolates the two system identifiers returned by `uname(2)`: the node name the NIS domain name. all processes inside the same UTS namespace see the same hostname and domain name, but cannot effect and see what going on in other namespaces.
+
+each process has symlink files (symbolic link) in `/proc/PID/ns` that link it to the correspondng namespace, the value of the links has the form of `<namespace type>:[magic inode number]`. the number is from an internally mounted namespace filesystem.
+
+```sh
+readlink /proc/$$/ns/uts
+#uts:[4026531838]
+```
+
+if two processes have the same inode number for symlink, they are in the same namespace of that type.
+
+- `unshare(1)` - create new namespaces and execute a command in them. default command in `sh`
+- `nsenter(1)` - enter an existing namespace and execute a command in them.
+
+### Demonstration of creating a UTS namespace
+
+running in two shells at the same time, starting at the default namespace. in one shell we will create a new uts namespace, and then we'll enter it from the second shell.
+
+```sh
+hostname
+readlink /proc/$$/ns/uts
+# shell 1 only
+sudo unshare -u bash
+hostname # inherits the namespace from above
+hostname changedName
+echo $$ # get pid number
+# continue in both shells
+hostname
+readlink /proc/$$/ns/uts
+# shell 2
+sudo nsenter -t <pid number from shell-1> -u
+hostname
+readlink /proc/$$/ns/uts # verify we are at the same namespace as shell 1
+#
+```
+
+### Namespace Capabilites
+
+Traditional linux has normal users and roo user. with the root user being able to skip many checks. normally, if we wish to have program run with root privileges, we need to make it capable of assuming the root role. so when it runs, it takes the UID of the file owner.
+
+```sh
+sudo -i
+chown root prog
+chmod u+s prog
+```
+
+this is powerful, but dangerous. if the program gets comprised, it can do anything the root user can. we don't have a way to limit the blast radius of the power. if we want the program to be able to change system time, then we must give it complete root user powers.
+
+the concept of **Capabilites** is meant to remedy this by breaking the power of the super user into small pieces. at linux 6.4 there are 41 capabilites (see `capabilites(7)`). instead of setting programs to assume root user, we can have the attached with capabilites (using `setcap(8)`) to only do what it has to do. this is following the principle of least privilege.
+
+### User Namespaces
+
+we can have per-namespace mapping of user and group ids. for example, a process can have a non-zero UID (normal user) outside a certain namespace, and a UID 0 (super user) inside it.
+
+user namespace are inside hierarchical relationship, each one has a parent (which created it), those relationship effect how the capabilites are moved. when a namespace is created, the first process in it has the super user privileges, but only for the namespace, this is done by having UID and GID mappings (writing to two files: `/proc/PID/uid_map` and `/proc/PID/gid_map`). such as mapping the zero uid inside the namespace to uid 1000 outside it.
+
+shell 1:
+
+```sh
+id
+unshare -U -r bash
+id
+cat /proc/$$/uid_map
+cat /proc/$$/gid_map
+grep -E 'Cap' /proc/$$/status # see capabilites
+getpcaps $$ # same as above
+hostname newName #fails, we don't have root for uts namespace
+```
+
+shell 2:
+
+```sh
+ps -o 'uid, gid,pid' 5356
+```
+
+the first process in the namespace has full privileges, but only for objects owned by that namespace. (something about non-user namespaces). if we want to discover the namespace relationships, we can check the `ioctl_ns(2)` manual page.
+
+### Use Case and Applications
+
+permit the application to do things without root privileges, such as docker containers and LXC or chrome-style sand-boxing.
+
+</details>
+
+## Elazar Leibovich :: UB Effects On Real World Projects
+
+<details>
+<summary>
+some examples of undefined behavior.
+</summary>
+
+[UB Effects On Real World Projects](https://youtu.be/SEhNmLqrVxc?si=GkYupHTbu0SYGZFX)
+
+real undefined behavior and examples of it.
+
+undefined behavior is code that violates the language contract. but another way to put it is by saying that it is a problem of culture and values.
+
+> "The language shall be designed to avoid error prone features and _maximize automatic detection_ of programming errors"\
+> ~ the ADA language programming guide
+
+but C++ isn't like that, the focus of C++ is on performance.
+
+the first example is with excessive shifts, if we shift more than 32 bits, we have undefined behavior. the compiler knows it's undefined behavior, so it can optimize away the check against zero.
+
+```cpp
+groups_per_flex = 1 << sbi->s_log_groups_per_flex;
+if (groups_per_flex == 0)
+   return 1;
+flex_group_count = v / groups_per_flex;
+```
+
+another example, the compiler is allowed to pointers passed to <cpp>strncpy</cpp> are not null, so it can omit any checks for null on them, and if any variable has been set to that pointer, all null checks on it are omitted as well. Many times undefined behavior is discovered when compilers are updated, since new compilers are better at optimizing, and can expose them.
+
+in this example, we copy wide characters, but in windows it sometimes failed to copy all the bytes. it turns out that there different alignments for wide characters in linux and windows.
+
+```cpp
+void foo(char *src)
+{
+   wchar_t dst[100]={};
+   wcsncpy(std, sec, 5);
+   dst[5] = '\0';
+}
+```
+
+undefined behavior of boolean evaluating to both true and false. the uninitialized value was first tested for non-zero, but the second test was optimized to just taking the first bit, and the results were different.
+
+```cpp
+bool b;
+if (b) puts("B");
+//...
+if (!b) puts("!B");
+```
+
+an example with a macro, using the <cpp>this</cpp> pointer in the initialization list is undefined behavior.
+
+```cpp
+#define IDX_INIT(req) this->init((req, (Compile*) this__out))
+
+Node::Node(uint req): _idx(IDX_INIT(req))
+{}
+```
+
+Strict Aliasing is a common example of undefined behavior bugs (accessing an object through a pointer of a different type). it leads to a lot of compiler re-ordering.
+
+```cpp
+uint32_t a;
+uint16_t *a_half = std::reinterpret_cast<uint16_t*>(&a);
+std::cout << *a_half;
+```
+
+invalid pointers cannot be accessed or compared. and <cpp>realloc</cpp> can free the memory from the source pointer.
+
+```cpp
+int p* = malloc(sizeof(int));
+int q* = realloc(p, sizeof(int));
+
+if (p == q)
+   printf("%d %d\n", *p, *q);
+```
+
+accessing a union in-active member is undefined behavior, adding pointers past the containers limit is undefined behavior.
+
+we can't always use <cpp>-fsanitize=undefined</cpp>, but we should try it. we can add compiler flags to avoid some optimizations, and we should try with more than one compiler and interpreter to make sure we don't break because of it.
 
 </details>
 
