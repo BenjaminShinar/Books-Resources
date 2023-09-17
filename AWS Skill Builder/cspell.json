@@ -2,8 +2,10 @@
   "version": "0.2",
   "ignorePaths": [],
   "dictionaryDefinitions": [],
-  "dictionaries": ["aws"],
+  "dictionaries": ["aws", "k8s"],
   "words": ["Fargate"],
   "ignoreWords": [],
-  "import": []
+  "import": [],
+  "enabled": true,
+  "allowCompoundWords": true
 }

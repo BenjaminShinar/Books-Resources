@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore elbv2 Neumann cgroups
+// cSpell:ignore elbv2 Neumann cgroups pictShare Kubelet eksctl
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -237,9 +237,9 @@ Fully Managed Infrastructure and Scaling for Containers
 <cloud>Fargate</cloud> is an AWS service for containers. it removes the need to manage <cloud>EC2</cloud> instances in terms of provisioning and scaling. it works with <cloud>ECS</cloud> and <cloud>EKS</cloud>, has pay-per-usage payment model. it helps developers focus on the application they run, and not the instances that run them.\
 AWS takes care of creating the EC2 instances and managing them to have the correct agents (ECS agent, docker agent) and the correct AMI. they are also responsible for cluster management and engine placement. The Developer is in charge of creating the task and the ecs orchestration.
 
-fargate is easier to use, and can be used through the normal tools and APIs. there are only a few small differences. fargate task run in VPC, and works with load balancers, but can be still monitored like <cloud>EC2</cloud> machines. there is no SSH access to the tasks.
+Fargate is easier to use, and can be used through the normal tools and APIs. there are only a few small differences. Fargate task run in VPC, and works with load balancers, but can be still monitored like <cloud>EC2</cloud> machines. there is no SSH access to the tasks.
 
-fargate can fit any container use case, such as:
+Fargate can fit any container use case, such as:
 
 > - Long running services
 > - Highly available workloads
@@ -249,7 +249,7 @@ fargate can fit any container use case, such as:
 there are cases where EC2 launch types are better, such as spot and reserved instances payment modes.
 
 - ECS - aws native container service, which works with other AWS services.
-- EKS - aws kubernetes clusters, using the open source platform.
+- EKS - aws Kubernetes clusters, using the open source platform.
 - ECR - container image registry to store images
 
 </details>
@@ -275,7 +275,7 @@ AWS Fargate was developed to reduce the overhead for using containers:
 
 #### AWS Fargate Components
 
-A Task definition defines the application in term of image, resource requirements, etc... a single task is a running instantiation of a task definition, and it it set to use fargate as a launch type. A service maintains and manages the running copies of the task, and is integrated with the load balancer to check and replace unhealthy tasks as needed. They reside inside a cluster, which is the boundary for infrastructure and IAM permissions.
+A Task definition defines the application in term of image, resource requirements, etc... a single task is a running instantiation of a task definition, and it it set to use Fargate as a launch type. A service maintains and manages the running copies of the task, and is integrated with the load balancer to check and replace unhealthy tasks as needed. They reside inside a cluster, which is the boundary for infrastructure and IAM permissions.
 
 a task definition is immutable, and changes to a definition create new versions. a task can have up to ten container definitions, which will all run on the same host. the definition has task level resources (CPU and memory), and can optionally define different slices to the containers. the resources determine the costs.
 
@@ -302,7 +302,7 @@ Task metadata is available from inside the within the task, so monitoring tools 
 
 A new option is **Managed Service Discovery**. this is done inside <cloud>Route 53</cloud> and provides a dns compatible addresses. this is managed by aws without running custom code.
 
-fargate allows us to run containers without having to worry about EC2 instances. it is usually a good idea to use fargate over EC2, unless there is a special reason not to.
+Fargate allows us to run containers without having to worry about EC2 instances. it is usually a good idea to use Fargate over EC2, unless there is a special reason not to.
 
 #### Demo
 
@@ -357,12 +357,12 @@ now we can change the application, commit the change and look at the web console
 
 <details>
 <summary>
-Some information about linux containers and namespaces. what is shared and what is not.
+Some information about Linux containers and namespaces. what is shared and what is not.
 </summary>
 
 > Security should be the first concern for any project – maintaining the confidentiality, integrity and availability of your architecture. Containers present a unique middle ground between full instance management and pure services.
 
-security in linux containers, without focusing on any specific implementation or platform.
+security in Linux containers, without focusing on any specific implementation or platform.
 
 The risks are: Confidentiality, integrity, availability.
 
@@ -436,7 +436,7 @@ Fargate launch type is closer to serverless architecture, as AWS manages provisi
 Tasks (either standalone or in a service) are defined in <cloud>Task Definition</cloud> files. those are the blueprints for creating tasks. they contain the name, memory resources, mounting points and what containers are running in the task (with which image).
 task definitions also define which launch type is used: EC2 or Fargate.
 
-With EC2 launch types, Tasks are hosted on EC2 instances, which run a docker agent and an ecs agent, those agent send telemetry to the ECS back-plane. with fargate launch type, AWS manages the instances directly, saving the need for configuring the cluster.
+With EC2 launch types, Tasks are hosted on EC2 instances, which run a docker agent and an ecs agent, those agent send telemetry to the ECS back-plane. with Fargate launch type, AWS manages the instances directly, saving the need for configuring the cluster.
 
 #### Task Placements
 
@@ -454,7 +454,7 @@ those constrains are defined in the task definition, the placement strategies ar
 
 there are also placement constraints, **bindings**, which can prevent a placement. they are not "best-effort".
 
-- distinctInstance - only one task allowed on an instance (like kubernetes daemonSet)
+- distinctInstance - only one task allowed on an instance (like Kubernetes daemonSet)
 - memberOf - based on an expression (such as instance type or Availability Zone)
 
 services also use placement strategies and constraints. and they have the "distinctInstance" option.
@@ -492,6 +492,123 @@ there are two additional scheduling strategies:
 
 - replicas - always have a consistent number of tasks running.
 - daemon (EC2 only) - always have the task running once on each of the EC2 instances.
+
+</details>
+
+### Amazon Eks Primer
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+> Kubernetes is a powerful container orchestration system that is the backbone of many microservices architectures, but it has a steep learning curve and is complex to manage. With Amazon Elastic Kubernetes Service (Amazon EKS), you can run Kubernetes on Amazon Web Services (AWS) without needing to install, operate, and maintain your own Kubernetes control plane.
+
+#### Introduction To EKS Primer
+
+<details>
+<summary>
+Basic EKS and Kubernetes Concepts
+</summary>
+
+> Amazon Elastic Kubernetes Service (<cloud>Amazon EKS</cloud>) is a managed container orchestration service that facilitates deploying, managing, and scaling Kubernetes applications in the AWS Cloud or on premises. Amazon EKS helps you provide highly available and secure clusters. Amazon EKS also helps you automate key tasks such as patching, node provisioning, and updates.
+
+(video)
+
+containers are light-weight virtualization, packaging runtime and software together, without the overhead of the entire operating systems. when used at scale, containers require a managing and orchestrating tool.
+
+- scheduling and placement
+- automatic scaling the number of containers
+- removing unhealthy containers and replacing them with new ones
+- integration with the cloud and other services, such as networking and persistent storage
+- centralized security and monitoring
+
+EKS benefits:
+
+- managed Kubernetes across multiple Availability Zones, reducing points of failure
+- tight integration with other AWS services, such as IAM and load balancing
+- part of the Kubernetes community - works with existing plug-ins and configurations, portable and easy to migrate.
+
+##### Kubernetes Objects
+
+a review of Kubernetes objects and concepts:
+
+- Cluster - a set of worker machines (nodes), a cluster has a least one node, and a cluster has a <cloud>control plane</cloud> that runs services and manages the cluster.
+- Node - a physical or virtual machine that has workloads. managed by the control plane.
+- Pod - a group of one or more containers, the basic building block of Kubernetes.
+- Volumes - data storage:
+  - Ephemeral volume - data storage that is tied to the life time of the pod, persists across pod restarts, but when a pod ceases to exist, it's also removed.
+  - Persistent volume - data storage that has independent lifecycle and is not tied to any pod. can be backed up by another storage subsystem that is outside of the cluster node.
+- Service - a logical collection of pods and a way to access them. tracks the number of available pods.
+- Namespace -  a logical separation between workloads, can be useful to separate teams and projects that use the same cluster.
+- ReplicaSet - ensuring a number of pod replicas are running at the same time
+- Deployment - owns replicaSets and pods, manages the desired state.
+- ConfigMap - api object that stores non-confidential data.
+- Secret - storing confidential data.
+
+Pods are deployed and removed according to the scheduler. it checks the resources required by the pods and then finds nodes to run them on. running through a set of filters:
+
+- volume filters - volume requirements and constraints.
+- resource filters - networking, cpu, memory.
+- topology - constraints set at the node or pod level
+- prioritization - (other stuff).
+
+- **Control plane**: Control plane nodes manage the worker nodes and the pods in the cluster.
+  - Controller Manager - background threaded that detect and respond to cluster events.
+  - Cloud Controller - interacts with the underlying cloud provider.
+  - Scheduler - selects where to place newly created workloads.
+  - Api Server - exposes the Kubernetes api, frontend for the control plane. scales horizontally.
+  - Etcd - key value dictionary that is the core persistence layer. stores critical cluster and state data.
+- **Data plane**: Worker nodes host the pods that are the components of the application workload.
+  - Kube-Proxy - maintains networking rules, performs connections and request forwarding if needed.
+  - Container Runtime - can be Docker, Containerd, or something else.
+  - Kubelet - the primary agent that runs on the worker nodes and manages their health.
+  - Pods - a group of one ore more containers, can interact with other pods. containers in a pod always exist on the same node, and are scheduled together.
+
+there are also custom resources which can be defined as CRD and controlled with custom controllers (<cloud>operators</cloud>). there is a command line tool <cloud>kubectl</cloud> to manage Kubernetes cluster and resources.
+
+##### Amazon EKS and the Control Plate
+
+in a self-managed Kubernetes clusters, the cluster owner is responsible for all the components of the control plane and the worker nodes.
+
+> Amazon EKS provides a scalable, highly available control plane. Amazon EKS automatically manages the availability and scalability of the Kubernetes API servers and the etcd persistence layer for each cluster.
+
+EKS has a least two API servers and three etcd nodes across three Availability Zones. unhealthy control planes are automatically replaced, which reduces the operational burden for running a cluster. the user still has to provision worker nodes (EC2 machines) to run the applications on. there are two control plane tools available in AWS: the general <cloud>aws cli</cloud> that works with many other aws resources, and the specialized <cloud>eksctl</cloud> that wraps over <cloud>CloudFormation</cloud> objects to provision resources.
+
+to be clear: there are two api servers in question: one is the amazon EKS API and one is the Kubernetes API.
+
+##### Amazon EKS and the Data Plate
+
+While AWS manages the control plane nodes, the user is in charge of the worker nodes that run the applications, but even here, the level of responsability can be changed.
+
+- Self Managed nodes: only the control plane is managed by aws
+- Managed nodes:  aws takes more control, allows for easier provisioning, managing, updating and scaling. but the resources used are always visible.
+- Fargate: offloading thr resource creation and management to AWS entirely, giving up control of the data plane and allowing aws to provision and manage the worker nodes natively. requires creating a <cloud>Fargate profile</cloud> on the cluster with proper selectors. in this case, every pod has a unique host(no two pods share a host), and there is no visibility into the host (via ssh or otherwise).
+
+##### Quiz: Choosing The Correct API
+
+- Q: Creating a Cluster
+- A: Amazon EKS
+- Q: Delete a managed node group
+- A: Amazon EKS
+- Q: Create a deployment
+- A: Kubernetes
+- Q: Get the fargate profile
+- A: Amazon EKS
+- Q: Get all the namespace
+- A: Kubernetes
+
+</details>
+
+### Configuring Amazon Eks
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+
+</details>
 
 </details>
 

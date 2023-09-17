@@ -701,6 +701,283 @@ we can't always use <cpp>-fsanitize=undefined</cpp>, but we should try it. we ca
 
 </details>
 
+## Yossi Moalem :: Easy to use, Hard to Misuse: Practical Guidelines to Tame Your API
+
+<details>
+<summary>
+Some Thoughts about creating APIs.
+</summary>
+
+[Easy to use, Hard to Misuse: Practical Guidelines to Tame Your API](https://youtu.be/wP9C36DM8K4?si=ookNiBxbZhEXKO9E).
+
+APIs that have assumptions and preconditions that aren't properly conveyed, an example is misleading or unclear argument types, like days and months for dates, or when creating points by either coordinates or polar calculations. strong types are one solution, but they force boiler plate.
+
+levels of ease for incorrect use:
+
+- incorrect code will not compile
+- incorrect code will crash
+- Need to look at te prototype to get it right
+- Need to read comments, documentations and examples to get it right
+- requiring a non-trivial workaround
+
+The more flexibility and power the users have, the more likely they are to use it wrong. the common use should be safe and easy. uncommon (and potentially unsafe) use can (and should be) harder.
+
+Examples of constructors that can fail, and how to possible handle them. like c++23 <cpp>std::expected</cpp>.
+Unclear names, should names indicate domain or software and program state in the stack? avoid having misleading names.
+
+</details>
+
+## Ivica Bogosavljevic :: Instruction Level Parallelism in Your C++ Program
+
+<details>
+<summary>
+Tricks to increase Instruction Level Parallelism, and hiding dependency chains.
+</summary>
+
+[Instruction Level Parallelism in Your C++ Program](https://youtu.be/jfE8FqQIYko?si=mNy50AQyzwkMzffu)
+
+ILP - Instruction Level Parallelism.
+
+> - Modern CPU can:
+>   - Execute more than one instruction in a single cycle
+>   - Execute instructions our of order
+>   - But there is a limit to how much work a CPU can do regardless of all tht tricks hardware uses to speed up computation.
+> - Instruction Level Parallelism
+>   - How much code can profit from the available HW resources
+
+the main limiting factor on instuction parallelism is dependencies, an instruction can't be executed until the input data variables are ready. so even if we had a magical endless chip, it would still have to wait.
+
+quiz: endless machine, can do infinite parallelism, exception, memory load and store operation take 3 cycles, other operation take one cycle.
+
+loop1: equivelent of <cpp>std::transform</cpp> on an array or a vector.
+
+```cpp
+for (int i = 0; i < n; i++) {
+   c[i] = a[i] + b[i];
+}
+
+// "semi-assembly" code equivelent
+for (int i = 0; i < n; i++) {
+   register a_v = load(a + i);
+   register b_v = load(b + i);
+   register c_v = a_v + b_v;
+   store(c + i, c_v);
+}
+```
+
+~~the `a+i` is one cycle, loading is 3 cycles. we can do `b+i` at the same time (we can probably calculate `c+i` as well). but we have to wait for both to finish before we can run `a_v+b_v`, and only then can we store the value. so the total is $1+3+1+3=8$ cycles. regardless of the size of the vector.~~
+
+(actually, we don't have dependencies for `a+i` as an instruction, so it's seven cycles.)
+
+loop2 example: equivelent of <cpp>std::reduce</cpp> on a vector. with a bit of unrolling.
+
+```cpp
+auto sum = 0;
+for (int i = 0; i < n; i++) {
+   sum += a[i];
+}
+
+// "semi-assembly" code equivelent
+register sum_v = 0;
+for (int i = 0; i < n; i+=2) {
+   register a_v_1 = load(a + i);
+   sum_v += a_v_1;
+   register a_v_2 = load(a + i +1);
+   sum_v += a_v_2;
+}
+```
+
+we can load all data at the same time, but we have dependencies for the summing operations. so the total operations are $3 + n*1$ (without adding any tricks).
+
+loop3 example: summing elements of linked list, equivelent of <cpp>std::reduce</cpp> on a linked list
+
+```cpp
+sum = 0;
+while (current != null) {
+   sum += curent->val;
+   current = current->next;
+}
+
+// "semi-assembly" code equivelent
+register sum_v = 0;
+while (current != 0) {
+   register current_val_1 = load(current + offsetof(val));
+   sum_v += current_val_1;
+   current = load(current + offsetof(next));
+   if (current == 0) break;
+   register current_val_2 = load(current + offsetof(val));
+   sum_v += current_val_2;
+   current = load(current + offsetof(next));
+}
+```
+
+we can't do all loads at the same time, so we have dependencies on both the summations and the loads.
+
+so we see that instruction dependencies force a speed limit even on the most powerful hardware imaginable. even the cpu can skip instructions and run them out of order, it still needs to wait for the input to be ready. so the instruction level parallelism is not a property of the machine, it arises from the source code. in the three examples:
+
+> - Loop 1: no loop carried dependencies, all decencies are within a single iteration of the loop - high ILP.
+> - Loop 2: no loop carried dependencies in data loads - medium ILP.
+> - Loop 3: loop carried dependencies in data loads - low ILP.
+
+the same constraints also apply for vectorization, multi threading, and other forms of parallelism.\
+Each instruction in the cpu has two numbers that we need to consider:
+
+> - **Latency**: Number of cycles that pass between the time the instruction is issued and it is finished.
+> - **Throughput**: How many cycles does the CPU need to wait to issue the same instruction again.
+> - Latency is always smaller than throughput.
+> - Latency Limits software with low ILP, throughput limit software with high (ILP).
+
+### Increasing ILP
+
+code that usually has medium and low ILP:
+
+> - reductions such as summing over arrays or vectors
+> - "pointer chasing code" (linked lists, trees, hash maps with separate chaining)
+> - long sequences of auto generated code
+> - loops with large bodies (even without loop carried dependencies)
+
+techniques:
+
+> - Interleaving dependency chains - instead of processing only one dependency chain at a the time, we process two or more of them simultaneously
+> - Shorting dependency chains - we decrease the length of the dependency chain
+> - Decreasing the number of times we need to iterate a dependency chain
+> - Break dependency chains - we completely remove the the dependency chain
+
+interleaving example: two dependency chains at the same time.
+
+```cpp
+double cosine(double x)
+{
+   constexpr double tp = 1.0 / (2.0 * M_PI);
+   x = x * tp;
+   x = x - (double(0.25) + std::floor(x + double(0.25)));
+   x = x * (double(16.0) * (std::abs(x) - double(0.5)));
+   x = x * (double(0.225) * x * (std::abs(x) * double(1.0)));
+   return x;
+}
+
+// interleaving
+
+std::pair<double, double> cosine(std::pair<double, double> x)
+{
+   constexpr double tp = 1.0 / (2.0 * M_PI);
+   double x1 = x.first * tp;
+   double x2 = x.second * tp;
+   x1 = x1 - (double(0.25) + std::floor(x1 + double(0.25)));
+   x2 = x2 - (double(0.25) + std::floor(x2 + double(0.25)));
+   x1 = x1 * (double(16.0) * (std::abs(x1) - double(0.5)));
+   x2 = x2 * (double(16.0) * (std::abs(x2) - double(0.5)));
+   x1 = x1 * (double(0.225) * x1 * (std::abs(x1) * double(1.0)));
+   x2 = x2 * (double(0.225) * x2 * (std::abs(x2) * double(1.0)));
+   return {x1,x2};
+}
+```
+
+recursive calls to `cosine` create a loop carried dependency (each loop created the input of the next iteration). so this is an opportunity for us to employ interleaving, also an example of parallel lookups in a single tree (independet searches). this is the simplest thing to do, but it only works when the dependency chain is long enough, and it increases register pressure (less efficient assembly). the other options it keep the dependency chain, but make it shorter.
+
+shortening dependency chains
+
+```cpp
+auto sum = 0;
+for (int i = 0; i < n; i++) {
+   sum += a[i];
+}
+
+// shorter chain + interleaving
+
+auto sum_0 = 0;
+auto sum_1 = 0;
+auto sum_2 = 0;
+auto sum_3 = 0;
+for (int i = 0; i < n; i+=4) {
+   sum_0 += a[i];
+   sum_1 += a[i + 1];
+   sum_2 += a[i + 2];
+   sum_3 += a[i + 3];
+}
+
+auto sum = sum_0 + sum_1 + sum_2 + sum_3;
+```
+
+this is something that compilers can do automatically with integers on `-O3` flag, for floating point numbers, `-associative-math` or `-ffast-math` flags are needed (because of precision differences). when doing assembly intrinsics or vectorization this should be done manually.
+
+vectorization shortening example
+
+```cpp
+int count(int x) {
+   int cnt = 0;
+   for (int i = 0; i < N; i++) {
+      cnt += (a[i] == x);
+   }
+   return cnt;
+}
+```
+
+for Linked Lists and Trees, we can still try and shorten the dependency chain. since lists are bad for memory locality, there are some alternatives, such as `Colony` that combine vectors with lists. we can decrease the number of passes over the chain. a simple example is inverting data accesses. if we have a vector and list, it's easier to iterate many times over the vector than over the list, so rather than search the list for each element of the vector, we search the vector for each element of the list.
+
+the best case is breaking the dependency entirely, but this is harder to do and requires redesign. one option it to store the data from a list inside a temporary array (for repeated searches), or using n-array trees instead of pointer trees.
+
+### Compilers, In-Order Processors and ILP
+
+Smaller low-level processor in embedded world don't support instructions skipping. they are much more sensitive to even shorter dependency chains. when using compiler intrinsics, we can do loop unrolling and interleaving, and the more complicated technique of "loop pipelining". compiler explorer has an analytical tool `llvm-mca` to check for dependency pressure.
+
+</details>
+
+## Mike Shah :: Running Away From Computation - An Introduction
+
+<details>
+<summary>
+Strategies to reduce computation.
+</summary>
+
+[Running Away From Computation - An Introduction](https://youtu.be/wbnzNWmZ-kU?si=aUoYAZs7YaCan_kR)
+
+we have a lot of trade-offs:
+
+- memory and CPU
+- abstraction and performance
+- readability
+- **time and space**
+
+we can usually trade space to get faster performance, or the other way around. such as the big O notation.
+
+an example of linked list implementations, one that iterates over all the nodes, and one that stores the tail node and has a quicker `append` operation.
+
+we have another trade off in C++, between compile-time and runtime. (also the link time). maybe there are runtime optimizations we can also apply to compile-time?
+
+examples of runtime optimizations:
+
+- using better algorithms - like the linked list with quicker `append` to reduce redundant computations
+- do less computations - using short circuiting to avoid expensive operations
+
+we can divide them into micro-optimizations - hand tunning the code, removing dead code, extracting common code, using quicker instructions, etc`. there are also Macro optimizations - re thinking our design and the data structures.
+
+the difference between <cpp>std::map</cpp> and <cpp>std::unordered_map</cpp>: tree based and sorted vs map based and unsorted. we can use the better data structure for our use-case if we know the differences. another option is to delay the computation until we're sure we need it, in C++ we use <cpp>std::promise</cpp> and <cpp>std::future</cpp> and the higher level of <cpp>std::launch::deferred</cpp> execution policy. when (and if) we need the value, we can call the `.get()` method and then block to wait for the computation to be completed. a similar concept is "copy on write" (sometimes called lazy-initialization), which doesn't make actual copies until something is changed.
+
+### Compile-Time Optimizations
+
+There are things we can control at compile time, if we allow the compiler to optimize, it can remove dead code itself, and extract common sub expressions itself.
+
+```cpp
+int global;
+
+void passByPointer(const int* p){
+   global += *p;
+}
+
+void passByReference(const int& p){
+   global += p;
+}
+```
+
+The instructions are the same, but reference must point to a value, while a pointer can be null. so even if the assembly is the same, we usually prefer references, and we don't want to manually check for null pointers. this is part of the core guidelines: **Use References**.
+
+we want to discover bugs and errors as early as possible, like at compile time. we can use <cpp>static_assert</cpp> to check things at compile time, there is no cost at runtime (unlike runtime <cpp>assert</cpp>).\
+Moving forward from that, we can have compile time expressions <cpp>constexpr</cpp>, which must be evaluated at compile time. the classic example is factorial function, we can run it at compile time (if we know what value we want) and then we don't need to calculate it at runtime. if we have data that we want to use, we can embed it into the executable directly.
+
+the last example is template meta-programming. we can reduce runtime complexity by paying more at compile time and binary size.
+</details>
+
 ## Separator
 
 </details>
