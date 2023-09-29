@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore elbv2 Neumann cgroups pictShare Kubelet eksctl
+// cSpell:ignore elbv2 Neumann cgroups pictShare Kubelet eksctl Karpenter kube-proxy kubeconfig kube-system
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -9,7 +9,7 @@ ignore these words in spell check for this file
 
 [Developer Learning Plan](https://explore.skillbuilder.aws/learn/lp/84/developer-learning-plan)
 
-> A Learning Plan pulls together training content for a particular role or solution, and organizes those assets from foundational to advanced.   Use Learning Plans as a starting point to discover training that matters to you.\
+> A Learning Plan pulls together training content for a particular role or solution, and organizes those assets from foundational to advanced. Use Learning Plans as a starting point to discover training that matters to you.\
 > This Learning Plan is designed to help Developers who want to learn how to develop modern applications on AWS. The digital training included in this Learning Plan will expose you to developing with serverless and container technologies, as well as the foundation of DevOps on AWS. This Learning Plan can also help prepare you for the AWS Certified Developer - Associate certification exam.
 
 ## Introduction Elastic BeanStalk
@@ -21,7 +21,7 @@ Deploy Servers, Databases and Load Balancers in an integrated way.
 
 > AWS <cloud>Elastic Beanstalk</cloud> provides you with a platform enabling you to quickly deploy your applications in the cloud. This course will briefly discuss the different components of the AWS Elastic Beanstalk solution, and perform a demonstration of the service.
 
-as developers, we want to get our application to the cloud quickly. <cloud>Elastic Beanstalk</cloud> belongs to the *Platform as a service* family of AWS features. it reduces management complexity and allows re-using existing code (some languages), it also allows for some control over the running infrastructure, such as the instance type, database and auto scaling.
+as developers, we want to get our application to the cloud quickly. <cloud>Elastic Beanstalk</cloud> belongs to the _Platform as a service_ family of AWS features. it reduces management complexity and allows re-using existing code (some languages), it also allows for some control over the running infrastructure, such as the instance type, database and auto scaling.
 
 supported platforms:
 
@@ -80,6 +80,7 @@ There are Identity Services (<cloud>IAM - Identity Access Management</cloud>) to
 There are also Monitoring and Auditing services, <cloud>CloudWatch</cloud> for monitoring performance and operational information such as logs and <cloud>CloudTrail</cloud> to record API behavior and actions to know which operations are used and by who.
 
 moving from EC2 to other options (containers, serverless) decreases the amount of infrastructure overhead and offloads it to AWS.
+
 </details>
 
 ### Developer Tools
@@ -95,7 +96,7 @@ tools for developers, such as AWS SDK for .NET, Visual Studio, Visual Studio Cod
 
 - AWS Toolkit for <cloud>Azure</cloud> devops allows deploying AWS resources from Azure dev and release pipelines
 - AWS Cloud Development Kit for creating infrastructure as code
-  
+
 </details>
 
 ### Practice Activity
@@ -169,7 +170,7 @@ reason to choose AWS:
 
 1. functionality - wide selection of services that can fit general and specific use-cases.
 2. community of customers and partners - millions of active customers, many developers and support options.
-3. security -  satisfies security requirement for military, finance and government standards.
+3. security - satisfies security requirement for military, finance and government standards.
 4. pace of innovation - continually adding services and technology, giving more options and making development easier.
 
 </details>
@@ -201,11 +202,11 @@ Container images share the host operating system kernel, they are composed of la
 
 there are earlier implementations of the idea of virtualization, but it is now very popular, partly due to the rise of the docker containerization platform. docker has many benefits:
 
-> - *Portable* runtime application environment
-> - Package application and dependencies in a *single, immutable artifact*
-> - Ability to run different application versions with different dependencies *simultaneously*
-> - *Faster* development and deployment cycles
-> - Better *Resource utilization and efficiency*
+> - _Portable_ runtime application environment
+> - Package application and dependencies in a _single, immutable artifact_
+> - Ability to run different application versions with different dependencies _simultaneously_
+> - _Faster_ development and deployment cycles
+> - Better _Resource utilization and efficiency_
 
 Images are read-only templates to create a container, so an container is an instance of an image. Images are based on one another, starting from the OS Image and building on it.\
 Images can be created by <cloud>DockerFiles</cloud>, each line in the file adds a layer to the image. an instruction can run a script, copy files, and expose ports.\
@@ -332,7 +333,7 @@ the next part setting up a CI-CD pipeline to update the cluster when code change
 ```sh
 aws codecommit create-repository --repository-name pictShare
 # this is one command!
-aws codebuild create-project --name "pictShare" --description "Build project for pictShare" \ 
+aws codebuild create-project --name "pictShare" --description "Build project for pictShare" \
 --source type="CODEPIPELINE" \
 -- service-role=<CodeBuildExecutionRoleArn> \
 --environment type="LINUX_CONTAINER", image="aws/codebuild/docker:17.09.0", computeType="BUILD_GENERAL1_SMALL" \
@@ -463,18 +464,18 @@ services also use placement strategies and constraints. and they have the "disti
 
 #### ECS Integration With Other AWS Services
 
-Service | Purpose
----|---
-<cloud>ECR</cloud> | Container Images
-<cloud>SQS</cloud> | Decoupling
-<cloud>SNS</cloud> | Decoupling
-<cloud>ELB</cloud> | Load Balancing
-<cloud>Route53</cloud>| DNS
-<cloud>IAM</cloud>| Authentication and Authorization
-<cloud>Secret Manager</cloud> | passwords and other secrets
-<cloud>API Gateway</cloud> | exposing services
-<cloud>Code Pipeline</cloud> | CI-CD
-<cloud>CloudWatch</cloud> | Monitoring and logging
+| Service                       | Purpose                          |
+| ----------------------------- | -------------------------------- |
+| <cloud>ECR</cloud>            | Container Images                 |
+| <cloud>SQS</cloud>            | Decoupling                       |
+| <cloud>SNS</cloud>            | Decoupling                       |
+| <cloud>ELB</cloud>            | Load Balancing                   |
+| <cloud>Route53</cloud>        | DNS                              |
+| <cloud>IAM</cloud>            | Authentication and Authorization |
+| <cloud>Secret Manager</cloud> | passwords and other secrets      |
+| <cloud>API Gateway</cloud>    | exposing services                |
+| <cloud>Code Pipeline</cloud>  | CI-CD                            |
+| <cloud>CloudWatch</cloud>     | Monitoring and logging           |
 
 <cloud>ECR</cloud> is an cloud based AWS native image registry, highly available, secure, with at-rest encryption and fully integrated with <cloud>IAM</cloud> and the <cloud>ECS</cloud>.
 
@@ -540,7 +541,7 @@ a review of Kubernetes objects and concepts:
   - Ephemeral volume - data storage that is tied to the life time of the pod, persists across pod restarts, but when a pod ceases to exist, it's also removed.
   - Persistent volume - data storage that has independent lifecycle and is not tied to any pod. can be backed up by another storage subsystem that is outside of the cluster node.
 - Service - a logical collection of pods and a way to access them. tracks the number of available pods.
-- Namespace -  a logical separation between workloads, can be useful to separate teams and projects that use the same cluster.
+- Namespace - a logical separation between workloads, can be useful to separate teams and projects that use the same cluster.
 - ReplicaSet - ensuring a number of pod replicas are running at the same time
 - Deployment - owns replicaSets and pods, manages the desired state.
 - ConfigMap - api object that stores non-confidential data.
@@ -582,7 +583,7 @@ to be clear: there are two api servers in question: one is the amazon EKS API an
 While AWS manages the control plane nodes, the user is in charge of the worker nodes that run the applications, but even here, the level of responsability can be changed.
 
 - Self Managed nodes: only the control plane is managed by aws
-- Managed nodes:  aws takes more control, allows for easier provisioning, managing, updating and scaling. but the resources used are always visible.
+- Managed nodes: aws takes more control, allows for easier provisioning, managing, updating and scaling. but the resources used are always visible.
 - Fargate: offloading thr resource creation and management to AWS entirely, giving up control of the data plane and allowing aws to provision and manage the worker nodes natively. requires creating a <cloud>Fargate profile</cloud> on the cluster with proper selectors. in this case, every pod has a unique host(no two pods share a host), and there is no visibility into the host (via ssh or otherwise).
 
 ##### Quiz: Choosing The Correct API
@@ -600,18 +601,226 @@ While AWS manages the control plane nodes, the user is in charge of the worker n
 
 </details>
 
-### Configuring Amazon Eks
+#### Configuring Amazon EKS
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Setting Up an EKS cluster
 </summary>
 
+> There are three tasks to perform when building a cluster:
+>
+> 1. Secure your AWS environment.
+> 1. Configure the <cloud>virtual private cloud (VPC)</cloud> networking for the cluster.
+> 1. Create the Amazon <cloud>EKS</cloud> cluster.
+
+##### Perpearing your AWS Environment
+
+The AWS shared responsability model. aws protects the physical infrastructure, while customers protect the content and content security data. the level of separation changes between self-managed, managed, and fargate configurations.
+
+- self managed - aws manages the control plane and the user manages the data plane (<cloud>IAM</cloud>, pod security, runtime security, network security, code security)
+- managed node groups - aws manages building the optimized AMI OS,and the user has to deploy it.
+- Fargate - aws is responsible for sacling node workers.
+
+authentication - who somebody is? either a user or a service. authorization - what can that identity do? which permissions does it posses? EKS uses IAM for authentication, and the native RBAC for authorization.
+
+- cluster IAM role - managing EKS and <cloud>EC2</cloud> machines.
+- node IAM role - like pulling images from <cloud>ECR</cloud>
+- RBAC user - mapped from an IAM role, by default this is too strong, so there should be granular control.
+
+Networking is configured, an EKS must live inside a <cloud>VPC</cloud>. which can have public subnets, private subnets, or a mix.
+
+##### Creating A Cluster
+
+demo of creating a cluster, using the eksctl tool.
+
+eksctl uses <cloud>AWS CloudFormation</cloud> stacks to create <cloud>EKS</cloud> clusters. it has some default actions which make it simple and easy to use.
+
+- Creates IAM roles for the cluster and worker nodes.
+- Creates a dedicated VPC with Classless Inter-Domain Routing (CIDR) 192.168.0.0/16.
+- Creates a cluster and a nodegroup.
+- Configures access to API endpoints.
+- Installs CoreDNS.
+- Writes a kubeconfig file for the cluster.
+
+```sh
+# download eks and install it
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+
+# create a cluster from a config file
+
+eksctl create cluster -f ./prod-cluster-config.yaml
+
+# view nodes
+kubectl get nodes
+```
+
+video demo of managing eks cluster with the web management console. seeing the cluster workloads on the cluster, must have three workloads which define aws functionality.
+
+- aws-node
+- coredns
+- kube-proxy
+
+seeing the compute type, networking, security groups, connecting with OIDC as an additional way to log in into the cluster. cluster logging is disabled by default, and could be enabled at any time.
+
+##### Configuring Horizontal and Vertical Scaling
+
+> - Horizontal scaling: A horizontally scalable system is one that can increase or decrease capacity by adding or removing compute resources. In this example, more pods are deployed when demand spikes (scale out). Pods are removed when demand drops (scale in).
+> - Vertical scaling: A vertically scalable system increases performance by adding more resources to the compute resource, such as faster (or more) central processing units (CPUs), memory, or storage.
+
+in Kubernetes, Horizontal scaling is much easier than it is in traditional server infrastructure, vertical scaling is still a possibility. the number of nodes can be adjusted by using a **Cluster Autoscaler**, which means attaching the worker nodes to an <cloud>EC2 Auto Scaling Group</cloud>. there is an alternative to autoscaling, called **Karpenter**, which is a node lifecycle management solution.
+
+Kubernetes has an internal scaling option, which can be configured to either track cpu utilization or metrics from cloud watch.
+
+```sh
+kubectl autoscale deployment myApp --cpu-percent=50 --min=1 --max=10
+```
+
+Kubernetes also has a vertical scaling option, which can scale down pods with over-requested resources to allow new pods to scheduled.
+
+(demo video)
+deploying a web application and see auto scaling, the 'cluster-autoscaler' and 'metrics-server' run as deployments. we can simulate an increase in demand:
+
+```sh
+kubectl get pods -o wide -A
+kubectl apply -f https://k8s.io/examples/application/php-apache.yaml
+kubectl describe deployment php-apache
+kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
+# on a different terminal
+watch "kubectl get nodes; echo; kubectl get hpa, pods -o wide"
+# back to the original terminal
+kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh/ -c "while sleep 0.01; do wget -q -O -http://php-apache; done"
+```
+
+##### Managing Communication in Amazon EKS
+
+> To simplify inter-node communication, Amazon EKS integrates Amazon VPC networking into Kubernetes through the Amazon VPC <cloud>Container Network Interface (CNI)</cloud> plugin for Kubernetes. The Amazon VPC CNI plugin allows Kubernetes pods to have the same IP address inside the pod as they do on the Amazon VPC network.
+
+a <cloud>VPC</cloud> is an isolated partition in a data center, it's created inside a single region, but spans across all Availability Zone in that region. a VPC has an address range (a CIDR block).\
+EKS communication can be:
+
+- between containers in the same pod
+- between pods (either on the same node or not)
+- ingress connections from outside he cluster
+
+communication inside a pod uses the local host, this doesn't require a <cloud>NAT</cloud> (network address translation). comunication between pods uses Linux namespaces and their internal routing tables. communication from outside uses the <cloud>VPC CNI</cloud> plugin. it provides each pod with an IP address inside the VPC, even though they all live on the same host machine. this uses secondary ip addresses.
+
+Services are Kubernetes native solution for communication with pods (which might disappear and be replaced at any moment). A Kubernetes Service provides a consistent IP address and acts as the entry point for a number of pods.
+
+(video)
+
+- Cluster ip - fixed ip address, only available internally
+- NodePort - fixed port for nodes, externall
+- LoadBalancer - connects with the cloud vendor load balancer
+- ExternalName - maps an internal address into an external resource.
+
+> Ingress:\
+> With Kubernetes ingress objects, you can reduce the number of load balancers you use. An ingress object exposes HTTP and HTTPS routes from outside the cluster to your services and defines traffic rules.
+>
+> AWS Load Balancer Controller:\
+> The AWS Load Balancer Controller is a controller that manages Elastic Load Balancing (ELB) for a Kubernetes cluster. The load balancers can be Application Load Balancers when you create a Kubernetes Ingress or Network Load Balancers when you create a Kubernetes service of type LoadBalancer.\
+> An Application Load Balancer balances application traffic at Layer 7 (for example, HTTP or HTTPS) of the Open Systems Interconnection (OSI) model, while a Network Load Balancer balances network traffic at Layer 4 [for example, Transmission Control Protocol (TCP), User Datagram Protocol (UDP), and so forth]. Application Load Balancers can be used with pods that are deployed to nodes or to Fargate.\
+> Application Load Balancers can be deployed to public or private subnets. Network Load Balancers can load balance network traffic to pods deployed to Amazon EC2 IP and instance targets or to Fargate IP targets.
 
 </details>
 
+
+#### Integrating Amazon EKS with Other Services
+
+<details>
+<summary>
+Running your workloads on an Amazon EKS cluster provides the benefit of using other AWS service.
+</summary>
+
+##### Managing Storage in Amazon EKS
+
+> Running your workloads on an Amazon EKS cluster provides the benefit of using other AWS services including several storage services. In this lesson, you explore how to manage your application workload storage requirements with Amazon Elastic Block Store (Amazon EBS) and Amazon Elastic File System (Amazon EFS)
+
+###### Kubernetes Persistent Storage
+
+> Application workloads requiring data persistence independent of the pod lifecycle require at least two Kubernetes objects, a <cloud>persistent volume (PV)</cloud> and a <cloud>persistent volume claim (PVC)</cloud>.
+
+Persistent Volume storage are still stored on the cluster, but they aren't tied to any pod, and they have their own lifetime. there is also a <cloud>Storage Class</cloud> object which allows for scaling and management of the storage. a final object is the <cloud>Container Storage Interface (CSI)</cloud> driver that connects the cluster to an external storage provider. in EKS, there are <cloud>CSI</cloud> drivers for <cloud>Elastic Block Storage (EBS)</cloud> and <cloud>Elastic File System (EFS)</cloud>.
+
+> When a cluster user submits a PVC with the requisite parameters, the Amazon EBS storage class calls on the EBS CSI driver to allocate storage per the PVC request. The EBS CSI driver makes the necessary AWS API calls to create an EBS volume and attach the volume to the designated cluster node. When attached, the persistent volume is allocated to the PVC. The Amazon EBS CSI driver can be configured to use the various functionality of Amazon EBS including volume resizing, creating volume snapshots, and so forth.
+>
+> A Kubernetes storage class backed by Amazon EFS will direct the Amazon EFS CSI driver to make calls to the appropriate AWS APIs to create an access point to a preexisting file system. When a PVC is created, a dynamically provisioned PV will use the access point for access to the Amazon EFS file system then bind to the PVC.
+
+Fargate Nodes work well with <cloud>EFS</cloud>, and they don't require installing a <cloud>CSI</cloud>.
+
+(video)
+
+attaching <cloud>EBS</cloud> storage to a cluster.
+
+```sh
+kubectl get pv, all -A
+# download IAM role
+curl -o example-iam-policy.json https://raw..githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/master/docs/example-iam-policy.json
+aws iam create policy --policy-name EBC_CSI_Driver_Policy --policy-document file://example-iam-policy.json
+eksctl create iamserviceaccount --name ebs-csi-controller-sa --namespace kube-system --cluster dev --attach-policy-arn <policy> --approve --override-existing-serviceaccounts
+
+# helm
+helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+helm repo update
+helm upgrade --instal aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver --namespace kube-system --set image.repository=<> --set controller.serviceAccount.create=false --set controller.serviceAccount.name=ebs-csi-contoller-sa
+# verify that works properly
+# not gonna write this down
+```
+
+##### Deploying Applications to Amazon EKS
+
+we mostly use the `kubectl` cli tool to deploy applications, but this doesn't scale well. instead, there are other options. we can set up a ci-cd pipeline using aws services:
+
+- <cloud>AWS CodePipeline</cloud>
+- <cloud>AWS CodeCommit</cloud>
+- <cloud>AWS CodeBuild</cloud>
+
+we commit new code and trigger a pipeline, which runs tests and builds an image, this image is pushed into <cloud>ECR</cloud>. at the same time, a <cloud>Lambda</cloud> is triggered which invokes the Kubernetes api to update the application, which then pulls the new image from the repository.
+
+we can also use other tools for ci-cd and integrate them with EKS. for example, a pipeline from github uses a webhook to trigger Jenkins, then the image is stored in a Harbor repository. This then activates a Spinnaker pipeline which can include creating a new Helm manifest and deploying it onto a cluster.
+
+##### Gaining Observability
+
+> Observability is the ability to analyze and view data or processes. It is achieved only after monitoring data (such as metrics) has been compiled. _Observability_ is a term often used interchangeably with _monitoring_, but they are two different concepts.
+
+observability comes in several forms: metrics, logs and traces. metrics are structured data points that can be aggregated and visualized, such as health checks and resource utilization. logs are less structured, and are created by each container and can contain valuable data. Traces follow the path of requests across multiple services.
+
+<cloud>AWS CloudWatch</cloud> has container insights for eks clusters, and can collect diagnostic information. the cloudwatch agent runs as a daemonset on every node and uses fluentBit (a lightweight version of FluentD) to collect logs. there are also open source tools for collecting logs and metrics, such as <cloud>Grafana</cloud>, <cloud>Prometheus</cloud>, <cloud>OpenSearch</cloud>, etc...
+
+(video)
+
+enabling control plane logging for components:
+
+- API Server
+- Audit
+- Authenticator
+- Controller Manager
+- Scheduler
+
+using the same load generator from the previous section to create logs. and then seeing those logs in <cloud>AWS CloudWatch</cloud> at the correct log group. we can choose <cloud>Container Insights</cloud> to see metrics about our clusters.
+
+##### Deploying a Service Mesh with AWS App Mesh
+
+> AWS App Mesh is a service mesh that provides application-level networking to help your services communicate with each other across multiple types of compute infrastructure. App Mesh gives end-to-end visibility and high availability for your applications
+
+the more fragmented our microservices become, network communications become more important and complicated. there are challenges to development, visibility, security and scaling (traffic management).
+
+> A better way to address managing service communication at scale is with a service mesh. A service mesh is a dedicated infrastructure layer in which you can abstract away the service-to-service communication. The abstraction is done with an array of lightweight network proxies deployed alongside the application code.\
+> Developers can use a service mesh to focus on the business application instead of focusing on configuring the intelligence of the network. By removing the logic from the application code, you keep the services smaller and the logic more consistent.\
+> A service mesh monitors all service-to-service traffic and abstracts its configuration. The mesh tracks all data on the wire, which you can use.
+
+The service mesh is deployed on the cluster control plane, and then each pod has mesh proxy sidecar container controlling the traffic.
+
 </details>
+
+#### Maintaining Your Amazon EKS Cluster
+<!-- end of eks primer -->
+</details> 
+
+#### Managing Amazon EKS Costs
 
 ### Separator
 
+<!-- end of containers -->
 </details>

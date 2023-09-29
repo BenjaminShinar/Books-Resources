@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico subspan Bloaty McBloatface rodata dynstr fullsymbols
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico subspan Bloaty McBloatface rodata dynstr fullsymbols jason conan gitlab jenkins unreachables conway gtest codecov typesafe ftxui
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -19,14 +19,14 @@ if we use compiler explorer, we can will see how the binary changes and more stu
 
 </details>
 
-## C++ Weekly - Ep 302 - It's Not Complicated, It's *std::complex*
+## C++ Weekly - Ep 302 - It's Not Complicated, It's _std::complex_
 
  <details>
  <summary>
  a numeric type for complex number, with all the operators.
  </summary>
 
- [It's Not Complicated, It's std::complex](https://youtu.be/s_1SymtU0BI)
+[It's Not Complicated, It's std::complex](https://youtu.be/s_1SymtU0BI)
 
 inside the "complex" header of the standard library. been here since forever, but still being worked on. the equality operator was removed and replace with the spaceship operator.\
 there's also a user defined literals, constexpr support for getting the parts and for operators.
@@ -46,7 +46,7 @@ a side note: some math functions still don't have constexpr support, as those de
  an home exercise to make everything with lambdas.
  </summary>
 
- [C++ Homework: Lambda All The Things](https://youtu.be/_xvAmEbK1vE)
+[C++ Homework: Lambda All The Things](https://youtu.be/_xvAmEbK1vE)
 
 continuing the homework series. now we want to make everything a lambda expression.\
 Lambdas are by default const (unless stated to be mutable), and are implicitly constexpr. we use the same code sample. we need to decide what should and what shouldn't be a lambda expression. probably not the member functions. lambdas allow us to make code const. we can make free functions lambda.
@@ -64,7 +64,7 @@ note: don't forget to have warnings on, use -std=c++20, and clear up the formatt
  different ways and forms of checking a condition during compile time.
  </summary>
 
- [C++23's `if consteval`](https://youtu.be/AtdlMB_n2pI)
+[C++23's `if consteval`](https://youtu.be/AtdlMB_n2pI)
 
 - C++17: `if constexpr`
 - C++23: `is_constant_evaluated`
@@ -1605,7 +1605,7 @@ Macros that allow us to check if we can use a feature in our current standard li
 
 [C++20's Feature Test Macros](https://youtu.be/4Bf8TmbibXw)
 
-c++20 standardized compile time behavior, it allows us to check at compile time if a feature exists in the standard. the value of the macro is the year and the month the feature was accepted, so if something was added in c++20, the value might be "201707L" - designating that it was accepted early on to the standard, back in july 2017.
+c++20 standardized compile time behavior, it allows us to check at compile time if a feature exists in the standard. the value of the macro is the year and the month the feature was accepted, so if something was added in c++20, the value might be "201707L" - designating that it was accepted early on to the standard, back in July 2017.
 
 having this macros allow us to check if the library which we are using supports a feature
 
@@ -3069,7 +3069,7 @@ Ship with Hardening enabled
 
 [Your 5 Step Plan For Deeper C++ Knowledge](https://youtu.be/287_oG4CNMc)
 
-object life time: a class that writes to the console when it's created or destroyed, and tells us what happened, this allows us to see return value optimization, copy ellison, and so on.
+object life time: a class that writes to the console when it's created or destroyed, and tells us what happened, this allows us to see return value optimization, copy elision, and so on.
 
 study the lambda: when are things created, what happens if it's inside the body of the lambda, inside the capture list, what happens when we copy a lambda.
 
@@ -3504,7 +3504,7 @@ int main(){
 }
 ```
 
-we can attempt this with the fibonacci sequence, and in compiler explorer, we can check that we no longer get execution timeout.
+we can attempt this with the Fibonacci sequence, and in compiler explorer, we can check that we no longer get execution timeout.
 
 </details>
 
@@ -3751,7 +3751,7 @@ some best practices for using AI-code generator.
 
 1. Assume the answer is wrong - even when it appears correct and is confident
 2. Assume the answer is stolen from somewhere - be concerned about copyrights
-3. Be explicit about the required guidelines - "prefer libfmt over iostreams"
+3. Be explicit about the required guidelines - "prefer libfmt over iostream"
 4. The answers represent the "average" quality of code on the internet - garbage in, garbage out.
 
 The tools (chatGPT) can be used as a "rubber duck" and help with clarifying the problem, and as jumping point for inspiration and starting. it can also be used as a "second set of eyes", like figuring out a compiler error.
@@ -3902,7 +3902,7 @@ Tools to prevent ABI violations
 
 having two versions of the same API, resulting in ABI violation.
 
-IPO is "Interprocedural optimization", LTO is "link time optimization", so if we enable them we can get warnings about those issues, so it's not only about better performance, it becomes something that helps us write better code.
+IPO is "Inter-procedural optimization", LTO is "link time optimization", so if we enable them we can get warnings about those issues, so it's not only about better performance, it becomes something that helps us write better code.
 
 </details>
 
@@ -4276,7 +4276,7 @@ in c++23, we can stick attributes onto lambda, like the <cpp> [[nodiscard]] </cp
 int main()
 {
     auto l = [] () {return 42;};
-    auto l_23 = [] [[nodiscard]] () [[gnu::deprecated]] {return 42;}; //c++23  
+    auto l_23 = [] [[nodiscard]] () [[gnu::deprecated]] {return 42;}; //c++23
 }
 ```
 
@@ -4308,6 +4308,7 @@ A scripting language based on modern C++.
 
 "Concepts of Programming Languages" book. Lisp (recursive only programming), looking at chai-script again, and re-inventing it into **cons_expr** - a modern scripting language which works with `constexpr` behavior.\
 The tests run in compile time and runtime. has a gui thing that shows the internal, and this supports lisp-like expressions.
+
 </details>
 
 ## C++ Weekly - Ep 389 - Avoiding Pointer Arithmetic
@@ -4379,6 +4380,7 @@ int main()
 the two are equivelent, we could remove the <cpp>mutable</cpp> mark from the lambda and add <cpp>const</cpp> to the member function and then we couldn't change the return value.
 
 (more about compile time members, constructors and mutability).
+
 </details>
 
 ## C++ Weekly - Ep 391 - Finally! C++23's std::views::enumerate
@@ -4415,4 +4417,96 @@ A binary size profiler by google.
 [Google's Bloaty McBloatface](https://youtu.be/MY5DTDc3e-I?si=9EuZ6lQM7fg4Ye8w)
 
 a tool for profiling binary files, like identifying which parts of the binary contribute most to the its size (or virtual memory). such as the ".text" section for functions, ".rodata" for readonly data, ".strtab" and ".dynstr" for strings, and also how much of the binary is debug data. it's also possible to check which function takes up the most space by passing the `-d fullsymbols` flag
+
+</details>
+
+## C++ Weekly - Ep 393 - C++23's std::unreachables
+
+<details>
+<summary>
+Marking code as unreachable to allow optimizations.
+</summary>
+
+[C++23's std::unreachable](https://youtu.be/ohMyb4jPIAQ?si=zcgnCav9kWUmgnY3)
+
+another C++23 feature, <cpp>std::unreachable</cpp>, this raises undefined behavior and is used to optimize away branches.
+
+```cpp
+enum struct Options {Opt1, Opt2, Opt3};
+
+std::string make_string_1();
+std::string make_string_3();
+std::string make_string_3();
+
+std::string process(Options option)
+{
+    switch(option) {
+        case Options::Opt1:
+            return make_string_1();
+        case Options::Opt2:
+            return make_string_2();
+        case Options::Opt3:
+            return make_string_3();
+    };
+    std::unreachable();
+}
+```
+
+but since an enum is an int, the function will also accept any integer value, marking this with <cpp>std::unreachable</cpp> allows the compiler to skip one of the check (optimizing) at release build, or have an undefined behavior.
+
+</details>
+
+## C++ Weekly - Ep 394 - C++11's Most Overlooked Feature: Delegating Constructors
+
+<details>
+<summary>
+Constructors calling other constructors.
+</summary>
+
+[C++11's Most Overlooked Feature: Delegating Constructors](https://youtu.be/G5ewfxJ0KMU?si=leOMGvBQxCps3IJ4)
+
+```cpp
+struct S
+{
+    S() : S(42) {}
+    S(int _x) : x{_x} {}
+
+    int x;
+};
+
+int main()
+{
+    S s;
+    return s.x;
+}
+```
+
+> 1. If your find yourself duplicating code in a constructor: use a delegating constructor.
+> 2. If _Any_ constructor completes, the object had it's lifetime begin and it's destructor is called.
+> 3. Delegating constructors can be used for advanced lifetime management.
+> 4. If you delegate, you cannot initialize any other members.
+
+another option is to have a public constructor call the private one.
+</details>
+
+## C++ Weekly - Ep 395 - How Much is 100,000 Subscribers Worth?
+
+<details>
+<summary>
+General YouTube stuff.
+</summary>
+
+[How Much is 100,000 Subscribers Worth?](https://youtu.be/wLXnH0Z08EU?si=EEMqcZPbS_S0jXem)
+
+the growth of the channel, revenue streams.
+
+the channel gains around 700 subscribers each month, had a bump at April 2020 with the doom port eight hours live stream and the PANDEMIC.
+
+- adds - about 200$ dollars a month
+- amazon affiliate - around 10$
+- sponsorships - costs 600$ an episode, but this doesn't happen much
+- Patreon - not specified, but not much.
+- book sales and contracts - not going into details.
+
+views mean money, not subscribers, clickbait titles work and bring in more views than other videos.
 </details>

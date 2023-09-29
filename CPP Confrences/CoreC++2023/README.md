@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize
+// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -129,7 +129,7 @@ The Linker's Responsibilities are:
 
 The gcc `-c` flag makes it so only the first step of compilation is performed, and it outputs an object file, we can then call `objdump -d` and look at the code disassembly (`objdump -t` will show the symbols).\
 This includes the mangled names and the machine code instructions (we can pass it through `| c++fill` to get de-mangled names for better readability).\
-the assembly code has function calls in assembly, the instuction is call, and the op-code is zero. this is because the compiler doesn't know where the actual code is, and it needs the linker to fill it in. we could also add the `--reloc` flag to the object dump and see how the code expects the re-locations should work.\
+the assembly code has function calls in assembly, the instruction is call, and the op-code is zero. this is because the compiler doesn't know where the actual code is, and it needs the linker to fill it in. we could also add the `--reloc` flag to the object dump and see how the code expects the re-locations should work.\
 we can run the disassembler on the executable file and see how it looks after linking. now the addresses are filled out with actual locations.\
 if we want to link with a library (static archive) we pass the library with `-L` path argument, we can use the `-###` flag to tell gcc to print what it actually will run, and it will show the entire command it would use, including linking the standard libraries. the linking order is sometimes important.
 
@@ -191,7 +191,7 @@ The solution must serve a wide variety of user/areas, it can't break existing co
 
 ### C++ Evolution
 
-C++ stared with two goals - efficient use of hardware (like C), and managing complexity (based on simula). it also meant enforcing argument type checking. a different jey idea is to "represent concepts in code". <cpp>RAII</cpp> - resource acquisition is initialization, not only memory resources, also file handles, locks, sockets, shaders.\
+C++ stared with two goals - efficient use of hardware (like C), and managing complexity (based on Simula). it also meant enforcing argument type checking. a different jey idea is to "represent concepts in code". <cpp>RAII</cpp> - resource acquisition is initialization, not only memory resources, also file handles, locks, sockets, shaders.\
 In the early 80's, Object oriented programming was emerging, encapsulation, abstraction, overloading. then we have templates, containers, algorithms, smart pointers and exceptions.
 
 ### C++ Core Guidelines
@@ -745,7 +745,7 @@ ILP - Instruction Level Parallelism.
 > - Instruction Level Parallelism
 >   - How much code can profit from the available HW resources
 
-the main limiting factor on instuction parallelism is dependencies, an instruction can't be executed until the input data variables are ready. so even if we had a magical endless chip, it would still have to wait.
+the main limiting factor on instruction parallelism is dependencies, an instruction can't be executed until the input data variables are ready. so even if we had a magical endless chip, it would still have to wait.
 
 quiz: endless machine, can do infinite parallelism, exception, memory load and store operation take 3 cycles, other operation take one cycle.
 
@@ -976,6 +976,508 @@ we want to discover bugs and errors as early as possible, like at compile time. 
 Moving forward from that, we can have compile time expressions <cpp>constexpr</cpp>, which must be evaluated at compile time. the classic example is factorial function, we can run it at compile time (if we know what value we want) and then we don't need to calculate it at runtime. if we have data that we want to use, we can embed it into the executable directly.
 
 the last example is template meta-programming. we can reduce runtime complexity by paying more at compile time and binary size.
+
+</details>
+
+## Kevin Carpenter :: Being RESTful with Billions of Dollars in Transactions
+
+<details>
+<summary>
+Case study for making http requests in C++.
+</summary>
+
+[Being RESTful with Billions of Dollars in Transactions](https://youtu.be/KIpUrDUa-vw?si=LEOJcVukxofuva0T), [restful-with-billions github](https://github.com/kevinbcarpenter/restful-with-billions).
+
+using header only libraries for http requests and RESTful APIs.
+
+> What is Rest?
+>
+> - Dissertation of _Roy Fielding_
+> - Representational State Transfer
+> - High level rules only - lower level implementation is not specified
+> - Constrains:
+>   - Client Server Architecture
+>   - Uniform Interface - consistent, well-defined, endpoints.
+>   - Stateless - each operation should conclude and be done (avoiding session management), state management should be done by the client, not the server.
+>   - Cacheable - can be done by an intermediate layer.
+>   - Layers System - system should be layered (end points, backend server, database).
+>   - Code On Demand (optional) - could return binary data (maybe to update a terminal)
+
+in the Electronic payments world, the clients can be smartphones and browsers for online shopping, but there are also traditional client such s registers and terminals.
+
+| HTTP Verb | Crud Operation | URI                   | Payload | Result          |
+| --------- | -------------- | --------------------- | ------- | --------------- |
+| GET       | Read           | /batch/{batchId}      | empty   | returns Json    |
+| POST      | Create         | /sale                 | Json    | Create record   |
+| PUT       | Update         | /void/{transactionId} | Json    | Updates record  |
+| DELETE    | Delete         | /sale/{transactionId} | Empty   | 405 not allowed |
+
+> - upgrading existing XML and legacy systems, adding modern JSON/REST API
+> - Previously using 0MQ - did we change? why?
+> - Header only please! why it matters in our environment
+> - Performance Considerations
+> - <cpp>Nlohmann::json</cpp> - pros and cons
+> - <cpp>Cpp-httplib</cpp> - pros and cons
+
+Using Json over XML - json is humanly readable, and saves a bit in size (around 20%), but in large volumes, the difference adds up and is better for older terminals with limited bandwidth options. there are no comments in json, not error handling, no date type, and it's not as robust as XML.
+
+Headers only libraries are used because they are easier to follow and have minimal decencies, and if the library stops getting updates, then the team must be able to keep marinating it locally (at least for a while) and make small customizations.
+
+### C++ REST
+
+- basic HTTP server
+- REST Practices!
+- creating HTTP client
+- Lessons Learned
+
+detaching a thread to run the server, passing a configuration file (json), listening on a host and port, and setting up routing (also pre-routing for security,post-routing and error handling). authentication and authorization. json serialization, test example. (live demo).
+
+choosing between singleton and injection. using concrete types to bridge between json files and writing typed code.
+
+</details>
+
+## Coral Kashri and Daisy Hollman :: From a Modern to an Unbelievably Modern C++
+
+<details>
+<summary>
+Showing why it's advised to move toward the newer standards.
+</summary>
+
+[From a Modern to an Unbelievably Modern C++](https://youtu.be/3ZWYrlmA5g4?si=YE-z1dd8ZucNPt8Z)
+
+reasons to move from a "modern" standard (11/14/17) to a "more modern" one (17/20/23). many new features, less bugs, better optimizations, shorter development time. this talk will show code comparison, and give a roadmap for migrating and moving forward to a newer version, and also introduce some nice c++23 features.
+
+### Code Comparisons
+
+showing how the new standard makes writing code easier and safer.
+
+#### Example 1: Extracting Values from Pair/Tuple.
+
+```cpp
+std::map<std::string, std::string> my_map;
+// C++11/14
+for (std::pair<const std::string, std::string>& key_val : my_map) {
+   auto& key = key_val.second;
+   auto& val = key_val.first; // oops! this is a bug
+   // some magic with key & val
+}
+// C++17
+for (auto& [key, val]: my_map) {
+   // some magic with key & val
+}
+```
+
+C++17 added the structured binding concept, which we can use for any <cloud>std::tuple</cloud> return type.
+
+```cpp
+std::tuple<int, double, std::string> func() { return {42, 4.2, "*"}; }
+auto [i, d, s] = func();
+```
+
+#### Example 2: if statements
+
+```cpp
+// C++11/14
+template <typename ContT>
+void my_func(ContT &container, const typename ContT::value_type &value) {
+   auto it = std::find(container.cbegin(), container.cend(), value);
+   if (it != container.cend()) {
+      std::cout << "The value " << value << " exists in container\n";
+      // func_when_value_exist(container, value);
+   } else {
+      std::cout << "The value " << value << " doesn't exists in container\n";
+      // func_when_value_does_not_exist(container, value);
+   }
+   // `it` continues to exists in the scope
+   container.emplace_back(value + 1);
+   // now te iterator might be invalidated, depending on the container type
+}
+
+// C++17
+template <typename ContT>
+void my_func(ContT &container, const typename ContT::value_type &value) {
+   if (auto it = std::find(container.cbegin(), container.cend(), value); it != container.cend())
+   {
+      std::cout << "The value " << value << " exists in container\n";
+      // `it` exists here
+   } else {
+      std::cout << "The value " << value << " doesn't exists in container\n";
+      // `it` exists here
+   }
+   // `it` doesn't exist anymore
+}
+```
+
+in C++11/14, the iterator still exists, so if the container is changed, it might be invalidated. we could use an inner scope to make sure the iterator is no longer accessible, but in C++17 we got initializers inside `if` and `switch` statement.
+
+#### Example 3: If Statement on Compile Time Information
+
+```cpp
+struct Number {virtual void inc() = 0;};
+
+// C++11/14
+// bad code!
+template<typename T>
+void func(T &t) {
+   // Runtime if-else condition on compile time information
+   // both branches should be able to perform the same commands
+   // which means the following code wo't compile for arithmetic types
+   if (std::is_arithmetic<T>::value) {
+      ++t;
+   }
+   else if (std::is_base_of<Number, T>::value) {
+      t.inc();
+   }
+   std::cout << "I am here\n";
+}
+
+// working code, SFINAE
+template<typename T, std:: enable_if_t<std::is_arithmetic<T>::value>>
+void func(T &t) {
+   ++t;
+   std::cout << "I am here\n";
+}
+
+template<typename T, std:: enable_if_t<std::is_base_of<Number,T>::value>>
+void func(T &t) {
+   t.inc();
+   std::cout << "I am here\n";
+}
+
+// C++17
+// this simply works now, like wanted before.
+template<typename T>
+void func(T &t) {
+   if constexpr (std::is_arithmetic<T>::value) {
+      ++t;
+   }
+   else if constexpr (std::is_base_of<Number, T>::value) {
+      t.inc();
+   }
+   std::cout << "I am here\n";
+}
+```
+
+compile time <cpp>if constexpr</cpp> allow us to make decisions on compile-time information and write simpler code without abusing SFINAE for some cases.
+
+#### Example 4: Unions
+
+using a <cpp>union</cpp> can be undefined behavior if used inside a type with a constructor or destructor.
+
+```cpp
+struct MyStructure {
+   int a;
+   double b;
+};
+
+// C++11/14
+union myUnion {
+   int a;
+   double b;
+   MyStructure ms;
+};
+
+class MyUnionHolder {
+   enum Types {
+      a, b, ms, none
+   };
+   Types current_type;
+   MyUnion m;
+
+   public:
+   void set_a(int val) { m.a=val; current_type = Types::a; }
+   void get_a(int val) {
+      if (current_type == Types::a) {
+         return m.a;
+      } else {
+         // what to do here? throw? do nothing? crash?
+      }
+   }
+   // more getters and setters
+};
+
+// C++17
+std::Variant<int, double, MyStructure> my_variant;
+my_variant = 5;
+int res = std::get<int>(my_variant);
+try {
+   double d = std::get<double>(my_variant); // throws
+} catch (std::bad_variant_access const &ex) {
+   std::cout << ex.what() << : " my_variant contained int, nou double \n"; // ex.what() -> "Unexpected index"
+}
+```
+
+C++17 added <cpp>std::variant</cpp> as an alternative to `union`, with clear defintions and the ability to use <cpp>std::visit</cpp>.
+
+```cpp
+template<class... Ts> struct overloaded: Ts... { using Ts::operator()...; };
+// explicit deduction guide (until C++20):
+template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+std::Variant<int, double, MyStructure> my_variant;
+std::visit(overloaded {
+   [] (auto& val) { std::cout << val << '\n'; },
+   [] (MyStructure ms) { std::cout << ms.a << " " << ms.b << '\n'; }
+}, my_variant)
+```
+
+#### Example 5: There is a Return Value
+
+Forcing the user to user the return value with the <cpp>[[nodiscard]]</cpp> attribute.
+
+```cpp
+enum Status {
+   SUCCESS,
+   FAILURE,
+   FORCE_EXIT_OR_SOMETHING_TERRIBLE_WOULD_HAPPEN
+};
+
+// C++11/14
+class MyClass {
+   public:
+   Status do_something() { Status s; /*...*/; return s; }
+};
+
+void my_func(MyClass& mc)
+{
+   mc.do_something(); // no waring
+   // more code
+}
+
+// C++17
+class MyClass {
+   public:
+   [[nodiscard]] Status do_something() { Status s; /*...*/; return s; }
+};
+
+void my_func(MyClass& mc)
+{
+   mc.do_something(); // warning, and if -Werror is used then an error
+   // more code
+}
+```
+
+#### Example 6: Sub String
+
+```cpp
+// C++11/14
+std::string remove_prefix(const std::string& str, const std::string& prefix) {
+   return str.substr(str.find(prefix) + prefix.size()); // creates a copy
+}
+
+// C++17
+std::string_view remove_prefix(std::string_view str, std::string_view prefix) {
+   return str.substr(str.find(prefix) + prefix.size()); // a non owning span
+}
+
+```
+
+<cpp>std::string_view</cpp> is a non-owning span object that doesn't create a new copy of the original string. we don't need to pass a `const` objects anymore.
+
+#### Example 7: Variadic Templates
+
+```cpp
+// C++11/14
+// this will look weird if someone passes a string instead
+template <typename T>
+auto sum14(T value)
+{
+   return value;
+}
+
+template <typename T, typename... Args>
+auto sum14(T value, Args... args)
+{
+   return value + sum14(args...);
+}
+
+// other code which is too long to copy to limit this to only integrals
+```
+
+unpacking variadic templates in C++11/14 required a templated function with one argument, and a function with variadic arguments. then at compile time there would be multiple functions created which would call one another at runtime. this is massive code bloat. we would need to more code to do conjunction on integral variables. C++17 have fold expressions which are easier to write and don't create as many functions.
+
+```cpp
+// C++17
+template <typename T>
+auto sum17(Args... args)
+{
+   return (args + ...); // fold expression
+}
+
+// only for arithmetics
+template <typename T, typename = std::enable_if_t<std::conjunction_v<std::is_arithmetic_v<Args>...>>>
+auto sum17(Args... args)
+{
+   return (args + ...); // fold expression
+}
+
+// even easier!
+template <typename T, typename = std::enable_if_t<(std::is_arithmetic_v<Args> &&...)>>
+auto sum17(Args... args)
+{
+   return (args + ...); // fold expression
+}
+```
+
+#### C++20 examples
+
+<cpp>std::span</cpp>
+
+```cpp
+std::vector<int> vec = {1,2,3,4,5,6,7,8,9};
+// C++11/14/17
+std::vector<int> sub_vec(vec.begin() + 2, vec.end() - 2); // copy
+auto start = vec.begin() +2 ; // not copying, but here are two more object to keep track of!
+auto end = vec.end() - 2;
+// C++20
+std::span<int> sub_vec(vec.begin() + 2, vec.end() - 2); // no copy, only pointers
+```
+
+in C++20, we got <cpp>std::span</cpp> - which do owning spans, and we can also send the span to a function without defining the type. which means we can use <cpp>std::array</cpp> without specifying the size (no creating a new function instance for each size)
+
+```cpp
+void func(std::span<int> cont) {/*...*/}
+```
+
+<cpp>std::ssize</cpp>
+
+```cpp
+// C++11/14/17
+for (auto i = vec.size() - 1; i >= 0; --i) { // oops, underflow
+   std::cout << vec[i] << ', ';
+}
+
+for (auto i = vec.size(); i > 0; --i) { // no underflow
+   std::cout << vec[i - 1] << ', '; // good luck remembering why this was used
+}
+
+// C++20
+for (auto i = std::ssize(vec) - 1; i >= 0; --i) { // oops, underflow
+   std::cout << vec[i] << ', ';
+}
+```
+
+we can get the size of containers with <cpp>std::ssize</cpp> and it will be a signed value, so we won't get underflow when it's zero.
+
+concatenating strings:
+
+```cpp
+// C++11/14/17
+std::ofstream file("FileID_" + file_id + "." file_version + "." + system_version + "." file_ext);
+
+// using the format library
+std::ofstream file(fmt::format("FileID_{}.{}.{}", file_id , file_version, + system_version, file_ext));
+
+// C++20
+std::ofstream file(std::format("FileID_{}.{}.{}", file_id , file_version, + system_version, file_ext));
+```
+
+C++20 adopted the formatting library and made it into part of the standard.
+
+nodiscard with description:
+
+```cpp
+
+// C++20
+enum Status {
+   SUCCESS,
+   FAILURE,
+   FORCE_EXIT_OR_SOMETHING_TERRIBLE_WOULD_HAPPEN
+};
+
+class MyClass {
+   public:
+   [[nodiscard("Possible status might indicate to shutdown the program/pc/office")]] 
+   Status do_something() { Status s; /*...*/; return s; }
+};
+
+void my_func(MyClass& mc)
+{
+   auto s = mc.do_something();
+   if (s == Status::FORCE_EXIT_OR_SOMETHING_TERRIBLE_WOULD_HAPPEN) {
+      exit(1);
+   }
+   // more code
+}
+```
+
+explain in the warning/error why the return must be used.
+
+<cpp>concepts</cpp> and `<cpp>requires</cpp>`
+
+```cpp
+template <typename T>
+concept Arithmetic = std::is_arithmetic_v<T>;
+
+template <Arithmetic... Args>
+auto sum20(Arithmetic&& ... args)
+{
+   return (args + ...);
+}
+```
+
+making the constraints visible and clear. we can replace virtual interfaces with concepts, which makes the inheritance chains shorter, and don't require declaring the interfaces from the start.
+
+### Moving Forward
+
+migrating to a newer version. we want to maintain backward compatiblity. the standard doesn't remove capabilities easily, the list is short and anything that was removed is already a problem if somebody uses it.
+
+- trigraphs - did you even hear about this?
+- <cpp>std::random_shuffle</cpp> - was buggy
+- <cpp>std::auto_ptr</cpp> - didn't work
+- comma operator within subscript operator
+- iterator class - deprecated, not removed.
+
+they don't remove stuff that will break code, unless the code was already broken.
+
+using new compilers allows to have new optimizations, which means faster code. so unless there are reasons to use an older compiler (like a custom made one, or with a dedicated hardware), then we should move forward.
+
+```cpp
+// C++17
+std::vector<int> vec = {1,2,3,4};
+std::cout << vec[1]; // prints 2
+std::cout << vec[1, 2]; // this prints 3\
+// C++20
+std::cout << vec[(1,2)]; // C++20 onwards
+```
+
+this was deprecated to allow overloading the subscript operator for multiple parameters (like for matrix)
+
+### Other Features
+
+the above examples used C++17 features:
+
+- structured bindings
+- `if` statement wit initializer
+- <cpp>if constexpr</cpp>
+- <cpp>std::variant</cpp> and <cpp>std::visit</cpp>
+- <cpp>[[nodiscard]]</cpp>
+- <cpp>std::string_view</cpp>
+- fold expressions
+
+but there are also other features, such as:
+
+- Guaranteed copy elision
+- Class template argument deduction
+- Non-type template parameters declared with auto
+- Simplified nested namespaces
+
+other c++20 features:
+
+- <cpp>consteval</cpp>
+- Designated initializers
+- <cpp>[[likely]]</cpp> and <cpp>[[unlikely]]</cpp>
+- <cpp>[[no_unique_address]]</cpp>
+- Modules
+- Coroutines
+- Three way comparison operator (spaceship `<=>`)
+
+C++23 features:
+
+- <cpp>std::mdspan</cpp>
+- deducing <cpp>this</cpp>
+- <cpp>std::flat_map</cpp> and <cpp>std::flat_set</cpp>
+
 </details>
 
 ## Separator
