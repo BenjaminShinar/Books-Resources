@@ -4487,6 +4487,7 @@ int main()
 > 4. If you delegate, you cannot initialize any other members.
 
 another option is to have a public constructor call the private one.
+
 </details>
 
 ## C++ Weekly - Ep 395 - How Much is 100,000 Subscribers Worth?
@@ -4509,4 +4510,42 @@ the channel gains around 700 subscribers each month, had a bump at April 2020 wi
 - book sales and contracts - not going into details.
 
 views mean money, not subscribers, clickbait titles work and bring in more views than other videos.
+
+</details>
+
+## C++ Weekly - Ep 396 - `emplace` vs `emplace_hint`! What's The Difference?
+
+<details>
+<summary>
+Understanding the different forms of the operation.
+</summary>
+
+[emplace vs emplace_hint! What's the difference?](https://youtu.be/hW4NJF4RLnE?si=AoH4ER09ItnKxwf_), [github_issue](https://github.com/lefticus/cpp_weekly/issues/16), [benchmark](https://quick-bench.com/q/I9Wmi2dnRwmCeNo-2aLvP6aUTUw).
+
+<cpp>emplace</cpp> creates an object in a specific place, avoiding copying and moving objects.
+
+<cpp>emplace_back</cpp> in containers. <cpp>emplace_front</cpp> when supported (lists, deque), <cpp>emplace(iterator, args)</cpp> to create objects at a specific location, or use <cpp>emplace</cpp> in associative containers (<cpp>std::set</cpp>, <cpp>std::map</cpp>,
+<cpp>std::multiset</cpp>, <cpp>std::multimap</cpp>, <cpp>std::unordered_set</cpp>, <cpp>std::unordered_map</cpp>, <cpp>std::unordered_multiset</cpp>, <cpp>std::unordered_multimap</cpp>) to have the object created at the appropiate location. the return value is a pair object with iterator and a boolean. <cpp>try_emplace</cpp> first checks if the key exists, and then passes the arguments to create the object. <cpp>emplace_hint</cpp> and <cpp>try_emplace_hint</cpp> take a location argument that acts as a hint where to construct the object. <cpp>emplace</cpp> in gcc standard library is defined with <cpp>emplace_hint</cpp>, but not in clang standard library.
+
+```cpp
+std::vector<std::string> vec;
+vec.emplace_back(42, 'a'); // call the string constructor with the arguments to create a string of 42 times the 'a' character
+std::list<std::string> list;
+list.emplace_front("77");
+list.emplace(list.begin(), "here");
+std::set<std::string> set;
+set.emplace(42, 'a');
+std::map<std::string> map;
+map.try_emplace("a", 42, 'a'); // insert object
+map.try_emplace("a", 42, 'a'); // doesn't create the string object
+map.emplace_hint(map.back(), "b", 42, 'a'); // doesn't create the string object
+```
+
+also used in <cpp>std::optional</cpp>, <cpp>std::variant</cpp>, <cpp>std::expected</cpp> and <cpp>std::any</cpp>.
+
+```cpp
+std::optional<std::string> opt;
+opt.emplace(42, 'a');
+```
+
 </details>

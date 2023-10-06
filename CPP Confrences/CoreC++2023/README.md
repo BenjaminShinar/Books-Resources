@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib
+// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib Dennard
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -1387,7 +1387,7 @@ enum Status {
 
 class MyClass {
    public:
-   [[nodiscard("Possible status might indicate to shutdown the program/pc/office")]] 
+   [[nodiscard("Possible status might indicate to shutdown the program/pc/office")]]
    Status do_something() { Status s; /*...*/; return s; }
 };
 
@@ -1478,6 +1478,340 @@ C++23 features:
 - deducing <cpp>this</cpp>
 - <cpp>std::flat_map</cpp> and <cpp>std::flat_set</cpp>
 
+</details>
+
+## Alex Cohn :: Does The C++ Compiler Work Too Hard?
+
+<details>
+<summary>
+Case study of analyzing a complete build of the Unreal Game Engine.
+</summary>
+
+[Does The C++ Compiler Work Too Hard?](https://youtu.be/IjstIoRM7MI?si=CFVCbwDYNQVN5HJu)
+
+showing a case study about the **Unreal Engine** and how long it takes to build, with an optimized build taking 5 hours on a normal machine. build speed can increase by reducing the number of compilation units - unity build (this has massive effects), using precompiled headers and there is a slight (very small) effect of using different compilation flags (`-Oz`, `-Os`).\
+Of course, compilation time isn't the only consideration, we want the program to run efficiently.\
+there is a correlation between the time it takes to optimize each unit and the size of the resulting object. The effect of unity build (combining multiple files into one) seems to be that it reduces the number of times the compiler initializes. The "sqlite" library seems to be an outlier, it takes a long time to build for a relatively small resulting object size. it's actually 100 C files, so if they are combined into a single compilation unit, there can be some speed gains.
+
+</details>
+
+## Eran Talmor :: Scope Sensitive Programming
+
+<details>
+<summary>
+A way of programming that relies on scope based thread specific objects.
+</summary>
+
+[Scope Sensitive Programming](https://youtu.be/UBTvUY9IEsA?si=iIXCU8qUz36c18fG), [scoped github](https://github.com/erangithub/scoped).
+
+The motivating problem
+
+> - A computational SW
+> - Graph in the infrastructure layer
+> - Multiple layers of business logic
+> - Big API layers
+> - Script thread: heavy, lengthy computations
+> - GUI thread: light, short computations
+>
+> How do we set different threshold from the Scripting and GUI threads?
+
+both the Scripting thread and the GUI thread want to use the graph infrastructure.
+
+there are commonly prescribed solutions: either setting the threshold with an direct API, passing the threshold argument as part of the call, or changing the architecture entirely to support 'per-thread graph views'. each of the solutions has it's own issues.
+
+The lecture suggests using a `scoped<>` template ("hacking the stack"). wrapping a value with a tag to differentiate them between instances. they must be put on the stack.
+
+```cpp
+template<class T, class... tags>
+class scoped {
+/* ... */
+};
+
+using ScopedThreshold = scoped<int, struct ScopedThresholdTag>;
+```
+
+> - **Doubly-Linked list** embedded in the call-stack.
+> - Each template instance of `<data, tags...>` is separate.
+> - **Thread-local** static pointer to the current top or bottom maintained by the constructor and destructor.
+
+```cpp
+void f1() {
+   ScopedThreshold thresh(30);
+   f2();
+}
+
+void f2() {
+   f3();
+}
+
+void f3() {
+   ScopedThreshold thresh(60);
+}
+```
+
+each thread sees a unique doubly linked list.
+
+```cpp
+using ScopedThreshold = scoped::scoped<int, struct ScopedThresholdTag>;
+
+void print_number(int x) {
+   std::cout << "The number is ";
+   if (auto thresh = ScopedThreshold::top())
+   {
+      if (x >= thrash->value())
+      {
+         std::cout << "BIG" << std::endl;
+         return
+      }
+   }
+   std::cout << x << std::endl;
+}
+
+int main()
+{
+   {
+      ScopedThreshold scoped_threshold{4};
+      print_number(3); // Expected: "The number is 3"
+      print_number(10); // Expected: "The number is BIG"
+   }
+   print_number(10); // Expected: "The number is 10"
+   return 0;
+}
+```
+
+we use a static (thread specific) function to check if function is inside a scoped stack, and then we can use it.
+
+Caching
+
+- Many computations modules enjoy caching
+- Caching best determined by the consumer of a function/module
+- `scoped<>` can help set caching at different levels/scopes
+- in our example `is_prime()` prefers the outer most scope.
+
+```cpp
+// Create a new scoped cache for caching prime numbers
+using ScopedPrimeCache = scoped::scoped::<std::unordered_map<int, bool>, struct ScopedPrimeCacheTag>;
+
+// check if a given number is a prime number
+bool is_prime(int n)
+{
+   if (n<2) return false;
+   // Retrieve the prime number cache, taking the bottom (outer) most scope
+   auto pScopedCache = ScopedPrimeCache::bottom();
+
+   // if previously cached, return the result
+   if (pScopedCache) {
+      auto & cache = pScopedCache->value();
+      if (auto it = cache.find(n); it != cache.end()) {
+         std::cout << "Cache hit for " << n << std::endl;
+         return it->second();
+      }
+   }
+
+   // calculate wether the number is a prime or not, and cache the result
+}
+
+// Find the next prime number greater than a given number
+int next_prime(int n) {
+   int k = n + 1;
+   for (; is_prime(k); k++;);
+   return k;
+}
+
+// Find the first n prime numbers
+std::vector<int> first_n_primes(int n) {
+   std::vector<int> primes;
+   int p = 0;
+   for (int i = 0; i < n; ++i) {
+      p = next_prime(p);
+      primes.push_back(p);
+   }
+   return primes;
+}
+
+int main()
+{
+   // Create a new scoped cache for caching prime numbers
+   ScopedPrimeCache primeCache;
+
+   first_n_primes(5);
+   for (auto p : first_n_primes(10)) // 5 cache hits
+   {
+      std::cout << p << std::endl;
+   }
+}
+```
+
+we can use this for event Counting, such as collecting usage statistics, internal code, external users. we can count events inside a function or inside a thread.
+
+(example of a calculator class)
+
+another use case is with decorators (and dependency injection), such as decorating log messages. each scope can add decorations to the message, and they are applied sequentially. and since this is thread specific, there is no problem of interference.
+
+There are of course a few drawbacks to the solution, mostly that it introduces invisible affects to functions. for that reason, there is the option to use a _scoped::shield_ object. it acts the same as any other scope, but it sets the top and bottom scopes to null at creation, and resets them back to what they were at the destructor.
+
+```cpp
+int main()
+{
+   {
+      ScopedThreshold scoped_threshold{4};
+      print_number(3); // Expected: "The number is 3"
+      print_number(10); // Expected: "The number is BIG"
+      {
+         ScopedThreshold::shield shield;
+         print_number(10); // Expected: "The number is 10"
+      }
+      print_number(10); // Expected: "The number is BIG"
+   }
+   print_number(10); // Expected: "The number is 10"
+   return 0;
+}
+```
+
+another option is adding a "manifest", so the scopes gain more visibility. this is done via macros. this allows attaching scopes to specific objects, classes and functions.
+
+> **Pros**:
+>
+> - flexible, supporting multiple use-cases
+> - Thread Safe
+> - Fast - no locks
+> - No need to set and reset configurations
+> - Hide low-level details from header files
+> - Polymorphic
+> - Easy to apply to existing code
+> - Changes the code, not architecture
+> - Intuitive?
+> - Easy to maintain
+>
+> **Cons**:
+>
+> - Provide hidden knobs / side channel
+>   - "Manifests" may help
+> - Code prone to External affects
+>   - "Shields" may help
+> - If not used carefully, may lead to bad coding
+> - Don't use instead of arguments
+
+</details>
+
+## Gal Oren :: Accelerated C++ with OpenMP
+
+<details>
+<summary>
+Many-Core programming with OpenMP.
+</summary>
+
+[Accelerated C++ with OpenMP](https://youtu.be/kxN2JOxrwzs?si=9udHZ67ifINThDZ7)
+
+Parallel computing helps us increase our computation power by scaling across multiple instances and not by just building stronger machines.
+
+"Dennard Scaling" is an observation (similar to "Moore's law") that it's possible to increase the number of transistors in a given space and still have the same power efficiency, thanks to technological advancements. this was the case until the early 2000's, now the power consumption increases more than the computing capabilites. this gives the raise for multi-core programming.
+
+Many-Core computing is the idea of reducing the power of each invidual core, but spreading the work across many of them.
+
+Graphical Processing Units (GPU):
+
+- The strength of a GPU lies in the massive parallelism it offers.
+- Each compute unit in the GPU is not very powerful, but there are many of such units.
+
+this works for simple and single instructions, which are repeated across large data sets. in recent years, more than half of the super computers in the world rely on GPUs to dome large part of their computing.
+
+we need to write programs that can take advantage of those capabilites.
+
+> programming models:
+>
+> - OpenMP
+> - OpenCl
+> - OpenACC
+> - CUDA
+> - SYCL
+
+### OpenMP High Performance Computing
+
+moving from multi-core to many-core. OpenMP is hardware agnostic, vendor agnostic, support incremental "upgrading" to parallelism. it exposes a runtime library on the system layer with support for shared memory access and threading on the hardware.
+
+a simple model is "fork-join" parallelism, in which some sections of the code are parallelized, with the number of threads increasing as long as there are performance gains.
+
+Calculating Pi
+
+$$
+\begin{align*}
+\int_0^1 \frac{4.0}{1+x^2}dx = \pi \\
+\sum\limits_{i=0}^{n}F(X_i)\Delta \approx \pi
+\end{align*}
+$$
+
+serial code to calculate &pi;
+
+```c
+static long num_steps = 100000;
+double step;
+
+int main()
+{
+   int i;
+   double x;
+   double pi;
+   double sum = 0.0;
+   step = 1.0 / (double) num_steps;
+   for (i = 0; num_steps < n; i++) {
+      x = (i + 0.5) * step;
+      sum = sum + 4.0/(1.0 + x * x);
+   }
+   pi = step * sum;
+}
+```
+
+parallel code with OpenMP loop & reduction
+
+```c
+#include <omp.h>
+static long num_steps = 100000;
+double step;
+
+int main()
+{
+   int i;
+   double pi;
+   double sum = 0.0;
+   step = 1.0 / (double) num_steps;
+   #pragma omp parallel // create a team of threads
+   {
+      double x; // create a scalar local to head thread to hold the value of x at the center of each interval
+      #pragma omp for reduction(+:sum)
+      for (i = 0; num_steps < n; i++) {
+         x = (i + 0.5) * step;
+         sum = sum + 4.0/(1.0 + x * x);
+      }
+   }
+   pi = step * sum;
+}
+```
+
+later, OpenMP started working with the concept of "Tasks", attaching threads to a workload. then it started supporting offloading workloads to other devices. this meant that the memory isn't necessary shared across all devices, some can be in the CPU and can some can be GPU with separate memory space.
+
+default data sharing example, the stack arrays are copied to the device and the calculation is executed there, and then they are copied back.
+
+```c
+int main(void)
+{
+   int N = 1024;
+   double A[N];
+   double B[N];
+
+   #pragma omp target
+   {
+      // ii is private on the device since it's being declared within the target region
+      for (int ii = 0; ii < n; ii++) {
+         A[ii] = A[ii] + B[ii]
+      }
+   } // end of target region
+}
+```
+
+we can choose to run asynchronously and launch the target without calculation without waiting for it to complete, and explicitly wait for it at a later point. for dynamic memory we need to explicitly map memory for it to correctly copy the data (we can specify which data we copy from the host and back from the device to get better performance). we can combine device parallelism and thread parallelism (and then use SIMD). there are many additional `#pragma omp` options to get granular. but in recent versions of OpenMP we can get really good defaults from the simple `#pragma omp loop`.
+
+(demo of running code on two different GPUs)
 </details>
 
 ## Separator

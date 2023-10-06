@@ -1,11 +1,13 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Okun Kube fooa SVennam aaaabc
+// cSpell:ignore Okun kube fooa SVennam aaaabc kubelet kubernetes nginx openshift linux redhat
 -->
 
 # Books-Resources
 
-where I store my learning from books, youtube videos, and other sources which don't fit elsewhere.
+where I store my learning from books, YouTube videos, and other sources which don't fit elsewhere.
+
+## Geneal stuff
 
 ### FireShip - WebSockets in 100 Seconds & Beyond with Socket.io
 
@@ -248,6 +250,7 @@ Select-String -Path .\regex22.txt -Pattern "^fooa+bar$"
 
 - [About Regex](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_regular_expressions?view=powershell-7.2)
 - [PowerShell](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/select-string?view=powershell-7.2)
+
 </details>
 
 ## Markdown Formatting Tips
@@ -299,6 +302,15 @@ definition and tooltip
 
 [latex symbols](https://www.cmor-faculty.rice.edu/~heinken/latex/symbols.pdf)
 
+$$
+\begin{align*}
+state_m = state_n + path_{(n,m)} \\
+state_m = state_n + delta_{(n,n+1)} + ... + delta_{(m-1, m)} + metadata_m \\
+\int_0^1 \frac{4.0}{1+x^2}dx = \pi \\
+\sum\limits_{i=0}^{n}F(X_i)\Delta \approx \pi
+\end{align*}
+$$
+
 </details>
 
 ## Other stuff
@@ -313,4 +325,5 @@ set environment variables
 - linux: `export AWS_DEFAULT_REGION=us-east-1`
 - windows cmd: `set AWS_DEFAULT_REGION=us-east-1`
 - powershell: `$Env:AWS_DEFAULT_REGION='us-east-1'`
+
 </details>

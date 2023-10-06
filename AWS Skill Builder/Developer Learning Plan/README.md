@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore elbv2 Neumann cgroups pictShare Kubelet eksctl Karpenter kube-proxy kubeconfig kube-system
+// cSpell:ignore elbv2 Neumann cgroups pictShare Kubelet eksctl Karpenter kube-proxy kubeconfig kube-system Alexa
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -179,7 +179,7 @@ reason to choose AWS:
 
 ## Containers
 
-<!-- <details> -->
+<details>
 <summary>
 Several Courses focusing on containers.
 </summary>
@@ -498,7 +498,7 @@ there are two additional scheduling strategies:
 
 ### Amazon Eks Primer
 
-<!-- <details> -->
+<details>
 <summary>
 //TODO: add Summary
 </summary>
@@ -725,7 +725,6 @@ Services are Kubernetes native solution for communication with pods (which might
 
 </details>
 
-
 #### Integrating Amazon EKS with Other Services
 
 <details>
@@ -815,12 +814,251 @@ The service mesh is deployed on the cluster control plane, and then each pod has
 </details>
 
 #### Maintaining Your Amazon EKS Cluster
-<!-- end of eks primer -->
-</details> 
+
+<details>
+<summary>
+Updating EKS Clusters to New Kubernetes Versions.
+</summary>
+
+> Add-ons extend the operational capabilities of Amazon EKS clusters but are not specific to any one application. This includes software like observability agents or Kubernetes drivers that allow the cluster to interact with underlying AWS resources for networking, compute, and storage. Add-on software is typically built and maintained by the Kubernetes community, cloud providers like AWS, or third-party vendors.
+
+##### Maintining Add-ons
+
+> Amazon EKS automatically installs on every cluster the following add-ons:
+>
+> - Amazon VPC CNI
+> - kube-proxy
+> - CoreDNS
+
+they have two flavours - managed and self-managed.
+
+There are also third-party add-ons, but they can get out of date if a new Kubernetes version comes and breaks the API the add-ons use.
+
+addons can viewed in the configuration tab of in the aws management console.
+
+##### Maintining Upgrades
+
+upgrading starts with deploying the new API Server nodes and checking the health of the nodes, if a problem is encountered then it rollback is performed. a possible cause for failure is not having enough free ip addresses in the subnet. aws only updates the control plane nodes, worker nodes must be upgraded by the user (but not fargate nodes).
+
+for a managed node group, aws creates a new EC2 machine (based on the autoscaling group and launch template), it then removes one of the existing nodes. this is repeated until the upgrade is completed.
+
+> There are two options for the update strategy:
+>
+> - Rolling update – This option respects PodDisruptionBudgets for your cluster. The update fails if Amazon EKS is unable to gracefully drain the pods that are running on this node group because of a PodDisruptionBudget issue.
+> - Force update – This option does not respect PodDisruptionBudgets. It forces node restarts.
+
+for self-managed node groups, the process needs to be done manually, either by creating a new node group and migrating to it or by updating the <cloud>CloudFormation</cloud> stack node group to se the new AMI.
+
+(video)
+demo of upgrading an <cloud>EKS</cloud> cluster version from 1.20 to 1.21. in the web console, there is a mesage to update a cluster. in the <kbd>configuration</kbd>, we can click <kbd>Update now</kbd> and select the new version. this will update the control plane only.\
+Once done, we are prompted to upgrade the ami for the node groups. we proceed with the update by selecting each node group and choosing the same version as we updated the control plane to, we have the option of selecting which update strategy to use. We should also update the add-ons of the cluster in the <kbd>Add-Ons</kbd> tab.\
+We can always see the log of the cluster upgrade in the <kbd>update history</kbd> tab (either for the cluster itself or the node group) or in the add-on page.
+
+</details>
 
 #### Managing Amazon EKS Costs
 
-### Separator
+<details>
+<summary>
+EKS Costs.
+</summary>
 
-<!-- end of containers -->
+> Part of the Six Pillars of the AWS the Well-Architected Framework is cost optimization, which is summarized as running systems to deliver business value at the lowest price point.
+
+The Bulk of the costs associated with an <cloud>EKS Cluster</cloud> come from the compute resources. the control Plane and Networking services make up a smaller share of the total costs.
+
+Compute resources follow they same cost options as <cloud>EC2 machines</cloud>:
+
+- On Demand - "pay as you use"
+- Saving Plans and Reserved Instances - make a commitment for 1 or 3 years and receive a bulk discount
+- Spot and Fargate Spot - for stateless or fault tolerant workloads that aren't time critical.
+
+Using managed node groups also can decrease the costs.
+
+</details>
+
+</details>
+
+</details>
+
+## Serverless Computing
+
+<!-- <details> -->
+<summary>
+Several Courses Focusing on Serverless.
+</summary>
+
+### Introduction to Serverless Development
+
+<details>
+<summary>
+Introduction for Servereless for Developers.
+</summary>
+
+> Writing Code
+>
+> - System Architecture
+> - Design Patterns
+> - Frameworks and Libraries
+>
+> Managing Code
+>
+> - Tools
+> - Developer Workflows
+> - Test/Deployment Automation
+> - Environment Management
+
+(video)
+
+moving to serverless has benfits in costs (both upfront and scaling), ease of scaling, and it helps with making development cycles faster and reaching the market quicker.
+
+- <cloud>Lambda</cloud> - Compute
+- <cloud>API Gateway</cloud> - API proxy
+- <cloud>S3</cloud> - Storage
+- <cloud>DynamoDB</cloud> - Database
+- <cloud>SNS</cloud>, <cloud>SQS</cloud> - Interprocess Messaging
+- <cloud>Step Functions</cloud> - Orchestration
+- <cloud>Kinesis</cloud>, <cloud>Athena</cloud> - Analytics
+- <cloud>Developer Tools</cloud> - Tools
+
+we will focus mostly on <cloud>Lambda</cloud>, and event based compute service. it has an <cloud>IAM resource Policy</cloud> for what can trigger the code, and a different policy for what the code can do and interact with (based on the execution role).
+
+#### Writing Lambda Functions
+
+(video)
+
+best practices for writing lambda code are the same as regular code. a code should have `Handler` method, which acts as an entry point. the typical layout divides the code into layers:
+
+1. Handler - Function configuration, <cloud>Lambda</cloud> specific code and no business logic.
+2. Controller - event processing, the core business logic.
+3. Service - external integrations, connections to other services.
+
+(video)
+
+we can include external libraries and fraeworks, this will effect the speed in which the lambda operates.\
+lambda has two "starts" - the "cold start" when the code is downloaded and the execution runtime starts, and the "warm start", when the event is triggered. the smaller the size of the library (less dependencies) the better. it might be better to have statically linked libraries.
+
+#### MManaging Serverless Applications
+
+(video)
+
+The developer tool chain doesn't have to change when moving to serverless, but there is an additional step of packaging and deploying the application onto the lambda service. if the code is spread across multiple lambdas that need to interact, then that's an additional issue to consider. even a simple API can become a very complicated <cloud>CloudFormation</cloud> template. .because of that, it's suggested to use an application framework, such as <cloud>AWS SAM (Serverless Application Model)</cloud> which simplifies the process. it defines everyting in a smaller way. it also has a CLI tool to package the code (and upload to S3).
+
+```sh
+sam package
+sam deploy
+```
+
+there are also other options besides <cloud>AWS SAM</cloud>, such as APEX, Zappa, Chalice, Sparta, Claudia.js, and more.
+
+(video)
+
+The Code should be orgainzed in the source code repository. a Repository can contain one function or all of them. the way to think about this is to divide the function into "services", each being one or more functions (and other services) that work together, and they should be in the same separate repository.
+
+(video)
+
+there should a local environment (IDE) to write and develop the code, but there should also be a AWS environment where the code is deployed and tested using real AWS resources. each developer can have it's own sandbox or have the whole team use a shared sandbox. it's better to separate production environment from the development account.
+
+#### Testing and Debugging Serverless Applications
+
+(video)
+
+hierarchy of testing - locally, remotely, and having integration (regression, acceptance) tests. Unit tests should focus on the business logic (the controller layer), and have mockups for the other services. there are mocking options such as <cloud>LocalStack</cloud> and <cloud>DynamoDB local</cloud>, and there is an option to build a custom mocking solution (which is complicated). it's also possible that the local tests simply run against the cloud.
+
+(video)
+
+besides testing, we should also be able to debug the code, this is harder to do with <cloud>Lambda</cloud> functions. it's impossible to run a step-by-step debugger on an active instance. however, with the <cloud>SAM CLI</cloud> tool, it is possible to launch a docker container with the lambda code and then debug it.
+
+</details>
+
+### Getting Into The Serverless Mindset
+
+<details>
+<summary>
+Overview of Serverless Architecture Mindset
+</summary>
+
+(video)
+
+Key concepts of serverless architecture, and changing how we think. a "traditional" web service application would probably use and <cloud>EC2 machine</cloud> and some database. we can grow and add machines for increased demand and use a <cloud>Elastic Load Balancer</cloud>, and use an <cloud>EC2 Auto Scaling Group</cloud> to start and terminate machines as needed. we can even spread it across multiple Availability Zones for high availability. this model is fine, but it has a lot of over head to consider: machine and OS patching, scaling, health checks... this is all time consuming and detracts from focusing on the core business logic. and since this is similar for most applications, it's a lot easier to offload this burden onto the cloud Vendor.
+
+#### How Can Serverless Help?
+
+(video)
+
+in a serverless world, the architecture changes. if we focus on the core components, we can determine that there are requests from clients, some business logic applied to it, and a backend / database. we could consider the requests as 'events' and the business logic as 'handling events', and that leads us to <cloud>Lambda</cloud> functions.\
+When we say "serverless", what we means is:
+
+- No Server Management
+- Flexible Scaling
+- Automating High Availability (Fault Tolerance)
+- No Idle Capacity
+
+the same benefits of moving to the cloud apply to serverless architecture.
+
+#### Managed Services Connected by Functions
+
+(video)
+
+when we move from tractional architecture to serverless, there are other shifts that we should make. <cloud>Lambda</cloud> is a core component, but there are other services, such as <cloud>API Gateway</cloud>, databases, messaging, and storage.\
+Multiple functions can be combined with <cloud>Step Functions</cloud>, deployment and pipelines can be handled by other services. moving to serverless allows the application to reduce itself and stop being a monolith, it makes the application clearer and easier to handle. we do this by thinking about "Event-orient architecture", where each event (not just api calls) can trigger a flow.
+
+- Data Stores
+  - <cloud>S3</cloud>
+  - <cloud>DynamoDB</cloud>
+  - <cloud>Kinesis</cloud>
+  - <cloud>Cognito</cloud>
+  - <cloud>RDS - Aurora</cloud>
+- End Points
+  - <cloud>Alexa</cloud>
+  - <cloud>API Gateway</cloud>
+  - <cloud>IOT Core</cloud>
+  - <cloud>Step Functions</cloud>
+- Repositores
+  - <cloud>CloudFormation</cloud>
+  - <cloud>CloudTrail</cloud>
+  - <cloud>CloudWatch</cloud>
+  - <cloud>CodeCommit</cloud>
+- Event / Message Services
+  - <cloud>SES</cloud>
+  - <cloud>SQS</cloud>
+  - <cloud>SNS</cloud>
+  - Cron Events
+
+#### From Hours to Minutes with Parallelization
+
+(video)
+
+another thing with serverless architecture is how it works with parallelism, since we don't have idle servers running, we can take advantage of this and focus on breaking down the tasks into parallelized work. a task that takes an hour on a single machine could be broken into 360 task each taking 10 seconds and be completed in less than a minute.\
+one example is transcoding video to different formats. the work is split between many lambdas (each working on a small part of the video) and is then combined at the end. there is also "pyWren" which executes python code on <cloud>Lambda</cloud> functions.
+
+#### More Environments, More Innovation
+
+(video)
+
+another benefit of serverless is that it allows creating and deploying more environment, like giving each developer a sandbox environment, or having an active environment for each feature. this makes automation more critical, and requires using an application framework such as <cloud>AWS SAM</cloud>.
+
+(video)
+
+serverless architecture allows more time to focus on providing unique value and frees time from infrastructure management.
+</details>
+
+### AWS Lambda Foundations
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+> AWS Lambda is an event-driven, serverless compute service that lets you run code without provisioning or managing servers. This course focuses on what you need to start building Lambda functions and serverless applications. You learn how AWS Lambda works and how to write and configure Lambda functions. You explore deployment and testing considerations and finally end with a discussion on monitoring and troubleshooting Lambda functions.
+
+#### Introduction to Serverless
+
+#### Separator
+<!-- end of aws lambda foundations -->
+</details>
+
+### Seperator
+
+<!-- end of serveless -->
 </details>
