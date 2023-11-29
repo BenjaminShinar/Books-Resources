@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico subspan Bloaty McBloatface rodata dynstr fullsymbols conan gitlab jenkins unreachables conway gtest codecov typesafe ftxui Hylo
+// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Werror Wall Wextra Weverything Wconversion Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico subspan Bloaty McBloatface rodata dynstr fullsymbols jason conan gitlab jenkins unreachables conway gtest codecov typesafe ftxui Hylo
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -707,8 +707,8 @@ constexpr auto get_array(const std::string& str)
 
 int main()
 {
-    constexpr static auto length = get_length(make_string("hello Jason, ",3));
-    constexpr static auto str = get_array<length>(make_string("hello Jason, ",3));
+    constexpr static auto length = get_length(make_string("hello jason, ",3));
+    constexpr static auto str = get_array<length>(make_string("hello jason, ",3));
     constexpr static auto sv = std::string_view(str.begin(), str.end());
 
 }
@@ -741,7 +741,7 @@ constexpr auto to_oversized_array(const std::string & str)
 int main()
 {
     constexpr auto make_data =[](){
-        return make_string("hello Jason, ",3); // lambda
+        return make_string("hello jason, ",3); // lambda
     };
     constexpr static auto str = to_oversized_array(make_data()));
     constexpr static auto sv = std::string_view(str.begin(), str.end());
@@ -775,7 +775,7 @@ consteval auto to_right_size_array(Callable callable)
 int main()
 {
     constexpr auto make_data =[](){
-        return make_string("hello Jason, ",3); // lambda
+        return make_string("hello jason, ",3); // lambda
     };
     constexpr static auto str = to_right_size_array(make_data));
     constexpr static auto sv = std::string_view(str.begin(), str.end());
@@ -4662,15 +4662,4 @@ So C++ will continue to be around for a long time.
 C++ itself begins in 1979 as "C with Classes", and got its' name in 1982/3. with the first standard in 1998. C++03 was a first revision, and then C++11 begins the modern era of C++. and since then there was a three year release cycle (c++14, c++17, c++20, c++23).
 
 Programming Language ranking shows a decline in popularity until 2018, and a rise since then, with usage being in a steady state.
-
-as for the language not evolving anymore, the Hello World example has it's first major change in C++23 with the formatting library and <cpp>std::println</cpp>.
-
-```cpp
-int main()
-{
-    std::cout << "Hello World\n"; // before c++23
-    std::println("Hello World"); // since C++23
-}
-```
-
 </details>
