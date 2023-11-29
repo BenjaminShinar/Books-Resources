@@ -1041,6 +1041,7 @@ another benefit of serverless is that it allows creating and deploying more envi
 (video)
 
 serverless architecture allows more time to focus on providing unique value and frees time from infrastructure management.
+
 </details>
 
 ### AWS Lambda Foundations
@@ -1054,7 +1055,105 @@ serverless architecture allows more time to focus on providing unique value and 
 
 #### Introduction to Serverless
 
+Serverless applications are a further step in hiding away the infrastructure layer. there is no need to manage instances, operating systems and servers. the amount of operational tasks is reduced, allowing the customer to focus on core business development.
+
+| Deployment and Operational tasks               | Traditional Environment | Serverless |
+| ---------------------------------------------- | ----------------------- | ---------- |
+| Configure an instance                          | YES                     | NO         |
+| Update operating system (OS) YES               | NO                      |
+| Install application platform                   | YES                     | NO         |
+| Build and deploy apps                          | YES                     | YES        |
+| Configure automatic scaling and load balancing | YES                     | NO         |
+| Continuously secure and monitor instances      | YES                     | NO         |
+| Monitor and maintain apps                      | YES                     | YES        |
+
+Some AS Serverless services:
+
+| Service                    | Type                   | Notes                        |
+| -------------------------- | ---------------------- | ---------------------------- |
+| <cloud>Lambda</cloud>      | Compute                |
+| <cloud>Lambda@Edge</cloud> | Compute                | Compute on edge servers      |
+| <cloud>S3</cloud>          | Storage                | Object Storage               |
+| <cloud>DynamoDB</cloud>    | Storage                | Data Store, NoSQL            |
+| <cloud>EventBridge</cloud> | Event Bus              |
+| <cloud>SNS</cloud>         | Interprocess Messaging | Simple Notification Service  |
+| <cloud>SQS</cloud>         | Interprocess Messaging | Simple Queue Service         |
+| <cloud>API Gateway</cloud> | Api Integration        |                              |
+| <cloud>AppSync</cloud>     | Api Integration        |                              |
+| <cloud>CDK</cloud>         | Developer Tools        | Cloud Development Kit        |
+| <cloud>SAM</cloud>         | Developer Tools        | Serverless Application Model |
+
+<cloud>AWS Lambda</cloud> is an event driven, high-availability and automatically scaling compute service. it runs user code without requiring provisioning and management of instances. code is easily logged and monitored via <cloud>CloudWatch</cloud>. it supports integration with other aws services and has a flexible permissions model. it is highly available and scales with demand, but payment is based on usage.
+
+Event Driven Architecture means that when changes happen, an event is published and other components can respond to it (consume it). events can be user initiated or generated from other aws services, such as changes in a database. Events are created by _Producers_, and then are sent to the lambda via a _Router_ (such as <cloud>EventBridge</cloud>) and eventually get acted on by _Consumers_.
+
+Lambdas are stateless functions, or pieces of code designed to run in response to one of those events. they don't maintain state between invocations and don't rely on any data stored in the running instances. A lambda has:
+
+- Access permissions - which services it is allowed to interact with.
+- Triggering Events - which kind of events causes the lambda to run.
+- Code - user provided code.
+- Configurations - memory, timeout and lambda concurrency.
+
+#### How AWS Lambda Works
+
+Lambdas can be invoked synchronously, asynchronously and by "polling" depending on the kind of event.
+
+Synchronous invocations returns the function response and data about the lambda invocation (version, runtime, etc...), there are no built-in "retries" in case the function fails.
+
+The following AWS services invoke Lambda synchronously:
+
+- <cloud>Amazon API Gateway</cloud>
+- <cloud>Amazon Cognito</cloud>
+- <cloud>AWS CloudFormation</cloud>
+- <cloud>Amazon Alexa</cloud>
+- <cloud>Amazon Lex</cloud>
+- <cloud>Amazon CloudFront</cloud>
+
+Asynchronous invocation model utilizes an event queue and is used when the response isn't immediately required. the event is queued and the invoking function (or user) continues without getting the response. With the asynchronous model, it's possible to send records of lambda invocation to a destination. this can be configured based on the result of the lambda or other conditions.
+
+The following AWS services invoke Lambda asynchronously:
+
+- <cloud>Amazon SNS </cloud>
+- <cloud>Amazon S3</cloud>
+- <cloud>Amazon EventBridge</cloud>
+
+as part of Lambdas integration with other services, it can watch for changes in queue and streaming services, and poll for events that match a condition to trigger the lambda.
+
+- <cloud>Amazon Kinesis</cloud>
+- <cloud>Amazon SQS</cloud>
+- <cloud>Amazon DynamoDB Streams</cloud>
+
+When A lambda is invoked, it runs in a _Lambda Execution Environment_. this handles the resources (memory and cpu), manages the the lifecycle of the functionand provides external extensions. the lifecycle has three stages: Init, Invoke and Shutdown.
+
+The Init stage includes creating the execution environment, downloading the code onto it with any decencies and running the functions' static code. the stage has three phases:
+
+1. Extension init - starts all extensions
+1. Runtime init - bootstraps the runtime
+1. Function init - runs the function's static code
+
+In the Invoke stage, the function handler code is run, and once completed, the lambda prepares for an addition invocation.
+
+The Shutdown stage happens if the lambda did not receive any invocations after a period of time. the lambda shuts down the extensions and then removes the runtime environment.
+
+> When you write your function code, do not assume that Lambda automatically reuses the execution environment for subsequent function invocations. Other factors may require Lambda to create a new execution environment, which can lead to unexpected results. Always test to optimize the functions and adjust the settings to meet your needs.
+
+If we want our code to be performant, there are some ways to optimize it for Lambda invocations.
+When a lambda is invoked, it can either go through a "cold" or "warm" start. a "cold start" happens when a new execution environment is required, in this case the lambda must download the code and initialize the runtime. a "warm start" happens when a lambda is invoked on an existing runtime. in this case, only the user code needs to be initialized (such as user packages and dependencies), and the code starts running faster. Billing begins at the "warm start" phase.
+
+If the time needed for the "cold start" is important for the proper running of the application, it is possible to reduce it and make it predicable by using provisioned concurrency, which ensures that a known number of runtime exectution environments are active (passed the "cold start") at all time, so there is no suprise latency.
+
+> Best practice: Write functions to take advantage of warm starts
+>
+> - Store and reference dependencies locally.
+> - Limit re-initialization of variables.
+> - Add code to check for and reuse existing connections.
+> - Use tmp space as transient cache.
+> - Check that background processes have completed.
+
+#### AWS Lambda Function Permissions
+
 #### Separator
+
 <!-- end of aws lambda foundations -->
 </details>
 

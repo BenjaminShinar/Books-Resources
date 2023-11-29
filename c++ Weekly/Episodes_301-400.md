@@ -4622,7 +4622,7 @@ int main()
     {
         for (const auto &elem : windows)
         {
-        std::cout << elem << ',';
+            std::cout << elem << ',';
         }
         std::cout << '\n';
     }
