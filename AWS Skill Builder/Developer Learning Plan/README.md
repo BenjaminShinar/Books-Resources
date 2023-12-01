@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore elbv2 Neumann cgroups pictShare Kubelet eksctl Karpenter kube-proxy kubeconfig kube-system Alexa
+// cSpell:ignore elbv2 Neumann cgroups pictShare Kubelet eksctl Karpenter kube-proxy kubeconfig kube-system Alexa omponent
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -1046,9 +1046,9 @@ serverless architecture allows more time to focus on providing unique value and 
 
 ### AWS Lambda Foundations
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Serverless and Lambda basics.
 </summary>
 
 > AWS Lambda is an event-driven, serverless compute service that lets you run code without provisioning or managing servers. This course focuses on what you need to start building Lambda functions and serverless applications. You learn how AWS Lambda works and how to write and configure Lambda functions. You explore deployment and testing considerations and finally end with a discussion on monitoring and troubleshooting Lambda functions.
@@ -1152,9 +1152,360 @@ If the time needed for the "cold start" is important for the proper running of t
 
 #### AWS Lambda Function Permissions
 
-#### Separator
+The <cloud>Lambda</cloud> function has two sets of permissions, both fully controlled and integrated with <cloud>IAM</cloud>.
 
-<!-- end of aws lambda foundations -->
+```json
+{
+  "Version": "2012-40-17",
+  "Statement": [
+    {
+      "Sid": "Allow PutItem in table/test",
+      "Effect": "Allow",
+      "Action": "dynamodb:putItem",
+      "Resource": "arn:aws:dynamodb:us-west-2:###:table/test"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "sts:assumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      }
+    }
+  ]
+}
+```
+
+- Resource policy - permissions to invoke the function
+- Execution role - permissions for the lambda itself to act with
+
+the execution role controls which other services the lambda can act upon, such as <cloud>DynamoDB</cloud>, <cloud>S3</cloud> and others. this role must include a trust policy for to allow the function to assume it.
+
+The resource policy (also called function policy) controls who can invoke the lambda (users, roles, aws services, other aws accounts).
+
+the resource based policy is easier to use than roles for most cases, but it does have a size limit.
+
+> - Lambda resource-based (function) policy
+>   - Associated with a "push" event source such as Amazon API Gateway
+>   - Created when you add a trigger to a Lambda function
+>   - Allows the event source to take the _lambda:InvokeFunction_ action
+> - IAM execution role
+>   - Role selected or created when you create a Lambda function
+>   - IAM policy includes actions you can take with the resource
+>   - Trust policy that allows Lambda to _AssumeRole_
+>   - Creator must have permission for _iam:PassRole_
+
+Policy management can be part of the <cloud>Sereveless Application Model</cloud>. the permissions are scoped to the resources used in the application, and are added in the <cloud>SAM</cloud> template.
+
+Lambda can also be allowed to access resources inside <cloud>Virtual Private Cloud</cloud>. this is done by connecting the Lambda to the subnet and security groups in the <cloud>VPC</cloud> or through <cloud>AWS Private Link</cloud>.
+
+#### Authoring AWS Lambda Functions
+
+Lambda functions can be written in several programming languages, and has plugins for several IDEs.
+
+- Node.js
+- Python
+- Java
+- Go
+- C#
+- Ruby
+- PowerShell
+
+AWS continuously updates the supported versions for popular runtimes, with new versions being added and old versions removed (deprecated), the complete list is maintained in the [AWS documentation](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html).
+
+The Lambda execution begins at the function handler method, this method takes two arguments, the required event object and (optionally) a context object. the event object is mandatory, and each type of event creates a different event object. the object that represents a S3 event isn't the same as the object from an API gateway event. the context object contains information about the lambda function itself, such as the requestID, the specific runtime and which <cloud>CloudWatch</cloud> stream will contain the log statements from the lambda. other data depends on the specific runtime.
+
+in terms of design, the best-practice suggests separating the business logic code from the lambda code, with the lambda specific code simply calling the actual code. this allows for portability and testing. another suggestion is writing modular functions - each lambda should only do one thing. Lambda functions are stateless, which means they shouldn't rely on any information saved in the context object (the runtime), every invocation can be run on a different runtime, so there is no consistent state. if data needs to be stored across invocations, it should be done in a different service:
+
+> - <cloud>Amazon DynamoDB</cloud> is serverless and scales horizontally to handle your Lambda invocations. It also has single-millisecond latency, which makes it a great choice for storing state information.
+> - <cloud>Amazon ElastiCache</cloud> may be less expensive than DynamoDB if you have to put your Lambda function in a VPC.
+> - <cloud>Amazon S3</cloud> can be used as an inexpensive way to store state data if throughput is not critical and the type of state data you are saving will not change rapidly.
+
+A final suggestion is to minimize the size and the number of dependencies inside the deployment package. This is done by minimizing the number of modules imported, correctly bundling packages and using lightweight frameworks if possible. A modular design that keeps the responsabilities of each lambda small and well defined is a great way to achieve this - if a function has a limited scope, then the amount of external dependencies is also limited. The size and complexity of a deployment package effects the start-up time of the lambda.
+
+There are also best practice advice for the code itself:
+
+- Include logging statements.
+- Return a result from the lambda.
+- Provide environment variables - separate configuration from the code itself. environment variables are encrypted using either the <cloud>Customer Master Key</cloud> or a user key from the <cloud>Key Management Service</cloud>.
+- Manage Confidential data in the <cloud>Parameter Store</cloud> and retrieve it with the secrets manager. this can be combined with <cloud>AWS AppConfig</cloud>.
+- Avoid Recursive code - **DON'T** call the lambda from itself. if this ever occurs, set the concurrent execution limit to zero to throttle requests while the code is being fixed (to avoid racking up costs).
+- Gather metrics with <cloud>CloudWatch</cloud> - use the embedded metric format to automatically extracy metrics from logs.
+- Reuse execution context - Take advantage of an existing execution context when you get a warm start by doing the following:
+  > - Store dependencies locally.
+  > - Limit re-initialization of variables.
+  > - Reuse existing connections.
+  > - Use tmp space as transient cache.
+  > - Check that background processes have completed.
+
+```js
+console.log("Loading Function");
+const aws = require("aws-sdk");
+const s3 = new aws.S3({ apiVersion: "2006-03-01" });
+exports.handler = async (event, context) => {
+  // Get the object from the event and show its content type
+  const bucket = event.Records[0].s3.bucket.name;
+  const key = decodeURIComponent(
+    event.Records[0].s3.object,
+    key.replace(/\+/g, " ")
+  );
+  const params = {
+    Bucket: bucket,
+    Key: key,
+  };
+  try {
+    const { ContentType } = await s3.getObject(params).promise();
+    console.log("CONTENT TYPE:", ContentType);
+    return ContentType;
+  } catch (err) {
+    console.log(err);
+    const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exists and your bucket is in the same region as this function.`;
+    console.log(message);
+    throw new Error(message);
+  }
+};
+```
+
+Lambda functions cab be built in several ways. it can be written directly in the consode editor using the <cloud>AWS Cloud9 IDE</cloud>, this allows for rapid testing. another advantage is that the console provides common blueprints and complete apps as built-in resources, we can also use a container image to deploy the lambda. larger code that rely on dependencies (other than the AWS SDK) can be uploaded as a deployment package - either a zip archive file or a container image in the <cloud>Elastic Container Registry</cloud>. there are also ways to automate lambda deployment with services such as <cloud>SAM</cloud>, <cloud>CodeBuild</cloud>, <cloud>CodeDeploy</cloud> and <cloud>CodePipeline</cloud>.
+
+> <cloud>AWS Serverless Application Model</cloud> is an open-source framework for building serverless applications. It provides shorthand syntax to express functions, APIs, databases, and event source mappings.
+
+<cloud>SAM</cloud> uses a yaml to define resource, permissions and mappings in a concise way (compared to the more detailed <cloud>CloudFormation</cloud> syntax) that creates a serverless application with lambdas, databases, apis and event mappings. it includes a number of prebuilt policies which follow the principle of least privleges. the SAM template is then expanded and built as a <cloud>CloudFormation stack</cloud>. \
+The first line in the template tells AWS that this SAM template that needs to be transformed into a CloudFormation one. then it define a resource, such as a lambda function. the lambda has properties (code location, handler, runtime), policies (what it's allowed to do) and sets up a mapping to to an <cloud>API Gateway endpoint</cloud>.
+
+There is a command line interactive tool for managing SAM applications, it launches a docker container to test, validate and debug the code. [SAM CLI](https://github.com/aws/serverless-application-model). the key commands are:
+
+- `sam init` - initialize a serverless application
+- `sam local` - run locally
+- `sam validate` - validate a template
+- `sam deploy` - deploy the serverless application
+- `sam build` - builds the artifact
+
+other aws services (<cloud>CodeBuild</cloud> and <cloud>CodeDeploy</cloud>) integrate with <cloud>SAM</cloud> to automate packaging, testing and safe deployment.
+
+#### Configuring Your Lambda Functions
+
+When creating A lambda, there are three configuration parameters:
+
+- memory - max 10GB of memory allocated to a lambda, with CPU and other resources proportional to it.
+- timeout - max of 900 seconds (15 minutes), time until the lambda quits on it own.
+- concurrency - how many functions can run at the same time, set at region level for the account (default 1000).
+
+Lambda is billed based on the memory configuration, the number of invocations and the total runtime. the duration is billed in 1 milliseconds increments. setting a timeout can reduce costs, and while higher memory allocations cost more, they can also reduce the runtime (and therefore cost less) - this can be checked with a tool called _aws-lambda-power-tunning_.
+
+there are three concurrency types:
+
+- Unreserved concurrency - concurrency that is not allocated to any specific set of functions. hard limit of minimal 100.
+- Reserved concurrency - maximum number of concurrent instances for the function, no other function can use it. no additional costs.
+- Provisioned capacity - number of instances which were "warm started" at any given time. provides high performance and low latency, incurs costs.
+
+we might want to limit concurrent lambda invocations (reserved concurrency) to match it with downstream resource that doesn't scale as quickly as lambda functions.
+
+Lambda also have concurrency Burst options, which increase the concurrency limit for all functions in the region based on demand. Concurrency metrics are sent to <cloud>CloudWatch</cloud>, so monitors and alerts can be created.
+
+#### Deploying and Testing Serverless Applications
+
+A traditional (server based) application uses existing machines to hold the application, while a serverless application customizes the resource and instances around itself using a blueprint. <cloud>CloudFormation</cloud> is AWS Infrastructure-as-Code service, a single template can create a stack, which is a collection of resources that are managed as a single unit. Traditional applications are easier to test locally, but serverless applications testing more closely resembles the "real thing".
+
+##### Demo : Using AWS SAM and AWS Cloud9 to Create, Edit, and Deploy a Lambda Function
+
+S3 event triggers a lambda which writes to dynamoDB. using the <cloud>Cloud9</cloud> service, we first click <kbd>Create Environment</kbd> and give it a name and description. the type is an <cloud>EC2</cloud> machine with a <cloud>IAM</cloud> role that can call other services. we can verify the version with the command `sam --version`. we select the <kbd>AWS Explorer</kbd> and choose the region and click on the <kbd>Lambda</kbd> symbol and we can either import, create or deploy a lambda. we click <kbd>Create Lambda SAM Application</kbd> and follow the wizrad and select the <kbd>Node.Js</kbd> runtime, and we use the basic "hello world" option. we can view the "launch.json" and see the launch configuration of the lambda. we can run the application to test it.\
+if we wish to generate an s3 event, we can type in the console `sam local generate-event s3 put` and copy the payload and add it into launch file as the testing payload.\
+we now add the <cloud>S3</cloud> bucket and the event mapping. we do this by editing the "template.yaml" file and adding it to the resources object, we also add the S3 event to the mapping so the object creation event will trigger the lambda.
+
+```yaml
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # other stuff
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: HelloWorldFunctionBucket
+            Events: s3:ObjectCreated:*
+
+  HelloWorldFunctionBucket:
+    Type: AWS::S3::Bucket
+```
+
+we can verify the template with the command `sam validate` in containing folder, this will warn us of errors and indentation problems.
+
+we next create a bucket to store the artifacts, this is done with the explorer and select <kbd>Create S3 Bucket</kbd> and giving it a name. we can deploy the application, store the artifact in the new bucket, and then the resources are actually created in our aws environment. we can now upload a file to the application bucket ("HelloWorldFunctionBucket") and see that our lambda was invoked.
+
+our next step is expanding the logic to have the lambda write to a <cloud>dynamoDb</cloud>. we create the table as a resource in the template file, and we grant the lambda permissions to write to the table.
+
+```yaml
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # other stuff
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: HelloWorldFunctionBucket
+            Events: s3:ObjectCreated:*
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HelloWorldFunctionTable
+
+  HelloWorldFunctionBucket:
+    Type: AWS::S3::Bucket
+  HelloWorldFunctionTable:
+    Type: AWS::Serverless::SimpleTable
+```
+
+if we deploy the application now, we can see the newly created table. we can now modify the code to write the information
+
+```js
+console.log("Loading Function");
+const aws = require("aws-sdk");
+const ddb = new aws.DynamoDB({ apiVersion: "2012-08-10" });
+exports.handler = async (event, context) => {
+    // boiler plate code before here
+
+    const s3ObjectKey = event.Records[0].s3.object.key;
+    const s3TimeStamp = event.Records[0].eventTime;
+    const params = {
+      TableName: '' // copy the name
+      Item: {
+        'id': {S: s3ObjectKey},
+        'timestap': {S: s3TimeStamp}
+      }
+    };
+    await ddb.putItem(params, function(err, data) {
+      if(err) {
+        console.log("Error", err);
+      } else {
+        console.log("Success");
+      }
+    }).promise();
+    return response;
+};
+```
+
+we can now deploy again and test by uploading a file to the bucket and seeing it created in the dynamodb table.
+
+---
+
+a drawback of serverless applications is that they can go live without proper testing, this risk can be mitigated by employing versioning and rollbacks to ensure safe deployments. when we publish a lambda, it gets a unique incremental number, and is also published with the tag of "LATEST". we can use the unique number to always refer to that version in an <cloud>ARN</cloud>, and we can create specific aliases such as "DEV", "BETA" and "PRODUCTION" and have them refer to specific versions.
+
+with aliasing in place, we can test using routing, sending part of the traffic to the existing version and part of it to a new version.
+
+> You can point an alias to a maximum of two Lambda function versions. The versions must meet the following criteria:
+>
+> - Both versions must have the same runtime role.
+> - Both versions must have the same dead-letter queue configuration, or no dead-letter queue configuration.
+> - Both versions must be published. The alias cannot point to $LATEST.
+
+we can also integrate this with <cloud>CodeDeploy</cloud>, which offers traffic shifting strategies:
+
+> - Canary – Traffic is shifted in two increments. If the first increment is successful, the second is completed based on the time specified in the deployment.
+> - Linear – With linear traffic shifting, traffic is slowly shifted in a predetermined percentage every X minutes based on how you have it configured.
+> - All-at-once – Shifts all traffic from the original Lambda function to the updated Lambda function version at once.
+
+<cloud>CodeDeploy</cloud> also has alarms and hooks for extra control. this options can be set up in the SAM template
+
+```yaml
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # other stuff
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: HelloWorldFunctionBucket
+            Events: s3:ObjectCreated:*
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HelloWorldFunctionTable
+      AutoPublishAlias: live
+      DeploymentPreference:
+        Type: Canary10Percent10Minutes
+        Alarms:
+          - !Ref AliasErrorMetricGreaterThanZeroAlarm
+          - !Ref LaterstVersionErrorMetricGreaterThanZeroAlarm
+        Hooks:
+          PreTraffic: !Ref PreTrafficLambdaFunction
+          PostTraffic: !Ref PostTrafficLambdaFunction
+```
+
+#### Monitoring and Troubleshooting
+
+AWS Lambda integrates with monitoring services to monitor and troubleshoot functions. for <cloud>CloudWatch</cloud>, it automatically tracks and displays:
+
+> - Invocations - The number of times your function code is run, including successful runs and runs that result in a function error. If the invocation request is throttled or otherwise resulted in an invocation error, invocations aren't recorded.
+> - Duration - The amount of time that your function code spends processing an event. The billed duration for an invocation is the value of Duration rounded up to the nearest millisecond.
+> - Errors -The number of invocations that result in a function error. Function errors include exceptions thrown by your code and exceptions thrown by the Lambda runtime. The runtime returns errors for issues such as timeouts and configuration errors.
+> - Throttles - The number of times that a process failed because of concurrency limits. When all function instances are processing requests and no concurrency is available to scale up, Lambda rejects additional requests.
+> - IteratorAge - Pertains to event source mappings that read from streams. The age of the last record in the event. The age is the amount of time between when the stream receives the record and when the event source mapping sends the event to the function.
+> - DeadLetterErrors - For asynchronous invocation, this is the number of times Lambda attempts to send an event to a dead-letter queue but fails.
+> - ConcurrentExecutions- The number of function instances that are processing events. \
+>   You can also view metrics for the following:
+>   - UnreservedConcurrentExecutions – The number of events that are being processed by functions that don't have reserved concurrency.
+>   - ProvisionedConcurrentExecutions – The number of function instances that are processing events on provisioned concurrency. For each invocation of an alias or version with provisioned concurrency, Lambda emits the current count.
+
+Another Option is using the <cloud>CloudWatch Lambda Insights</cloud> for system level metrics such as cold starts, worker shutdown and other diagnostic data. this is done by adding a lambda layers that collects the metrics and emits the data as a single log using the embedded metric formatting. Each lambda has it's own dashboard, and there is an aggregate dashboard for all functions.
+
+<cloud>AWS X-Ray</cloud> is a stool that visualizes data flow between services and can identify performance bottlenecks and show timelines for cold starts and function initializations. <cloud>CloudTrail</cloud> audits api actions, and a dead-letter-queue (usually <cloud>SQS</cloud> or <cloud>SNS</cloud>) can be used to capture events that must be handled even if they failed at the first time.
+
+#### Quiz: AWS Lambda
+
+- Q: Which of these statements describe a resource policy? (Select THREE.)
+- A:  Can give Amazon S3 permission to initiate a Lambda function, Determines who has access to invoke the function, Can grant access to the Lambda function across AWS accounts.
+- Q: Which monitoring tool provides the ability to visualize the components of an application and the flow of API calls?
+- A: <cloud>AWS X-Ray</cloud>
+- Q: Which capabilities are features of Lambda? (Select THREE.)
+- A: Triggers Lambda functions on your behalf in response to events, Runs code without you provisioning or managing servers, Scales automatically.
+- Q: What is the importance of the IAM execution role?
+- A: Gives your function permissions to interact with other services.
+- Q: What are the reasons for setting a concurrency limit (or reserve) on a function? (Select THREE.)
+- A: Match the limit with a downstream resource, Manage costs, Regulate how long it takes to process a batch of events.
+- Q: Which patterns are Lambda invocation models? (Select THREE.)
+- A: Synchronous, Asynchronous, Polling.
+- Q: What does an AWS Identity and Access Management (IAM) resource-based policy control?
+- A: Permissions to Invoke the function
+- Q: Match the terms on the left with the appropriate definition.
+- A: Producer: Create events with all required information, Router:Ingests and filters events using rules, Consumer: Subscribe and are notified when events occur.
+- Q: Which feature can a developer enable to create a copy of a function for testing?
+- A: ~~Aliases~~ Versioning.
+
+</details>
+
+### Amazon API Gateway for Serverless Applications
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+> In this course, you will learn how API Gateway lets you define and deploy application programming interfaces (APIs) at scale, and why it makes a great front door to your AWS Lambda functions and backend APIs. You will learn what you need to know to plan for, launch, and use API Gateway for your serverless applications and how to use it to decouple a monolithic application. You will learn to analyze API Gateway traffic and identify opportunities or improvements, validations, responses, and mapping.
+
+#### Introduction to API Gateway
+
+#### Designing WebSocket APIs
+
+#### Designing REST APIs
+
+#### Knowledge Check
+
+#### Building and Deploying APIs with API Gateway
+
+#### Managing API Access
+
+#### Monitoring and Troubleshooting
+
+#### Data Mapping and Request Validation
+
+#### Quiz: API Gateway Knowledge check
+<!-- end of Amazon API Gateway for Serverless Applications -->
 </details>
 
 ### Seperator

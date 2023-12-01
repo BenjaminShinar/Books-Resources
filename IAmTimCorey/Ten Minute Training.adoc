@@ -225,7 +225,7 @@ We can change the Code style suggestion and auto generations of code. we can cre
 .Analyzing MongoDB C# code
 [%collapsible]
 ====
-A roselyn analyzer, so we need to install the package from nuget "MongoDb.analyzer". This helps us analyze C# code queries and show us the raw query, and it tells us if the query is recognized by mongoDB or if it's broken somehow.
+A Roselyn analyzer, so we need to install the package from nuget "MongoDb.analyzer". This helps us analyze C# code queries and show us the raw query, and it tells us if the query is recognized by mongoDB or if it's broken somehow.
 
 if we want to change the settings, we need a file "mongodb.analyzer.json" at the root folder.
 ====
@@ -872,6 +872,171 @@ Github Actions have a `create workflow` wizard. +
 When viewing file trees, there is now a **Collapse All Descendants** option.
 
 ====
+
+=== How to Fix the Inconsistent Accessibility Error in C#
+
+.Returning an Object That Can't Be Used By The Caller
+[%collapsible]
+====
+an error that a "return type '(sometime)' is less accessible than (calling function)" happens when the object returned from a function is less accessible than that of the function that returns it. like returning a class marked "internal" from a public function. this means that someone can call a method and won't be able to use the object they got back. +
+there is no problem with retuning a more accessible object.
+====
+
+=== The Dictionary Data Structure in C# in 10 Minutes or Less
+
+.Key Value Data Structure
+[%collapsible]
+====
+
+a key value pair data structure with unique keys. has quick lookup based on keys. really good for lookups.
+[source, csharp]
+----
+Dictionary<int, string> rookieOfTheYear = new();
+rookieOfTheYear.Add(2000, "Mike Miller");
+rookieOfTheYear.Add(2001, "Jane Doe");
+rookieOfTheYear.Add(2002, "Jane Doe"); // legal, repeating value
+rookieOfTheYear.Add(2003, "John Smith");
+// rookieOfTheYear.Add(2003, "jane Doe"); // illegal, repeating key
+
+if (rookieOfTheYear.Contains(2002)) {
+  Console.WriteLine(rookieOfTheYear[2002]);
+}
+----
+
+====
+=== Understanding SQL Auto-Incrementing Identity in 10 Minutes or Less
+
+.Setting An Identity Column To Be Auto-Incrementing
+[%collapsible]
+====
+setting a SQL column to be auto-incrementing and always have a value, we can set a first value (seed) and change the increment. the values are stored in disk in the identity order.
+
+[source, sql]
+----
+CREATE TABLE [dbo].[DemoPeople]
+(
+  [Id] INT NOT NULL PRIMARY KEY IDENTITY,
+  [FirstName] NVARCHAR(50) NULL,
+  [LastName] NVARCHAR(50) NULL
+)
+----
+
+====
+=== Data Annotation Updates in .NET 8
+
+.New Data Annotations To Validate Fields
+[%collapsible]
+====
+
+.annotations:
+* `Length` - required length of a string property
+* `Range` - minimal and maximal value of ranges, with the ability to exclude the top or bottom values.
+* `AllowedValues` - limit values to specific cases
+* `Denied` - disallow specific values
+
+[source, csharp]
+----
+using System.ComponentsModel.DataAnnotations
+namespace DataAnnotationsDemo;
+public class EmployeeModel
+{
+  [Length(5,25)]
+  public string? FirstName { get; set; }
+
+  [Range(1,5, MinimumIsExclusive=true, MaximumIsExclusive)]
+  public int EvaluationScore { get; set; }
+
+  [AllowedValues("Monday", "Tuesday", "Wednesday","Thursday", "Friday")]
+  public string? FavoriteWorkday { get; set; }
+
+  [DeniedValues("None","NA")]
+  public string? FavoriteBoss { get; set; }
+}
+----
+====
+
+=== Dependency Injection Updates in .NET - Keyed Implementations
+
+.More Than One Implementation of An Interface Identifiable With a Key.
+[%collapsible]
+====
+
+we can define more than one interface in dependency injection and request which interface we want based on a key.
+
+Blazor Example:
+
+[source, csharp]
+----
+
+public Interface IInteractionMessages{
+  string greetings();
+}
+
+public class FormalMessages : IInteractionMessages
+{
+  public string greetings()
+  {
+    return "FORAML MESSAGE";
+  }
+}
+
+public class InformalMessages : IInteractionMessages
+{
+  public string greetings()
+  {
+    return "message that is, like, chilled";
+  }
+}
+
+// some more code
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddRazorComponents().
+  AddInteractiveServerComponents();
+builder.Services.AddKeyedSingleton<IInteractionMessages, FormalMessages>("formal");
+builder.Services.AddKeyedSingleton<IInteractionMessages, InformalMessages>("relaxed");
+var app = builder.Build();
+
+// usage
+public class Demo {
+  public Demo([FromKeyedServices("relaxed")] IInteractionMessages messages);
+}
+----
+obviously, the key should probably be an enum. there is some special consideration for blazor code-behind components.
+====
+
+=== .NET 8 Adds Shuffle to Random for Arrays and Spans
+
+.Randomly Shuffle Arrays and Spans (in place)
+[%collapsible]
+====
+
+a new method inside the `Random` class that allows for in-place shuffling of arrays and spans. doesn't support List for now.
+[source, csharp]
+----
+record PersonRecord(string a, string b);
+
+PersonRecord[] people = [
+  new("a","b"),
+  new("c","d"),
+  new("e","f"),
+  new("g","h"),
+  new("i","j")
+];
+
+foreach (var p in people)
+{
+  Console.WriteLine($"{p.a} {p.b}")
+}
+
+Random.Shared.Shuffle(people);
+foreach (var p in people)
+{
+  Console.WriteLine($"{p.a} {p.b}")
+}
+----
+
+====
+
 
 == Misc
 
