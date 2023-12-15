@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro
+// cSpell:ignore codecov cppcoro dogbolt decompiler
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -158,4 +158,40 @@ int main()
 ```
 
 it's always better to rely on simple composable function instead of <cpp>std::move</cpp>.
+</details>
+
+## C++ Weekly - Ep 405 - Dogbolt: The Decompiler Explorer
+
+<details>
+<summary>
+De-compile binary files into source code.
+</summary>
+
+[Dogbolt: The Decompiler Explorer](https://youtu.be/h3F0Fw0R7ME?si=-WkvV_SK_zzXIlRO)
+
+a [website](https://dogbolt.org/?) similar to compiler explorer, it can take an executable binary file and then runs it through engines and de-compiles it back into source code.
+
+</details>
+
+## C++ Weekly - Ep 406 - Why Avoid Pointer Arithmetic?
+
+<details>
+<summary>
+Examples of pointer arithmetics going wrong.
+</summary>
+
+[Why Avoid Pointer Arithmetic?](https://youtu.be/MsujPM2wDmk?si=B540jHpG-vXF9uzv)
+
+adding to a pointer means adding the size of the pointed object. so moving a character pointer moves one byte, int pointer moves 4 bytes at a time.
+
+```cpp
+struct S;
+void use_ptr(S* ptr)
+{
+  ptr += 1;
+}
+```
+
+pointer arithmetics is ripe for bugs of accessing memory outside the actual variable, can happen when passing arrays, when parsing strings. it's better to use things like <cpp>std::string_view</cpp> or <cpp>std::span</cpp>. and it's always important to test using "fuzzy testing".
+
 </details>
