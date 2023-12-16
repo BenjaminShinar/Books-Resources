@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib Dennard
+// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib Dennard alon Metaparse Lexy ctre idents
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -1812,6 +1812,248 @@ int main(void)
 we can choose to run asynchronously and launch the target without calculation without waiting for it to complete, and explicitly wait for it at a later point. for dynamic memory we need to explicitly map memory for it to correctly copy the data (we can specify which data we copy from the host and back from the device to get better performance). we can combine device parallelism and thread parallelism (and then use SIMD). there are many additional `#pragma omp` options to get granular. but in recent versions of OpenMP we can get really good defaults from the simple `#pragma omp loop`.
 
 (demo of running code on two different GPUs)
+
+</details>
+
+## Alon Wolf :: Expressive Compile Time Parsers
+
+<details>
+<summary>
+Creating compile time parsers for custom text
+</summary>
+
+[Expressive Compile Time Parsers](https://youtu.be/g_GJ_a_lxLg?si=IY5rBvxucSkzGS3i)
+
+> "Expressive Code" refers to the style of writing code in a way that is easy to read, write, understand and communicate its purpose. Relies on both the syntax of the programming language and the quality of naming conventions.
+
+the definition of expressive code changes as the language evolves, with each version allowing for more concise code and less boiler-plate. operator overloading can be a part of expressive code.
+
+DSL - domain specific language provides specialized vocabulary and syntax that are aligned with the domain. the dsl syntax has to be legal C++ code, which limits how the DSL can change.
+
+(example of Boost Spirit DSL code for writing runtime compilers)
+
+example of using a filter transformation in c++11 vs c++23.
+
+```cpp
+std::vector<Cat> cats = {/* ... */};
+std::vector<std::tuple<int, std::string>> result;
+
+for (auto itr = cats.cbegin(); itr = cats.cend(); ++itr)
+{
+   if (itr-> age < 42)
+   {
+      results.emplace_back(std::tuple{itr->id, itr->name});
+   }
+}
+
+// modern approach
+auto view =  cats |
+   std::views::filter([] (const Cat& cat) {return cat.age > 42;}) |
+   std::views::transform([] (const Cat& cat) {return std::tuple{cat.id, cat.name};});
+auto result2 = std::vector(view.begin(), view.end());
+```
+
+but what if we could write this in a single line? this could be done by using compile time parsers.
+
+```cpp
+std::vector<Cat> cat = {/*...*/};
+auto results = "Select id, name WHERE age > 42"_FROM(cats);
+```
+
+in this case, we have a compile time value with a string literal that we transform into a lambda, in the general case, we transform any arbitrary syntax to any compile time value.
+
+### Existing Parsing Libraries
+
+
+- LL parser - left left, left most deviations, top-down, 'predictive parsers'
+- LR parser - left right, right most deviations, bottom-up, 'shift reduce parsers'
+
+turns out there was a boost library for compile time parsing: **Boost Metaparse**, it was created for C++98, and allowed to write and create meta functions from raw string using template parsers.
+
+a modern library is [Lexy](https://lexy.foonathan.net/), a parser combinator for C++17 and onwards. it supports unicode strings and compile-time parsing. a parser has a rule for constructing and value. Lexy also has the option for multiple composable parsers.
+
+Another C++17 library is **Compile Time Regular Expressions** (CTRE). it allows for regular expressions at either compile or runtime. it constructs the regex during compile time (error when regex is illegal), it also performs much better than the standard <cpp>std::regex</cpp>, and similarly to other runtime libraries such as boost.
+
+```cpp
+auto [v1, a1] = "REGEX"_ctre.match(s); // C++17 with N3599
+auto [v2, a2] = ctre::match<"REGEX">(s); // C++20
+```
+
+another libary is **Compile time Parser Generator** (CTPG), which generates parsers from a grammar, it itself uses a self-generated regex parsers.
+
+**Macro Rules** was originally created for C++23, but was converted to C++20, it describes DSL with Rust macro style rules. it is more experimental than other libraries (proof of concept rather than usable library). it uses macros other than string literals, and it has hashed identifies for faster lookups.
+
+### Reflection
+
+C++ still doesn't have reflection, only several introspection features. we could use compile time parsers to parse the source code itself and generate the metadata for reflection. the generated string is valid C++ source code.
+
+```cpp
+// macro style reflection
+struct Obj {
+   int a = 42;
+   int b = 1337;
+   REFLECT(MyObj, a, b);
+};
+
+// parsing style
+
+template<StaticString src>
+constexpr auto Reflect()
+{
+   constexpr auto attributes = attributes_parser(src);
+   constexpr auto base_classes = bases_parser(src);
+   return std::tuple(attributes, base_classes);
+}
+```
+
+example [compiler explorer](https://godbolt.org/z/xzeT7rM7Y): we want to match a member inside a value with dot separated string. each level is an identifier (member value) of the object we want to "reflect" onto.
+
+```cpp
+// desired syntax
+auto email = "manager.details.email"_in(company);
+
+// parser
+constexpr auto identifier = ... >>= [] (auto sv) {return Hash(sv);};
+constexpr auto path_parser = separate_by(identifier, "."_lit);
+
+// reflect member with identifier
+static constexpr auto ResolveIdentifier(ValueWrapper<Hash("x")>) {
+   return &S::x;
+}
+
+struct S{
+   int x;
+   int y;
+   REFLECT_MEMBERS(S, (x)(y));
+};
+
+// stirng literal _in operator 
+template<StaticString path_str>
+constexpr auto operator""_in(){
+   return [] (auto& value)->decltype(auto) {
+      constexpr auto path = path_parser(path_str); // parse at compile time
+      return GetPath<path>(value); 
+   };
+}
+
+// recursive iteration of path and get member by identifier
+template<auto path>
+constexpr auto GetPath(auto& value){
+   return RecursiveFor([] (auto& value, auto idx, auto next)->decltype(auto) {
+      if constexpr (idx.Value() == path.m_Size) {
+         return (decltype(value)&)value;
+      } else {
+         constexpr auto ident = path.m_Data[idx.Value()];
+         return next(GetMember<ident>(value));
+      }
+   }, value);
+}
+```
+
+if we look at the generated assembly, we see that both ways of accessing the data have the same assembly instructions, so this becomes a zero-cost abstraction (zero cost at runtime, of course) we the `-O1` optimization flag
+
+```cpp
+auto& F1(const Line& line){
+    return line.p2.x;
+}
+
+auto& F2(const Line& line){
+    return "p2.x"_in(line);
+}
+```
+
+we might wish to extended this syntax, and allow something such as: `"players:character.items:textures:height|sqs|print"_of(game);`. with the "`:`" being a range based for loop and "`|func`" being a function call with the current value. so the line above:
+
+1. takes the "players" field from the "game" object
+1. iterates over all the players
+1. takes the "character" field
+1. takes "items" field for the character and iterates over all the items
+1. takes the "textures" field for the item and iterates over it
+1. takes the "height" field
+1. squares the value
+1. prints the values.
+
+we create parsers for the "iterate" and "pipe" operators, and now we have a "scope". the scope maps an identifier to a value (usually a lambda), it can be the global scope or a local scope.
+
+```cpp
+constexpr auto iterate = ":"_lit >>= [] (auto) {
+   return IterateTag{};
+};
+constexpr auto pipe = ("|"_lit + identifier) >>= [] (auto ident) {
+   return Pipe{ident};
+};
+constexpr auto custom_parser = *(path_parser | iterate | pipe);
+
+// extended implementation for path
+template<auto path>
+constexpr auto CustomPath(auto& value, Scope& scope = GlobalScope()) {
+   return RecursiveFor([] (auto& value, auto idx, auto next)->decltype(auto) {
+      if constexpr (iterate) {
+         for (auto& v : value) next(v);
+      } else if constexpr (path) {
+         return next(GetPath<*path>()(FWD(value)));
+      } else {
+         constexpr auto ident = ValueWrapper<pipe->m_Action>();
+         return next(scope(ident)(FWD(value)));
+      }
+   }, value);
+}
+
+// scope
+constexpr auto sqr = [] (auto&& x) {return x*x;};
+constexpr auto ResolveIdentifier(Vw<Hash("sqs")>) {
+   return sqr;
+}
+#define SCOPE [] (auto v) {return ResolveIdentifier(v);}
+using GlobalScope = decltype(SCOPE);
+
+// local scope example
+
+```
+
+so the string of `"players:character.items:textures:height|sqs|print"_of(game, SCOPE);` is the same as:
+
+```cpp
+for (auto& player : game.players)
+   for (auto& item : player.character.items)
+      for (auto& texture : item.textures)
+         print(sqr(texture.height));
+```
+
+but now it's being read left to right, has abstracted away loops and the boiler plate code. and we can see the same assembly code in [compiler explorer](https://godbolt.org/z/fP6cose6q), meaning that this is a zero-cost abstraction again.
+
+next we want to create a struct, rather than a lambda. our parser should take a syntax such as:
+
+```text
+STRUCT(Point, {
+   x: float
+   y: float
+})
+```
+
+and make it into a valid C++ struct.
+
+the parser will look like this
+
+```cpp
+constexpr auto struct_parser = "{"_lit + *(identifier + ":"_lit + identifier) + "}"_lit;
+template<auto Id, class T>
+struct StructMember {
+private:
+   T m_value;
+public:
+   static constexpr auto ResolveIdentifier(Vw<Id>) {
+      return &StructMember::m_value;
+   }
+   constexpr auto& operator[](Vw<Id>) {return m_Value;}
+   constexpr auto& operator[](Vw<Id>) const {return m_Value;}
+};
+
+// more code examples, multiple members through folding composition, parsing into the actual struct
+```
+
+the limits on using compile time parsing is the compilation speed and the limits on `constexpr`, in theory, we could write parsers for every programming language and have them integrated into the C++ code.
+
 </details>
 
 ## Separator
