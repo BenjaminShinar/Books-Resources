@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib Dennard alon Metaparse Lexy ctre idents
+// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib Dennard alon Metaparse Lexy ctre idents crend crbegin truncatable
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -1864,7 +1864,6 @@ in this case, we have a compile time value with a string literal that we transfo
 
 ### Existing Parsing Libraries
 
-
 - LL parser - left left, left most deviations, top-down, 'predictive parsers'
 - LR parser - left right, right most deviations, bottom-up, 'shift reduce parsers'
 
@@ -1927,12 +1926,12 @@ struct S{
    REFLECT_MEMBERS(S, (x)(y));
 };
 
-// stirng literal _in operator 
+// stirng literal _in operator
 template<StaticString path_str>
 constexpr auto operator""_in(){
    return [] (auto& value)->decltype(auto) {
       constexpr auto path = path_parser(path_str); // parse at compile time
-      return GetPath<path>(value); 
+      return GetPath<path>(value);
    };
 }
 
@@ -2054,6 +2053,330 @@ public:
 
 the limits on using compile time parsing is the compilation speed and the limits on `constexpr`, in theory, we could write parsers for every programming language and have them integrated into the C++ code.
 
+</details>
+
+## Victor Ciura :: The Imperatives Must Go!
+
+<details>
+<summary>
+Functional Programming in C++
+</summary>
+
+[The Imperatives Must Go!](https://youtu.be/WdWwbDJWx78?si=OGQeF19zw8zlHO4n), [slides](https://ciura.ro/presentations/2023/Conferences/The%20Imperatives%20Must%20Go%20-%20Victor%20Ciura%20-%20Core%20C++%202023.pdf), [lift github](https://github.com/rollbear/lift)
+
+Humans and machines operate differently, and when we write software, we try to "think like a machine" and create a mental model that replicates what the computer does.
+
+> What is Functional Programming ?
+>
+> - Functional programming is a _style_ of programming in which the basic method of computation is the _application of functions_ to arguments.
+> - A functional language is one that supports and encourages the functional style
+
+the elephant (&#x1F418;) in the room is the **Haskell** programming language.
+
+in imperative style, we tell the machine how want the computation to be performed, and our main "tool" is _variable assignment_.
+
+```cpp
+int total = 0;
+for (int i = 1; i <= 10; i++) {
+   total = total + i;
+}
+```
+
+in contrast, for Haskell, we use **function application**.
+
+```Haskell
+sum [1..10]
+```
+
+in other words, imperative style is about the "how", while functional style is about the "what". if we compare to OOP, then OOP minimizes complexity by encapsulating the moving parts into classes, and functional programming minimizes complexity by reducing the amount of the moving parts.
+
+### Historical Background
+
+we can connect functional programming to lambda calculus from the 1930's, and the first functional programming language (**Lisp**) was developed in the 1950's. it took inspiration from lambda calculus, but retain variable assignments. then we get **ISWIM**, which is the first pure functional programming language. in the seventies we start looking at _higher order functions_, _type inference_ and _polymorphic types_. then we add _lazy computation_ and evaluations. all of these reach the **Haskell** language, which then get the innovation of _type classes_ and _monads_.
+
+despite that, Haskell didn't take over the world, at least not directly. however, other languages are moving towards functional programming, taking inspiration from Haskell and incorporating elements from it.
+
+- lambdas and closures
+- <cpp>std::function</cpp>
+- values
+- ADT
+- composable algorithms
+- lazy ranges
+- folding
+- mapping
+- partial applications
+- higher order functions
+- monads
+- <cpp>std::optional</cpp>, <cpp>std::future</cpp>, <cpp>std::expected</cpp> (c++23)
+
+here is an example of haskell code.
+
+```Haskell
+f [] = []
+f (x: xs) = f ys ++ [x] ++ f zs
+            where
+               ys = [a | a <- xs, a <= x]
+               xs = [b | b <- xs, b > x]
+```
+
+this is actually a quick sort algorithm, it recursively applies the algorithm and combines the result. starting with the first element as the pivot.
+
+```Haskell
+qsort [] = []
+qsort (x: xs) = qsort smaller ++ [x] ++ qsort larger
+            where
+               smaller = [a | a <- xs, a <= x]
+               larger  = [b | b <- xs, b > x]
+```
+
+the computations is done like this:
+
+```na
+q[3,2,4,1,5]
+q[2,1] ++ [3] ++ q[4,5]
+q[1] ++ [2] + q[] ++ [3] ++ q[] ++ [4] ++ q[5]
+[1] ++ [2] + [] ++ [3] ++ [] ++ [4] ++ [5]
+
+[1,2,3,4,5]
+```
+
+once we learn how to read this code, it might be easier to understand than C language quickSort source code.
+
+an historical example is a task of reading a text file, and outputting a sorted list of words and their frequencies. a solution submitted by Donald Knuth in **Pascal** was ten pages long, and a rebuttal by Douglas Mcllroy done in a shell script was only six lines.
+
+```sh
+tr -cs A-Za-z '\n' |
+   tr A-Z a-z |
+   sort |
+   uniq -c |
+   sort -rn |
+   set ${1}q
+```
+
+### The Journey for Functional Programming
+
+one option to learn functional programming is learning category theory. but there are also more practical approaches that focus on software rather than mathmatical theory.
+
+we now move to more examples: higher-order function, "lifting" and "boxing".
+
+<cpp>boost::hof</cpp> is a library that uses higher order functions, there is also the _lift_ library which is simpler.
+
+- equal
+- not_equal
+- less_than
+- less_equal
+- greater_than
+- greater_equal
+- negate
+- compose
+- when_all
+- when_any
+- when_none
+- if_then
+- if_then_else
+- do_all
+
+a simple code example for using the library, a composition of function wraps them over one another. it also allows us to "compose" an overloaded set of functions using a macro.
+
+```cpp
+struct Employee {
+   std::string name;
+   unsigned number;
+};
+
+const std::string& select_name(const Employee& e) { return e.name; }
+unsigned select_number(const Employee& e) { return e.number; }
+
+std::vector<Employee> staff;
+
+// sort employees by name
+std::sort(staff.begin(), staff.end(), lift::compose(std::less<>{}, select_name));
+
+// retire employee number 5
+auto i = std::find_if(staff.begin(), staff.end(), lift::compose(lift::equal(5), select_number));
+if (i != staff.end()) {
+   staff.erase(i);
+}
+```
+
+C++20 gave us ranges, which could be used in a similar way.
+
+boxing is a way of encapsulation values. we use the terms "Functor", "Applicative" and "Monad".
+
+| method                     | storage            | accesses             |
+| -------------------------- | ------------------ | -------------------- |
+| <cpp>std::unique_ptr</cpp> | `unique_ptr<T> p;` | `*p`, `p.get()`      |
+| <cpp>std::shared_ptr</cpp> | `shared_ptr<T> p;` | `*p`, `p.get()`      |
+| <cpp>std::vector</cpp>     | `vector<T> v;`     | `v[0]`, `*v.begin()` |
+| <cpp>std::optional</cpp>   | `optional<T> o;`   | `*o`, `o.value()`    |
+| <cpp>std::function</cpp>   | `function<T> f;`   | `f(5)`               |
+
+but this might be an anti-pattern, retrieving and storing the data again and again. we want to preserve the context of a value across computations.
+
+we can learn from a common un-wrapping mistake in Rust, and avoid constantly peeking into the box.
+
+this code unwraps the box (the anti-pattern)
+
+```cpp
+string capitalize(string str);
+
+std::optional<string> str = f(); // from an operation that could fail
+
+std::string cap;
+if (str)
+   cap = capitalize(str.value()); // capitalize(*str);
+```
+
+a functional way of doing this would be by lifting the capitalizing function, which now takes the box itself, if the value is valid, then it performs the unwrapping ,does the capitalization and boxes it again, otherwise it returns the input without changing it.
+
+```cpp
+std::optional<std::string> liftedCapitalize(const std::optional<std::string> & s)
+{
+   std::optional<std::string> result;
+   if (s)
+      result = capitalize(*s);
+
+   return result;
+}
+```
+
+we can extend the idea further, into an `fmap` function.
+
+```cpp
+template<class A, class B>
+std::optional<B> fmap(std::function<B(A)> f, const std::optional<A> & o)
+{
+   std::optional<B> result;
+   if (o)
+      result = f(*o); // wrap a <B>
+   return result;
+}
+// or
+template<typename T, typename F>
+auto fmap(const std::optional<T> & o, F f) -> decltype(f(o.value()))
+{
+   if (o)
+      return f(o.value());
+   else
+      return {}; // std::nullopt
+}
+```
+
+another example about containers holding different types, and <cpp>std::transform</cpp>. if any operation fails (because the input is optional), we can return the default (empty) value. C++23 added monadic operations to <cpp>std::optional</cpp>:
+
+- <cpp>o.and_then()</cpp>
+- <cpp>o.transform()</cpp>
+- <cpp>o.or_else()</cpp>
+
+| Concept | C++                  | Haskell      |
+| ------- | -------------------- | ------------ |
+| functor | <cpp>transform</cpp> | `fmap`       |
+| monad   | <cpp>and_then</cpp>  | `>>= (bind)` |
+
+we shouldn't use <cpp>std::optional</cpp> for error handling, instead, we can use <cpp>std::expected</cpp> from C++23, which can return another value explaining why we don't have a value.
+
+> expressions yield values, statement do not;
+
+we want to program with expressions and not statements.
+
+as mentioned, C++20 ranges promote functional programming. a simple task of printing only the even elements from a range in revere order.
+
+```cpp
+// imperative style
+std::for_each(std::crbegin(v), std::crend(v),[](auto const i) {
+   if(is_even(i))
+      cout << i;
+});
+
+// functional style
+for (auto const i : v
+                  | reverse
+                  | filter(is_even))
+{
+   cout << i;
+}
+```
+
+> Gotchas with ranges / views:
+>
+> C++20 ranges library is fantastic tool, but watch out for gotchas
+>
+> - views have reference semantics => all the reference gotchas apply
+> - as always with C++, const is shallow and doesn't propagate (as you might expect)
+> - some functions do caching, eg. <cpp>begin()</cpp>, <cpp>empty()</cpp>, <cpp>| filter</cpp>, <cpp>| drop</cpp>
+> - don't hold on to views or try to reuse them
+> - safest to use them ad-hoc, as temporaries
+> - if needed, better "copy" them (cheap) for reuse
+
+</details>
+
+## Yehezkel Bernat :: Lazy and Proud: How I Failed to Standardize lazy_counted_iterator
+
+<details>
+<summary>
+How do we change the standard?
+</summary>
+
+[Lazy and Proud: How I Failed to Standardize lazy_counted_iterator](https://youtu.be/JSM2aKKAH1s?si=6EMn9vCwn4Mw66Zp)
+
+the motivation for this talks come from project [Euler problem #37](https://projecteuler.net/problem=37), reading:
+
+> The number 3797 has an interesting property. Being prime itself, it is possible to continuously remove digits from left to right, and remain prime at each stage: 3797, 797, 97 and 7. Similarly we can work from right to left: 3797,379,37,3.
+>
+> Find the sum of the only eleven primes that are both truncatable from left to right and right to left.
+>
+> NOTE: 2,3,5 and 7  are not considered to be truncatable primes.
+
+this problem can be probably be solved using ranges. let's try it. the solution will probably start with something such as
+
+```cpp
+views::iota(10) | // generate numbers starting at 10
+    views::filter(/*something here*/) | // filter somehow
+    views::take(11); // take first eleven number 
+```
+
+but when running this in compiler explorer, it seems to continue running even after 11 results, and it time out! the problem is the <cloud>views::take</cloud>
+uses <cpp>std::counted_iterator</cpp> internally. which continues to work even if there are no more object to take (we only generated 10 numbers)
+
+simple example:
+
+```cpp
+#include <ranges>
+#include <iostream>
+
+bool f(int n){
+    return n < 5;
+}
+
+int main()
+{
+    auto vec = std::views::iota(0) | // endless generator
+               std::views::filter(f) | // numbers smaller than 5
+               std::views::take(6); // take six of them
+    for (const auto v : vec){
+        std::cout << v <<',';
+    }
+}
+```
+
+the bug is also present with input_iterators. an extra incrimination "eats" an element, which is now lost.
+
+```cpp
+auto iss = std::istringstream("0 1 2");
+for (auto i : std::ranges::istream_view<int>(iss) | std::views::take(1)) {
+   std::cout << i << '\n' // print 0
+}
+
+auto i = 0;
+iss >> i;
+assert(i==1); // FAILS,  i == 2
+```
+
+fixing a bug in the standard requires changing the implementation and text that defines the standard itself. there are all sorts of functions in the committee, including domain specific study groups(SG9 for ranges), a proposal needs to go through all the stages before it's accepted and becomes part of the standard.
+
+<cpp>lazy_counted_iterator</cpp> was suggested as a new class to avoid breaking the ABI. after writing the inital proposals, some people commented and pointed issues, so the process repeats.
+
+eventually, it was decided to reject the proposal, and deciding that the problem should be addressed differently.
 </details>
 
 ## Separator

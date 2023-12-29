@@ -1788,6 +1788,134 @@ API gateways can also take care of some basic request validations, rather than p
 
 </details>
 
+### Amazon DynamoDB for Serverless Architectures
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+#### Introduction to Amazon DynamoDB for Serverless Architectures
+
+> DynamoDB is a serverless, fully managed NoSQL (non-relational) database service designed for Online Transactional Processing (OLTP) workloads.
+
+(video)
+
+<cloud>DynamoDb</cloud> is a NoSQL database, relational databases were created when storage was expensive, and they used rigid schemas to store a lot of data. queries then used relational connections between tables to answer questions about the data, but complex queries could require a lot of computing power. Non-relational databases, such as <cloud>DynamoDB</cloud> take advantage of the decreased cost of storage, and store related data locally to reduce CPU usage. this also allows for data to be stored without forcing it to a specific schema.\
+<cloud>DynamoDb</cloud> itself is a serverless service, fully managed by AWS and easy to integrate with other AWS services.
+
+We usually have two kinds of queries: transactional and analytical.
+
+- Online Transactional Processing (OLTP)
+- Online Analytical Processing (OLAP)
+
+<cloud>DynamoDb</cloud> serves for transaction queries, with known request patterns. live operations, active connections, quick and precise with small objects. more in-depth queries (which don't demand the answer right now) are more fit for OLAP and different databases.
+
+> - Flexible Schema
+> - JSON document or key-value data structures
+> - Supports event-driven programming
+> - Accessible via AWS Management Console, CLI, and SDK
+> - Availability, durability, and scalability built-in
+> - Scales horizontally
+> - Provides fine-grained access control
+> - Integrates with other AWS services
+
+DatabaseBases in AWS:
+
+- <cloud>RDS</cloud> - relational, transactional queries, supports multiple engines(including <cloud>Amazon Aurora</cloud>)
+- <cloud>DynamoDb</cloud> - non relational, transactional queries, document storage and key-value store models.
+- <cloud>Redshift</cloud> - relational, analytical, fully managed date warehouse.
+- <cloud>Neptune</cloud> - non-relation, analytical, highly connected datasets (graphs)
+- <cloud>ElasticCache</cloud> - in memory data cache, supports redis and memcached engines.
+
+#### How Amazon DynamoDB Works
+
+(video)
+
+data is stored in tables, a table stores items, each item has attributes, there is a required 'partiton key' attribute, and an optional 'sort key' attribute. the combination of the partition key and the sort key makes up the primary key, which must be unique. items can have additional attributes, but those are flexible and not required.\
+When tables require scaling, they use a technique called "sharding", which stores items based on the hash of the partition key. each partition is stored on a different server (this happens automatically). attributes can be:
+
+- numeric
+- boolean (true or false)
+- string (text)
+- binary (base64 encoded)
+- null
+- sets of numbers, strings or binaries (unordered)
+
+if the data uses json, we can store it as document model (map, list). partition and sort-key can't be mapped.
+
+data is stored in several copies across the region (different Availability Zones), this replication allows for 99.99% reliability. there two forms of consistency: eventual consistency (the default) and strong consistency. strong consistency reads always read from the most recently updated replication, so it increases the load and can lead to some unexpected behavior. we can set the throughput by specifying Read and Write capacity units.
+
+- 1 read capacity unit (RCU) = 1 item(4kb or less) read per second
+- 1 write capacity unit (WCU) = 1 item(1kb or less) write per second. updating an item is the same as writing. Deleting is also a 'write' request.
+
+dynamoDb also has burst capacity, which adapts for imbalanced workloads. strong consistency reads take twice as much RCU than eventual consistency reads.
+
+basic requests:
+
+- `PutItem` - write item to specified primary key
+- `UpdateItem` - change attributes for item of specified primary key
+- `BatchWriteItem` - write a bunch of items to specified primary keys
+- `Delete` - remove item from specified primary key
+- `GetItem` - retrieve item associated with a specified primary key
+- `BatchGetItems` - retrieve items associated with a number of primary keys
+- `Query` - for a specified partition key, retrieve item  matching sort key expressions (forward/reverse order)
+- `Scan` - give me every item in my table
+
+Queries are more cost efficient.
+
+DynamoDb supports secondary indexes, which allow to query Data based on attributes other than the primary key. this also supports projection.
+
+- Local Secondary index (LSI) - local to a specific partition key, share the base table capacity, this limit the data to 10GB per partition. can't be modified after the table is created.
+- Global Secondary index (GSI) - not local to a partition key, can span across all items in the table, so it's an alternative partition of the original table. they have an independent provision throughput. but they don't offer strong consistent reads. they can be created and deleted at any time. they don't require unique primary keys.
+
+we can define up to 5 globally secondary indexes and up to 5 locally secondary indexes for each table.
+
+there also dynamoDb streams, which logs all operations on the table.
+
+(demo video)
+
+we click <kbd>Create Table</kbd> to create a new table with a partition and sort key (creating primary key). we can add items to the table, the items must have the primary key attributes, and we can add other attributes if we want. we can either <kbd>Query</kbd> or <kbd>Scan</kbd> the table, queries are faster and costless, but require passing a partition key. scans are slower and more costly, but can filter all the data in the table.
+
+#### Operating Amazon DynamoDB
+
+(video)
+
+configuring the clients to handle errors. errors can be because the service is down, or because the provisioned throughput was exceeded (throttling). the AWS SDK has built-in retry logic, with other configurable options. also need to handle retires for batch requests.\
+DynamoDb has auto scaling for provisioned throughputs, separably for read and write.\
+there is also support for globally replacted tables, which offer durability and faster operations in multiple regions. using this requires some more configuration to direct clients to the same replica for reads and writes.\
+Items can expire by using TTL - automatic deletion with time to live, this is an epoch field. expiring items can be moved to S3 by reading the dynamodb stream.\
+we can control access to the table with <cloud>IAM</cloud> roles and limit permissions, we can also set a VPC endpoint.
+
+DAX (DynamoDB Accelerator) is an in-memory acceleration way to reduce load and latency for eventually consistent reads. tables are backed up either by demand or with a rolling 35 days windows.
+
+monitoring:
+
+- aws error code returned from operations
+- logging api calls with <cloud>CloudTrail</cloud>
+- setting up <cloud>CloudWatch</cloud> alarms for performance metrics
+
+**continue later**
+
+#### Design Considerations
+
+#### Serverless Architecture Patterns
+
+#### DynamoDb Assessment
+
+</details>
+
+### Seperator
+
+<!-- end of serveless -->
+
+## CI-CD Services
+
+<details>
+<summary>
+Courses Focusing on CI/CD and deployment in AWS.
+</summary>
+
 ### Build and Deploy APIs with a Serverless CI/CD
 
 <details>
@@ -1879,7 +2007,182 @@ CI/CD Best Practices
 
 </details>
 
-### Seperator
+### Getting Started with DevOps on AWS
 
-<!-- end of serveless -->
+<details>
+<summary>
+DevOps services in AWS
+</summary>
+
+> This beginner-level course is for technical learners in the development and operations domains who are interested in learning the basic concepts of DevOps on Amazon Web Services (AWS). Using discussions, interactive content, and demonstrations, you will learn about culture, practices, and tools used in a DevOps environment. You will also explore concepts for developing and delivering secure applications at high velocity on AWS.
+
+#### Introduction to DevOps
+
+<details>
+<summary>
+What DevOps is
+</summary>
+
+> DevOps is the combination of cultural philosophies, practices, and tools that increases an organization’s ability to deliver applications and services at high velocity: evolving and improving products at a faster pace than organizations using traditional software development and infrastructure management processes.\
+> This speed enables organizations to better serve their customers and compete more effectively in the market.
+
+DevOps comes from Developmet Operations, Development teams create the software, while Operation teams deliever and monitor it. so DevOps combines it together.
+
+##### Problems with Traditional Development Practices
+
+The traditional Model of development is the "waterfall" model, staring with design, code building, testing, deployment and the monitoring.
+
+Transition from each stare requires extensive information passing, as each part is performed by another team. there are significant costs to fix issues that are discovered in later phases, and the whole process is fairly slow.
+
+This is also true for monolithic applications, they are developed as a single unit, have high coupling and are developed using a single technology stack. this makes them big and costly to upgrade (each change requires re-testing everything), hard to understand (everything is connected), and it's very hard to switch technology or upgrade versions (all or nothing).
+
+a lot of traditional devops is done manually, either by creating and configuring the test environments, packaging the deployment correctly, and running test on it. it's easy to forget something or make a mistake.
+
+##### Why DevOps?
+
+There are several benefits for using devops strategies:
+
+- Agility
+- Rapid Delivery
+- Relability
+- Scale
+- Improved Collaboration
+- Security
+
+</details>
+
+#### DevOps Methodlogy
+
+<details>
+<summary>
+What DevOps use and care about
+</summary>
+
+> DevOps methodology increases collaboration through the entire service lifecycle, from product design through the development process to production operations. It brings people together to work and remove obstacles so they can efficiently accomplish their goals.\
+> This module will dive deeper into the DevOps methodology: culture, processes, and tools.
+
+##### DevOps Culture
+
+Shifting to DevOps requires changes to the culture and mindest of developers.
+
+> 1. Create a highly collaborative environment:\
+>    DevOps brings together development and operations to break down silos, align goals, and deliver on common objectives. The whole team (development, testing, security, operations, and others) has end-to-end ownership for the software they release. They work together to optimize the productivity of developers and the reliability of operations. Teams learn from each other's experiences, listen to concerns and perspectives, and streamline their processes to achieve the required results.\
+>    This increased visibility enables processes to be unified and continuously improved to deliver on business goals. The collaboration also creates a high-trust culture that values the efforts of each team member, and transfers knowledge and best practices across teams and the organization.
+> 2. Automate when possible\
+>    With DevOps, repeatable tasks are automated, enabling teams to focus on innovation. Automation provides the means to rapid development, testing, and deployment. Identify automation opportunities at every phase, such as code integrations, reviews, testing, security, deployments, and monitoring, using the right tools and services.\
+>    For example, infrastructure-as-code (IaC) can be used for predefined or approved environments, and versioned so that repeatable and consistent environments are built. You can also define regulatory checks and incorporate them in test that continuously run as part of your release pipeline.
+> 3. Focus on customer needs\
+>    A customer first mindset is a key factor in driving development. For example, with feedback loops DevOps teams stay in-touch with their customer and develop software that meets the customer needs. With a microservices architecture, they are able to quickly switch direction and align their efforts to those needs.\
+>    Streamlined processes and automation deliver requested updates faster and keep customer satisfaction high. Monitoring helps teams determine the success of their application and continuously align their customer focused efforts.
+> 4. Develop small and release often\
+>    Applications are no longer being developed as one monolithic system with rigid development, testing, and deployment practices. Application architectures are designed with smaller, loosely coupled components. Overarching policies (such as backward compatibility, or change management) are in place and provide governance to development efforts. Teams are organized to match the required system architecture. They have a sense of ownership for their efforts.\
+>    Adopting modern development practices, such as small and frequent code releases, gives teams the agility they need to be responsive to customer needs and business objectives.
+> 5. Include security at every phase\
+>    To support continuous delivery, security must be iterative, incremental, automated, and in every phase of the application lifecycle, instead of something that is done before a release. Educate the development and operations teams to embed security into each step of the application lifecycle. This way, you can identify and resolve potential vulnerabilities before they become major issues and are more expensive to fix. \
+>    For example, you can include security testing to scan for hard-coded access keys, or usage of restricted ports.
+> 6. Continuously experiment and learn\
+>    Inquiry, innovation, learning, and mentoring are encouraged and incorporated into DevOps processes. Teams are innovative and their progress is monitored. With innovation, failure will happen. Leadership accepts failure and teams are encouraged to see failure as a learning opportunity.\
+>    For example, teams use DevOps tools to spin-up environments on demand, enabling them to experiment and innovate, perhaps on the use of new technology to support a customer requirement.
+> 7. Continuously improve\
+>    Thoughtful metrics help teams monitor their progress, evaluate their processes and tools, and work toward common goals and continuous improvement. For example, teams strive to improve development performance measures such as throughput.\
+>    They also strive to increase stability and reduce the mean time to restore service. Using the right monitoring tools, you can set application benchmarks for usual behaviors, and continuously monitor for variations.
+
+##### DevOps Practices
+
+> DevOps culture leads to DevOps practices that are geared toward streamlining and improving the development lifecycle, to reliably deliver frequent updates, while maintaining stability.
+
+1. Communication and collaboration - rapid, clear, transperant and frequent communication between teams.
+1. Monitoring and observability - assessing how the system is performing at all times. using discrete information (such as error logs) and numeric metrics, using visualizations and centralized tools to make the data available and actionable.
+1. Continuous integration (CI) - regularly mergin small changes into the main code branch (after running tests on it), finding bugs quickly and addressing them.
+1. Continuous delivery/continuous deployment (CD) - regularly delivering the upgraded software to the client, rather than releasing "service packs" or yearly versions.
+1. Microservices architecture - design around services with limited functionality, reduce coupling and complexity, allowing for changes and innovation in one service without effecting other components.
+1. Infrastructure as code - storing configurations for testing environments and development machines in a repository, allowing for repeatability and scaling that isn't possible with manual operations.
+
+The devops pipeline is similar to the waterfall pipeline, but it's more fluid, and since it's smaller in scale and involves less people, it's easier to go back and change something when encountering an error.
+
+- Code
+- Build
+- Test
+- Release
+- Deploy
+- Monitor
+
+##### DevOps Tools
+
+Devops use the cloud, as it's both a source of services that can facilitate ci/cd on the highest level, and as a way to provision infrastructure resources without buying them.
+
+There are Tools that make development better, such as IDEs and SDKs. IDEs make writing code easier, with refactoring tools, auto completion and code suggestions. SDKs make interacting with external libraries (such as AWS cloud) easy, instead of writing API calls directly.
+
+CI/CD tools allow automating the process from changes to the code in the source-code repository and taking it all the way to the finished product, that means building the artifacts, running tests, checking for security problems, and even releasing the code onto the cloud.
+
+There are also tools that allow for acquiring and configuring infrastructure, which means that different environments (production, development, testing) can have consistent configurations, and any difference between them are also documented. provisioning infrastructure also allows for fine grained control of permissions, networking and dependencies.
+
+Container services and Serverless services also allow developers to focus on the core product, rather than worry about the host environment. this can be similar to virtual machines (only lighter), or without any worries about the underlying system at all.
+
+There are also tools for monitoring and observability, such as collecting logs, metrics, tracking requests, monitoring traffic, etc..
+
+</details>
+
+#### Amazon's DevOps Transformation
+
+<details>
+<summary>
+Case study of How amazon itself moved to DevOps
+</summary>
+
+In the early 2000s, Amazon was a retail company with a monolith architecture. as a large company, it suffered from all the downsides of traditional devops processes. they changed it by giving small teams responsability over features, and gave them the power to control the entire pipeline, so there was no need for knowledge transfer between teams across stages, and they could eliminate redundancies.
+
+</details>
+
+#### AWS DevOps Tools
+
+<details>
+<summary>
+AWS Tools for DevOps
+</summary>
+
+<cloud>AWS Cloud9</cloud> is a cloud based IDE to write, run and debug code.
+<cloud>AWS Code Commit</cloud> is a source control service that stores the code on the cloud (similar to github). <cloud>AWS CodeBuild</cloud> automates compiling the source code, running tests and creating software packages (artifacts). <cloud>AWS CodeDeploy</cloud> automates the task of deploying the code onto compute resources (<cloud>EC2</cloud>, <cloud>Fargate</cloud>, <cloud>Lambda</cloud>, etc...). <cloud>AWS CodePipeline</cloud> combines them into a CI/CD pipeline that can run all the tasks in a repeatable way.
+
+Once the deployment is done, <cloud>AWS CloudWatch</cloud> collects the logs from the services, and <cloud>AWS X-Ray</cloud> can trace how requests pass through the system.
+
+</details>
+
+#### AWS DevOps Demo
+
+<details>
+<summary>
+Create and Control a CI/CD Pipeline
+</summary>
+
+> In this demo, you will see how AWS DevOps services are used to create and control a continuous integration and continuous delivery (CI/CD) pipeline. This release pipeline will automate deploying a working application to multiple Regions. The application being deployed is a simple web page. You will see how to control the workflow and speed up the pipeline by eliminating manual interventions.
+>
+> These steps have been completed before the demo:
+>
+> - The infrastructure required for the application to run was provisioned in two AWS Regions.
+> - Along with the application source, an appspec.yml file and supporting scripts have been created and provided with the code.
+> - A Lambda function has been created. When invoked, it checks some text on a webpage.
+>
+> During the demo, the pipeline will be created in the following steps:
+>
+> 1. The demo starts with a quick review of the provisioned infrastructure and the template file that was used to create them.
+> 1. AWS CodeCommit is configured to hold the code, and is the continuous integration service that starts the pipeline with every code change.
+> 1. AWS CodeDeploy is configured with specifics about each deployment Region. CodeDeploy is the continuous deployment service that installs the application on the infrastructure.
+> 1. AWS CodePipeline uses the configured services to create pipelines.
+>    1. First, a two stage pipeline is created that automatically deploys to Region 1.
+>    1. Then, we build on the pipeline and add two new stages. This release pipeline will deploy the simple web application to two distinct AWS Regions. The pipeline still automatically deploys code changes to Region 1, but requires a manual approval before deploy to Region 2.
+>    1. Finally, a Lambda function is used speed up the pipeline while maintaining control. It replaces the manual approval gate with automation.
+
+(video)
+
+we have a <cloud>CloudFormation</cloud> template that provions resources (<cloud>EC2</cloud> machines), we have a <cloud>CodeCommit</cloud> source code repository, <cloud>CodeDeploy</cloud> and <cloud>CodePipeline</cloud> services that automate the deployment.
+
+we create a repository and clone it, then we create the application and commit the files into it. we use the <cloud>Cloud9</cloud> tool to write our code. we next create the deployment in the <cloud>CodeDeploy</cloud> service, and we set it to use the EC2 instances. we follow the wizard for <cloud>CodePipeline</cloud> and set the repository as our source, so we will run the pipeline when the code is changed. we also add an approval gate to require manual approval before deploying to a different region. we can replace the approval check with a lambda function
+
+</details>
+
+</details>
+
+</details>
+
 </details>

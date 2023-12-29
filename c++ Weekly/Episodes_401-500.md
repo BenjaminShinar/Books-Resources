@@ -195,3 +195,42 @@ void use_ptr(S* ptr)
 pointer arithmetics is ripe for bugs of accessing memory outside the actual variable, can happen when passing arrays, when parsing strings. it's better to use things like <cpp>std::string_view</cpp> or <cpp>std::span</cpp>. and it's always important to test using "fuzzy testing".
 
 </details>
+
+## C++ Weekly - Ep 407 - C++98 Code Restoration
+
+<details>
+<summary>
+Continue from episode 402.
+</summary>
+
+[C++98 Code Restoration](https://youtu.be/A5haG_UCbRI?si=RsUhgejnlWsM7j3P)
+
+Working on C++98 code, using tools that were available at the time. we first add some tests (in a new project), needing to resolve dependencies across them.
+
+- adding code to source control.
+- upgrade build tools as much as possible (what was available then).
+- capture current state with tests before making changes.
+- split long files to headers.
+- keep changes to minimal at start.
+- add header guards
+
+bugs are ok for now, we want to have something that builds, links and is testable.
+
+we can set the ".gitattributes" file to change to way git adds line endings on legacy files.
+
+once we get it to a stable state, we can start modifying the code and use best practice. we can use the standard library and proper types (<cpp>std::string</cpp> rather than <cpp>char *</cpp> pointers, <cpp>bool</cpp> rather than <cpp>int</cpp>). we can move to using references instead of pointers, and make sure to use <cpp>const</cpp> when needed. templates existed back then, so we can use them instead of void pointers. it's ok to discover bugs, we just need to have tests that monitor them.\
+Since this is an arithmetical project, we use operator overloading instead of calling named functions like `divide` and `add`.
+</details>
+
+## C++ Weekly - Ep 408 - Implementing C++23's constexpr unique_ptr in C++20
+
+<details>
+<summary>
+<cpp>std::unique_ptr</cpp> is now supported a compile time.
+</summary>
+
+[Implementing C++23's constexpr unique_ptr in C++20](https://youtu.be/p8Q-bapMShs?si=FiHoZUqe2fPW7njJ)
+
+<cpp>constexpr</cpp> and <cpp>std::unique_ptr</cpp> finally work together in C++ 23. until now it didn't have constant expression constructor and destructor. generally, if the code exists in a header file, it usually easy to make it <cpp>constexpr</cpp>.
+
+</details>
