@@ -1,11 +1,10 @@
 <!--
-// cSpell:ignore Unmanaged PaaS IaaS SaaS AZCOPY GZRS Passwordless Spendings functionapp eastus Kusto
+// cSpell:ignore Unmanaged PaaS IaaS SaaS AZCOPY GZRS Passwordless Spendings functionapp eastus Kusto linux azcopy ddos kubernetes
  -->
 
 # AZ-900 Microsoft Azure Fundamentals
 
-udemy course [Learn the fundamentals of Azure, and get certified, with this complete beginner's AZ-900 course, includes practice test!](https://www.udemy.com/course/az900-azure/). by *Scott Duffy*.
-
+udemy course [Learn the fundamentals of Azure, and get certified, with this complete beginner's AZ-900 course, includes practice test!](https://www.udemy.com/course/az900-azure/). by _Scott Duffy_.
 
 [extra tests](https://www.udemy.com/course/microsoft-azure-az-900-practice-tests-latest-2020/)
 
@@ -13,8 +12,8 @@ udemy course [Learn the fundamentals of Azure, and get certified, with this comp
 
 [exam requirements](https://learn.microsoft.com/en-us/certifications/exams/az-900)
 
-
 ## Introduction
+
 <details>
 <summary>
 Course introduction.
@@ -25,17 +24,18 @@ Course introduction.
 for people without technical background, and for people who want a certificate.
 
 the exam covers three topics
+
 - Describe cloud concepts
 - Describe Azure architecture and services
 - Describe azure management and governance
 
-
-> "What is *the cloud?*"\
+> "What is _the cloud?_"\
 > the common answer is "someone else's computer".
 
 When we say "cloud", it usually means that we rent computing resources from some outside source, this is opposed to running the servers on premises or contracting some company to host your machines.
 
 > Computing resources:
+>
 > - Windows and Linux Servers
 > - Unlimited File Storage
 > - Databases
@@ -50,12 +50,13 @@ When we say "cloud", it usually means that we rent computing resources from some
 
 and many more services, some are basic and some are advanced.
 
-
 ### A Quick Look Into Azure
+
 showing how to create a virtual machine in Azure. there are many options, but we can ignore them and use the default, and things will work. we can choose the image, the instance type (compute power).\
 for windows machine, we need a admin user, for linux machine we use SSH keys. if we use windows servers, we can provide an existing license information and reduce our costs. we can set backups, automatic shutdown hours, and more stuff. each machine must exist in a network.
 
 ### AZ-900 Exam Requirements
+
 The AZ-900 exam is the basic exam for azure.
 
 > Azure Fundamentals exam is an opportunity to prove knowledge of cloud concepts, Azure services, Azure workloads, security and privacy in Azure, as well as Azure pricing and support. Candidates should be familiar with the general technology concepts, including concepts of networking, storage, compute, application support, and application development.
@@ -67,6 +68,7 @@ this is a one-time certificate, it isn't limited like other certificates.
 </details>
 
 ## Cloud Computing
+
 <details>
 <summary>
 Understanding the basics of cloud computing.
@@ -75,11 +77,13 @@ Understanding the basics of cloud computing.
 cloud - pay only for what you use.
 
 ### What is Cloud Computing
+
 describing cloud computing. all kinds of resources, such as virtual machine, virtual app (a wrapper over a virtual machine), a function app (serverless computing), logic app (connecting application together). there are also different categories of resources (not just computing), such as AI and machine learning, data analytics, block chain, databases, devops, databases, we can find many more options under the marketplace...
 
 ### Shared Responsibility Model
 
 layers:
+
 - Building Security
 - Physical Network Security
 - Physical Computer Security
@@ -106,6 +110,7 @@ Pricing models, this can be complicated. when we run on-premises, we can calcula
 for the cloud, it's different, the price is usually decided by at several metrics.As in example, for CosmosDB: operations, consumed storage, access and backup.
 
 there are a number of free services (or free until a threshold)
+
 - Virtual Network
 - Private ip Address
 - Azure Migrate
@@ -117,6 +122,7 @@ there are a number of free services (or free until a threshold)
 - Azure App services (some)
 
 other services are charged by time
+
 - Virtual Machines
 - App services
 - Databases
@@ -125,6 +131,7 @@ other services are charged by time
 - public ip Address
 
 and some are charged by storage
+
 - Database Storages
 - Backups
 - Unmanaged Disks
@@ -132,19 +139,19 @@ and some are charged by storage
 - Outbound traffic(above 5GB monthly)
 
 some services charge by operation (usually fractions of a penny)
+
 - Unmanaged Storage (reads, writes, deletes)
 - Database Queries
 - Messaging
 
-
 some are charged by execution
+
 - Azure functions (above the threshold)
 - Serverless Databases
 - Messaging Services
 - Logic Apps
 
 there are also regional differences, some regions cost more to operate in.
-
 
 ### Live Demo: Pricing Calculator
 
@@ -153,6 +160,7 @@ estimating the cost of azure resources, changing the settings and the region to 
 </details>
 
 ## Benefits of Cloud Computing
+
 <details>
 <summary>
 MISSING STUFF HERE
@@ -164,6 +172,7 @@ MISSING STUFF HERE
 - manageability
 
 > Benefits
+>
 > - cost saving (both real and accounting)
 > - availability and scalability
 > - reliability and predictability
@@ -172,7 +181,6 @@ MISSING STUFF HERE
 > - global reach
 > - range or ready on-demand services
 > - range of tools
-
 
 ### Cost Savings Benefit of Cloud Computing
 
@@ -187,6 +195,7 @@ high availability - is there a downtime? is the service responsive when it's nee
 we can achieve high availability with scalability: handling a growth of users or work. we can added capacity to the application to handle the increased demand. azure has the concept of elasticity - if we can detect we are reaching the max capacity, then we can provision more compute power automatically, and when the demand drops, we release the resources, as they are not needed anymore.
 
 ### High availability
+
 - gradual deployment
 - testing and monitoring deployments
 - easy rollback plan
@@ -194,6 +203,7 @@ we can achieve high availability with scalability: handling a growth of users or
 - frequent deployments
 
 redundancy:
+
 - availability sets
 - availability zones
 - cross region load balancing
@@ -205,6 +215,7 @@ geographically distributed deployments. having a disaster recovery plan. load te
 </details>
 
 ## Cloud Service Types
+
 <details>
 <summary>
 IaaS, PaaS, SaaS
@@ -213,23 +224,27 @@ IaaS, PaaS, SaaS
 IaaS, PaaS, SaaS. not having to buy resources upfront, allowing for flexible use, it's also possible to have a cost saving plan.
 
 IaaS - the lower level building blocks, usually there is a "real-world" alternative.
+
 - computing - azure virtual machine
 - storage - azure storage, (blobs, files, queues, tables), can also be configured as a data lake.
 - networking - virtual networking, (they don't cost anything on their own), bandwidth (ingress and egress)
 
 PaaS - a service layer on top of Iaas, middleware, development tools, ci-cd features... freedom from worrying about the VM
+
 - azure app services
 - managed storage
 - azure sql database
 - networking - Azure Front Door, load balancer, firewall
 
-SaaS - ready-to-use applications 
+SaaS - ready-to-use applications
+
 - cloud apps
 - office tools - office35
 
 </details>
 
 ## Core Architectural Components
+
 <details>
 <summary>
 Separation of resources- physical and logical
@@ -241,12 +256,14 @@ Regions, more than 60, some are more accessible than others. Azure has the most 
 Sovereign regions (US government, China) are special regions that have some special requirements, and aren't available for all.
 
 ### Availability Zones and Data Centers
+
 availability zones reside inside regions, they are data centers that are the physical servers of the region. those data centers are connected to one another, but if one fails, the others should still work. not all regions have availability zones (two or more data centers).\
 A data center has a separate power and networking infrastructure.
 
 ### Resources, Resource Groups, Subscriptions, Management Groups
 
 Logical separation of resources, doesn't have to follow the physical grouping.
+
 - management groups
 - subscriptions
 - resource groups
@@ -276,11 +293,11 @@ management group contain one or more subscriptions, and can contain nested manag
 </details>
 
 ## Compute And Networking Services
+
 <details>
 <summary>
 More in-depth description of Azure Services.
 </summary>
-
 
 ### Azure Compute Services
 
@@ -298,14 +315,12 @@ VM Scale Sets are VM that run the same code and have a load balancer in front of
 App-services (web-apps) are published apps in azure, there is no vm to manage. there is aks (azure kubernetes) and native container instances (ACI) - which are more fitting for small scale containers.\
 Virtual desktop are just as the name suggests, they are a virtualization of a desktop computer, with a GUI, file system... etc.
 
-
 ### Azure Networking Services
+
 - Virtual Networks (like VPC)
 - VPN gateways
 - Peering
 - ExpressRoute - high speed **private** connection to Azure. not running over the internet.
-
-
 
 - connection services
 - protection services(ddos, firewall, security groups, private link)
@@ -313,7 +328,9 @@ Virtual desktop are just as the name suggests, they are a virtualization of a de
 - monitoring services - Azure monitor
 
 subnets, vpn (connecting two networks as if they are the same one), DNS (domain name service resolution)
+
 ### Network Peering
+
 virtual networks have address space, and can be divided into subnets, there are 5 reserved Ips for each subnet. communicating across virtual networks is done with "peering". this allows traffic to travel between the networks, and resource addresses can be resolved even if they reside the other network. Peering could be bi-directional or uni-directional. this can be done in the same region, or across regions, but global peering has more costs.
 
 ### Public and Private Endpoints
@@ -323,6 +340,7 @@ Azure resources can have different access, we can global public access, select p
 </details>
 
 ## Azure Compute Demo
+
 <details>
 <summary>
 Demos of creating Azure compute services
@@ -334,7 +352,7 @@ We need a resource group. choosing the region, availability zone (or allowing az
 
 ### LIVE DEMO: Connecting to a Virtual Machine
 
-we can see public and private IPs, we can connect to it directly with RDP (remote-desktop-protocol) for windows or SSH for linux, we can make the windows server into a web server, (we might need to open up some ports). 
+we can see public and private IPs, we can connect to it directly with RDP (remote-desktop-protocol) for windows or SSH for linux, we can make the windows server into a web server, (we might need to open up some ports).
 
 Even when we close down the machine, we still pay for the storage of the disks, but that is a much lower cost.\
 We can resize the machine into a stronger machine. and we can add more disk space to it if needed.
@@ -359,14 +377,15 @@ just like before, we close up by deleting the resource group.
 
 ### LIVE DEMO: Creating Azure Functions
 
-Azure function can be serverless of use the PAAS model. we again need globally unique name, we can choose a <kbd>runtime stack</kbd> or containers, we can only choose one kind of language, and we can't mix between them. we have to connect to a storage account, and we choose the OS and <kbd>Plan</kbd>. there are 3 plans: 
+Azure function can be serverless of use the PAAS model. we again need globally unique name, we can choose a <kbd>runtime stack</kbd> or containers, we can only choose one kind of language, and we can't mix between them. we have to connect to a storage account, and we choose the OS and <kbd>Plan</kbd>. there are 3 plans:
+
 - app service plan
-- consumption (serverless) 
+- consumption (serverless)
 - premium functions
 
 the plan dictates which features are available and how they scale up. there are less options to choose from than we saw in VMs or WebApps.
 
-The url is not a website. if we want functionality, we need to choose <kbd>Functions</kbd>, then <kbd>Create</kbd> and set up the trigger. each "code" function should be really small, the demo code allows for an http request with a personalized message. pricing is based on consumption (number of execution). 
+The url is not a website. if we want functionality, we need to choose <kbd>Functions</kbd>, then <kbd>Create</kbd> and set up the trigger. each "code" function should be really small, the demo code allows for an http request with a personalized message. pricing is based on consumption (number of execution).
 
 Functions are good for small pieces of code that don't require a complete server. there are also **durable functions** which are more advanced and can call other functions and wait for the response from them.
 
@@ -383,6 +402,7 @@ Microsoft Container Registry is a storage space for images, the image is a self 
 </details>
 
 ## Azure Storage
+
 <details>
 <summary>
 Storage Solutions: Blob, Disk, File and Tables
@@ -407,16 +427,19 @@ BLOB - Binary Large Object. any file can be stored in blob.
 - failover options - using the backup before azure comes back online
 
 Disk Storage is for Azure Virtual Machines, managed disks act as hard disks for our VMs, they are optimized for that purpose, and have different pricing model.
+
 ### LIVE DEMO: Create an Unmanaged Storage Account
 
 in Azure, we choose <kbd>Storage Account</kbd>, <kbd>Create</kbd>, give it a globally unique name, choose the region, performance and redundancy tiers.
 
 the region affects the cost, some regions are cheaper than others. Premium performance uses SSD disks so it has lower latency, and can be further optimized:
+
 - Block blobs - high transaction rates and lw storage latency.
 - File Shares - high performance applications that need to scale
 - Page blobs - random read and write operations
 
 Redundancy:
+
 - LRS - Locally Redundant Storage - basic redundancy, backup in the same Data-Center, but on a different rack.
 - ZRS - Zone Redundant Storage - backup at a different data-center (availability zone) in the same region
 - GRS - backup at a different region, useful for data recovery and failover
@@ -434,6 +457,7 @@ we set the networking options and who can access it, and we can also enable file
 ### LIVE DEMO: Upload Files to a Storage Account
 
 The storage account contains the four types of data:
+
 - Containers - blob
 - File share
 - Queues
@@ -454,9 +478,10 @@ we shouldn't really interact with Azure Storage manually in the day to day scena
 
 if we want to copy data between containers, we don't have to manually download and reupload the data (which would take time and cost us money in networking bandwidth). the better way is to copy the data inside the Azure ecosystem, this is done with a CLI tool called **AZCOPY**, which we can download to our local machine or use directly from the azure cloud shell. we can also use it to download files.
 
-1. we create SAS from the source container with read permissions. 
+1. we create SAS from the source container with read permissions.
 2. we create SAS from the destination container with write permissions.
 3. inside the cloud shell console we run the command
+
 ```ps
 azcopy ? # show help
 azcopy copy '<source url>' '<destination url>'
@@ -465,12 +490,14 @@ azcopy copy '<source url>' '<destination url>'
 this will also work across subscriptions, because we got the permissions through the Shared Access Signature.
 
 ### Azure File Sync
+
 Many companies still have File servers, so Azure has cloud solution called "File Share". the metric is the IO/s operations per second. we interact with them using the SMB protocol, so we can mount them on our machine.
 
 - Storage Sync Service - organize groups and end point
 - File Sync Agent - synchronize between the on-premises file server and the cloud
 
 ### Azure Migrate
+
 A tool for creating a migration process from the on-premises servers and workloads into the cloud. it discovers local machines and services, maps them into the correct Azure service, and notifies if something requires action (updating) before it can be migrated.
 
 ### Azure Data Box
@@ -479,11 +506,11 @@ When we have a large amount of data (TerraBytes of data), it's no longer practic
 
 Azure provides a way to send data in a physical device.
 
-Name | Storage | Notes
-------|---|---
-Data Box Disk | 8 TB | SSD disk
-Data Box | 100 TB | Computer
-Data Box Heavy | 1 PB | Wheeled Version
+| Name           | Storage | Notes           |
+| -------------- | ------- | --------------- |
+| Data Box Disk  | 8 TB    | SSD disk        |
+| Data Box       | 100 TB  | Computer        |
+| Data Box Heavy | 1 PB    | Wheeled Version |
 
 we can also use Azure Stack Edge (either physical or virtual) which also help.
 
@@ -492,6 +519,7 @@ the data is encrypted, and the disks are wiped clean after the upload
 </details>
 
 ## Identity, Access and Security
+
 <details>
 <summary>
 Identity and Security tools
@@ -504,6 +532,7 @@ security and identification
 Identity can refer to a person, application or a device, it's a digital representation. it usually requires a password, secret key or certificates to assume the identity.
 
 traditional models of client-server would rely on all sorts of identification methods, some were handmade, some used cookies, and in many cases the were hacks and exploits:
+
 - storing passwords in plain text
 - using a simple, reversible hash algorithm such as MD5
 - storing the "salt" (random element) along with the data
@@ -514,13 +543,14 @@ Azure has an identity management system based on Active Directory, which is very
 
 Traditional AD does not work with Internet protocols.
 
-Azure AD uses "identity as a service" model.  it removes the need to write code to handle users, passwords, password reset, etc...
+Azure AD uses "identity as a service" model. it removes the need to write code to handle users, passwords, password reset, etc...
 
 - **Client** uses UserId and password to connect to the **Identity Provider** and receives a signed token.
 - this signed token allows the **Client** to connect to the **Server**.
 - The **Server** and the **Identity Provider** have a trust-key relationship.
 
 protocols:
+
 - SAML
 - OpenID
 - WS Federation
@@ -535,6 +565,7 @@ User has one User Id and one password - Single Sign-On.
 Azure services integrate with AzureAD, even across azure accounts, which again reduces the amount of identity management.
 
 ### Authentication vs Authorization
+
 - Authentication - the user proving who they are.
 - Authorization - ensuring that a user is permitted to perform an action. what can the user do.
 
@@ -549,6 +580,7 @@ A common case of hacking is when the credentials of one user are exposed, and th
 ### Multi-Factor Authentication (MFA or 2FA)
 
 MultiFactor authentication requires more evidence to log in. it allows for more security in case one factor is compromised.
+
 - something you know - password
 - something you have - access to mobile phone, email account, authentication App.
 - something you are - fingerprint scan, retina scan, photograph.
@@ -557,12 +589,12 @@ in azure, we can use SMS, email, authenticator app or phone call as an identity 
 
 ### PasswordLess
 
-Passwordless is a new way to perform authentication without causing inconvenient and without compromising security 
+Passwordless is a new way to perform authentication without causing inconvenient and without compromising security
 
-X | Low Security |High Security
------|----|-
-InConnivent | &empty; | Passwords + 2FA
-Connivent| Passwords | PasswordLess
+| X           | Low Security | High Security   |
+| ----------- | ------------ | --------------- |
+| InConnivent | &empty;      | Passwords + 2FA |
+| Connivent   | Passwords    | PasswordLess    |
 
 Phone gestures are one type of PasswordLess authentication, it's tied to the device, so it can't be used elsewhere. face identification is another form, or asking you to verify who you are on a different device.
 
@@ -574,7 +606,8 @@ the administrator creates roles that represent common tasks, and those roles get
 
 Users are then assigned to roles, and they get those permissions, this reduces the complexity of handling permissions across many users.
 
-in azure, there are usually some built-in roles which represent common operations. 
+in azure, there are usually some built-in roles which represent common operations.
+
 - reader - read only
 - contributor - read and write
 - owner - assign permission
@@ -586,6 +619,7 @@ we can always create custom permissions as needed.
 in the traditional paradigm, there is a single security threshold (the firewall). in a zero trust model, there are multiple security threshold, and services don't trust each other, everything is guarded.
 
 Zero Trust principles
+
 - Verify Explicitly
 - Use Least Privileged Access
 - Assume Breach
@@ -613,10 +647,10 @@ Having multiple layers of defense, protecting each layer of the stack and limiti
 
 A paid service for security posture management, it does analysis, gives a rating and recommendation for security, follow regulation, firewalls and other security products.
 
-
 </details>
 
 ## Cost Management
+
 <details>
 <summary>
 Understanding, Estimating and Monitoring Spendings
@@ -625,6 +659,7 @@ Understanding, Estimating and Monitoring Spendings
 ### Factors that Affect Cost
 
 each service has different cost calculations. some services are free:
+
 - Resource groups
 - Virtual network (up to 50)
 - Load balancer (basic)
@@ -637,6 +672,7 @@ other services have metrics that effect the costs.
 the consumption model is based on innovations, such as Azure functions. the first million executions are free, and then it's another 20&cent; for each million executions. compared to the cost of running the cheapest virtual machine, which is about 20$ per month.
 
 Pay per usage Services:
+
 - Azure functions
 - Logic Apps
 - Storage (pay per GB)
@@ -653,7 +689,7 @@ outbound Bandwidth is also charged, the first 5GB going out are free, in boundDa
 
 The Pricing Calculator is a tool that helps us estimate the costs based on the resources we use. we set up the services and configuration, and we can see an estimate of how much using azure will cost.
 
-we start by adding the services, and then choose which configurations we use and the usage metrics. we set the savings plan we plan to use. we can do this for each resource and create a estimate. 
+we start by adding the services, and then choose which configurations we use and the usage metrics. we set the savings plan we plan to use. we can do this for each resource and create a estimate.
 
 ### Total Cost of Ownership Calculator
 
@@ -664,6 +700,7 @@ The cost of running a Server on-premises isn't just the hardware itself, we need
 The TCO calculator is used to estimate the relative cost of running the workloads on premises compared to running it on the cloud. we describe the workloads we use, and then set the assumptions for costs. the calculator will use those assumptions to compare between staying on-premises or migrating to the cloud.
 
 ### Azure Cost Management
+
 The cost management service is a tool to view and analyze spending in azure. it tracks spending across time, regions, services, and it can allows to set a budget and have an alert if the costs exceed a threshold.
 we can use those alerts to set automatic actions.
 
@@ -678,6 +715,7 @@ at any resource, we can click <kbd>Tags</kbd> and start adding key-value pairs.
 </details>
 
 ## Governance and Compliance
+
 <details>
 <summary>
 Governance and Compliance guidelines.
@@ -693,6 +731,7 @@ Governance and Compliance are guidelines which must be followed for resources. w
 Blueprints are templates for subscription with roles and policies already defined. Policies are rules which act across azure resources, such as requiring all databases to have backup enabled, the policy can be used to enforce the behavior and block resources which don't follow the rule from being created, or evaluate resources according to the policy and report them.
 
 There are built in policies, such as:
+
 - requiring minimal SQL servers version
 - limiting storage account SKUs
 - limiting virtual machine SKUs
@@ -709,6 +748,7 @@ The microsoft Service Trust Portal holds all the documents about how azure is co
 </details>
 
 ## Tools for Managing and Deploying Resources
+
 <details>
 <summary>
 Ways to work and manage resources in Azure
@@ -782,9 +822,10 @@ The Azure Service Health is concerned the health of azure in general, rather tha
 
 Diagnostic settings is a storage of the metrics from our resources, we can save them into a storage account, or send them to the log analytics workspace, an event hub or a 3rd party solution.
 
-there is a "classic" diagnostic service which is being phased out. 
+there is a "classic" diagnostic service which is being phased out.
 
 ### Azure Monitor
+
 An dashboard that gives an overview about our resources, for most accounts, we can set alerts based on all sorts of queries, we can look at metrics and save those reports to the dashboard. there is a small charge for each rule and for the notification itself.
 
 there are built in reports for each type of resource, the queries are using the Kusto Query Language syntax. some queries can also create visualizations. we can gather them together into workbooks to create customized reports.
@@ -792,195 +833,241 @@ there are built in reports for each type of resource, the queries are using the 
 </details>
 
 ## Practice Tests
+
 <!-- <details> -->
 <summary>
 Practice tests
 </summary>
 
-### Practice Test 1 
+### Practice Test 1
+
 <details>
 <summary>
 First Exam
 </summary>
 
 #### Q01
+
 > What is the benefit of economics of scale?
 
 #### Q02
+
 > Best approach when copying data between two azure storage accounts?
 
 #### Q03
+
 > What are the benefits of Availability Sets for virtual machines?
 
-
 #### Q04
+
 > Can you have more than one azure subscription per company?
 
 #### Q05
+
 > Is Azure Active Directory a network gateway for load balancing user logins using a CDN?
 
 #### Q06
-> Availability zones per region
 
+> Availability zones per region
 
 Three Availability Zones per region.
 
 #### Q07
+
 > Manage multiple subscriptions into nested hierarchies
 
 #### Q08
+
 > Recommendations based on actual usage
 
 #### Q09
+
 > Azure resource groups
 
 #### Q10
+
 > Creating policies
 
 #### Q11
+
 > Azure public cloud
 
 #### Q12
+
 > Monitoring azure itself, not the customer resources
 
 #### Q13
+
 > Azure AD licenses
- 
+
 Office365 License and Azure Active Directory Free
+
 #### Q14
+
 > Azure **blueprints**
 
 #### Q15
+
 > Azure Powershell and Azure CLI compatibility
 
-
 not compatible - different flavours.
+
 #### Q16
+
 > Azure VM images
 
-
 #### Q17
+
 > what makes a feature elastic
 
 #### Q18
+
 > login without password
 
 #### Q19
+
 > Azure sovereign Regions
 
 #### Q20
+
 > Consumption based vs time-based pricing model
 
 #### Q21
+
 > Cheapest storage redundancy option
 
 #### Q22
+
 > Managing resources in other vendors
 
 #### Q23
+
 > what are compute resources
 
 not just VMs, not limited to the Azure Marketplace.
+
 #### Q24
+
 > public and private endpoints on azure storage account
 
 #### Q25
+
 > Azure availability zones
 
 #### Q26
-> Split traffic 
 
+> Split traffic
 
 #### Q27
+
 > is Azure a public cloud only?
 
 Azure has private cloud offerings.
+
 #### Q28
+
 > Azure **scaleSets**
 
 Scale Sets allow managing virtual machines as a single unit.
 
 #### Q29
+
 > Cost of inbound traffic
 
 #### Q30
+
 > Azure policy usage for enforcement
 
-
 #### Q31
+
 > MultiFactor authentication
 
-
 #### Q32
+
 > Azure CloudShell (CLI, powershell)
 
 #### Q33
+
 > Azure preferred identity service
 
-
 #### Q34
+
 > Infrastructure as a service
 
 #### Q35
+
 > personalized windows desktop machine
 
 #### Q36
+
 > fastest connection to azure
 
-
 #### Q37
+
 > Features of Azure AD
 
 #### Q38
+
 > Required features for a virtual machine
 
 Virtual machines require
+
 - storage account
 - network interface card
 - virtual network
 
 #### Q39
+
 > Microsoft service trust portal
 
 #### Q40
+
 > Perimeter layer of security
 
 the firewall is part of the perimeter layer of security.
 
 #### Q41
+
 > Single signOn
 
 #### Q42
+
 > Total cost of ownership
 
 everything is part of te total cost of ownership
 
 #### Q43
+
 > read only resource lock
 
 #### Q44
+
 > Azure app service
 
-
 #### Q45
+
 > Zero trust
 
 #### Q46
+
 > network layer of security
 
 using subnets
 
 #### Q47
+
 > Infrastructure as a service
 
 #### Q48
+
 > Which service collects all logs?
 
-
 #### Q49
+
 > ARM abbreviation
 
 #### Q50
+
 > What is a public endpoint
 
 providing access from outside the virtual network
@@ -988,177 +1075,222 @@ providing access from outside the virtual network
 </details>
 
 ### Practice Test 2
-<!-- <details> -->
+
+<details>
 <summary>
 Second Exam
 </summary>
 
 #### Q01
+
 > Private preview mode
 
-
 #### Q02
+
 > MultiFactor Authentication
 
 #### Q03
+
 > Monitoring Azure as a whole
 
 #### Q04
+
 > Azure cognitive services
 
 #### Q05
+
 > General Availability Mode
 
 #### Q06
+
 > Why is Azure App PaaS
 
 #### Q07
+
 > Which is preferable for tax optimization?
 
-
 #### Q08
+
 > Which is not IaaS?
 
-
 #### Q09
+
 > How to Store secrets in azure?
 
-
 #### Q10
+
 > What is Big Data?
 
 #### Q11
+
 > What is DDoS?
 
 #### Q12
+
 > Two features that Azure AD provides
 
 #### Q13
+
 > Creating custom Azure policies
 
 #### Q14
+
 > What happens if Azure doesn't live up to it's SLA?
 
 #### Q15
+
 > Azure Resource groups
 
 #### Q16
+
 > Public Cloud Model
 
 #### Q17
+
 > Collecting Logs
 
 #### Q18
+
 > Basic way of protecting an Azure Virtual network subnet
 
 #### Q19
+
 > what kinds of DDoS protection is provided by Azure
 
 Standard and Basic
+
 #### Q20
+
 > default free tier credits
 
 200 $ in credits
+
 #### Q21
+
 > IaaS responsibility
 
-
 #### Q22
+
 > The "network" layer of security
 
 #### Q23
+
 > Powershell and Cli compatibility
 
 #### Q24
+
 > how many regions?
 
 #### Q25
+
 > What is ISO
 
-
 #### Q26
+
 > "perimeter" layer of security
 
 #### Q27
+
 > Virtual machines Os
 
 windows and linux
+
 #### Q28
+
 > Azure Active Directory
 
 #### Q29
+
 > Azure MarketPlace
 
 #### Q30
+
 > Managing multiple subscriptions
 
-
 #### Q31
+
 > What makes a system "elastic"?
 
 #### Q32
+
 > Azure availability zones
 
 #### Q33
+
 > Public preview mode
 
-
 #### Q34
+
 > getting recommendations from azure based on usage
 
 #### Q35
+
 > Azure cloudShell
 
-
 #### Q36
+
 > Single SignOn
 
 #### Q37
+
 > Azure Policy example
+
 #### Q38
+
 > Azure as a private cloud
 
 #### Q39
+
 > Benefits of content delivery network (CDN)
 
 #### Q40
+
 > Azure AD Licenses
 
 #### Q41
+
 > Internet of things Devices
 
-
 #### Q42
+
 > Azure preferred identity service
 
 #### Q43
+
 > ARM abbreviation
 
-
 #### Q44
+
 > Does azure charge for inbound traffic?
 
 #### Q45
+
 > What are the benefits for economy of scale?
 
 #### Q46
+
 > Splitting traffic
 
 #### Q47
+
 > Consumption based pricing model
 
 #### Q48
+
 > What are compute resources
 
 #### Q49
+
 > Microsoft Service trust portal
 
 #### Q50
+
 > Azure subscriptions limit
 
 </details>
 
 ### Topic to review:
+
 - Azure Availability Sets - VMs
 - Azure ScaleSets
 - RA-GRS?
@@ -1170,8 +1302,8 @@ windows and linux
 - Azure Mobile App
 - Azure Logic Apps?
 
-
 answers:
+
 - when possible, prefer hybrid over private cloud
 - Defender for cloud is posture management, identity is done via Azure AD
 - inbound data is free, and so is data inside the same az. transfer of data between region (inter-regions) is not free.
@@ -1189,10 +1321,10 @@ answers:
 - management groups tree max depth is six levels (without the root)
 - The SLA includes everything in the calculations
 
-
 </details>
 
 ## Takeaways
+
 <details>
 <summary>
 
@@ -1208,23 +1340,20 @@ ACI - Azure Containers Instance
 which services in azure are comparable to aws services
 </summary>
 
-| Service Purpose         | Azure Name         | AWS Name                    | Notes                                     |
-| ----------------------- | ------------------ | --------------------------- | ----------------------------------------- |
-| Virtual Machine         | Azure VM           | EC2                         | compute                                   |
-| General Storage         | Blob storage       | S3                          | object / blob storage                     |
-| General Storage Tiers   | Hot, Cool, Archive | S3 Standard, IA, Glacier    | storage tiers for costs and retrieval time |
-| Event-Driven Serverless | Azure Functions    | Lambda                      |
-| Message Queue           | Queue storage      | SQS                         | asynchronous message handling              |
-| VM disk volume          | Azure Disks        | EBS - elastic block storage | storage volumes for virtual compute       |
-| File Storage            | Azure Files        | EFS - elastic file system   |
-| Physical data transfer  | Azure Data Box     | AWS SnowBall                | Data migration                            |
-| Resource Creation       | Azure Blueprints   | AWS CloudFormation          | create resources from templates           |
-Containers | Azure Container Instances | (not ECS) | simple containers
-Kubernetes | AKS | EKS | managed kubernetes cluster
-Object Storage | Blob Container | S3 Bucket | data storage
-Accessing Object Storage | Shared Access Signature | PreSigned Url | granular, time limited access
-
+| Service Purpose          | Azure Name                | AWS Name                    | Notes                                      |
+| ------------------------ | ------------------------- | --------------------------- | ------------------------------------------ |
+| Virtual Machine          | Azure VM                  | EC2                         | compute                                    |
+| General Storage          | Blob storage              | S3                          | object / blob storage                      |
+| General Storage Tiers    | Hot, Cool, Archive        | S3 Standard, IA, Glacier    | storage tiers for costs and retrieval time |
+| Event-Driven Serverless  | Azure Functions           | Lambda                      |
+| Message Queue            | Queue storage             | SQS                         | asynchronous message handling              |
+| VM disk volume           | Azure Disks               | EBS - elastic block storage | storage volumes for virtual compute        |
+| File Storage             | Azure Files               | EFS - elastic file system   |
+| Physical data transfer   | Azure Data Box            | AWS SnowBall                | Data migration                             |
+| Resource Creation        | Azure Blueprints          | AWS CloudFormation          | create resources from templates            |
+| Containers               | Azure Container Instances | (not ECS)                   | simple containers                          |
+| Kubernetes               | AKS                       | EKS                         | managed kubernetes cluster                 |
+| Object Storage           | Blob Container            | S3 Bucket                   | data storage                               |
+| Accessing Object Storage | Shared Access Signature   | PreSigned Url               | granular, time limited access              |
 
 </details>
-
-

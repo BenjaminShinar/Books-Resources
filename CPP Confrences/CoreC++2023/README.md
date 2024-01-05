@@ -2379,6 +2379,53 @@ fixing a bug in the standard requires changing the implementation and text that 
 eventually, it was decided to reject the proposal, and deciding that the problem should be addressed differently.
 </details>
 
+## Chris Ryan :: Multi-Paradigm Programming and Beyond
+
+<details>
+<summary>
+What Does Being "Multi-Paradigm" Mean?
+</summary>
+
+[Multi-Paradigm Programming and Beyond](https://youtu.be/i1cliYm9qQY?si=Tvfa-I8SqtJWJrxE)
+
+- Imperative
+- Procedural
+- Functional
+- Declarative
+- Object Oriented
+
+Paradigm can be the building block, but also be something bigger or more conceptual -
+
+> - a way of doing or thinking about something
+> - a way of organizing or managing a process or data
+> - a way of showing your intent
+
+- Imperative - Sequencing of statements to describe how the program should execute
+- Procedural - Organizes code into functions to perform tasks and manipulate step-by-step
+- Functional - Programming techniques, such as high-order functions, and immutability
+- Declarative - Describing what needs to be done, rather than how to achieve it
+- Object Oriented - Organizing code around objects that encapsulate data and behavior
+
+other than Object Oriented, we could do this in C.
+
+we could put them on a scale, getting more structured as we move forward.\
+Imperative -> Procedural -> Functional -> Declarative
+
+we also have generic programming - coding for a wide range of data types, without specialization. Templatization - generate types at compile time, then also execute code at compile time.
+
+there are also other kinds of paradigms: super-loops, state machines (state dispatcher, windows event-driven frames), I/O loops, MFC(microsoft foundation class), MVC(model view controller).
+
+Data models:
+
+- Conceptual - An abstract representation or high level description of as system, process, or domain.
+- Logical - Represents the structure and organization of data at a higher-level of abstraction.
+- Physical - Represents the implementation-specific details of a system or database.
+
+Entity-Relationship(ER): Conceptual modeling technique used in database design to represent the relationships between entities in a system or domain.
+
+we can say C++ is more of a mixed-paradigm language than multi-paradigm. we can use whatever we want, and combine them together.
+</details>
+
 ## Separator
 
 </details>

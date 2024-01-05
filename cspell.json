@@ -3,7 +3,7 @@
     "ignorePaths": [],
     "dictionaryDefinitions": [],
     "dictionaries": ["softwareTerms"],
-    "words": [],
+    "words": ["udemy"],
     "ignoreWords": [],
     "import": [],
     "allowCompoundWords": false

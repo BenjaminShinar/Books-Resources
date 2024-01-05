@@ -883,7 +883,7 @@ Using managed node groups also can decrease the costs.
 
 ## Serverless Computing
 
-<!-- <details> -->
+<details>
 <summary>
 Several Courses Focusing on Serverless.
 </summary>
@@ -1790,9 +1790,9 @@ API gateways can also take care of some basic request validations, rather than p
 
 ### Amazon DynamoDB for Serverless Architectures
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Understanding DynamoDB
 </summary>
 
 #### Introduction to Amazon DynamoDB for Serverless Architectures
@@ -1859,7 +1859,7 @@ basic requests:
 - `Delete` - remove item from specified primary key
 - `GetItem` - retrieve item associated with a specified primary key
 - `BatchGetItems` - retrieve items associated with a number of primary keys
-- `Query` - for a specified partition key, retrieve item  matching sort key expressions (forward/reverse order)
+- `Query` - for a specified partition key, retrieve item matching sort key expressions (forward/reverse order)
 - `Scan` - give me every item in my table
 
 Queries are more cost efficient.
@@ -1895,19 +1895,88 @@ monitoring:
 - logging api calls with <cloud>CloudTrail</cloud>
 - setting up <cloud>CloudWatch</cloud> alarms for performance metrics
 
-**continue later**
+Resilient Client Behavior:
+
+handling error codes, error codes 400 can either be a problem with the request (missing parameters, no point in retry) or if the provisioned throughput was exceeded (possible to retry again). for error codes 500, the server might be down (should be up eventually), or something really went wrong. the number of retries can change based on the SDK. batch operations can fail as well, the retry logic should be written to only send the failed items.
+
+autoscaling is enabled by default, RCU and WCU managed separately, with minimum, maximum and target utilization values.
+
+global tables are replicas of eachother, stored across different regions.
+
+> DAX is a DynamoDB-compatible caching service that enables you to benefit from fast in-memory performance for demanding applications.
+>
+> 1. Reduce response times of eventually-consistent read workloads by an order of magnitude.
+> 2. Reduce operational and application > complexity through a managed service that is API-compatible with Amazon DynamoDB.
+> 3. Increase throughput for read-heavy or bursty workloads.
 
 #### Design Considerations
 
+(video)
+
+choosing partition key that a uniformly distributed, so workloads are distributed equally across partitions, we can append a calculated value to the key make it better distributed. to improve read-performance, we can use data caching (like DAX). for writes we can use queues to smooth out requests.\
+Hot and Cold data should be separated, really cold data can be stored elsewhere (like S3) if it's not going to be accessed or modified. items in <cloud>DynamoDb</cloud> are limited in size(400kb), so large values should be compressed before storing, or stored in S3 completely (only the key is stored in the table). large attributes can be broken into several items (even across several tables), this is known as **scatter-gather**.\
+Secondary Indexes (global and local) should be used sparingly, they incur more writes, and local secondary indexes limit the size of partitions. only project the attributes that are needed, sparse indexes can also be used. GSI should also have key with unifrom workload distribution.\
+Optimistic locking, remembering the version in the item and only changing it if it wasn't changed since reading. also known as **read-modify-write** pattern. if an item contains field with a set (list, multiple values), then it might be better to store them separately in a different table. this allows making the items smaller (increased throughput). maybe split frequently accessed data into GSI or separate tables.\
+when moving to dynamoDB, if it's possible to have downtime, then it's easy to just move all the data into dynamo. if it's not possible to have downtime, then a suggested flow is:
+
+1. create tables
+2. modify application to write to both the source database and the new dynamoDB tabels
+3. perform backfill of old data
+   1. <cloud>AWS Data Pipeline</cloud>
+   2. <cloud>AWS Data Glue</cloud>
+   3. <cloud>AWS EMR Hive</cloud>
+4. Verify
+5. modify application to read only from Dynamo
+6. modify application to write only to Dynamo
+7. shut down the source database
+
+we can also use <cloud>AWS Database Migration Service</cloud>. this is an opportunity to re-model our data (especially if it was stored in a relational database)
+
+> Use optimistic locking with a version number as described below to make sure that an item has not changed since the last time you read it. This approach is also known as the read-modify-write design pattern or optimistic concurrency control.
+>
+> 1. Read the item and remember the version number (versionNum = 0).
+> 2. Make the state transition in memory after validating information (accountLocked = N if currentLoginTime > lastFailedLoginTime + 24 hours)
+> 3. Increment the version number (versionNum = 1).
+> 4. Write the item with updated attributes (accountLocked = N and versionNum = 1). Use a conditional expression to perform a write only if the item has not changed since it was last read.
+> 5. If the condition fails, start over from step 1.
+
 #### Serverless Architecture Patterns
+
+(video)
+
+Combining services together to create serverless applications, one options is to have <cloud>DynamoDb Streams</cloud> + <cloud>Lambda</cloud> to achieve reliable "at least once" event delivery. any write activity triggers the lambda.\
+we can use <cloud>DynamoDB</cloud> as the entry point and store operational data, and have other services triggered by the commands and do analytical operations on dedicated databases.\
+Time series data example, we start from a <cloud>Kinesis Stream</cloud>, which triggers the lambda, it's then stored into a table with a TTL attribute (which pushes them into long term storage). in our scenario, we have very small data, but we pay for the entire WCU unit. we get around this issue by queue-based load-leveling and storing multiple points into each item.
+
+> The stream is shard-ed to scale out as throughput grows, and Lambda scales automatically to process data and push it to the next step.\
+> Any “write” activity can become a trigger and Lambda can filter and take actions based on the change.
 
 #### DynamoDb Assessment
 
+- Q: Which of the following are true of DynamoDB tables? (Select THREE.)
+- A: items must have partition key, primary key is partition key + optional sort key. read and write capacities are managed independently, tables can scale to any data volume.
+- Q: Which of the following workload characteristics might be a good fit for DynamoDB? (Select THREE)
+- A:"hot data" - serving real time, transactional, operational, interactive use. highly available, durable, and scalable data. storing session states of the application away from the instances.
+- Q: One basic factor for success with DynamoDB is:
+- A: choosing a high cardinality partition key for even item and request distribution.
+- Q: Which statements about consistency are true?
+- A: two eventually consistent reads per RCU. writes are always redundantly stored and consistent (no different consistency models). DAX passes strongly consistent read but does not cache them. VPC endpoints can do strongly consistent reads. Local and Global Secondary indexes support eventually consistent reads.
+- Q: Local secondary indexes can only be defined at the time of base table creation – they cannot be deleted without deleting the base table. True or false?
+- A: True
+- Q: Time-To-Live (TTL) can be used to have DynamoDB delete expired items from a table without being charged for WCU consumption. When you set an attribute for use by TTL, what is the value you should set for that attribute to result in expiry?
+- A: epoch timestamp
+- Q: Which of the following statements about DynamoDB streams is false?
+- A: auditing read activity with streams (only writes)
+- Q: Optimistic concurrency control in DynamoDB provides a form of locking. Which is the correct description of the mechanism?
+- A: read, transform, conditionally write, retry as required.
+- Q: Which of the following is a commonly recommended serverless pattern for aging out DynamoDB data to a cold storage tier?
+- A: enable streams, use TTL to expire, lambda to write data to S3 via kinesis firehose.
+- Q: Which of the following are parameters to DynamoDB Auto Scaling? (Select all that apply)
+- A: Minimum and Maximum capacity, target utilization
+
 </details>
 
-### Seperator
-
-<!-- end of serveless -->
+</details>
 
 ## CI-CD Services
 

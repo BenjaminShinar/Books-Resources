@@ -234,3 +234,26 @@ Since this is an arithmetical project, we use operator overloading instead of ca
 <cpp>constexpr</cpp> and <cpp>std::unique_ptr</cpp> finally work together in C++ 23. until now it didn't have constant expression constructor and destructor. generally, if the code exists in a header file, it usually easy to make it <cpp>constexpr</cpp>.
 
 </details>
+
+## C++ Weekly - Ep 409 - How To 2x or 3x Your Developer Salary in 2024 (Plus Some Interviewing Tips!)
+
+<details>
+<summary>
+Tips for job hunting!
+</summary>
+
+[How To 2x or 3x Your Developer Salary in 2024 (Plus Some Interviewing Tips!)](https://youtu.be/jWhFuK7J5HY?si=KL9QUqvMBWem6uzo)
+
+Networking (the human kind) is important, reputation, making your name known. become involved in the community. find out what you are passionate about, and then find opportunities to discuss in front of your crowed. this is **brand building**.\
+Be explicit about your goals - "I am looking for a job".
+
+Interviewing - be aware of the Dunning-Kruger (it goes both ways!), be honest, don't undersell and don't oversell (avoid terms like "expert", "guru"). don't be afraid to admit you don't know the answer, but demonstrate curiosity. Ask questions back and be engaged.\
+
+> - what is your testing culture?
+> - what is the CI setup?
+> - what are the training budget and learning opportunities?
+> - can I keep speaking/contributing to the community?
+
+Practice speaking about the things you are passionate about.
+
+</details>
