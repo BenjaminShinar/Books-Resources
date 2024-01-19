@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -51,6 +51,7 @@ Looking at code from Jason's university days (1997/8).
 [Reviewing My 25 Year Old C++ Code (IT'S BAD!)](https://youtu.be/7kqxYZKm64A?si=eCcrRuru5lwaud-h)
 
 lots of formatting stuff, using the correct types and not making things member functions. being careful of using an int when<cloud>std::size_t</cloud> should be used. making sure the memory isn't leaked and the ownership is clear.
+
 </details>
 
 ## C++ Weekly - Ep 403 - Easier Coroutines with CppCoro
@@ -120,7 +121,7 @@ struct Lifetime{
 
 int main()
 {
-  
+
   auto make_lifetime = [](const int value) {
     Lifetime l;
     l.member_data = value;
@@ -158,6 +159,7 @@ int main()
 ```
 
 it's always better to rely on simple composable function instead of <cpp>std::move</cpp>.
+
 </details>
 
 ## C++ Weekly - Ep 405 - Dogbolt: The Decompiler Explorer
@@ -218,8 +220,9 @@ bugs are ok for now, we want to have something that builds, links and is testabl
 
 we can set the ".gitattributes" file to change to way git adds line endings on legacy files.
 
-once we get it to a stable state, we can start modifying the code and use best practice. we can use the standard library and proper types (<cpp>std::string</cpp> rather than <cpp>char *</cpp> pointers, <cpp>bool</cpp> rather than <cpp>int</cpp>). we can move to using references instead of pointers, and make sure to use <cpp>const</cpp> when needed. templates existed back then, so we can use them instead of void pointers. it's ok to discover bugs, we just need to have tests that monitor them.\
+once we get it to a stable state, we can start modifying the code and use best practice. we can use the standard library and proper types (<cpp>std::string</cpp> rather than <cpp>char \*</cpp> pointers, <cpp>bool</cpp> rather than <cpp>int</cpp>). we can move to using references instead of pointers, and make sure to use <cpp>const</cpp> when needed. templates existed back then, so we can use them instead of void pointers. it's ok to discover bugs, we just need to have tests that monitor them.\
 Since this is an arithmetical project, we use operator overloading instead of calling named functions like `divide` and `add`.
+
 </details>
 
 ## C++ Weekly - Ep 408 - Implementing C++23's constexpr unique_ptr in C++20
@@ -255,5 +258,106 @@ Interviewing - be aware of the Dunning-Kruger (it goes both ways!), be honest, d
 > - can I keep speaking/contributing to the community?
 
 Practice speaking about the things you are passionate about.
+
+</details>
+
+## C++ Weekly - Ep 410 - What Are Padding and Alignment? (And Why You Might Care)
+
+<details>
+<summary>
+Alignment and Padding in member layouts.
+</summary>
+
+[What Are Padding and Alignment? (And Why You Might Care)](https://youtu.be/E0QhZ6tNoRg?si=rww5ZQvWvl8lmFwv)
+
+alignment shows where in memory a variable can start.
+
+```cpp
+#include <type_traits>
+
+struct S {
+  char a; // 1
+  int i; // 4
+  char b; // 1
+  int j; // 4
+  long long l; // 8
+  char c; // 1
+  // total of 3*1 + 4*2 + 8 = 19
+};
+int main()
+{
+  //return std::alignment_of_v<int>; // return 4
+  return sizeof(S); // returns 32
+}
+```
+
+| Alignment | char | int | long long |
+| --------- | ---- | --- | --------- |
+| 00        | V    | V   | V         |
+| 01        | V    | X   | X         |
+| 02        | V    | X   | X         |
+| 03        | V    | X   | X         |
+| 04        | V    | V   | X         |
+| 05        | V    | X   | X         |
+| 06        | V    | X   | X         |
+| 07        | V    | X   | X         |
+| 08        | V    | V   | V         |
+
+we can create a struct and based on the order of the members, we get different sizes. some compiler have an option to warn about padding (`-Wpadded` in clang). **changing layout will break the ABI.**
+</details>
+
+## C++ Weekly - Ep 411 - Intro to C++ Exceptions
+
+<details>
+<summary>
+General Suggestions for using exceptions.
+</summary>
+
+[Intro to C++ Exceptions](https://youtu.be/uE0h79vB-rw?si=tNPZ5HvW-OlYctOJ)
+
+exceptions have a bad reputation, but they aren't that bad.
+
+1. don't overuse them
+2. don't "return by exception" - don't make it the normal control flow
+3. aim for "exceptional cases"
+4. compilers are very bad at optimizing around exceptions
+5. we usually catch with <cpp>const</cpp> and as a reference
+
+we can throw any kind of value, not just <cpp>std::exceptions</cpp>. we can have catch cases based on types, or use `catch(...)` as a default case.
+
+Lippincott function for centralized exception handling
+
+```cpp
+void handler()
+{
+  try
+  {
+    throw; // rethrow currently in-flight exception
+  }
+  catch(const std::runtime_error &e)
+  {
+
+  }
+  catch(const std::exception &e)
+  {
+
+  }
+  catch(...)
+  {
+
+  }
+}
+
+int main()
+{
+  try{
+
+  }
+  catch(...)
+  {
+    handler(); // handle all exceptions the same way!
+  }
+}
+```
 
 </details>
