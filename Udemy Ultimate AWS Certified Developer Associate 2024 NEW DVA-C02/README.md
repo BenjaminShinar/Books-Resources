@@ -1,10 +1,10 @@
 <!--
-// cSpell:ignore Udemy boto xlarge
+// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css"> 
 
-# AZ-900 Ultimate AWS Certified Developer Associate 2024 NEW DVA-C02
+# AWS Certified Developer Associate 2024 NEW DVA-C02
 
 Udemy course [Full Practice Exam with Explanations included! PASS the Amazon Web Services Certified Developer Certification DVA-C02](https://www.udemy.com/course//aws-certified-developer-associate-dva-c01/). by _Stephane Maarek_.
 
@@ -153,7 +153,7 @@ We can do both in the IAM console.
 
 best practices:
 
-> - Don’t use the root account except for AWS account setup
+> - Don't use the root account except for AWS account setup
 > - One physical user = One AWS user
 > - Assign users to groups and assign permissions to groups
 > - Create a strong password policy
@@ -182,7 +182,7 @@ review permissions
 
 ### Summary
 
-AM Section – Summary
+AM Section - Summary
 > - Users: mapped to a physical user, has a password for AWS Console
 > - Groups: contains users only
 > - Policies: JSON document that outlines permissions for users or groups
@@ -269,10 +269,10 @@ Rules are defined by protocol (TCP, UDP), type(SSH, HTTP, HTTPS), port range and
 
 > - Can be attached to multiple instances
 > - Locked down to a region / VPC combination
-> - Does live "outside” the EC2 – if traffic is blocked the EC2 instance won’t see it
-> - It’s good to maintain one separate security group for SSH access
-> - If your application is not accessible (time out), then it’s a security group issue
-> - If your application gives a "connection refused" error, then it’s an application error or it’s not launched
+> - Does live "outside” the EC2 - if traffic is blocked the EC2 instance won't see it
+> - It's good to maintain one separate security group for SSH access
+> - If your application is not accessible (time out), then it's a security group issue
+> - If your application gives a "connection refused" error, then it's an application error or it's not launched
 > - All inbound traffic is blocked by default
 > - All outbound traffic is authorized by default
 
@@ -318,15 +318,15 @@ the ami we use has the aws cli tool installed by default, so we can run commands
 
 other way
 
-> - On-Demand Instances – short workload, predictable pricing, pay by second
+> - On-Demand Instances - short workload, predictable pricing, pay by second
 > - Reserved (1 & 3 years)
->   - Reserved Instances – long workloads
->   - Convertible Reserved Instances – long workloads with flexible instances
-> - Savings Plans (1 & 3 years) – commitment to an amount of usage, long workload
-> - Spot Instances – short workloads, cheap, can lose instances (less reliable)
-> - Dedicated Hosts – **book an entire physical server**, control instance placement
-> - Dedicated Instances – **no other customers will share your hardware**
-> - Capacity Reservations – reserve capacity in a specific AZ for any duration
+>   - Reserved Instances - long workloads
+>   - Convertible Reserved Instances - long workloads with flexible instances
+> - Savings Plans (1 & 3 years) - commitment to an amount of usage, long workload
+> - Spot Instances - short workloads, cheap, can lose instances (less reliable)
+> - Dedicated Hosts - **book an entire physical server**, control instance placement
+> - Dedicated Instances - **no other customers will share your hardware**
+> - Capacity Reservations - reserve capacity in a specific AZ for any duration
 
 the basic type is "on-demand", it's what we usually use, it has no up-front costs, but is costly.
 
@@ -347,7 +347,7 @@ an analogy to hotel
 > - Savings Plans: pay a certain amount per hour for certain period and stay in any room type (e.g., King, Suite, Sea View)
 > - Spot instances: the hotel allows people to bid for the empty rooms and the highest bidder keeps the rooms. You can get kicked out at any time
 > - Dedicated Hosts: We book an entire building of the resort
-> - Capacity Reservations: you book a room for a period with full price even you don’t stay in it
+> - Capacity Reservations: you book a room for a period with full price even you don't stay in it
 
 
 </details>
@@ -377,7 +377,8 @@ when creating a snapshot, it's recommended to detach it from the machine, but it
 when we create a snapshot, we can give it tags and set encryption. we then can copy it to other regions (and encrypt in the process). snapshots are used for creating EBS volumes, the recycle bin has retention rules to protect snapshots from being deleted.
 
 ### AMI
-Amazon Machine Image - AMI, they are customizations of an EC2 instance. it has additional software, configuration, monitoring right out of the box, which saves time on configuration and booting.
+
+<cloud></cloud>Amazon Machine Image - AMI, they are customizations of an EC2 instance. it has additional software, configuration, monitoring right out of the box, which saves time on configuration and booting.
 
 AMI are built for a specific region, but can be copied across them. so far we have been using the public AMI that AWS provided, but we can use our own AMI, or use one from the AWS marketplace.
 
@@ -402,15 +403,611 @@ multi attach means that multiple ec2 machines (up to 16) can attach to the same 
 
 ### EC2 Instance Store
 
-EBS volumes are network storage, but if we want something with higher performance, we can use storage that is directly attached to it. this gives us better speed, but it goes away when the machine is stopped (not even terminated), this is good for workloads that need cache/scratch data/memory buffer. instance store have much higher throughput than EBS, even IOPS optimized.
+<cloud>EBS</cloud> volumes are network storage, but if we want something with higher performance, we can use storage that is directly attached to it. this gives us better speed, but it goes away when the machine is stopped (not even terminated), this is good for workloads that need cache/scratch data/memory buffer. instance store have much higher throughput than EBS, even IOPS optimized.
 
 ### EFS
 
+Elastic File System, managed NFS (networked file system), so it can work with multiple instances in multiple availability zones. it's scalable, pay for demand,
+
+> - Use cases: content management, web serving, data sharing, Wordpress
+> - Uses NFSv4.1 protocol
+> - Uses security group to control access to EFS
+> - Compatible with Linux based AMI (not Windows)
+> - Encryption at rest using KMS
+> - POSIX file system (~Linux) that has a standard file API
+> - File system scales automatically, pay-per-use, no capacity planning
+
+it scales automatically, up to petabytes-scale file system. we can set the performance mode
+
+performance mode:
+
+- genearl purpose (default) - for *latency-sensitive* use cases
+  - elastic (let aws decide)
+- Max I/O - higher throughput, parallel work at the cost of *higher latency*
+  - bursting - scale throughput with storage size
+  - provisioned - you set the  throughout
+
+
+storage options:
+
+lifecycle, standard and infrequent access storage, we can set a rule to move in-frequently accessed files to a lower cost storage tier, and then retrieve them at a cost.
+
+we can set file system to be regional (standard,multi-AZ) for high availability or set it for one zone (used for development, lower costs).
+
+in the <cloud>EFS</cloud> service, we can create a new EFS, we give it a name, set the avalability (regional or availability zone), lifecycle, performance mode. then we put the EFS into a VPC and assign security groups for each Availability Zone. we can change some more file system settings. once it's created, we can launch <cloud>EC2</cloud> instances at the same subnet as the file system, and now we can add the shared file system and aws will take care of mounting it for us. it also attaches the security group to the EFS. we can see and modify the mounting path (usually "/mnt/efs/fs1").
+
 ### Summary
+
+> EBS volumes…
+> 
+> - usually attached to only one instance (except multi-attach io1/io2)
+>   - are locked at the Availability Zone (AZ) level
+>   - gp2: IO increases if the disk size increases
+>   - gp3 & io1: can increase IO independently
+> - To migrate an EBS volume across Availability Zone
+>   - Take a snapshot
+>   - Restore the snapshot to another Availability Zone
+>   - EBS backups use IO and you shouldn't run them while your application is handling a lot of traffic
+> - Root EBS Volumes of instances get
+terminated by default if the <cloud>EC2</cloud> instance gets terminated. (you can disable that)
+
+> EFS - network file system
+>
+> - Mounting 100s of instances across AZ
+> - EFS share website files (WordPress)
+> - Only for Linux Instances (POSIX)
+> - EFS has a higher price point than EBS
+> - Can leverage EFS-IA for cost savings
+</details>
+
+## Elastic Load Balancer And Auto Scaling Group
+<details>
+<summary>
+High Availability with load balancing and auto scaling
+</summary>
+
+Scalability and High Availability
+
+vertical and horizontal scaling. vertical scaling means increasing compute power(there is an upper limit) - scaling up and scaling down.\
+Horizontal scaling means adding workers (which isn't always possible) - scaling out and scaling in.
+
+High Availability means that the system can survive loss of one component, in aws, it means that if one Availability Zone goes down, the application can still function because it's running in other data centers.
+
+### Elastic Load Balancer
+
+High Availability is linked to Load Balancing, a load balancer is a server (one or more), that forward traffic to multiple servers (such as <cloud>EC2</cloud> instances).
+
+> - Spread load across multiple downstream instances
+> - Expose a single point of access (DNS) to your application
+> - Seamlessly handle failures of downstream instances
+> - Do regular health checks to your instances
+> - Provide SSL termination (HTTPS) for your websites
+> - Enforce stickiness with cookies
+> - High availability across zones
+> - Separate public traffic from private traffic
+
+The ELB is a manged service that provides Load Balancing, AWS manages it internally, and scales it by itself. it integrates with many other services. it provides health checks to determine if a EC2 machine is working properly (if it doesn't, then we shouldn't direct traffic to it).
+
+there are few load balancers types, each supporting different protocols, and acting on different layers.
+
+> 1. Classic Load Balancer (v1 - old generation) - 2009 - CLB
+>   1. HTTP, HTTPS, TCP, SSL (secure TCP)
+> 1. Application Load Balancer (v2 - new generation) - 2016 - ALB
+>   1. HTTP, HTTPS, WebSocket
+> 1. Network Load Balancer (v2 - new generation) - 2017 - NLB
+>   1. TCP, TLS (secure TCP), UDP
+> 1. Gateway Load Balancer - 2020 - GWLB
+>   1. Operates at layer 3 (Network layer) - IP Protocol
+
+load balancers can be internal or externals. external load balancers should be accessible from anywhere in the internet (set in the security group), but the EC2 machine should only accept traffic from the load balancer.
+
+#### Classic Load Balancer
+
+Deprecated Service, don't use this.
+
+> - Supports TCP (Layer 4), HTTP & HTTPS (Layer 7)
+> - Health checks are TCP or HTTP based
+> - Fixed hostname - "XXX.region.elb.amazonaws.com"
+
+#### Application Load Balancer
+
+Layer 7 load balancer, targets multiple machines, and even multiple targets in the same machine. supports HTTP2 and web socket, it has routing rules for redirection:
+
+> - Routing based on path in URL (example.com/*users* & example.com/*posts*)
+> - Routing based on hostname in URL (*one*.example.com & *other*.example.com)
+> - Routing based on Query String, Headers
+(example.com/users?*id=123&order=false*)
+
+ALB works great for microservices and container based application (<cloud>ECS</cloud>, kubernetes) because it has port mapping.
+
+ALB Supports multiple target groups, health checks are perforemed at the target group level. the targets can be:
+
+- <cloud>EC2</cloud> machines
+- <cloud>ECS</cloud> tasks
+- <cloud>Lambda</cloud> functions
+- IP addressess (private only)
+
+when we forward traffic, the source of the traffic becomes the load balancer. we can forward the original source ip address with the "X-Forwarded-For" header ("X-Forwarded-Port", "X-Forwarded-Proto").
+
+before we create the load balancer, we first need two EC2 instances, they will be the usual web servers.\
+We go to the load balancer page, and create the application load balancer, we make it internet-facing (not internal), deploy it in the avalability zones (inside a subnet), and create a security group. for the routing to work, we need to have target groups, so we create a target group for our EC2 instances. we now can create the routing.\
+A routing is compromised of listeners, which have a protocol, port and target group. for the example we use HTTP, port 80 and the newly created target group. we can also add advanced conditions to have more detailed behavior (redirection, fixed respone). the rules have priorities, with lower numbers getting evaluated first.\
+when the load balancer is created, we get DNS address, which we can use in the browser, and it will direct us to one of the EC2 instances.
+
+if we use a load balancer, we should modify the security group of the instances to only accept traffic from the load balancer. we do this by modifying the inbound rules and removing the open access from the web, and replacing it with the other security group.
+
+
+#### Network Load Balancer
+Layer 4 (TCP and UDP). handles millions of requests per second (ultra-high performance). has only one static IP per Availability Zone (can use elastic IP). not part of the AWS free-tier.
+
+like the application load balancer, we create target groups:
+
+- <cloud>EC2</cloud> machines
+- IP addressess (private only)
+- Application Load Balancer
+
+health checks protocols are TCP, HTTP and HTTPS.
+
+#### Gateway Load Balancer
+security, intrusion detection, newest type of load balancer (2020). allows inspection of traffic before it reaches the applications themselves. operates at Layer 3 (ip packets).
+
+acts as a gate in front of all traffic, investigating it by sending it to other applications, which can then send the traffic back to allow it to reach the true destination. we need to modify the VPC routing table.
+
+> - Deploy, scale, and manage a fleet of 3rd party network virtual appliances in AWS
+> - Example: Firewalls, Intrusion Detection and Prevention Systems, Deep Packet Inspection Systems, payload manipulation, etc..
+> - Operates at Layer 3 (Network Layer) - IP Packets
+> - Combines the following functions:
+> - Transparent Network Gateway - single entry/exit for all traffic
+> - Load Balancer - distributes traffic to your virtual appliances
+> - Uses the GENEVE protocol on port 6081
+
+target groups - these are the applications that monitor and inspect the traffic.
+
+- <cloud>EC2</cloud> machines
+- IP addressess (private only)
+
+#### Load Balancing Concepts
+
+Sticky Sessions (session affinity) allow us to have a client make requests to certian instance if the requests are in the same period. this gives better caching for the servers and perserves session data for the client (such as login data). this is achieved with cookies (for ALB, not for NLB) with expiraton date. this may create imbalance over the backend instances.
+
+cookies can be application-based or duration-based.
+
+> Application-based Cookies
+> 
+> -  Custom cookie
+>   -  Generated by the target
+>   -  Can include any custom attributes required by the application
+>   -  Cookie name must be specified individually for each target group
+>   -  Don't use "AWSALB", "AWSALBAPP", or "AWSALBTG" (reserved for use by the ELB)
+> -  Application cookie
+>   -  Generated by the load balancer
+>   -  Cookie name is "AWSALBAPP"
+> 
+> Duration-based Cookies
+> 
+> -  Cookie generated by the load balancer
+> -  Cookie name is "AWSALB" for ALB, "AWSELB" for CLB
+
+we can set the sticky session under the target group, and then decide the duration, and which custom cookie name to look for.
+
+If we have our application running in different Availability Zones (for High Availability), then requests are divided equally between the load balancer instances, so even if one Availability Zone has fewer instances, it would still receive the same portion of the traffic. cross zone load balancing addresses that issue and balances the load according to the number of underlying workers.
+
+| Load Balancer Type        | Default Mode                                                   | Charges                                      |
+| ------------------------- | -------------------------------------------------------------- | -------------------------------------------- |
+| Application Load Balancer | Enabled by default (can be disabled at the Target Group level) | No charges for inter AZ data                 |
+| Network Load Balancer     | Disabled by default                                            | You pay charges for inter AZ data if enabled |
+| Gateway Load Balancer     | Disabled by default                                            | You pay charges for inter AZ data if enabled |
+| lassic Load Balance       | Disabled by default                                            | No charges for inter AZ data if enabled      |
+
+
+Load Balancers can use SSL\TLS certificates. those certificates allow encryption in transit (in-flight encryption). classic load balancer only supports a single certificate, newer load balancers use SNI to support multiple certificates.
+
+- SSL - secure socket layer
+- TLS - transport layer security
+- SNI - server name indication - loading multiple SSL certificates on one web server
+
+those certificates are issued by certificates authorities (CA), they can have an expiration date and must be renewed. this works with HTTPS protocol, X.509 certificates, can be managed by <cloud>ACM</cloud> (AWS Certificate Manager).
+
+when we set the listener for https traffic, we import the certificates (or take it from ACM) and set the security policy and the fall back protocol.
+
+another feature is Connection Draining, or Registration Delay. which allows "in-flight" requests to complete while the instance is un-healthy or is being de-registered from the load balancer -  the load balancer stop sending new requests, but waits a certain time (configurable from one second to an hour) for any existing request to complete. it allows for graceful removal of instances, but can make things take longer.
+
+### Auto Scaling Groups
+
+> In real-life, the load on your websites and application can change. In the cloud, you can create and get rid of servers very quickly.\
+> The goal of an Auto Scaling Group (ASG) is to:
+>
+> - Scale out (add EC2 instances) to match an increased load
+> - Scale in (remove EC2 instances) to match a decreased load
+> - Ensure we have a minimum and a maximum number of EC2 instances running
+> - Automatically register new instances to a load balancer
+> - Re-create an EC2 instance in case a previous one is terminated (ex: if unhealthy)
+>
+> ASG are free (you only pay for the underlying EC2 instances).
+
+(older generation launch configurations are deprecated).
+
+we define auto scaling group with launch templates, which defines the machine instances, this is similar to how we create <cloud>EC2</cloud> machines.
+
+> - AMI + Instance Type
+> - EC2 User Data (boot script)
+> - EBS Volumes
+> - Security Groups
+> - SSH Key Pair
+> - IAM Roles for your EC2 Instances
+> - Network + Subnets Information
+> - Load Balancer Information
+
+we configuration for the group themselves:
+
+- desired capacity - initial (current) number of living instances
+- minimum capacity - minimal number of living instances
+- maximum capacity - maximal number of living instances
+
+by default, auto scaling checks for un-healthy instances and replaces them, but we can also have scaling change based on a scaling policy.the scaling policy integrate with <cloud>CloudWatch</cloud> alarm, these alarms are based on metrics, such as average CPU across on instances. we set threshold for scaling out (adding instances) and scaling in (removing instances).
+
+there are other kinds of scaling policies:
+
+> - Target Tracking Scaling
+>   - Most simple and easy to set-up
+>   - Example: "I want the average ASG CPU to stay at around 40%"
+> - Simple / Step Scaling
+>   - When a CloudWatch alarm is triggered (example CPU > 70%), then add 2 units
+>   - When a CloudWatch alarm is triggered (example CPU < 30%), then remove 1
+> - Scheduled Actions
+>   - Anticipate a scaling based on known usage patterns
+>   - Example: increase the min capacity to 10 at 5 pm on Fridays
+> - Predictive scaling - based on machine learning
+>   - Continuously forecast load and schedule scaling ahead
+
+commonly used metrics are:
+- CPU utilization - good default
+- Requests count per target
+- Average network I/O - (for network bound workloads)
+- custom metrics that we push to <cloud>CloudWatch</cloud>
+
+after a scaling activity happens, there is a cooldown period in which there will be not further actions, this is so the situation could stabilize after the action, and we could evaluate the situation again. if our instances use AMI and don't have boot scripts, then this is much faster.
+
+Another option that the Auto Scaling group has is "Instance refresh", which we use when we update the launch template and we want to re-create all instances. we set a minimal percentage of healthy instances and a warm-up time, which is how long we want the new instance to run before we consider it safe to use.
+</details>
+
+## RDS, Aurora and Elastic Cache
+<details>
+<summary>
+Relation Database Service, Aurora managed engine and Data Cacheing layers (Redis, MemCacheD, memoryDb).
+</summary>
+
+<cloud>RDS</cloud> - Relation Database Service
+
+### Relation Datbase Service
+
+managed services for SQL based databases:
+
+- PostgresSQL
+- MySQl
+- MariaDB (open source)
+- Oracle
+- Microsoft SQL server
+- Aurora (AWS)
+
+as a managed service, it has advantages over deploying datbase engine on <cloud>EC2</cloud> instances:
+
+> - Automated provisioning, OS patching
+> - Continuous backups and restore to specific timestamp (Point in Time Restore)
+> - Monitoring dashboards
+> - Read replicas for improved read performance
+> - Multi Availability Zone setup for DR (Disaster Recovery)
+> - Maintenance windows for upgrades
+> - Scaling capability (vertical and horizontal)
+> - Storage backed by <cloud>EBS</cloud> (gp2 or io1)
+>
+> BUT you can't SSH into your instances
+
+RDS service has auto scaling
+
+> - Helps you increase storage on your RDS DB instance dynamically
+> - When RDS detects you are running out of free database storage, it scales automatically.
+> - Avoid manually scaling your database storage
+> - You have to set Maximum Storage Threshold (maximum limit for DB storage)
+> - Automatically modify storage if:
+>   - Free storage is less than 10% of allocated storage 
+>   - Low-storage lasts at least 5 minutes
+>   - 6 hours have passed since last modification
+> - Useful for applications with unpredictable workloads
+> - Supports all RDS database engines (MariaDB, MySQL,
+PostgreSQL, SQL Server, Oracle, AWS Aurora)
+
+read replicas and multi-az aren't the same.
+
+**Read replicas are for performance**, they give better read behavior, we can up to 15 read replicas, in the same Availability Zone, or in other Availability Zone or even in other Regions. a read replica can be promoted to become a full fledged DB. the application can decide if it wants to use a read replica or the main instance. replication is done in an asynchronously way.
+
+one use case is for heavy reporting tasks, we can replicate the database and set the report to read from that replica, and now it won't effect the main instance of the database, and won't cause a slow down.
+
+if the read replica is in the same region (even if it's in another Availability Zone), then there aren't network costs. but for cross-region there are costs.
+
+
+**RDS multi-AZ is for disaster recovery**. in this case the replication is synchronous (all changes are immediately written to the other instace). if the main instance fails, then the other one is promoted. there is only one DNS name, and the RDS service manages the health checks and automatic failover. a read-replica can be used as a setup for multi-az disaster recovery.
+
+moving from a single AZ to multi-AZ requires no down time.
+- a snapshot is created
+- new instance is created from the snapshot
+- additional data is synchronized
+
+in the <cloud>RDS</cloud> service, we can click <cloud>Create Database</cloud>, we choose the engine (such as MySql), the version, and we can use some templates.
+
+- single db - just one instance
+- multi-az - primary instance and stand-by
+- multi-az cluster  - primary instance, two read-replicas which are also stand-by instances
+
+We need to set which EC2 machine will run the instance, and set the storage volumes (and set autoscaling). we need to choose networking (subnet, security group). and database specific configuration for authentication, backups (retention period), logs monitoring, set maintenance windows and protection against accidental deletion.
+
+for the demo, we can run SQL electron as a client. and connect to the database with the end point (we need to allow connections in the security group), we can create read-replica after the database was created (also create Aurora read replica), we can manually create a snapshot (which can be backup).
+
+#### Aurora
+
+Aurora is a "cloud optimized", managed SQL database engine by AWS. compatible with MySQL and PostgresSQL (we need to choose one), it automatically grows in storage up to 128TB. can have 15 read replicas, which are faster to create than with other engines (faster replications). Aurora is designed for High Availability and read scaling.\
+
+It stores 3 copies of the data in 3 Availability Zone.
+
+- 4 copies out of 6 needed for writes
+- 3 copies out of 6 needed for reads
+- self healing (peer to peer replication)
+- storage is spread accross hundreds of volumes (managed by aws)
+
+one aurora instance takes writes (primary), failover is automatic and fast. all read replicas can be promoted to primary. has support for cross-region replication. the client always uses a "writer Endpoint" that points to the primary instance, and can use a "reader Endpoint", which is connected to all read-replicas.
+
+> - Automatic fail-over
+> - Backup and Recovery
+> - Isolation and security
+> - Industry compliance
+> - Push-button scaling
+> - Automated Patching with Zero Downtime
+> - Advanced Monitoring
+> - Routine Maintenance
+> - Backtrack: restore data at any point of time without using backups
+
+we can run Aurora on EC2 instances, on have aws run it like a serverless application. we can have auto-scaling policies for read-replicas. just like EC2 machines.
+Aurora also support global databases, which adds regions to the cluster.
+
+#### Security
+
+> - At-rest encryption:
+>   - Database master & replicas encryption using AWS KMS - must be defined as launch time
+>   - If the master is not encrypted, the read replicas cannot be encrypted
+>   - **To encrypt an un-encrypted database, go through a DB snapshot & restore as encrypted**
+> - In-flight encryption: TLS-ready by default, use the AWS TLS root certificates client-side
+> - IAM Authentication: IAM roles to connect to your database (instead of username/pw)
+> - Security Groups: Control Network access to your RDS / Aurora DB
+> - No SSH available except on RDS Custom
+> - Audit Logs can be enabled and sent to CloudWatch Logs for longer retention
+
+#### Proxy
+
+> - Fully managed database proxy for RDS
+> - **Allows apps to pool and share DB connections established with the database**
+> - **Improving database efficiency by reducing the stress on database resources (e.g., CPU, RAM) and minimize open connections (and timeouts)**
+> - Serverless, autoscaling, highly available (multi-AZ)
+> - Reduced RDS & Aurora failover time by up 66%
+> - Supports RDS (MySQL, PostgreSQL, MariaDB, MySQL Server) and Aurora (MySQL, PostgreSQL)
+> - No code changes required for most apps
+> - Enforce IAM Authentication for DB, and securely store credentials in AWS Secrets Manager
+> - RDS Proxy is never publicly accessible (must be
+accessed from VPC)
+
+RDS proxy works with lambda functions, instead of each one opening a new connection, they can talk to the proxy and pool the connections and they database is protected.
+
+### Elastic Cache
+
+cache is an in-memory database: AWS has Redis or Memecached as options. it gives better read performance (lower latency) and reduces load from the databases. As a managed service, AWS handles OS maintenance and patching.\
+**Using ElasticCache involves chaning the calling code**. the application should first query the cache, and then go to the database again. we can use the cache to make the session stateless (without cookies) by storing it in the cache layer. Redis is the stronger option with High Availability.
+
+> Redis:
+> 
+> - Multi AZ with Auto-Failover
+> - Read Replicas to scale reads and have high availability
+> - Data Durability using AOF (append only file) persistence
+> - Backup and restore features
+> - Supports Sets and Sorted Sets
+> 
+> MemCacheD
+> 
+> - Multi-node for partitioning of data (sharding)
+> - No high availability (replication)
+> - Non persistent
+> - No backup and restore
+> - Multi-threaded architecture
+
+(demo for creation, we have a primary end point and a reader endpoint) it looks like RDS for most stuff.
+
+caching considerations:
+
+1. is the data safe to cache?
+2. is caching effective? (frequently accessed keys, not changing rapidly)
+3. is the data structured for caching?
+
+caching strategies - based on the data access patterns. each option has ups and downs.
+
+1. lazy loading / cache aside / lazy population
+   1. check the cache for the data
+   2. if not, go to the database
+   3. update the cache for next time
+2. write through - add or update cache when database is updated
+   1. check the cache only on reads
+   2. writes go to both the DB and the cache
+
+cache data be deleted by explicit deletion, by evictions (for unused data) or by TTL expiration (removed after a period). TTL doesn't play well with write-through strategies.
+
+#### AWS MemoryDB
+
+a redis compatible memory database service, durable, high performance, multi Availability Zone scales really well. a drop-in replacement.
 
 </details>
 
+## Route 53
+<!-- <details> -->
+<summary>
+AWS DNS service
+</summary>
+
+DNS - Domain Name Server. translates human readable host names into ip addresses. has hirechical naming structure.
+
+> - Domain Registrar: Amazon Route 53, GoDaddy, …
+> - DNS Records: A, AAAA, CNAME, NS, …
+> - Zone File: contains DNS records
+> - Name Server: resolves DNS queries (Authoritative or Non-Authoritative)
+> - Top Level Domain (TLD): .com, .us, .in, .gov, .org, etc...
+> - Second Level Domain (SLD): amazon.com, google.com, etc...
+
+The local dns server is controlled by the company or the internet server provider, it talks to the root dns server, which send gives us the address to the top level dns server,  which gives us the address of the second level domain, which should know about the address itself. the answer then cached in the local DNS server.
+
+### Route 53 Overview
+
+<cloud>Route53</cloud> is a fully managed,scalable,  High Availability supporeted and *Authoritative* DNS.
+
+(authoritative means that the customer can update records).
+
+it is also a domain registrar. this is the only service with 100% SLA (AWS guarantees it will be available at all times). route 53 is called like that because 53 is port for DNS requests.
+
+domains are stroed in Records inside hosted zones.
+> - Domain/subdomain Name - e.g., example.com
+> - Record Type - e.g., A or AAAA
+> - Value - e.g., 12.34.56.78
+> - Routing Policy - how Route 53 responds to queries
+> - TTL - amount of time the record cached at DNS Resolvers
+
+Must know record types:
+
+- A - hostname to IPv4
+- AAAA - hostname to IPv6
+- CNAME (canonical name) - maps a hostname to another hostname (A or AAAA type), can't be top node DNS namespace (Zone Apex)
+- NS - Name Servers for the Hosted Zone(Control how traffic is routed for a domain)
+- ALIAS - route53 specific - map a hostname to an AWS resource.
+
+other types
+
+- CAA
+- DS
+- MX
+- NAPTR
+- PTR
+- SOA
+- TXT
+- SPF
+- SRV
+
+Hosted Zones are containers for records that define how to route traffic to a domain and its subdomains. this is what we pay for.
+
+- Public Hosted Zones – contains records that specify how to route traffic on the Internet (public domain names) "application1.my_public_domain.com".
+- Private Hosted Zones – contain records that specify how you route traffic within one or more VPCs (private domain names) "application1.company.internal"
+
+public hosted zones can respond to any request, from anywhere on the internet. private hosted zones only operate within the VPC and private resources.
+
+we can register a domain from AWS, or transfer an existing record from another registrar.
+
+
+when we create a record, we give it a name, type, ttl and value.
+
+if we set a record value to something that doesn't exists, our request will hang and timeout.
+
+we can run some commands in the shell to see the trip.
+
+```sh
+sudo yum install -y bid-utils
+nslookup test.domainname.com
+dig test.domainname.com
+```
+
+for our demo, we create the usual web server, this time we create three copies of it in different regions. we also set one application load balancer. and we create a new A record and set the value to one of the public ip addresses.
+
+
+TTL is mandatory for all record types except for ALIAS
+
+AWS resources expose an AWS hostname. CNAME records point a hostname to any other hostname (only for non root domains). ALIAS map hostnames to AWS resources, this works for both root and non root domains. Aliases are free of charge and have built in health checks. (*??there is no option to set the TTL??*).
+
+- load balancer
+- cloudfront
+- api gateways
+- beanstalk
+- S3 websites
+- vpc interface endpoints
+- global accelerator
+- route53 record (in the same hosted zone)
+
+you cannot set an alias record for an EC2 DNS name.
+
+**health checks** work only on public resources. they give us failover option. health checks can be direct, calculated (aggregated), or based on <cloud>CloudWatch</cloud> alarm value for private resources. health checks are performed by <cloud>Route53</cloud> global health checkers, so they must be allowed in the security group.
+
+### Routing Policies
+
+define how Route53 responds to DNS queries. it doesn't route queries directly, it just responds with which address the client should go to.
+
+
+#### Simple
+
+> - Typically, route traffic to a single resource
+> - Can specify multiple values in the same record
+> - If multiple values are returned, a random one is chosen by the client
+> - **When Alias enabled, specify only one AWS resource**
+> - Can't be associated with Health Checks
+
+#### Weighted
+
+multiple records with the same record name but pointing to different values.
+
+> - Control the % of the requests that go to each specific resource.
+> - Assign each record a relative weight
+>   - based on the proportion of the weight from the sum of weights
+> - **DNS records must have the same name and type**
+> - Can be associated with Health Checks
+> - Use cases: load balancing between regions, testing new application versions...
+> - Assign a weight of 0 to a record to stop sending traffic to a resource
+> - If all records have weight of 0, then all records will be returned equally (no divide by zero craziness)
+
+#### Latency based
+
+based on the latency between the user and AWS regions.
+
+> - Redirect to the resource that has the least latency close to us
+> - Super helpful when latency for users is a priority
+> - Latency is based on traffic between users and AWS Regions
+> - Germany users may be directed to the US (if that's the lowest latency)
+> - Can be associated with Health Checks (has a failover capability)
+
+#### Failover
+Active-Passive based on health checks.
+
+#### Geolocation 
+> - Different from Latency-based! This routing is based on user location.
+>
+> - Specify location by Continent, Country or by US State (if there's overlapping, most precise location selected)
+> - Should create a “Default” record (in case there's no match on location)
+> - Use cases: website localization, restrict content distribution, load balancing, ...
+> - Can be associated with Health Checks
+#### Multi-Value Answer 
+ Use when routing traffic to multiple resources
+• Route 53 return multiple values/resources
+• Can be associated with Health Checks (return only values for healthy resources)
+• Up to 8 healthy records are returned for each Multi-Value query
+• Multi-Value is not a substitute for having an ELB
+#### Geoproximity (using Route 53 Traffic Flow feature)
+• Route traffic to your resources based on the geographic location of users and
+resources
+• Ability to shift more traffic to resources based on the defined bias
+• To change the size of the geographic region, specify bias values:
+• To expand (1 to 99) – more traffic to the resource
+• To shrink (-1 to -99) – less traffic to the resource
+• Resources can be:
+• AWS resources (specify AWS region)
+• Non-AWS resources (specify Latitude and Longitude)
+• You must use Route 53 Traffic Flow to use this feature
+</details>
+
 ## Take Away
+<details>
+<summary>
+Stuff to remember
+</summary>
+
 
 shell commands
 
@@ -419,3 +1016,10 @@ aws --version # check cli version
 aws configure # configure user
 aws iam list-users # show all users in account
 ```
+
+1. if we want really high IOPS (More than 250,000), we have to use Instance Store (can't use ELB).
+3. only NLB can have an elastic IP address.
+4. "A Read Replica in a different AWS Region than the source database can be used as a standby database and promoted to become the new production database in case of a regional disruption. So, we'll have a highly available (because of Multi-AZ) RDS DB Instance in the destination AWS Region with both read and write available."
+5. "What is the maximum number of Read Replicas you can add in an ElastiCache Redis Cluster with Cluster-Mode Disabled?" - **5** 
+
+</details>

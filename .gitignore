@@ -38,4 +38,5 @@
 #workspace.code-workspace
 The Complete Google Go Programming Course For Beginners/app/main
 
-/.vscode/
+/.vscode/*
+!/.vscode/snippets.code-snippets

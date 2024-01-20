@@ -3,8 +3,8 @@
     "ignorePaths": [],
     "dictionaryDefinitions": [],
     "dictionaries": ["softwareTerms"],
-    "words": ["udemy"],
-    "ignoreWords": [],
+    "words": [],
+    "ignoreWords": ["Udemy"],
     "import": [],
     "allowCompoundWords": false
 }
