@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR
+// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css"> 
@@ -844,9 +844,9 @@ a redis compatible memory database service, durable, high performance, multi Ava
 </details>
 
 ## Route 53
-<!-- <details> -->
+<details>
 <summary>
-AWS DNS service
+AWS DNS service, Routing Policies.
 </summary>
 
 DNS - Domain Name Server. translates human readable host names into ip addresses. has hirechical naming structure.
@@ -977,29 +977,77 @@ based on the latency between the user and AWS regions.
 Active-Passive based on health checks.
 
 #### Geolocation 
+
 > - Different from Latency-based! This routing is based on user location.
 >
 > - Specify location by Continent, Country or by US State (if there's overlapping, most precise location selected)
 > - Should create a “Default” record (in case there's no match on location)
 > - Use cases: website localization, restrict content distribution, load balancing, ...
 > - Can be associated with Health Checks
-#### Multi-Value Answer 
- Use when routing traffic to multiple resources
-• Route 53 return multiple values/resources
-• Can be associated with Health Checks (return only values for healthy resources)
-• Up to 8 healthy records are returned for each Multi-Value query
-• Multi-Value is not a substitute for having an ELB
-#### Geoproximity (using Route 53 Traffic Flow feature)
-• Route traffic to your resources based on the geographic location of users and
-resources
-• Ability to shift more traffic to resources based on the defined bias
-• To change the size of the geographic region, specify bias values:
-• To expand (1 to 99) – more traffic to the resource
-• To shrink (-1 to -99) – less traffic to the resource
-• Resources can be:
-• AWS resources (specify AWS region)
-• Non-AWS resources (specify Latitude and Longitude)
-• You must use Route 53 Traffic Flow to use this feature
+
+#### GeoProximity
+
+giving regions different biases, based on aws location or specific latitude longitude. uses bias values as way to shift proximity.
+
+(think of it like mass, or gravity, the stronger the bias, the further away items that it pulls). requires using <cloud>Route53 Traffic Flow</cloud>.
+
+> defined using Route 53 Traffic Flow feature
+> 
+> - Route traffic to your resources based on the geographic location of users and resources
+> - Ability to shift more traffic to resources based on the defined bias
+> - To change the size of the geographic region, specify bias values:
+> -   To expand (1 to 99) – more traffic to the resource
+> -   To shrink (-1 to -99) – less traffic to the resource
+> - Resources can be:
+> -   AWS resources (specify AWS region)
+> -   Non-AWS resources (specify Latitude and Longitude)
+> - You must use Route 53 Traffic Flow to use this feature
+
+#### Traffic Flow
+
+a simple way to set up advanced rules, has UI editor that creates a traffic flow policy (which can be versioned).
+
+the starting point is a record (with a type), which connects to an end point, or to another rule. this way we can increase the complexity and build hierarchical flows.
+
+#### IP Based
+defining list of cidr blocks, and set the ranges to endpoint. this works for optimizations, when the ip are known in advance.
+
+#### Multi Value
+
+> Use when routing traffic to multiple resources
+>
+> - **Route 53 return multiple values/resources**
+> - Can be associated with Health Checks (return only values for healthy resources)
+> - Up to 8 healthy records are returned for each Multi-Value query
+> - Multi-Value is not a substitute for having an ELB
+
+#### Domain Registar vs DBS Service
+we can buy the domain from any domain registrar, we don't have to buy from AWS. we can change the name server records there and have it point to Route53.
+</details>
+
+## VPC Fundamentals
+<details>
+<summary>
+Virtual Private Cloud.
+</summary>
+
+<cloud>Virtual Private Cloud</cloud>. a region based service.
+
+### VPC, Subnets, IGW and NAT
+
+subnets partition the VPC, defined at the Availability Zone level. we can have public and private subnets. public subnets can be accessed from the external web (internet), while private subnets are insulated.\
+We control the network flow through <cloud>Route Tables</cloud>.
+
+IGW - internet gateway, lives in the VPC. the public subnets have routes to it. private subnets don't have a direct route.
+NAT Gateway/Instances - allow private subnets access. live in the public subnet, and the private subnets have routes to it.
+
+NAT Gatewats are managed by AWS, NAT instaces are managed by the user.
+
+### Network ACL, SG, VPC Flow Logs
+### VPC Peering, Endpoints, VPN, DX
+### VPC Cheat Sheet & Closing Comments
+### Three Tier Architecture
+
 </details>
 
 ## Take Away
