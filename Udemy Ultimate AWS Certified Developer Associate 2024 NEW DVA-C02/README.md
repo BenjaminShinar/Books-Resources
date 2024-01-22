@@ -1044,11 +1044,101 @@ NAT Gateway/Instances - allow private subnets access. live in the public subnet,
 NAT Gatewats are managed by AWS, NAT instaces are managed by the user.
 
 ### Network ACL, SG, VPC Flow Logs
-### VPC Peering, Endpoints, VPN, DX
-### VPC Cheat Sheet & Closing Comments
-### Three Tier Architecture
+Network Access Control List - firewall with allow and deny rules, attached at the subnet level. only has ip address rules (not security groups). the security group are firewalls over <cloud>EC2</cloud> instances or <cloud>ENI</cloud> (elastic network interface).
 
+the default NACL of the default vpc allows free traffic.
+
+unlike security groups, NACL are **stateless**.
+
+The **Flow Logs** captures and logs all traffic in the VPC. also captures network information from AWS managed services. we can send this Flow Logs data to <cloud>S3</cloud>, <cloud>CloudWatch</cloud> or <cloud>Kinesis</cloud>
+
+### VPC Peering, Endpoints, VPN, DX
+
+if we want connectivity between VPCs, we can use <cloud>VPC Peering</cloud> that uses AWS internal network. for this to work, the IP address of the VPCs can't overlapp. VPC connection is not transitive. (even if A can connect to B, and B can connect to C, it doesn't mean that A can talk with C).
+
+endpoints allow us to connect to AWS services using a private network, rather than going through the outside internet. 
+
+- VPC endpoint gateway: <cloud>S3</cloud>, <cloud>DynamoDB</cloud>
+- VPC endpoint interface: other services.
+
+site to site VPN - connect on-premises private network to AWS VPC encrypted through the public internet.
+
+<cloud>Direct Connect</cloud> - private, physical connection from the site to AWS, takes at least a month to establish.
+
+### Three Tier Architecture
+- <cloud>Route53</cloud> DNS record
+- <cloud>ELB</cloud> in a public subnet
+- <cloud>EC2</cloud> machines in a private subnet with route table
+- <cloud>RDS</cloud> and <cloud>ElasticCache</cloud> in another private subnet.
+
+LAMP stack:
+- linux <cloud>EC2</cloud> machine (optionall EBS drives)
+- Apache webserver
+- MySql database (with and without cache)
+- Php sites
+
+Wordpress on AWS, using <cloud>EFS</cloud> to store files that need to be shared between machines.
+
+### VPC Cheat Sheet & Closing Comments
+> VPC: Virtual Private Cloud
+> 
+> - Subnets: Tied to an AZ, network partition of the VPC
+> - Internet Gateway: at the VPC level, provide Internet Access
+> - NAT Gateway / Instances: give internet access to private subnets
+> - NACL: Stateless, subnet rules for inbound and outbound
+> - Security Groups: Stateful, operate at the EC2 instance level or ENI
+> - VPC Peering: Connect two VPC with non overlapping IP ranges, non transitive
+> - VPC Endpoints: Provide private access to AWS Services within VPC
+> - VPC Flow Logs: network traffic logs
+> - Site to Site VPN: VPN over public internet between on-premises DC and AWS
+> - Direct Connect: direct private connection to a AWS
 </details>
+
+## S3 Introduction
+<details>
+<summary>
+Object Storage, buckets.
+</summary>
+
+infinitely scaling storage, it looks like a global service, but it's still regional.
+
+> - Amazon S3 allows people to store objects (files) in “buckets” (directories)
+> - **Buckets must have a globally unique name** (across all regions all accounts)
+> - Buckets are defined at the region level
+> - S3 looks like a global service but buckets are created in a region
+> - Naming convention
+>   - No uppercase, No underscore
+>   - 3-63 characters long
+>   - Not an IP
+>   - Must start with lowercase letter or number
+>   - Must NOT start with the prefix "xn--"
+>   - Must NOT end with the suffix "-s3alias"
+
+object have "keys", which are the full path from root to the objects, the UI shows folders, but S3 doesn't really have them. it's just has prefixes.
+
+max object size is 5TB, but for anything more than 5GB, "multi-part upload" is mandatory.
+
+blocking access from the public internet, using a pre-signed url.
+
+### Bucket Policies and Security
+
+user based security - IAM policies, which API actions are allowed on the bucket.
+
+> Resource-Based
+>
+> - Bucket Policies – bucket wide rules from the S3 console - allows cross account
+> - Object Access Control List (ACL) – finer grain (can be disabled)
+> - Bucket Access Control List (ACL) – less common (can be disabled)
+
+Objects are enctypted at REST. bucket policies look like normal IAM policies (they use the "Principal" field a lot).
+
+by default, we should leave the settings on the bucket as "block all public access" to prevent data leaks (can be set at account level).
+### S3 Websites
+### Versioning
+### Replication
+### Storage Classes (Tiers)
+</details>
+
 
 ## Take Away
 <details>
