@@ -1133,12 +1133,77 @@ user based security - IAM policies, which API actions are allowed on the bucket.
 Objects are enctypted at REST. bucket policies look like normal IAM policies (they use the "Principal" field a lot).
 
 by default, we should leave the settings on the bucket as "block all public access" to prevent data leaks (can be set at account level).
-### S3 Websites
+
+### S3 Static Websites
+
+using <cloud>S3</cloud> buckets to host static websites (not dynamic content). we need our bucket to allow public access (read) and to mark the bucket as hosting a public website. it needs html files. when we do this, we get a public website endpoint.
+
 ### Versioning
+a setting that we enable at a bucket level. when we re-upload an object with the same key, it gets added as a version. using versioning protects us against accidental deletes. previous versions of the object get a delete marker, but aren't really removed. now we can roll back and restore previous versions of them.\
+if we want to truly remove objects, we have to delete the specific versions.
 ### Replication
+
+<cloud>Cross Region Replication</cloud>, <cloud>Same Region Replication</cloud>.
+
+**requires to have versioning enabled on both buckets**. can be done across AWS accounts. copying is done asynchronously. 
+
+we can replicate buckets for compliance reasons, or to get better latency. replication only starts after the option has been set up, if we want to copy existing items, we need to use <cloud>AWS S3 Batch Replication</cloud>. another reason to have replication is for synchronizing prodcution and test environments.
+
+there is no "chaining" of replications. we can replicate all the objects in a bucket or based on a key prefix. deletion aren't replicated by default, but we can change this setting.
+
 ### Storage Classes (Tiers)
+
+storage classes have SLAs for duration and availability.
+
+durability is 11 9s' (99.999,999,999%)
+
+
+- Standard - general purpose
+- Standard-IA - same speed, but higher cost per read
+- One Zone-IA - less available
+- Glacier - low cost, archive
+  - Glacier Instant Retrieval - milliseconds retrival, but high cost to retrieve data.
+  - Glacier Flexible Retrieval - expedited (1 -5 minutes), standard(3-5 hours), bulk(5-12 hours). we pay more for expedited, and bulk is for free.
+  - Glacier Deep Archive - lowest cost
+- Intelligent-Tiering - move objects between tiers based on usage, small monthly fee.
+
+each object has it's own storage class. we can also create lifecycle rules for objects, to move between tiers or even remove them entirely.
 </details>
 
+## AWS CLI, SDK, IAM Roles and Policies
+<details>
+<summary>
+Some stuff.
+</summary>
+
+SDK - Software development Kit. libraries to integrate with AWS APIs from software and programs that we develop.
+
+### EC2 Instance Metadata
+allows EC2 instances to "learn" about themselves without an IAM role. they can learn about the IAM role name, but not the policy.
+url is "http://169.254.169.254/latest/meta-data". we can access both the metdata and user-data (boot script).
+
+there are two versios,
+
+IMDSv1 is accessing it directly. IMDSv2 gets a token first and then requests the data with that token. we select the option (both versions, or just the newer version) when we create the machine.
+
+(demo of doing querying the metadata from inside the machine)
+
+### AWS CLI
+
+managing multiple AWS account from the command line, creating multiple profiles.
+
+```sh
+aws configure --profile <profile_name>
+aws s3 ls
+aws s3 ls --profile <profile_name>
+```
+
+if we have MFA enabled, we need to create a temporary session. this gives us temporary credentials. we add the session token to our credentials file in the hidden ".aws" folder.
+
+```sh
+aws sts get-session-token --serial-number <arn-of-the-mfa-device> --tokencode <code-from-token> --duration-seconds 3600
+```
+</details>
 
 ## Take Away
 <details>
