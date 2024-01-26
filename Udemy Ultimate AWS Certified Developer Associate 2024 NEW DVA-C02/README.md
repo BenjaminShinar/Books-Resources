@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL
+// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css"> 
@@ -897,8 +897,8 @@ other types
 
 Hosted Zones are containers for records that define how to route traffic to a domain and its subdomains. this is what we pay for.
 
-- Public Hosted Zones – contains records that specify how to route traffic on the Internet (public domain names) "application1.my_public_domain.com".
-- Private Hosted Zones – contain records that specify how you route traffic within one or more VPCs (private domain names) "application1.company.internal"
+- Public Hosted Zones - contains records that specify how to route traffic on the Internet (public domain names) "application1.my_public_domain.com".
+- Private Hosted Zones - contain records that specify how you route traffic within one or more VPCs (private domain names) "application1.company.internal"
 
 public hosted zones can respond to any request, from anywhere on the internet. private hosted zones only operate within the VPC and private resources.
 
@@ -996,8 +996,8 @@ giving regions different biases, based on aws location or specific latitude long
 > - Route traffic to your resources based on the geographic location of users and resources
 > - Ability to shift more traffic to resources based on the defined bias
 > - To change the size of the geographic region, specify bias values:
-> -   To expand (1 to 99) – more traffic to the resource
-> -   To shrink (-1 to -99) – less traffic to the resource
+> -   To expand (1 to 99) - more traffic to the resource
+> -   To shrink (-1 to -99) - less traffic to the resource
 > - Resources can be:
 > -   AWS resources (specify AWS region)
 > -   Non-AWS resources (specify Latitude and Longitude)
@@ -1126,9 +1126,9 @@ user based security - IAM policies, which API actions are allowed on the bucket.
 
 > Resource-Based
 >
-> - Bucket Policies – bucket wide rules from the S3 console - allows cross account
-> - Object Access Control List (ACL) – finer grain (can be disabled)
-> - Bucket Access Control List (ACL) – less common (can be disabled)
+> - Bucket Policies - bucket wide rules from the S3 console - allows cross account
+> - Object Access Control List (ACL) - finer grain (can be disabled)
+> - Bucket Access Control List (ACL) - less common (can be disabled)
 
 Objects are enctypted at REST. bucket policies look like normal IAM policies (they use the "Principal" field a lot).
 
@@ -1168,6 +1168,84 @@ durability is 11 9s' (99.999,999,999%)
 - Intelligent-Tiering - move objects between tiers based on usage, small monthly fee.
 
 each object has it's own storage class. we can also create lifecycle rules for objects, to move between tiers or even remove them entirely.
+
+Amazon S3 Analytics creates a report with recommendations about lifecycle rules.
+
+### S3 Event Notification
+
+when we do stuff with S3, we create events, we can react to those events (such as when an object is created). we need IAM permissions for each type of target.
+
+destinations:
+- SNS - SNS resource Access policy
+- SQS - SQS resource Access policy
+- Lambda - Lambda Access policy
+
+Alternativley, we can also use <cloud>EventBridge</cloud> and send the events from there to more services, with better filtering, and use more advanced features.
+
+### Performance
+
+autoscales, has limits on API requests per second per prefixes.
+
+<cloud>S3 Transfer Acceleration</cloud> - upload and download, using edge locations. compatible with multi-part upload. <cloud>Byte-Range Fetches</cloud> - better performance, better resilience. can also be used to get just the header.
+
+<cloud>S3 Select</cloud> and <cloud>Glacier Select</cloud> allow for server-side filtering using SQL operations on csv files.
+
+if we want user defined meta-data, it needs the "x-amz-meta" name prefix. then we can retrieve it as part of the query or separately. Tags can be used by other serives in S3, or to use in data analysis. we can't search for tags or meta-data directly, if we want, then we need an external database, such as <cloud>DynamoDB</cloud> to handle the searches.
+
+### Encryption
+
+> - Server-Side Encryption (SSE)
+>   - Server-Side Encryption with Amazon S3-Managed Keys (SSE-S3) – (Enabled by Default) - Encrypts S3 objects using keys handled, managed, and owned by AWS. AES-256 encryption type.
+>   - Server-Side Encryption with KMS Keys stored in <cloud>AWS KMS </cloud>(SSE-KMS) - Leverage AWS Key Management Service to manage encryption keys. we can have <cloud>CloudTrail</cloud> audits of key usage. KMS keys have API limits (quotas)
+>   - Server-Side Encryption with Customer-Provided Keys (SSE-C)- When you want to manage your own encryption keys. must use HTTPS, and pass the key in headers together with the key. only from the cli (not the web console).
+> - Client-Side Encryption - the data is encrypted at the client level. 
+
+There is also encryption in transit (in-flight), SSL/TLS. S3 has two endpoint, HTTP and HTTPS. we can have a bucket policy that denies APIs that aren't secure transport.
+
+DSSE-KMS is Double Server Side Encryption-KMS (two layers). not part of the exam.\
+There is a default KMS key which is free of charge, using other KMS keys has additional costs.
+
+### CORS
+
+Cross-Origin Resource Sharing. does another webserver know about mine?
+
+origin = scheme (protocol) + host (domain) + port.
+
+in S3 world, for example, if we have one S3 website and it uses S3 objects from another bucket, we need the other bucket to allow for CORS on the origin bucket.
+
+> - If a client makes a cross-origin request on our S3 bucket, we need to enable the correct CORS headers
+> - It’s a popular exam question
+> - You can allow for a specific origin or for * (all origins)
+
+### S3 MFA-Delete
+
+a feature that requires multi factor authentication before doing important operations, such as permanently deleting an object marker or removing the versioning. only the bucket owner (root account) can enable or disable the MFA-Delete. this option can't be chaged through the web console portal, only through the CLI. deletions with MFA also don't show in the UI.
+
+### Access Logs
+
+logging all requests to S3, for auditing purposes. we write the logs of requests to one bucket into another bucket. they must be in the same region. the logs bucket shouldn't be monitoried itself (to avoid loops).
+
+under the <kbd>Properties</kbd> tab, we enable <kbd>Server Access Logging</kbd> and choose another bucket. we can then use <cloud>AWS Athena</cloud> to analyze the logs.
+
+### Pre-Signed Urls
+
+Urls with expiration time, allow us to give permissions for a limited time, so we can share private objects without changing the access levels. we can create them through the web console or the CLI.
+
+> - Allow only logged-in users to download a premium video from your S3 bucket.
+> - Allow an ever-changing list of users to download files by generating URLs dynamically.
+> - Allow temporarily a user to upload a file to a precise location in your S3 bucket.
+
+### Access Points and Object Lambdas
+
+Access points work together with access point policies, we define a prefix in the bucket and define access points to those prefixes. each access point can have a DNS name. we can also define them as only accessible from within a <cloud>VPC</cloud> (using VPC endpoint).
+
+Object Lambdas allow us to change the object before it's retrived by the caller application. this uses a single S3 access point, and one Object Lambda Access point per lambda.
+
+> - Redacting personally identifiable information for analytics or nonproduction environments.
+> - Converting across data formats, such as converting XML to JSON.
+> - Resizing and watermarking images on the fly using caller-specific details, such as the user who requested the object.
+
+
 </details>
 
 ## AWS CLI, SDK, IAM Roles and Policies
@@ -1203,6 +1281,41 @@ if we have MFA enabled, we need to create a temporary session. this gives us tem
 ```sh
 aws sts get-session-token --serial-number <arn-of-the-mfa-device> --tokencode <code-from-token> --duration-seconds 3600
 ```
+
+### Extra stuff
+
+API rate limits, S3 limits based on prefix. we can request a higher limit from AWS, if we really need it.
+
+also Service Quotas-  limits on how many resources we can provision, we can increase it if we want by opening a ticket. if we get a throtelling exception, we need to use exponential backoff, this is a retry-mechanism. used on 5xx server errors and throtelling.
+
+> The CLI will look for credentials in this order
+>
+> 1. Command line options - `--region`, `--output`, and `--profile`
+> 2. Environment variables - *AWS_ACCESS_KEY_ID*,*AWS_SECRET_ACCESS_KEY*, and *AWS_SESSION_TOKEN*
+> 3. CLI credentials file - `aws configure`` ~/.aws/credentials on Linux / Mac & C:\Users\user\.aws\credentials on Windows
+> 4. CLI configuration file - `aws configure`  ~/.aws/config on Linux / macOS & C:\Users\USERNAME\.aws\config on Windows
+> 5. Container credentials - for ECS tasks
+> 6. Instance profile credentials - for EC2 Instance Profiles
+
+a similar chain exists for SDKs.
+
+> Signing AWS API requests
+> 
+> - When you call the AWS HTTP API, you sign the request so that AWS can identify you, using your AWS credentials (access key & secret key)
+> - Note: some requests to Amazon S3 don’t need to be signed
+> - If you use the SDK or CLI, the HTTP requests are signed for you
+> - You should sign an AWS HTTP request using Signature v4 (SigV4)
+
+we can send the toke in authorization header or the query string as part of pre-signed URL (X-AMS-Signature).
+</details>
+
+## CloudFront
+<!-- <details> -->
+<summary>
+Content Delivery Network
+</summary>
+
+### Cache
 </details>
 
 ## Take Away
