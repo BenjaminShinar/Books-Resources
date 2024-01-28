@@ -1195,7 +1195,7 @@ if we want user defined meta-data, it needs the "x-amz-meta" name prefix. then w
 ### Encryption
 
 > - Server-Side Encryption (SSE)
->   - Server-Side Encryption with Amazon S3-Managed Keys (SSE-S3) – (Enabled by Default) - Encrypts S3 objects using keys handled, managed, and owned by AWS. AES-256 encryption type.
+>   - Server-Side Encryption with Amazon S3-Managed Keys (SSE-S3) - (Enabled by Default) - Encrypts S3 objects using keys handled, managed, and owned by AWS. AES-256 encryption type.
 >   - Server-Side Encryption with KMS Keys stored in <cloud>AWS KMS </cloud>(SSE-KMS) - Leverage AWS Key Management Service to manage encryption keys. we can have <cloud>CloudTrail</cloud> audits of key usage. KMS keys have API limits (quotas)
 >   - Server-Side Encryption with Customer-Provided Keys (SSE-C)- When you want to manage your own encryption keys. must use HTTPS, and pass the key in headers together with the key. only from the cli (not the web console).
 > - Client-Side Encryption - the data is encrypted at the client level. 
@@ -1310,13 +1310,136 @@ we can send the toke in authorization header or the query string as part of pre-
 </details>
 
 ## CloudFront
-<!-- <details> -->
+<details>
 <summary>
-Content Delivery Network
+CDN - Content Delivery Network
 </summary>
 
+improves read performance by cacheing at the edge location edge points. provides DDoS protection, together with <cloud>AWS Shield</cloud> and <cloud>AWS WAF</cloud> (Web Application Firewall).
+
+> - S3 bucket
+>  - For distributing files and caching them at the edge
+>  - Enhanced security with CloudFront Origin Access Control (OAC)
+>  - OAC is replacing Origin Access Identity (OAI)
+>  - CloudFront can be used as an ingress (to upload files to S3)
+> - Custom Origin (HTTP)
+>  - Application Load Balancer
+>  - EC2 instance
+>  - S3 website (must first enable the bucket as a static S3 website)
+>  - Any HTTP backend you want
+
+not the same as S3 replication. automatically for all regions, great for static contetnt that must be available everywhere.
+
+to do a demo, we crate a S3 bucket, upload some files into it. then we look at the <cloud>CloudFront</cloud> service, choose the bucket as a domain, select the origin access option, and we can set WAF settings, and we select the file as the entry point. we are also given a policy statement that we need to add to the bucket policy.
+
 ### Cache
+
+> - The cache lives at each CloudFront Edge Location.
+> - CloudFront identifies each object in the cache using the Cache Key (see next slide).
+> - You want to maximize the Cache Hit ratio to minimize requests to the origin.
+> - You can invalidate part of the cache using the "CreateInvalidation" API.
+
+the default cache key is the hostname + resource portion of the URL, but we can make something much more advanced.
+
+> Cache based on:
+> - HTTP Headers: None/Whitelist
+> - Cookies: None/Whitelist/Include All Except(denylist)/All
+> - Query Strings: None/Whitelist/Include All-Except(denylist)/All
+> 
+> - Control the TTL (0 seconds to 1 year), can be set by the origin using the Cache-Control header, Expires header...
+> - Create your own policy or use Predefined Managed Policies
+> - All HTTP headers, cookies, and query strings that you include in the Cache Key are automatically included in origin requests.
+
+origin request policy - adding headers to the request to the origin, but not as part of the caching.
+
+if we change the data in the origin, it won't be available until the cache expires. to get around this, we can force a cache refresh (update) by doing a CloudFront invalidation, we can do this for all files with the `*` wildcard or a specific path.
+
+>Configure different settings for a given URL path pattern
+> - Example: one specific cache behavior to images ("/*.jpg") files on your origin web server
+> - Route to different kind of origins/origin groups based on the content type or path pattern
+>   - "/images/*"
+>   - "/api/*"
+>   - "/*" (default cache behavior)
+> - When adding additional Cache Behaviors, theDefault Cache Behavior is always the last to be processed and is always "/*".
+
+### Other Origins
+
+<cloud>EC2</cloud> and <cloud>Application Load Balancer</cloud>. the Security groups must allow connections from the edge location ip addresses. the country is determined by an external ip-to-region service.
+
+### Geo Restrictions
+
+using <cloud>CloudFront</cloud> to restrict access based on location, either limit to an allowed list of countries or creating a blocklist.  
+
+### Signed Urls and Cookies
+
+a signed url\cookie with policy
+- expiration time
+- allowed ip range
+- trusted signers
+
+Signed urls have one to one relationship with files (one url = one file), signed cookies can provide access to more than one file. 
+
+
+> <cloud>CloudFront</cloud> Signed URL:
+> 
+> - Allow access to a path, no matter the origin
+> - Account wide key-pair, only the root can manage it
+> - Can filter by IP, path, date, expiration
+> - Can leverage caching features
+>
+> <cloud>S3</cloud> Pre-Signed URL:
+> 
+> - Issue a request as the person who pre-signed the URL
+> - Uses the IAM key of the signing IAM principal
+> - Limited lifetime
+
+there are two types of signers
+
+1. trust key group - can rotate keys (new way, recommended), can contain up to five keys.
+2. aws account that contains a cloudFront KeyPair (old way, not recommended). keys must be managed by the root account.
+
+### Additional stuff
+
+pricing varies based on which edge location is used and the volume of the data. we can control how many edge location will be used.
+1. all of them.
+1. exclude the most expensive locations.
+1. include only the cheapest locations.
+
+Origin groups allow for high availability using primary/secondary origins inside the group. Sensitive information is protected by "Field Level Encryption" - specific fields are encrypted at the edge location level, using asymmetric keys.
+
+we can send all the request data to <cloud>Kinesis</cloud>, this way we can monitor and analyze the data. 
 </details>
+
+## ECS, ECR and Fargate
+<!-- <details> -->
+<summary>
+
+</summary>
+
+starting with introduction to docker, a containerzed technology, running the same way no matter which machine runs them. works well with microservices, lift-and-shift.
+
+the machine runs a container service (such a docker), which then runs the docker images as containers. docker images are stored at repositories, such as <cloud>Docker Hub</cloud>, or AWS <cloud>ECR</cloud> (elastic container registrey).
+
+### Elastic Container Service
+
+launce types:
+- EC2
+- Fargate
+
+we run an ECS task, on our ECS cluster. we can have EC2 launch types, which means that we provision and maintain the machines that act as our cluster nodes. those machines will have the ECS agent running on them. the other option is using <cloud>Fargate</cloud> as the launch type, which is more "serverless", AWS provisions the machines for us, and we don't see them.
+
+ECS Instance Profile - used by the ECS agent (EC2 launch type only). but there are also ECS Tasks roles (both EC2 and Fargate), which is what the application itself can do. we can expose tasks as endpoints, and put them behind a load balancer. we usually go for the application load balancer, unless we need high throughput or we are working with <cloud>AWS Private Link</cloud>.\
+Data persistence can be handled with data volumes, we can mount the file system (<cloud>EFS</cloud>) on the tasks, and then the tasks can all see the same data. <cloud>S3</cloud> **can't be mounted**.
+
+when we create a cluster, we choose if it will have EC2 macines and fargate instances, and an advanced option of adding and on-premises data-center. if we create <cloud>EC2</cloud> machines, we need VPC, networking, security groups, etc...\
+The machines are created inside an auto-scaling group.
+
+Applications are run as Tasks and Services. we first need a task defintion. (a task is like a kubernetes pod). we can choose to launch as either EC2 machine or fargate (or both), we specify the operatin system and the required compute power in terms of CPU. we can also set the <cloud>IAM</cloud> roles, and then we set the containers with an image, environment variables and other options. now that we have the task definition, we can use it to start a service - a task can run several replicas of the same task, and it can have networking configurations, (including a load balancer).
+
+### Scaling and Updates
+
+</details>
+
 
 ## Take Away
 <details>
