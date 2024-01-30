@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE
+// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE ONTAP
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css"> 
@@ -1438,6 +1438,101 @@ Applications are run as Tasks and Services. we first need a task defintion. (a t
 
 ### Scaling and Updates
 
+service auto scaling - not the same as <cloud>EC2</cloud> auto-scaling.
+
+scaling metrics:
+- CPU
+- Memory (RAM)
+- ALB request count
+
+scaling strategies:
+- target tracking
+- step scaling
+- scheduled scaling.
+ 
+
+we can still have auto scaling for the instances, based on auto-scaling groups or the EC2 Cluster Capacity Provider.
+
+rolling updates (between versions) can controlled by minimum health percent (0-100%) and maximum health percent (100-200%).
+
+ECS tasks invoked by <cloud></cloud>, like S3 events. create and run a task that handles the event. this is like lambda, but using ECS. we can also use schedules Event Bridge invocation. we can also use <cloud>SQS</cloud> to trigger the tasks. we can also set the service auto-scaling to increase with the number of messages in the queue.\
+We can also use Event Bridge to intercept events from the tasks, like task starting, stopping or finishing.
+
+### Task Defintions
+we define tasks as json, they tell the ECS service how to run the docker container. 
+
+> - Image name
+> - Port bindings (container and host)
+> - Memory and cpu
+> - Environment variables
+> - Networking information
+> - <cloud>IAM</cloud> Role
+> - logging configuration (<cloud>CloudWatch</cloud>)
+
+a task can have up to 10 containers.
+
+for ECS instances-load balancing, we get **Dynamic Host Port Mapping** if we only define the container port in the task defintion. The alb finds the right port on the EC2 instance. in this case, we need the security group to allow access from any port in load balancer.\
+For fargate load balancing, we can't define the port on the host (only the container). each task has a private IP address.
+
+each task has an IAM role, (not each container). this is defined at the task defintion document. Environment variables can be hardcoded, or can come from the <cloud>SSM parameter store</cloud>, or from the <cloud>Secrets Manager</cloud>. we can also stick them in a S3 bucket.
+
+ECS tasks can have data volume, this also helps with sharing data between containers in the same task. (this works for both EC2 and Fargate tasks). for EC2 instances, the data is stored on the EC2 instance storage, and the lifecycle is tied to the instance. for fargate, we can define ephemeral storage, which is shared to the contains which use it.
+
+Tasks are placed on EC2 instances (**not fargate**) based on resources (CPU, memory) and available ports. same as when tasks need to be destroyed. we can also set taks placement strategies, these are considered "best-effort".
+
+1. identify ec2 instances with the correct resource
+2. find instances based on task constrains
+3. find instances based on placement strategy
+
+Constarains:
+1. **distanceInstance**: avoid placing two tasks on the same instance
+2. **memberOf**: place based on an expression (cluster query language)
+
+Strategies
+1. **Random**: Place tasks randomly.
+2. **Binpack**: Place task on the instance with the **least** amount of memory. try packing as many containers as possible.
+3. **Spread**: Place tasks based on some value, such as instance-id or Availability Zone. try spreading the tasks.
+
+we can mix the strategies together.
+
+### ECR
+ECR - Elastic Container Registry. store and manage images on aws. can be private or public repository. fully intergrated with ECS, images are backed in <cloud>S3</cloud> buckets. one advantage of using ECR is the integration with <cloud>IAM</cloud>. it also supports scanning, versioning, tags, life cycle managements.
+
+
+CLI commands to work with ECR.
+
+```sh
+aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
+docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/<image_namge>:<image_tag>
+```
+
+### AWS CoPilot
+
+> CLI took to build, release and operate production-ready containerized apps.
+
+focus on building the application, rather than provisioning the infrastructure. can be integrated with <cloud>CodePipeline</cloud> for automation. deploys to ECS, Fargate or <cloud>AppRunner</cloud>. this uses "manifest.yml" file.
+
+(following an AWS tutorial) - running this on <cloud>Cloud9</cloud> - we need to jump through some <cloud>IAM</cloud> hoops to deploy it.
+```sh
+copilot --version
+git clone <some example>
+cd example
+copilot init
+
+copilot env init --name prod --profile default  --app <app_name>
+copilot env deploy --name prod
+copilot app delete
+```
+
+### EKS
+EKS - Elastic Kubernetes Service. running a managed cluster, EC2 and Fargate modes. EC2 nodes can be managed (auto-scaling group) or self-managed (we create nodes and then register them to EKS). fargate mode doesn't need nodes at all.
+
+Data volumes work with the Container Storage Interface from kubernetes.
+
+- <cloud>EBS</cloud>
+- <cloud>EFS</cloud> (works with fargate)
+- <cloud>FSx for lustre</cloud>
+- <cloud>Fsx for NetApp ONTAP</cloud>
 </details>
 
 
