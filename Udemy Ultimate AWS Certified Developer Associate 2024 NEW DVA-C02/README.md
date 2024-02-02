@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE ONTAP
+// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE ONTAP ebextensions Flink
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css"> 
@@ -438,7 +438,7 @@ in the <cloud>EFS</cloud> service, we can create a new EFS, we give it a name, s
 
 ### Summary
 
-> EBS volumes…
+> EBS volumes...
 > 
 > - usually attached to only one instance (except multi-attach io1/io2)
 >   - are locked at the Availability Zone (AZ) level
@@ -851,8 +851,8 @@ AWS DNS service, Routing Policies.
 
 DNS - Domain Name Server. translates human readable host names into ip addresses. has hirechical naming structure.
 
-> - Domain Registrar: Amazon Route 53, GoDaddy, …
-> - DNS Records: A, AAAA, CNAME, NS, …
+> - Domain Registrar: Amazon Route 53, GoDaddy, ...
+> - DNS Records: A, AAAA, CNAME, NS, ...
 > - Zone File: contains DNS records
 > - Name Server: resolves DNS queries (Authoritative or Non-Authoritative)
 > - Top Level Domain (TLD): .com, .us, .in, .gov, .org, etc...
@@ -927,7 +927,7 @@ AWS resources expose an AWS hostname. CNAME records point a hostname to any othe
 - load balancer
 - cloudfront
 - api gateways
-- beanstalk
+- Beanstalk
 - S3 websites
 - vpc interface endpoints
 - global accelerator
@@ -1214,7 +1214,7 @@ origin = scheme (protocol) + host (domain) + port.
 in S3 world, for example, if we have one S3 website and it uses S3 objects from another bucket, we need the other bucket to allow for CORS on the origin bucket.
 
 > - If a client makes a cross-origin request on our S3 bucket, we need to enable the correct CORS headers
-> - It’s a popular exam question
+> - It's a popular exam question
 > - You can allow for a specific origin or for * (all origins)
 
 ### S3 MFA-Delete
@@ -1302,7 +1302,7 @@ a similar chain exists for SDKs.
 > Signing AWS API requests
 > 
 > - When you call the AWS HTTP API, you sign the request so that AWS can identify you, using your AWS credentials (access key & secret key)
-> - Note: some requests to Amazon S3 don’t need to be signed
+> - Note: some requests to Amazon S3 don't need to be signed
 > - If you use the SDK or CLI, the HTTP requests are signed for you
 > - You should sign an AWS HTTP request using Signature v4 (SigV4)
 
@@ -1411,9 +1411,9 @@ we can send all the request data to <cloud>Kinesis</cloud>, this way we can moni
 </details>
 
 ## ECS, ECR and Fargate
-<!-- <details> -->
+<details>
 <summary>
-
+Container Based Services
 </summary>
 
 starting with introduction to docker, a containerzed technology, running the same way no matter which machine runs them. works well with microservices, lift-and-shift.
@@ -1478,7 +1478,7 @@ each task has an IAM role, (not each container). this is defined at the task def
 
 ECS tasks can have data volume, this also helps with sharing data between containers in the same task. (this works for both EC2 and Fargate tasks). for EC2 instances, the data is stored on the EC2 instance storage, and the lifecycle is tied to the instance. for fargate, we can define ephemeral storage, which is shared to the contains which use it.
 
-Tasks are placed on EC2 instances (**not fargate**) based on resources (CPU, memory) and available ports. same as when tasks need to be destroyed. we can also set taks placement strategies, these are considered "best-effort".
+Tasks are placed on EC2 instances (**not fargate**) based on resources (CPU, memory) and available ports. same as when tasks need to be destroyed. we can also set tasks placement strategies, these are considered "best-effort".
 
 1. identify ec2 instances with the correct resource
 2. find instances based on task constrains
@@ -1503,7 +1503,7 @@ CLI commands to work with ECR.
 
 ```sh
 aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
-docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/<image_namge>:<image_tag>
+docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/<image_name>:<image_tag>
 ```
 
 ### AWS CoPilot
@@ -1535,6 +1535,693 @@ Data volumes work with the Container Storage Interface from kubernetes.
 - <cloud>Fsx for NetApp ONTAP</cloud>
 </details>
 
+## Elastic Beanstalk
+<details>
+<summary>
+Deploying Instance (EC2) based applications. A developer-centric view of deploying an application on AWS.
+</summary>
+
+Deploying applications as a whole, easily and in a scalable way. 
+
+a common web application follows a 3-tier architecture:
+
+1. <cloud>Elastic Load Balancer</cloud> in a public subnet.
+2. Web servers running on <cloud>EC2</cloud> machines in a private subnet across several Availability Zones, using an auto scaling group.
+3. Databases (<cloud>RDS</cloud>, <cloud>ElasticCache</cloud>) running in another private subnets.
+4. optional <cloud>Route53</cloud> record.
+
+all these are the same, no matter what the application is. Elastic Beanstalk is a managed service to manage all those connfigurations.
+
+> - Application: collection of Elastic Beanstalk components (environments,versions, configurations, ...)
+> - Application Version: an iteration of your application code
+> - Environment
+>   - Collection of AWS resources running an application version (only one application version at a time)
+>   - Tiers: Web Server Environment Tier & Worker Environment Tier
+>   - You can create multiple environments (dev, test, prod, ...)
+
+support multiple platforms and programming languages.
+
+- web server tier - like above, centered around the load balancer
+- worker tier - centered around an <cloud>SQS</cloud> queue, with workers processing message from the queue and scaling based on it.
+
+we can deploy in a single instance mode (development) or High Availability mode with multiple instances (deployment mode). Costs are based on the underlying resources, no extra cost for using this service.
+
+### Elastic Beanstalk Environments
+
+iin the console, we select <kbd>Create Application</kbd>, and choose a web-server environment. we give the application and the environment a name, and we choose the platform (such as node.js). for now we choose a sample application, and select the preset for "single instance". we next need to configure a service role, which is the machines <cloud>IAM</cloud> role and SSH key.
+
+when we create an application, it creates a <cloud>CloudFormation</cloud> template under the hood, so we can navigate to that service and view what's happening there.
+
+we get a centeralized view for logs, health checks for the instances, monitoring, etc...\
+we could also update the application version.
+
+if we choose the High Availability preset, then we can modify more configurations, such as networking - <cloud>VPC</cloud> and subnets, enabling databases (which becomes linked to the environment), instance type, size, storage and auto-scaling-group configuration, everything we usually do when we create a virtual machine or a load balancer can be done here as well. there are also built-in application updates scheduling, alarms and monitoring options.
+
+### Deployment Modes
+
+Deployment Options for updates, they differ in downtime or reduced capacity (taking down instances), costs (when spinning up extra instances), how long it takes, 
+
+> - All at once (deploy all in one go) – fastest, but instances aren't  vailable to serve traffic for a bit (downtime).
+> - Rolling: update a few instances at a time (bucket), and then move onto the next bucket once the first bucket is healthy.
+> - Rolling with additional batches: like rolling, but spins up new instances to move the batch (so that the old application is still available).
+> - Immutable: spins up new instances in a new ASG, deploys version to these instances, and then swaps all the instances when everything is healthy.
+> - Blue Green: create a new environment and switch over when ready.
+> - Traffic Splitting: canary testing – send a small % of traffic to new deployment.
+
+[deployment modes documentation](https://docs.aws.amazon.com/elasticBeanstalk/latest/dg/using-features.deploy-existing-version.html)
+
+| Deployment mode                 | capacity and downtime | additional cost                    | time                         | notes                                           |
+| ------------------------------- | --------------------- | ---------------------------------- | ---------------------------- | ----------------------------------------------- |
+| All at once                     | downtime              | None                               | fastest                      |
+| Rolling                         | reduced capacity      | None                               | depends on number of buckets |
+| Rolling with additional batches | None                  | additional instances               | depends on number of buckets |
+| Immutable                       | no downtime           | double instances                   | longest                      | quick rollback                                  |
+| Blue Green                      | zero downtime         | double instances and all resources | manual work                  | create another environment directly - swap URL. |
+| Traffic Splitting               | zero downtime         | double instances                   | based on health checks       | quick rollback                                  |
+
+we control the application mode in "updates, monitoring and logging" section. there are also configuration update modes which controls behavior when the <cloud>VPC</cloud> changes.
+
+(demo)
+
+we look at the demo application and change the background color, then we can deploy the new application version and see the deployment mode in action. we can use the deployment mode we selected earlier, or choose a one-time mode for this update only. when we start the update process, we can look at the events tab and see what happens.
+
+another option that we can do is "swap environment domain" between two versions. we can clone the environment, update the new environment, perform testing, and then swap the domains. because this involves DNS updates, this can take more time.
+
+### Elastic Beanstalk CLI
+
+an additional CLI tool that makes working with Beanstalk much easier, and is great for automation.
+
+- `eb create`
+- `eb status`
+- `eb health`
+- `eb events`
+- `eb logs`
+- `eb open`
+- `eb deploy`
+- `eb config`
+- `eb terminate`
+
+we need to describe the dependencies, package them as zip files, upload the file and deploy. the file is stored in S3 bucket, when the instance is created, the dependencies are resolved and the application starts
+
+### Beanstalk Lifecycle Policies
+
+there is a maximum of 1000 application versions, so if we have too many, we can't deploy new ones and must remove some. 
+
+- based on time - delete old ones
+- based on space - keep a limited amount of versions
+
+the active versions aren't deleted, and there's an option to keep the source files in S3.
+
+### Extensions, Cloning, Resources and Migrations
+
+the zip file contains code that is deployed to the instances, but can also contain specific configurations for beanstalk. they must be in a folder called ".ebextensions" in the root, they must have the ".config" file extension, but they should be in a JSON or YAML format. we can add resources that aren't available in the web console. we set it in a "option_settings" section, everything we create here will be tied to the application and be removed when the beanstalk environment is delted.
+
+Beanstalk relies on <cloud>CloudFormation</cloud>. Each environment is a stack, and we can view the resources created by looking at them.
+
+we can clone the existing environment, which maintains the same configuration (except for data in the RDS, but we can get around this by doing a backup). we can deploy a new environment for testing, and then swap the two.
+
+we can't change the load balancer type, so if we want to move from a application load balancer to a network load balancer, we need to re-create the environment (can't clone), and then shift traffic.
+
+<cloud>RDS</cloud> can be provisioned with Beanstalk, but since they are tied to the lifecycle of the environment, it might not be ideal for production environment. it's better to create it independently and connect to it using a connection string.
+
+> Elastic Beanstalk Migration: Decouple RDS
+> 
+> 1. Create a snapshot of RDS DB (as a safeguard)
+> 2. Go to the RDS console and protect the RDS database from deletion
+> 3. Create a new Elastic Beanstalk environment, without RDS, point your application to existing RDS 
+> 4. perform a CNAME swap (blue/green) or Route 53 update, confirm working
+> 5. Terminate the old environment (RDS won't be deleted)
+> 6. Delete CloudFormation stack (in DELETE_FAILED state)
+
+</details>
+
+## AWS CloudFormation
+<details>
+<summary>
+Infrastructure As Code.
+</summary>
+
+IaC - Infrastructure As Code. avoid repeated manual work that's hard to reproduce and is error prone. <cloud>Elastic Beanstalk</cloud> is using <cloud>CloudFormation</cloud>.
+
+everything that we can do in the web console, we can do as code. we declare what resources we want and their configuration, and then the service handles creating them for us.
+
+> - Infrastructure as code
+>   - No resources are manually created, which is excellent for control
+>   - The code can be version controlled for example using git
+>   - Changes to the infrastructure are reviewed through code
+> - Cost
+>   - Each resources within the stack is tagged with an identifier so you can easily see how much a stack costs you
+>   - You can estimate the costs of your resources using the CloudFormation template
+>   - Savings strategy: In Dev, you could automation deletion of templates at 5 PM and recreated at 8 AM, safely
+> - Productivity
+>   - Ability to destroy and re-create an infrastructure on the cloud on the fly
+>   - Automated generation of Diagram for your templates!
+>   - Declarative programming (no need to figure out ordering and orchestration)
+> - Separation of concern: create many stacks for many apps, and many layers. 
+>   - VPC stacks
+>   - Networking stacks
+>   - App stacks
+> 
+> - Don't re-invent the wheel
+>   - Leverage existing templates on the web!
+>   - Leverage the documentation
+
+
+### CloudFormation Basics
+
+templates are created, uploaded to <cloud>S3</cloud> (internally), and then are referenced in the service. when we update a new version, we actually upload new one and CloudFormation figures out the difference.
+
+we can create templates either manually using the wizard, or by editing the template files.
+
+templates contains:
+- Resources (mandatory)
+- Parameters - dynamic variables
+- Mappings - static variables
+- Outputs
+- Conditionals
+- Metdata
+
+(demo of creating EC2 instance)
+
+we can look at existing stacks and view the template in the designed mode (either in json or yaml format). and we click <cloud>Create Stack</cloud>, and we choose to create new resources (rather than import them). we can use a sample template, upload a file or create a template in the designere wizard. we use the file from the course resources.
+
+```yaml
+---
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-a4c7edb2
+      InstanceType: t2.micro
+```
+
+then we can use a different file to update the stack. it shows us the changeSet - what will be added, modified or deleted. modified resources can be replaced. references in the templates control the order of resources creation. this can take a few minutes.
+
+we could delete resources directly (like terminating the EC2 machine), but it's better to delete the stack and have AWS delete all the resources it has created.
+
+### CloudFormation Yaml
+
+yaml is a declarative, human readable format. it uses indentations and key-value pairs. it supports nested objects and arrays, and can contain comments.
+
+(<cloud>CloudFormation</cloud> also supports with json , but it's not as comfortable.)
+
+#### Resources
+the core part of the template is the **Resources** block. they are the heart of cloudFormation. they follow the same form.
+
+[Resources Documentations](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html)
+
+
+```yaml
+Resources:
+  CustomResourceName:
+     Type: AWS::<Service>::<Resource>
+      Properties:
+        Property1: <value>
+        Property2: <value>
+```
+
+> FAQ for resources
+> - Can I create a dynamic amount of resources?
+>    - No, you can't. Everything in the CloudFormation template has to be declared. **You can't perform code generation there**.
+> - Is every AWS Service supported?
+>   - Almost. Only a select few niches are not there yet.
+>   - You can work around that using AWS Lambda Custom Resources
+
+#### Parameters
+
+Parametes allow us to get input from the user, they are great for re-using templates.
+
+> Parameters can be controlled by all these settings:
+>
+> - Type:
+>   - String
+>   - Number
+>   - CommaDelimitedList
+>   - List\<Type>
+>   - AWS Parameter (to help catch invalid values – match against existing values in the AWS Account)
+> - Description
+> - Constraints
+>   - ConstraintDescription (String)
+>   - Min/MaxLength
+>   - Min/MaxValue
+> - Defaults
+> - AllowedValues (array)
+> - AllowedPattern (regexp)
+> - NoEcho (Boolean)
+
+we can refer to the parameters with the built-in `!Ref <parameter name>` function (`Fn::Ref`).
+
+```yaml
+Parameters:
+  CustomParameterName:
+    Description: Parameter description when prompted
+    Type: String
+```
+
+aws also has "pseudo parameters", which are defined by default.
+
+> - AWS::AccountId
+> - AWS::NotificationARNs
+> - AWS::NoValue (Does not return a value)
+> - AWS::Region
+> - AWS::StackId
+> - AWS::StackName
+
+#### Mapping
+
+fixed variables (hard coded) in the template, such as AMIs, Regions, production environments, etc...\
+we can access the parameters with `!FindInMap [MapName, TopLevelKey, SecondLevelKey]`
+
+```yaml
+Mappings:
+  RegionMap: # map name
+    us-east-1: # top level key
+      "32": "ami1" # second level key
+      "64": "ami2"
+    us-east-2:
+      "32": "ami3"
+      "64": "ami4"
+
+Resources:
+  MyEc2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::REGION", 32]
+```
+#### Outputs
+optional section that we can use to export values to be used in other stacks, we can also view them in the console and CLI.
+
+a common use case is to separate layers, such as having a networking stack which exports VPC variables (id, subnets), and then another stack uses those values as inputs. allows for cross-stack collbartion. prevents deletions when a different stack is using the exported value.
+
+
+```yaml
+Outputs:
+  CustomOutputInternalName:
+    Description: some description
+    Value: !Ref SomeOtherValue
+    Export:
+      Name: CustomExternalName
+```
+
+we can then import the value in another stack using `ImportValue <Output name>` function.
+
+```yaml
+Resources:
+  MyEc2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      SecurityGroups:
+      - !ImportValue SSHSecurityGroup
+```
+
+Exported Names must be unique in the region.
+#### Conditions
+
+> Conditions are used to control the creation of resources or outputs
+based on a condition.\
+> Conditions can be whatever you want them to be, but common ones are:
+> 
+> - Environment (dev/test/prod)
+> - AWS Region
+> - Any parameter value
+> - Each condition can reference another condition, parameter value or mapping
+
+we create a condition as it's own block
+```yaml
+Conditions:
+  CreateProdResources: !Equals [ !Ref EnvType, prod]
+```
+
+and use it in resources or outputs, in the "Condition" field
+
+```yaml
+Resources:
+  MountPoint:
+  Type: "AWS::EC2::VolumeAttachment"
+  Condition: CreateProdResources
+```
+
+#### Intrinsic Functions
+
+| Function Name     | ShortHand      | Usage                                                     |
+| ----------------- | -------------- | --------------------------------------------------------- |
+| `FN::Ref`         | `!Ref`         | reference                                                 |
+| `Fn::GetAtt`      | `!GetAtt`      | get attribute from resource                               |
+| `Fn::FindInMap`   | `!FindInMap `  | get value from static mapping                             |
+| `Fn::ImportValue` | `!ImportValue` | get value exported from other stack                       |
+| `Fn::Join`        | `!Join`        | join value with delimiter                                 |
+| `Fn::Sub`         | `!Sub`         | substitute string (sting must contains `${VariableName}`) |
+| `Fn::And`         | `!And`         | conditionals                                              |
+| `Fn::Equals`      | `!Equals`      | conditionals                                              |
+| `Fn::If`          | `!If`          | conditionals                                              |
+| `Fn::Not`         | `!Not`         | conditionals                                              |
+| `Fn::Or`          | `!Or`          | conditionals                                              |
+
+### Stack Rollbacks and Notifications
+if a stack creation fails, aws rolls backs (deletes resources) by default, we can change this behavior (and keep the created resources if we can). if a stack update fails, it will roll back to the previously known good state and we can look at the logs to see what happened.
+
+there are also advanced rollback options, based on <cloud>CloudWatch</cloud> alarms.
+
+we can enable stack event notifications, like sending notification to SNS (using <cloud>Lambda</cloud> to filter them).
+
+### ChangeSets, NestedStacks, StackSet
+
+Before we update a stack, we can view the change set and see what kind of actions (modifies, adds, deletion) would happen. and review the changes before applying them.
+
+we can have nested Stack, which are isolated components that can be used across different stacks. not the same as CrossStack.
+
+> - Cross Stacks
+>   - Helpful when stacks have different lifecycles.
+>   - Use Outputs Export and `Fn::ImportValue`.
+>   - When you need to pass export values to many stacks (VPC Id, etc...).
+>   - (Terraform equivalent is `data`).
+> - Nested Stacks
+>   - Helpful when components must be re-used.
+>     - Ex: re-use how to properly configure an Application Load Balancer.
+>   - The nested stack only is important to the higher level stack (it’s not shared).
+>   - (Terraform equivalent is `module`).
+
+StackSets perform stack operation across multiple accounts and regions. they are created by administrator accounts. when a stackSet is updated, it also updates the stacks instances that are dervied from it.
+
+### Stack Drift
+
+> CloudFormation allows you to create infrastructure, But it doesn’t protect you against manual configuration changes.
+>
+> - How do we know if our resources have drifted?
+> - We can use CloudFormation drift!
+
+not all resources are supported.
+
+(demo of changing a security group manually)\
+after we change the security group, we can choose <kbd>Detect drift</kbd> for the stack and view the differences.
+
+### Stack Policies
+
+> During a CloudFormation Stack update, all update actions are allowed on all resources (default).\
+> A Stack Policy is a JSON document that defines the update actions that are allowed on specific resources during Stack updates. it can be used to protect resources from unintentional updates.
+> 
+> - When you set a Stack Policy, all resources in the Stack are protected by default
+> - Specify an explicit ALLOW for the resources you want to be allowed to be updated
+
+
+example of stack policy which protect a single resources from being updated. (can still be deleted)
+```json
+{
+  "Statement":[
+    {
+      "Effect": "Allow",
+      "Action": "Update:*",
+      "Principal": "*",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Deny",
+      "Action": "Update:*",
+      "Principal": "*",
+      "Resource": "LogicalResourceId/ProductionDatabase"
+    }
+  ]
+}
+```
+</details>
+
+## Intergartion And Messaging Services
+<details>
+<summary>
+SQS, SNS and Kinesis.
+</summary>
+
+Services that allow for cross application communication and integrations (orchastration)
+
+> When we start deploying multiple applications, they will inevitably need to communicate with one another.\
+> There are two patterns of application communication
+>   - Synchronous communications (application to application)
+>   - Asynchronous / Event based (application to **queue** to application)
+
+Synchronous communication creates coupling, and can force dependencies and cause problems with scaling.
+
+- <cloud>SQS</cloud> - Queue
+- <cloud>SNS</cloud> - Publisher/Subscriber
+- <cloud>Kinesis</cloud> - Real-time streaming
+
+### SQS
+
+<cloud>SQS</cloud> - Simple Queue Service. contains messages. One of the first AWS services. fully managed.
+
+messages are created by producers, and then taken out by consumers (through polling). it acts as a buffer and decouples the producer from the consumers.
+
+- unlimited throughput, unlimited number of messages in the queue.
+- by default, retention is 4 days, maximum age is 14 days.
+- low latency (less than 10 milliseconds).
+- maximum size of messages 256Kb.
+- standard queues can have duplicated messages (delievered at least once).
+- standard queues don't guarantee order.
+
+producers create message with the `sendMessage` api. Consumers can be <cloud>EC2</cloud> machines, <cloud>Lambda</cloud> functions or even on-premises servers. consumers can receive up to 10 messages in a time. when they are done with the messages, they need to call the `deleteMessage` api. we can have multiple consumers running in parallel.
+
+- "at least once delivery"
+- "best effort message ordering"
+
+Queues work great with auto-scaling groups, we can set the scaling meteric to follow a <cloud>CloudWatch</cloud> metric for the queue length. a common use-case is decoupling application tiers. moving processing into a different application, only scaling components that need to be scaled.
+
+Security
+- in flight using HTTPS API
+- at-rest using <cloud>KNS</cloud> keys
+- client-side encryption if the client wants to
+
+Access is controlled by:
+- <cloud>IAM</cloud> roles for the SQS API
+- <cloud>SQS Access Policies</cloud> (similar to S3 bucket policies)
+  - Cross Account SQS accesses
+  - Allowing other services to write to the queue
+
+(demo)\
+We create a standard queue with the default settings, and click <kbd>Send And Receive Messages</kbd>. we can write messages manually, and then <kbd>Poll for Messages</kbd> to read it. we would need to manually delete the message to stop receiving it. we can <kbd>Purge</kbd> to remove all the messages from the queue.
+
+#### SQS Access Policies
+
+resource policies, allow for cross-account accesses (using principal), or to allow a <cloud>S3</cloud> bucket to publish event notification to the queue. we need to create the event notification in the bucket and choose the queue as the target. when we set this properly, we will see a test event in the queue.
+
+#### Message Visibility Timeout
+
+when a message is polled by a consumer, it becomes invisible to other consumers, the duration it remains invisible is the visibility timeout. after the duration passes, if it wasn't deleted, it could be received by other consumers and be processed again. a consumer can call the `ChangeMessageVisibility` API to get more time.
+
+#### Dead Letter Queues
+
+If a message fails to be processed, it returns to the queue after the visibility timeout. if this happens again and again, we can decide to stop processing this message and move it to a different queue. we set the number of times a message can be received by consumers, and if the receiveCount passes it, then it's pushed to the Dead Letter Queue.
+
+we use DLQ for debugging, the DLQ must be the same type as the original Queue (FIFO or standard), and they also have retention. after we find the probelm with the message, we can send it to the original queue (or any other queue) to be processed again, this is called <kbd>ReDrive</kbd>.
+
+#### Delay Queues and Other Concepts
+
+we can define a delay for queues - the time between the messages being sent until the consumers can receive it. by default this is zero (no delay), but can go up to 15 minutes. we can also override it per message with "DelaySecond" parameter. 
+
+Long Polling - waiting for messages to arrive if the queue is empty, this decrases the number of API calls we make to the queue (helps decrease your costs), and we get better latency. can be between 1 to 20 seconds. it is usually preferable over short polling. this can be set at queue level or per request with the "ReceiveMessageWaitTimeSeconds" parameter
+
+If we have a large message (maximum size is 256Kb), we can use something called SQS extended Library, in which the producer first sends the data to an S3 bucket, and then sends the metadate to the SQS, the consumer reads the metadata from the queue and then reads the file from the Bucket.
+
+> - `CreateQueue` (MessageRetentionPeriod)
+> - `DeleteQueue`
+> - `PurgeQueue`: delete all the messages in queue
+> - `SendMessage` (DelaySeconds) - (producer)
+>   - has batch option
+> - `ReceiveMessage` - consumer
+>   - `ReceiveMessageWaitTimeSeconds`: Long Polling
+>   - `MaxNumberOfMessages`: default 1, max 10 (for ReceiveMessage API)
+> - `DeleteMessage` - (consumer)
+>   - has batch option
+> - `ChangeMessageVisibility`: change the message timeout - (consumer)
+>   - has batch option
+
+#### FIFO Queues - First In First Out
+
+A specialized type of queue (unlike the standard queue), which guarantees the order of the messages. this queue has limited throughput (up to 300 messages per second, or 3000 messages with batching). the name must end with ".fifo". there is also an option to "deduplicate" messages if they are received in the same time window. we can de-duplicate based on the hash of the entire message body, or provide a message de-duplication id.\
+there is also "MessageGroupId", which allows to relax the ordering. the messages are processed in order inside the message group. we can set a different consumer for each groupId. ordering accross groups is not guaranteed.
+
+### SNS
+
+<cloud>SNS</cloud> - Simple Notification Service. One message to many receivers. publisher subscriber. the publisher doesn't need to know about who might read the message. this is done using Topics. we can have up to 100,00 topics per account, and 12,500,000 subscribers per topic.
+
+Subscribers can be emails, endpoints or AWS Services. after creating a subscription, it needs to be confirmed.
+- Email/Email with json
+- HTTP/HTTPS
+- SMS
+- <cloud>SQS</cloud>
+- <cloud>Lambda</cloud>
+- <cloud>Kinesis Firehose</cloud>
+
+
+to publish a message, we first need to create a topic. other services can subscribe to that topic, and when we publish the message to that topic, all the subscribers will receive it. we can also do "Direct Publish" for mobile apps, which needs a platform application and endpoints.
+
+SNS has similar security to SQS and has similar Access policies configuration option.
+
+#### The FanOut Pattern
+
+combining SNS and SQS, sending one message to multiple SQS queues.
+
+we push one message to SNS, and the SQS queues are subscribers. this is a fully decoupled model. the SQS access policy should allow SNS to write messages into it. it can also work across accounts and regions.
+
+This pattern also allows us to go around a <cloud>S3</cloud> limitation. in S3, a combination of event Type and prefix can only have one event rule. by using SNS topics, we can set the event rule to send to SNS, and then multiple queues can subscribe to this topic.\
+We can also use SNS and Kinesis, <cloud>Kinesis Fire Hose</cloud> can subscribe to the topic and then push the events into S3 or trigger a lambda.
+
+We can also do message filtering, a subscriber can set a filter policy to limit which messsages it wants to receive.
+
+Topics can be FIFO - working only with SQS fifo. same throughput limits.
+### Kinesis
+
+> Makes it easy to collect, process, and analyze streaming data in real-time.\
+> Ingest real-time data such as: Application logs, Metrics, Website clickstreams, IoT telemetry data...
+>
+> - <cloud>Kinesis Data Streams</cloud>: capture, process, and store data streams
+> - <cloud>Kinesis Data Firehose</cloud>: load data streams into AWS data stores
+> - <cloud>Kinesis Data Analytics</cloud>: analyze data streams with SQL or Apache Flink
+> - <cloud>Kinesis Video Streams</cloud>: capture, process, and store video streams
+</details>
+
+#### Kinesis Data Streams
+streams are composed of shards, we need to determine the number of shards when createing the streams, the more shards we have, the higher ingestion rate.
+
+Producers can be applications, software, or devices with a Kinesis Agent. producers create records, which have a partition key and the data blob. producer can send data at the rate of 1/mb per second per shard, or 1000 msg per second.\
+Consumers can be application using the SDK, <cloud>Lambda</cloud> function, or <cloud>Kinesis Data Firehose</cloud> and <cloud>Kinesis Data Analytics</cloud>. the consumers receive the record with the additional field of the sequence number. the consumption rate has two options:
+- standard shared - 2mb per shard for all consumers.
+- enhanced - 2md per shard per consumer.
+Retention between 1 day to 365 days
+
+> - Ability to reprocess (replay) data.
+> - Once data is inserted in Kinesis, it can’t be deleted (immutability).
+> - Data that shares the same partition goes to the same shard (ordering).
+
+two capcity modes:
+
+> - Provisioned mode:
+>   - You choose the number of shards provisioned, scale manually or using API
+>   - Each shard gets 1MB/s in (or 1000 records per second)
+>   - Each shard gets 2MB/s out (classic or enhanced fan-out consumer)
+>   - You pay per shard provisioned per hour
+> 
+> - On-demand mode:
+>   - No need to provision or manage the capacity
+>   - Default capacity provisioned (4 MB/s in or 4000 records per second)
+>   - Scales automatically based on observed throughput peak during the last 30 days
+>   - Pay per stream per hour & data in/out per GB
+
+security is controlled by <cloud>IAM</cloud> roles. encryption at flight and in rest. can communicate with VPC endpoints. <cloud>CloudTrail</cloud> can monitor API calls.
+
+#### Producers And Consumers
+
+producers send data into the stream, using the AWS SKD, client SDK or the kinesis Agent. the basic action is `PutRecords`, and there's also a batching option.
+
+the partition key is hashed and based on that hash, it goes to one of the shards. it's important to have a good hash function to balance the distribution keys, so the partition key should be chosen accordingly.
+
+there is a *ProvisionThroughputExceeded* error, which we can handle with
+- better distribution
+- retries with exponential backoff
+- increasing the number of shards
+
+consumers get records from the streams and handle them, they can be aws services or any application using the Kinesis Client Library.
+
+| Operation       | Shared (Classic) Fan-out Consumer       | Enhanced Fan-out Consumer                           |
+| --------------- | --------------------------------------- | --------------------------------------------------- |
+| Model           | Consumers **poll** data from Kinesis using  API call                                    | Kinesis **pushes** data to consumers over HTTP2                                                |
+| Consumer        | Low number of consuming applications    | Multiple consuming applications for the same stream |
+| Read throughput | 2 MB/sec per shard across all consumers | 2 MB/sec per consumer per shard                     |
+| Latency         | ~200 ms                                 | ~70 ms                                              |
+| Costs           | Lower                                   | higher                                              |
+| API call        | `GetRecords`                            | `SubscribeToShard`                                  |
+
+Lambda support both modes (classic and enhanced), read data in batches,can retry until success (or data expires).
+
+(demo)
+
+in the kinessis service, we <cloud>Create Data Stream</cloud>, give it a name and choose the capacity mode (provisioned or on-demand), we choose to provision a single shard. we see the options for producers and consumers. we can scale the stream (increase the number of shards). in the <cloud>CloudShell</cloud> CLI
+
+
+```sh
+# producer
+aws kinesis put-record --stream-name test --partition-key user --data "user sign up"--cli-binary-format raw-in-base64-out
+# consumer
+aws kinesis describe-stream --stream-name test --partition-key user --data "user sign up"--cli-binary-format raw-in-base64-out
+aws kinesis get-shard-iterator --stream-name test --shard-id shardId-00000 --shard-iterator-type TRIM_HORIZON
+aws kinesis getrecords --shard-iterator <from the previous message>
+```
+
+### Kinesis Client Library
+
+> A Java library that helps read record from a Kinesis Data Stream with
+distributed applications sharing the read workload
+> - Each shard is to be read by only one KCL instance
+>   - 4 shards = max. 4 KCL instances
+>   - 6 shards = max. 6 KCL instances
+> - Progress is checkpointed into <cloud>DynamoDB</cloud> (needs IAM access)
+> - Track other workers and share the work amongst shards using DynamoDB
+> - KCL can run on <cloud>EC2</cloud>, <cloud>Elastic Beanstalk</cloud>, and on-premises
+> - Records are read in order at the shard level
+> - Versions:
+>   - KCL 1.x (supports shared consumer)
+>   - KCL 2.x (supports shared & enhanced fan-out consumer)
+
+### Shard Operations
+
+Shard Splitting - we can split a shard to increase capacity, this creates new shards and removes the old one. there is no automatic scaling for kinesis streams. the opposite is Merging Shards, which combines two shards into a single one.
+
+### Kinesis Data Firehose
+
+> Fully Managed Service, no administration, automatic scaling, serverless
+> - Pay for data going through Firehose
+> - Near Real Time (because it's batched)
+> - (previously called Delivery Streams)
+
+
+can have the same producers as Kinesis Datastreams, and even more producers.(<cloud>Kinesis Datastreams</cloud>, <cloud>CloudWatch</cloud>, <cloud>AWS IOT</cloud>). it takes the incoming data, optionally transforms it using a lambda, and the writes it somewhere
+
+- AWS destinations:
+  - <cloud>S3 Bucket</cloud>
+  - <cloud>Redshift</cloud> (through <cloud>S3</cloud>)
+  - <cloud>OpenSearch</cloud>
+- 3rd party partners
+  - MongoDB
+  - DataDog
+  - Splunk
+- Custom HTTP endpint
+
+we can additionally back up the incoming data (all of it, or just the failed records) into <cloud>S3 Bucket</cloud>.
+
+Ingest -> Transform -> Load.
+
+we specify the buffer size to control how large are the messages, this can be from 1mb to 128mb. there is also buffer interval that flushes the buffer after a set time. we also need a specific IAM role (we can get it automatically).
+
+### Kinesis Data Analytics
+
+> Real-time analytics on Kinesis Data Streams & Firehose using SQL
+> - Add reference data from Amazon S3 to enrich streaming data
+> - Fully managed, no servers to provision
+> - Automatic scaling
+> - Pay for actual consumption rate
+> - Output:
+>   - Kinesis Data Streams: create streams out of the real-time analytics queries
+>   - Kinesis Data Firehose: send analytics query results to destinations
+> - Use cases:
+>   - Time-series analytics
+>   - Real-time dashboards
+>   - Real-time metrics
+> 
+> Use Flink (Java, Scala or SQL) to process and analyze streaming data
+> - Run any Apache Flink application on a managed cluster on AWS
+> - provisioning compute resources, parallel computation, automatic scaling
+> - application backups (implemented as checkpoints and snapshots)
+> - Use any Apache Flink programming features
+> - Flink does not read from Firehose (use Kinesis Analytics for SQL instead)
+
+(renamed to <cloud>AWS Manage Service For Apache Flink</cloud>)
+
+### Comparisons
+
+Ordering difference between Kinesis and <cloud>SQS</cloud> fifo queues.
+in kinesis - data is ordered in the shard level. in sqs, if we don't use groupId, our one consumer handles all the data in order,  we can use a groupID to split messages into groups (the messages are ordered in the group).
+
+in kinesis - scale consumers to the number of shards, in sqs - scale consumers to the number of groupIds.
+
 
 ## Take Away
 <details>
@@ -1555,5 +2242,13 @@ aws iam list-users # show all users in account
 3. only NLB can have an elastic IP address.
 4. "A Read Replica in a different AWS Region than the source database can be used as a standby database and promoted to become the new production database in case of a regional disruption. So, we'll have a highly available (because of Multi-AZ) RDS DB Instance in the destination AWS Region with both read and write available."
 5. "What is the maximum number of Read Replicas you can add in an ElastiCache Redis Cluster with Cluster-Mode Disabled?" - **5** 
+6. "Elastic Beanstalk application versions can be deployed to **Many "Environments**
+7. "Your deployments on Elastic Beanstalk have been painfully slow. After checking the logs, you realize that this is due to the fact that your application dependencies are resolved on each instance each time you deploy. What can you do to speed up the deployment process with minimal impact?" - **Resolve the dependencies beforehand and package them in the zip file uploaded to Elastic Beanstalk**.
+8. CloudFormation Stacks
+   1. Cross Stack - different lifecycles, import and export
+   2. Nested Stack - same lifecycle, reusable components
+   3. StackSet - a master stack in the administrator account, controls stacks in multiple regions, accounts.
 
+
+<cloud>CoPilot</cloud> manages ECS applications, while <cloud>Beanstalk</cloud> manages instance-based applications.
 </details>
