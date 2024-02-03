@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE ONTAP ebextensions Flink
+// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE ONTAP ebextensions Flink Distro
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css"> 
@@ -269,7 +269,7 @@ Rules are defined by protocol (TCP, UDP), type(SSH, HTTP, HTTPS), port range and
 
 > - Can be attached to multiple instances
 > - Locked down to a region / VPC combination
-> - Does live "outside” the EC2 - if traffic is blocked the EC2 instance won't see it
+> - Does live "outside" the EC2 - if traffic is blocked the EC2 instance won't see it
 > - It's good to maintain one separate security group for SSH access
 > - If your application is not accessible (time out), then it's a security group issue
 > - If your application gives a "connection refused" error, then it's an application error or it's not launched
@@ -981,7 +981,7 @@ Active-Passive based on health checks.
 > - Different from Latency-based! This routing is based on user location.
 >
 > - Specify location by Continent, Country or by US State (if there's overlapping, most precise location selected)
-> - Should create a “Default” record (in case there's no match on location)
+> - Should create a “Default" record (in case there's no match on location)
 > - Use cases: website localization, restrict content distribution, load balancing, ...
 > - Can be associated with Health Checks
 
@@ -1102,7 +1102,7 @@ Object Storage, buckets.
 
 infinitely scaling storage, it looks like a global service, but it's still regional.
 
-> - Amazon S3 allows people to store objects (files) in “buckets” (directories)
+> - Amazon S3 allows people to store objects (files) in “buckets" (directories)
 > - **Buckets must have a globally unique name** (across all regions all accounts)
 > - Buckets are defined at the region level
 > - S3 looks like a global service but buckets are created in a region
@@ -2077,7 +2077,6 @@ Topics can be FIFO - working only with SQS fifo. same throughput limits.
 > - <cloud>Kinesis Data Firehose</cloud>: load data streams into AWS data stores
 > - <cloud>Kinesis Data Analytics</cloud>: analyze data streams with SQL or Apache Flink
 > - <cloud>Kinesis Video Streams</cloud>: capture, process, and store video streams
-</details>
 
 #### Kinesis Data Streams
 streams are composed of shards, we need to determine the number of shards when createing the streams, the more shards we have, the higher ingestion rate.
@@ -2121,14 +2120,14 @@ there is a *ProvisionThroughputExceeded* error, which we can handle with
 
 consumers get records from the streams and handle them, they can be aws services or any application using the Kinesis Client Library.
 
-| Operation       | Shared (Classic) Fan-out Consumer       | Enhanced Fan-out Consumer                           |
-| --------------- | --------------------------------------- | --------------------------------------------------- |
-| Model           | Consumers **poll** data from Kinesis using  API call                                    | Kinesis **pushes** data to consumers over HTTP2                                                |
-| Consumer        | Low number of consuming applications    | Multiple consuming applications for the same stream |
-| Read throughput | 2 MB/sec per shard across all consumers | 2 MB/sec per consumer per shard                     |
-| Latency         | ~200 ms                                 | ~70 ms                                              |
-| Costs           | Lower                                   | higher                                              |
-| API call        | `GetRecords`                            | `SubscribeToShard`                                  |
+| Operation       | Shared (Classic) Fan-out Consumer                    | Enhanced Fan-out Consumer                           |
+| --------------- | ---------------------------------------------------- | --------------------------------------------------- |
+| Model           | Consumers **poll** data from Kinesis using  API call | Kinesis **pushes** data to consumers over HTTP2     |
+| Consumer        | Low number of consuming applications                 | Multiple consuming applications for the same stream |
+| Read throughput | 2 MB/sec per shard across all consumers              | 2 MB/sec per consumer per shard                     |
+| Latency         | ~200 ms                                              | ~70 ms                                              |
+| Costs           | Lower                                                | higher                                              |
+| API call        | `GetRecords`                                         | `SubscribeToShard`                                  |
 
 Lambda support both modes (classic and enhanced), read data in batches,can retry until success (or data expires).
 
@@ -2221,6 +2220,392 @@ Ordering difference between Kinesis and <cloud>SQS</cloud> fifo queues.
 in kinesis - data is ordered in the shard level. in sqs, if we don't use groupId, our one consumer handles all the data in order,  we can use a groupID to split messages into groups (the messages are ordered in the group).
 
 in kinesis - scale consumers to the number of shards, in sqs - scale consumers to the number of groupIds.
+</details>
+
+## Monitoring
+<details>
+<summary>
+Services that monitor other services
+</summary>
+
+- <cloud>CloudWatch</cloud> - metrics, logs
+  - Logs Insight - query logs
+  - Live Tail - realtime logs watch
+- <cloud>CloudTrail</cloud> - audits
+- <cloud>X-Ray</cloud> - Tracing
+- <cloud>Event Bridge</cloud>
+
+> AWS CloudWatch
+> 
+> - Metrics: Collect and track key metrics
+> - Logs: Collect, monitor, analyze and store log files
+> - Events: Send notifications when certain events happen in your AWS
+> - Alarms: React in real-time to metrics / events
+>
+> AWS X-Ray
+> - Troubleshooting application performance and errors
+> - Distributed tracing of microservices
+> 
+> AWS CloudTrail
+> - Internal monitoring of API calls being made
+> - Audit changes to AWS Resources by your users
+
+
+### CloudWatch
+
+a metric is something that we monitor, each service has different metrics. a metric belongs to a *namespace*, and has *dimensions* (attribute).
+
+for <cloud>EC2</cloud>, default monitoring is sending a data point once every 5 minutes, we can get "detailed metrics" to increase the rate once a minute (for a cost). 
+
+we can also define our custom metrics (such as RAM, disk space, number of logged in users), and then send it to <cloud>CloudWatch</cloud> using the `PutMetricData` api. we can also determine the rate of the metric ( 1/5/10/30/60 seconds). custom metrics can be timestamped up to two weeks in the past or two hours in the future, so it's important to make sure the instance time is correct.
+
+```sh
+aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://metric.json
+aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-name Buffers --unit Bytes --value 23143433 --dimensions InstanceId=1-234, InstanceType=m1.small
+```
+
+#### Logs
+CloudWatch is also the storage service for AWS. divided into Log groups (arbitrary name) and log streams, logs can have expiration policies. we can then export our logs.
+
+> CloudWatch Logs - Sources
+> 
+> - SDK, CloudWatch Logs Agent, CloudWatch Unified Agent
+> - Elastic Beanstalk: collection of logs from application
+> - ECS: collection from containers
+> - AWS Lambda: collection from function logs
+> - VPC Flow Logs: VPC specific logs
+> - API Gateway
+> - CloudTrail based on filter
+> - Route53: Log DNS queries
+
+to query the logs, we can use <cloud>CloudWatch Logs insights</cloud>, which is a query service to search and analyze the logs. we can then add those queries the dashboards.
+
+when we export to S3, it can take up to 12 hours. if we want immediate action, we can use log subscription (with a filter) to send them into <cloud>Kinesis Data Streams</cloud> or <cloud>Kinesis Data Firehose</cloud> and perform log aggregation across log groups and accounts.
+
+we can also use "Live Tail", which allows us to watch logs in real-time.
+
+by default, we don't send logs from <cloud>EC2</cloud> to <cloud>CloudWatch</cloud>. to get around this, we need to run a special agent (with the correct <cloud>IAM</cloud> permissions).
+
+- Logs Agent (older agent)
+- Unified Agent - collects additional data (more than the default metrics), can send metrics, integrates with <cloud>SSM parameter store</cloud>
+
+Metric Filters can look for a specific log pattern, and then trigger alarms or other stuff.
+
+#### Alarms
+
+alarms can be triggered from any metric:
+
+States:
+- OK
+- INSUFFICIENT_DATA
+- ALARM
+
+with alarms we can
+- do <cloud>EC2</cloud> action
+- do <cloud>AutoScaling Group</cloud> stuff
+- send to <cloud>SNS</cloud> topic - which can trigger lambda
+
+alarms operate on a single metric, but we can combine them together to create Composite Alarms and reduce noise. as mentioned above, we can create alarms based on logs metrics filters.
+
+testing an alarm can be done via the cli, we change the state to see the behavior in action.
+
+```sh
+aws cloudwatch set-alarm-state --alarm-name "MyAlarm" --state-value ALARM --state-reason "testing purposes"
+```
+#### Synthetics Canary
+
+> Configurable script that monitor your APIs, URLs, Websites, etc...
+> 
+> - Reproduce what your customers do programmatically to find issues before customers are impacted.
+> - Checks the availability and latency of your endpoints and can store load time data and screenshots of the UI.
+> - Integration with CloudWatch Alarms.
+> - Scripts written in Node.js or Python.
+> - Programmatic access to a headless Google Chrome browser.
+> - Can run once or on a regular schedule.
+>
+> there are built-in blueprints:
+> - Heartbeat Monitor – load URL, store screenshot and an HTTP archive file
+> - API Canary – test basic read and write functions of REST APIs
+> - Broken Link Checker – check all links inside the URL that you are testing
+> - Visual Monitoring – compare a screenshot taken during a canary run with a baseline screenshot
+> - Canary Recorder – used with CloudWatch Synthetics Recorder (record your actions on a website and automatically generates a script for that)
+> - GUI Workflow Builder – verifies that actions can be taken on your webpage (e.g.,test a webpage with a login form)
+
+
+### Event Bridge
+
+The default event Bus for AWS.
+
+(formerly <cloud>CloudWatch Events</cloud>)
+
+> - Schedule: Cron jobs (scheduled scripts).
+> - Event Pattern: Event rules to react to a service doing something.
+> - Trigger Lambda functions, send SQS/SNS messages...
+
+many services can send events to EventBridge (even CloudTrail!), then we can filter those events, transform them into a common format, and that event can be sent to other services:
+- <cloud>Lambda</cloud>
+- <cloud>AWS Batch</cloud>
+- <cloud>ECS Task</cloud>
+- <cloud>SQS</cloud>
+- <cloud>SNS</cloud>
+- <cloud>Kinesis Data Streams</cloud>
+- <cloud>Step Functions</cloud>
+- <cloud>CodePipeline</cloud>
+- <cloud>CodeBuild</cloud>
+- <cloud>EC2</cloud> Actions
+
+it is also integrated with other softwares, and allow them to send their events to AWS (examples: ZenDesk, DataDog). we can also create custom EventBus to send events from our applications. this can be set as cross-account using resource based policies (for aggregating important events across all our organization account).
+
+events can be achieved (all or filter, indefinitely or for a set period), and we can re-play those events to trigger the action again.
+
+to act on the events, we can look at the <cloud>Schema Registry</cloud> and figure out how data will be structured in the event bus.
+
+(demo of creating a custom event bus)\
+looking at integration with partners, creating rules (schedules or based on event pattern). the event source can be from AWS services, looking at all events (will increase costs), or from custom events. there is also sandbox to test rules and events.
+
+(creating multi-account integration)\
+sending events from one account to the <cloud>EventBridge</cloud> in another account.
+
+### X-Ray
+
+> Debugging in Production, the good old way
+> - Test locally
+>   - Add log statements everywhere
+>   - Re-deploy in production
+> - Log formats differ across applications using CloudWatch and analytics is hard.
+> - Debugging: monolith “easy", distributed services “hard"
+> - No common views of your entire architecture!
+>
+> X-Ray compatibility
+> 
+> - <cloud>AWS Lambda</cloud>
+> - <cloud>Elastic Beanstalk</cloud>
+> - <cloud>ECS</cloud>
+> - <cloud>ELB</cloud>
+> - <cloud>API Gateway</cloud>
+> - <cloud>EC2</cloud> Instances or any application server (even on- premises)
+
+uses Tracing to follow a request, segments and sub-segments, we can trace every request or a sample of them. to enable X-Ray, we must import the AWS X-RAY SDK. we need to install the daemon or enable the integration. we also need IAM roles to allow writing to X-RAY.
+
+(demo)\
+seeing the dependencies map for api calls, following traces wih queries, seeing latency.
+
+to add custom x-ray behavior to our code, we need to to import the SDK and we can modify the code to get better trace (with annotations, sub-segments, etc...)
+
+> X-Ray Concepts
+> - Segments: each application / service will send them
+> - Subsegments: if you need more details in your segment
+> - Trace: segments collected together to form an end-to-end trace
+> - Sampling: decrease the amount of requests sent to X-Ray, reduce cost
+> - Annotations: Key Value pairs used to index traces and use with filters
+> - Metadata: Key Value pairs, not indexed, not used for searching
+
+#### Sampling rules
+we use sampling rules to control which data is recorded into X-Ray, there is a default behavior - send the first request every second, and then 5% of the rest of them. we can change these rules in the service without re-starting the application. rules have priorities, rules with lower priority are evaluated first. rules can also be specified to filter requests.
+
+#### X-RAY APIs
+
+these are used by the daemon.
+
+> - `PutTraceSegments`: Uploads segment documents to AWS X-Ray.
+> - `PutTelemetryRecords`: Used by the AWS X-Ray daemon to upload telemetry.
+>   - `SegmentsReceivedCount`
+>   - `SegmentsRejectedCounts`
+>   - `BackendConnectionErrors`
+> - `GetSamplingRules`: Retrieve all sampling rules (for the daemon to know what/when to send)
+>   - `GetSamplingTargets`
+>   - `GetSamplingStatisticSummaries`
+
+APIs to be used on the data in Xray
+
+> - `GetServiceGraph`: main graph.
+> - `BatchGetTraces`: Retrieves a list of traces specified by ID. Each trace is a collection of segment documents that originates from a single request.
+> - `GetTraceSummaries`: Retrieves IDs and annotations for traces available for a specified time frame using an optional filter. To get the full traces, pass the trace IDs to BatchGet`Traces.
+> - `GetTraceGraph`: Retrieves a service graph for one or more specific trace IDs..
+
+#### Integration With Services
+
+Benstalk - includes the X-Ray daemon by default (but not for multi-container docker). either configure in the console or in the ".ebextensions/xray-daemon.config" file. make sure IAM role allows it and the application is using the X-RAY SDK. 
+```yaml
+option_settings:
+  aws:elasticbeanstalk:xray:
+    XRayEnabled: true
+```
+
+ECS and Fargate clusters
+1. X-Ray container as a daemon - one in each EC2 instance
+2. X-Ray container as a side-car - one in each app container
+3. X-Ray container as a side-car (fargate) - one in each task
+
+we need to enable the port mapping (udp, port 2000), environment variable, and link the main container with the sidecar. and of course, we need the IAM role to allow X-ray and have the application use the X-RAY SDK.
+
+#### Open Telemetry
+
+> Secure, production-ready AWS-supported distribution of the open-source project OpenTelemetry
+> 
+> - Provides a single set of APIs, libraries, agents, and collector services.
+>   - Collects distributed traces and metrics from your apps.
+>   - Collects metadata from your AWS resources and services.
+> - Auto-instrumentation Agents to collect traces without changing your code.
+> - Send traces and metrics to multiple AWS services and partner solutions.
+>   - <cloud>X-Ray</cloud>
+>   - <cloud>CloudWatch</cloud>
+>   - <cloud>Prometheus</cloud>
+> - Instrument your apps running on AWS (e.g., EC2, ECS, EKS, Fargate, Lambda) as well as on-premises.
+> 
+> - Migrate from X-Ray to AWS Distro for Telemetry if you want to standardize with open-source APIs from Telemetry or send traces to multiple destinations simultaneously.
+
+### CloudTrail
+
+> - Provides governance, compliance and audit for your AWS Account
+> - CloudTrail is enabled by default!
+> - Get an history of events / API calls made within your AWS Account by:
+>   - Console (web actions)
+>   - SDK
+>   - CLI
+>   - AWS Services
+> - Can put logs from CloudTrail into CloudWatch Logs or S3
+> - A trail can be applied to All Regions (default) or a single Region.
+> - If a resource is deleted in AWS, investigate CloudTrail first!
+
+there are three kinds of events:
+1. management events - modifying resource in the accounts
+   1. read events - won't modify resources
+   2. write events - might modify resources
+2. data events - S3 objects events, Lambda execution activity
+   1. aren't logged by default because of the high volume
+   2. read events
+   3. write evens
+3. insight events - anomaly detection
+   1. paid service
+
+> Enable CloudTrail Insights to detect unusual activity in your account.
+> 
+> - inaccurate resource provisioning
+> - hitting service limits
+> - Bursts of AWS IAM actions
+> - Gaps in periodic maintenance activity
+> 
+> CloudTrail Insights analyzes normal management events to create a basealine And then continuously analyzes *write* events to detect unusual patterns.
+> - Anomalies appear in the CloudTrail console
+> - Event is sent to Amazon S3
+> - An EventBridge event is generated (for automation needs)
+
+default storage of events is 90 days, to keep them for a longer period, we export them to <cloud>S3</cloud> and use <cloud>Athena</cloud> to query them.
+
+we can integrate <cloud>CloudTrail</cloud> with <cloud>EventBridge</cloud> and create a rule for specific events.
+- when a user assumes a role
+- when a user modifies inbound rules of a security group
+
+</details>
+
+## Lambda Functions
+<details>
+<summary>
+Serverless Computing.
+</summary>
+
+servereless means functions that we don't need to manage servers for, such as storage, databases, queues, messaging... there still are servers, but they aren't provisioned and aren't controlled by the user. the cloud vendor handles scaling, patching, operating systems and networking for us.
+
+<cloud>Lambda</cloud> is a serverless compute service. as opposed to using <cloud>EC2</cloud> compute machines. with lambda, we don't provision the machines, and we get them on demand.
+
+- limited to 15 minutes of execution
+- scaling is automated
+- pay per request and compute time
+- integrated with many other services
+- easy monitoring with <cloud>CloudWatch</cloud>
+
+supports multiple language out-of-the box, and also has custom runtime API, and supports for lambda container Image.
+
+the main integrations:
+1. <cloud>API gateway</cloud>
+2. <cloud>Kinesis</cloud>
+3. <cloud>DynamoDB</cloud>
+4. <cloud>S3</cloud>
+5. <cloud>CloudFront</cloud>
+6. <cloud>EventBridge</cloud>
+7. <cloud>CloudWatch Logs</cloud>
+8. <cloud>SNS</cloud>
+9. <cloud>SQS</cloud>
+10. <cloud>Cognito</cloud>
+
+a common example is creating a thumbnail for an image, when an image object is added to a bucket, we trigger lambda to create a thumbnail and we push it to a differnet bucket and add a record to a <cloud>DynamoDB</cloud> table.\
+Another example is setting a scheduled event to trigger a lambda, which acts as a cron-job.
+
+in the lambda service, we can click <kbd>Create A function</kbd>, and we can use the "hello world" python blueprint. the lambda needs an IAM role. we can see the sample code and it's very simple. we can click <kbd>Test</kbd> and see it in action. every time the lambda is invoked, we see the duration, billed duration and resources used.
+
+we can modify the memory for the function, the timeout (up to 15 minutes). there is a monitoring tab with information about invoations, durations, errors and other metrics. the logs are sent to <cloud>CloudWatch</cloud>. 
+
+### Synchronous Invocations
+
+used with the CLI, console, SDK, <cloud>API Gateway</cloud>, <cloud>Application Load Balancer</cloud>. the caller waits for the result, and if there are errors, the client has to handle it.
+
+```sh
+aws lambda list-functions
+aws lambda invoke --function-name hello-world  --cli-binary-format raw-in-base64-out --payload '{"key1": "value1", "key2": "value2"}'
+```
+
+### Lambda And Application Load Balancer
+
+we can expose the lambda through a load balancer, for this we need the lambda to be inside target group. the load balancer converts the HTTP request into a json payload. it also needs to happen to the json response - needs to be converted back into HTTP response.
+
+ALB can support multi header values, for example, `http://example.com/path?name=foo&name=bar`, the parameter 'name' appears twice, this is transformed into payloads with arrays for the values:
+
+```json
+{
+"queryStringParameters": {
+  "name":["foo", "bar"]
+  }
+}
+```
+
+we can do a demo and create an application load balancer. then we navigate to the load balancer and we get a response in a DMC Format. if we want a web page response, we need to modify the response value from the lambda:
+
+```json
+{
+  "statusCode": 200,
+  "statusDescription": "200 OK",
+  "isBase64Encoded": false,
+  "headers":{
+    "content-Type": "text/html"
+  },
+  "body": "<h1>Hello from Lambda!</h1>"
+}
+```
+
+
+### Asynchronous Invocations and DLQ
+
+for services that run the lambda without waiting for a response. the request are placed in an internal retry queue, it has default retires. we might see duplicate invocations. we can send the events into a DLQ for debugging and further processing.
+
+- <cloud>S3</cloud>
+- <cloud>SNS</cloud>
+- <cloud>CloudWatch Events</cloud>
+- <cloud>CodeCommit</cloud>
+- <cloud>CodePipeline</cloud>
+- <cloud>CloudWatch Logs</cloud>
+- <cloud>CloudForamtion</cloud>
+- <cloud>Config</cloud>
+- <cloud>IoT</cloud>, <cloud>IoT events</cloud>
+
+
+```sh
+aws lambda list-functions
+aws lambda invoke --function-name hello-world  --cli-binary-format raw-in-base64-out --payload '{"key1": "value1", "key2": "value2"}' --invocation-type Event response.json
+```
+
+we can configure the number of retires, (0,1,2 retires) and set the dead-letter-queue (needs <cloud>IAM Role</cloud> permissions).
+
+integrating with <cloud>CloudWatch Events</cloud> and <cloud>EventBridge</cloud>. we can set a rule in event bridge, make it run on a schedule (like a cron job) and target it to invoke the lambda. we will see the rule as the source trigger for the lambda.
+
+a common use case is integration with <cloud>S3</cloud> notifications (object created, object removed, object resorted, replication), S3 event can trigger Lambas in three ways:
+1. <cloud>Lambda</cloud> direct asynchronous invocation.
+2. <cloud>SQS</cloud> event that triggers the Lambda.
+3. <cloud>SNS</cloud> and using the fan-out pattern to trigger multiple SQS queues and their respective lambdas.
+
+the lambda needs a resource-based policy to allow the bucket to trigger it.
+
+</details>
 
 
 ## Take Away
@@ -2248,7 +2633,7 @@ aws iam list-users # show all users in account
    1. Cross Stack - different lifecycles, import and export
    2. Nested Stack - same lifecycle, reusable components
    3. StackSet - a master stack in the administrator account, controls stacks in multiple regions, accounts.
-
+9. "If you set an alarm on a high-resolution metric, you can specify a high-resolution alarm with a period of 10 seconds or 30 seconds, or you can set a regular alarm with a period of any multiple of 60 seconds." - **If you set an alarm on a high-resolution metric, you can specify a high-resolution alarm with a period of 10 seconds or 30 seconds, or you can set a regular alarm with a period of any multiple of 60 seconds.**
 
 <cloud>CoPilot</cloud> manages ECS applications, while <cloud>Beanstalk</cloud> manages instance-based applications.
 </details>

@@ -2,8 +2,8 @@
   "version": "0.2",
   "ignorePaths": [],
   "dictionaryDefinitions": [],
-  "dictionaries": [],
+  "dictionaries": ["aws", "softwareTerms"],
   "words": ["Alexa", "Mbps"],
-  "ignoreWords": ["Kroonenburg", "chkconfig", "mysite"],
+  "ignoreWords": ["Kroonenburg", "chkconfig", "mysite", "HDFS", "Udemy"],
   "import": []
 }

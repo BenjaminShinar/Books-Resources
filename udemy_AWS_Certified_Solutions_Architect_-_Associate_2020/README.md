@@ -51,21 +51,21 @@ Aws services:
 - RedShift - AWS data warehouse solution (BI).
 - ElastiCache - in memory "database".
 - DynamoDB - AWS NoSQL solution.
-- Aurora - highly availbe MySQL and PostgresSQL compatible Relational Database.
+- Aurora - highly available MySQL and PostgresSQL compatible Relational Database.
 - Aurora Serverless - Serverless RDS by Amazon.
 - DMS - Database Migration
 - Managed Microsoft AD - Active Directory by AWS
 - RAM - Resources Access Manger - share resources across account
 - Route53 - Dns
-- CloudFormation - templates for provsioning aws resources.
+- CloudFormation - templates for provisioning aws resources.
 - Beanstalk - one click solution to provision resource, like CloudFormation for dummies.
 - Elastic Transcoder - transcode (convert) media files between different formats.
 - Kinesis - Streaming Data platform (continuously generated data from multiple source, not video streaming)
 - Cognito - Web Identity Federation service.
 
-CloudWatch monitors resource usage, such as the number of EC2 instances we have, EBS volumes used, redirections from load balancers, etc... . CloudTrail Monitors aws actions such as API calls or other aws actions, the focus is how the users and services interact with AWS itself, not the metrics of the services themselves.
+CloudWatch monitors resource usage, such as the number of EC2 instances we have, EBS volumes used, re-directions from load balancers, etc... . CloudTrail Monitors aws actions such as API calls or other aws actions, the focus is how the users and services interact with AWS itself, not the metrics of the services themselves.
 
-To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, Secret Access Key.
+To use the AWS CLI we need an AWS user with Programmatic Access: Access Key Id, Secret Access Key.
 
 ### Acronyms
 
@@ -73,7 +73,7 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | --------- | ------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
 | ACL       | Access Control List                   | **S3, VPC**                                       |
 | AD        | Active Directory                      |                                                   | non-aws way to manage users in other systems                                 |
-| AMI       | Amazon Machine Image                  | EC2                                               | linux flavours, windowes, etc...                                             |
+| AMI       | Amazon Machine Image                  | EC2                                               | linux flavours, windows, etc...                                             |
 | ARN       | Amazon Resource Name                  |                                                   | amazon identifier                                                            |
 | AWS       | Amazon Web Service                    | the amazon cloud eco-system                       |
 | BI        | Business Intelligence                 |
@@ -109,7 +109,7 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | IAM       | Identity Access Management            | **AWS Service**                                   | always global                                                                |
 | IGW       | Internet Gateways                     | VPC                                               |
 | IOPS      | Input-Output Per Second               |                                                   | a metric for hard disk                                                       |
-| JWT       | JSON web Token                        | AWS Cognito                                       | authenticaton form                                                           |
+| JWT       | JSON web Token                        | AWS Cognito                                       | authentication form                                                           |
 | KMS       | Key Management Service                | **AWS Service**                                   | SSE-KMS                                                                      |
 | LDAP      | Lightweight Directory Access Protocol |
 | MAC       | Media Access Control (address)        |                                                   | networking                                                                   |
@@ -131,8 +131,8 @@ To use the AWS CLI we need an AWS user with Programatic Access: Access Key Id, S
 | RTC       | Replication Time Control              |                                                   | S3 buckets replication                                                       |
 | RTO       | Recovery Time Objective               |                                                   | time to recover from backup, how long it takes us to restore.                |
 | S3        | Simple Storage Service                | **AWS Service**                                   | globally unique names                                                        |
-| SAM       | Serverless Application Model          | CloudFormation Extention, Serverless Applications | Framework to build serverless applications                                   |
-| SAML      | Security Assertion Markup Langauge    | IAM access                                        | single sign on                                                               |
+| SAM       | Serverless Application Model          | CloudFormation Extension, Serverless Applications | Framework to build serverless applications                                   |
+| SAML      | Security Assertion Markup Language    | IAM access                                        | single sign on                                                               |
 | SAN       | Storage Area Network                  |
 | SCP       | Service Control Policies              | IAM                                               | Manage access on accounts within AWS organization                            |
 | SCT       | Schema Conversion Tool                | database migration                                |
