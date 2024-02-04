@@ -2605,6 +2605,85 @@ a common use case is integration with <cloud>S3</cloud> notifications (object cr
 
 the lambda needs a resource-based policy to allow the bucket to trigger it.
 
+### Event Source Mapping
+
+another way to process events:
+- <cloud>Kinesis Data Streams</cloud>
+- <cloud>DynamoDb Streams</cloud>
+- <cloud>SQS</cloud> and <cloud>SQS FIFO</cloud>
+
+these are all sources with records that need to polled. the lambda is reading and acting synchronously. there is an internal mapping.
+
+in the case of streams, there is an event source mapping in iterator for each shard. processed streams aren't removed from the stream.
+
+- low traffic: use batch window on multiple records
+- high traffic: multiple batches (up to 10 per shard) in parallel.
+
+if there is an error, the entire batch is re-processed. this is done so events remain in-order, but it can also block the processing. we can discard old events or limit the number of retries. we can send the discarded events to a destination.
+
+for queues, the events source mapping uses long polling with a batch size (from 1 to 10), we can still use a destination for failed events.
+
+> - Lambda also supports in-order processing for FIFO (first-in, first-out) queues, scaling up to the number of active message groups.
+> - For standard queues, items aren't necessarily processed in order.
+> - Lambda scales up to process a standard queue as quickly as possible.
+> - When an error occurs, batches are returned to the queue as individual items and might be processed in a different grouping than the original batch.
+> - Occasionally, the event source mapping might receive the same item from the queue twice, even if no function error occurred.
+> - Lambda deletes items from the queue after they're processed successfully.
+> - You can configure the source queue to send items to a dead-letter queue if they can't be processed.
+
+(demo with SQS)\
+we pressed the <kbd>Add Trigger</kbd> button and select the queue. we choose the batch size and and window (time in seconds to gather the batch). there are different options with kinesis.
+
+### Event And Context Objects
+
+> - **Event Object**
+>   - JSON-formatted document contains data for the function to process
+>   - Contains information from the invoking service (e.g., EventBridge, custom, etc...)
+>   - Lambda runtime converts the event to an object (e.g., dict type in Python)
+>   - Example: input arguments, invoking service arguments, etc...
+> - **Context Object**
+>   - Provides methods and properties that provide information about the invocation, function, and runtime environment
+>   - Passed to your function by Lambda at runtime
+>   - Example: aws_request_id, function_name, memory_limit_in_mb, etc...
+
+### Destinations
+
+sending the results of an asynchronous invocation (both failed and successful). it should replace the Lambda DLQ
+- <cloud>SQS</cloud>
+- <cloud>SNS</cloud>
+- <cloud>Lambda</cloud>
+- <cloud>EventBridge</cloud>
+
+synchronous lambda uses destinations for event batches, when we have discarded events. only for "failed" events.
+- <cloud>SQS</cloud>
+- <cloud>SNS</cloud>
+
+(demo with the S3 lambda)\
+we create two queues, one for successful and one for failure, and we click <kbd>Add Destination</kbd>, choose the correct queue, and set the IAM role to allow the lambda to push into the queues.
+
+### Execution Roles And Permissions
+
+Lambda functions have IAM roles with permissions, they usually need to write to <cloud>CloudWatch</cloud>, and there are also additional policies for all sorts of cases. 
+
+> Grants the Lambda function permissions to AWS services / resources\
+> Sample managed policies for Lambda:
+> - `AWSLambdaBasicExecutionRole` – Upload logs to CloudWatch.
+> - `AWSLambdaKinesisExecutionRole` – Read from Kinesis
+> - `AWSLambdaDynamoDBExecutionRole` – Read from DynamoDB Streams
+> - `AWSLambdaSQSQueueExecutionRole` – Read from SQS
+> - `AWSLambdaVPCAccessExecutionRole` – Deploy Lambda function in VPC
+> - `AWSXRayDaemonWriteAccess` – Upload trace data to X-Ray.
+> 
+> When you use an event source mapping to invoke your function, Lambda uses the execution role to read event data.\
+> Best practice: create one Lambda Execution Role per function.
+
+if our lambda is invoked by other services, we use resource based polices.
+
+> An IAM principal can access Lambda:
+> - if the IAM policy attached to the principal authorizes it (e.g. user access)
+> - OR if the resource-based policy authorizes (e.g. service access)
+
+
 </details>
 
 
