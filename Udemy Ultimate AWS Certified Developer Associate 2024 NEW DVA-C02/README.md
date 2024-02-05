@@ -2500,7 +2500,7 @@ we can integrate <cloud>CloudTrail</cloud> with <cloud>EventBridge</cloud> and c
 </details>
 
 ## Lambda Functions
-<details>
+<!-- <details> -->
 <summary>
 Serverless Computing.
 </summary>
@@ -2683,7 +2683,72 @@ if our lambda is invoked by other services, we use resource based polices.
 > - if the IAM policy attached to the principal authorizes it (e.g. user access)
 > - OR if the resource-based policy authorizes (e.g. service access)
 
+### Environment Variables
 
+key value pairs, custom variables and built-in ones. we can also encyrpt secrets into them by using <cloud>KMS</cloud>
+
+### X-Ray Integration
+Lambda Logs are stored in <cloud>CloudWatch</cloud>, and metrics are also sent there. we can turn on Lambda insights
+<cloud>X-Ray</cloud> Lambda Tracing  also works,it just needs the execution role and to import the SDK.
+
+### Lambda On the Edge
+
+Our lambdas are usually stored in a region, but sometimes we need to execute logic on the <cloud>CloudFront</cloud> edge locations.
+
+- CloudFront Functions
+- Lambda@Edge
+
+this is used to customize behavior closer to the user
+
+> - Website Security and Privacy
+> - Dynamic Web Application at the Edge
+> - Search Engine Optimization (SEO)
+> - Intelligently Route Across Origins and Data Centers
+> - Bot Mitigation at the Edge
+> - Real-time Image Transformation
+> - A/B Testing
+> - User Authentication and Authorization
+> - User Prioritization
+> - User Tracking and Analytics
+
+cloudFront functions are light-weight functions written in javascript, they are used to modify viewer request and respones. scales to super hight amounts.
+
+Lambda@Edge are writen in either javascript or python.
+
+
+| Action                             | CloudFront Funcions                       | Lambda@Edge                                          |
+| ---------------------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| Runtime Support                    | JavaScript                                | Node.js, Python                                      |
+| Requests Volume                    | Millions of requests per second           | Thousands of requests per second                     |
+| CloudFront Triggers                | Viewer Request-Response                   | Viewer Request/ Response and Origin Request/Response |
+| Max. Execution Time                | < 1 ms                                    | 5 – 10 seconds                                       |
+| Max. Memory                        | 2 MB                                      | 128 MB up to 10 GB                                   |
+| Total Package Size                 | 10 KB                                     | 1 MB – 50 MB                                         |
+| Network Access, File System Access | No                                        | Yes                                                  |
+| Access to the Request Body         | No                                        | Yes                                                  |
+| Pricing                            | Free tier available, 1/6th price of @Edge | No free tier, charged per request & duration         |
+
+> CloudFront Functions
+> - Cache key normalization
+> - Transform request attributes (headers,
+> cookies, query strings, URL) to create an optimal Cache Key
+> - Header manipulation
+> - Insert/modify/delete HTTP headers in the request or response
+> - URL rewrites or redirects
+> - Request authentication & authorization
+> - Create and validate user-generated tokens (e.g., JWT) to allow/deny requests 
+>  
+> Lambda@Edge
+> - Longer execution time (several ms)
+> - Adjustable CPU or memory
+> - Your code depends on a 3rd libraries (e.g., AWS SDK to access other AWS services)
+> - Network access to use external services for processing
+> - File system access or access to the body of HTTP requests
+
+### Lambda In VPC
+by default, Lambdas are launched outside <cloud>VPCs</cloud>, and can't access resources inside them (<cloud>RDS</cloud>, elasticCache, internal <cloud>ELB</cloud>). to allow access, we can define the Lambda a VPC id, subnets and security group data. this will create a <cloud>ENI (elastic network interface)</cloud> into the VPC.
+
+when a lambda is inside the VPC, it can't access the internet (even if it's inside a public subnet). to allow the lambda to connect with the global internet, we define a <cloud>NAT Gatway/Instance</cloud> (through the Internet Gatway). if we want to access in-aws resource from the VPC, we can use the global internet of set up a VPC endpoint.
 </details>
 
 
