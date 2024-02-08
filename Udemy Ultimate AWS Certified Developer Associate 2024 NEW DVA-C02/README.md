@@ -981,7 +981,7 @@ Active-Passive based on health checks.
 > - Different from Latency-based! This routing is based on user location.
 >
 > - Specify location by Continent, Country or by US State (if there's overlapping, most precise location selected)
-> - Should create a “Default" record (in case there's no match on location)
+> - Should create a "Default" record (in case there's no match on location)
 > - Use cases: website localization, restrict content distribution, load balancing, ...
 > - Can be associated with Health Checks
 
@@ -1102,7 +1102,7 @@ Object Storage, buckets.
 
 infinitely scaling storage, it looks like a global service, but it's still regional.
 
-> - Amazon S3 allows people to store objects (files) in “buckets" (directories)
+> - Amazon S3 allows people to store objects (files) in "buckets" (directories)
 > - **Buckets must have a globally unique name** (across all regions all accounts)
 > - Buckets are defined at the region level
 > - S3 looks like a global service but buckets are created in a region
@@ -1581,12 +1581,12 @@ if we choose the High Availability preset, then we can modify more configuration
 
 Deployment Options for updates, they differ in downtime or reduced capacity (taking down instances), costs (when spinning up extra instances), how long it takes, 
 
-> - All at once (deploy all in one go) – fastest, but instances aren't  vailable to serve traffic for a bit (downtime).
+> - All at once (deploy all in one go) - fastest, but instances aren't  vailable to serve traffic for a bit (downtime).
 > - Rolling: update a few instances at a time (bucket), and then move onto the next bucket once the first bucket is healthy.
 > - Rolling with additional batches: like rolling, but spins up new instances to move the batch (so that the old application is still available).
 > - Immutable: spins up new instances in a new ASG, deploys version to these instances, and then swaps all the instances when everything is healthy.
 > - Blue Green: create a new environment and switch over when ready.
-> - Traffic Splitting: canary testing – send a small % of traffic to new deployment.
+> - Traffic Splitting: canary testing - send a small % of traffic to new deployment.
 
 [deployment modes documentation](https://docs.aws.amazon.com/elasticBeanstalk/latest/dg/using-features.deploy-existing-version.html)
 
@@ -1759,7 +1759,7 @@ Parametes allow us to get input from the user, they are great for re-using templ
 >   - Number
 >   - CommaDelimitedList
 >   - List\<Type>
->   - AWS Parameter (to help catch invalid values – match against existing values in the AWS Account)
+>   - AWS Parameter (to help catch invalid values - match against existing values in the AWS Account)
 > - Description
 > - Constraints
 >   - ConstraintDescription (String)
@@ -1899,14 +1899,14 @@ we can have nested Stack, which are isolated components that can be used across 
 > - Nested Stacks
 >   - Helpful when components must be re-used.
 >     - Ex: re-use how to properly configure an Application Load Balancer.
->   - The nested stack only is important to the higher level stack (it’s not shared).
+>   - The nested stack only is important to the higher level stack (it's not shared).
 >   - (Terraform equivalent is `module`).
 
 StackSets perform stack operation across multiple accounts and regions. they are created by administrator accounts. when a stackSet is updated, it also updates the stacks instances that are dervied from it.
 
 ### Stack Drift
 
-> CloudFormation allows you to create infrastructure, But it doesn’t protect you against manual configuration changes.
+> CloudFormation allows you to create infrastructure, But it doesn't protect you against manual configuration changes.
 >
 > - How do we know if our resources have drifted?
 > - We can use CloudFormation drift!
@@ -2088,7 +2088,7 @@ Consumers can be application using the SDK, <cloud>Lambda</cloud> function, or <
 Retention between 1 day to 365 days
 
 > - Ability to reprocess (replay) data.
-> - Once data is inserted in Kinesis, it can’t be deleted (immutability).
+> - Once data is inserted in Kinesis, it can't be deleted (immutability).
 > - Data that shares the same partition goes to the same shard (ordering).
 
 two capcity modes:
@@ -2324,12 +2324,12 @@ aws cloudwatch set-alarm-state --alarm-name "MyAlarm" --state-value ALARM --stat
 > - Can run once or on a regular schedule.
 >
 > there are built-in blueprints:
-> - Heartbeat Monitor – load URL, store screenshot and an HTTP archive file
-> - API Canary – test basic read and write functions of REST APIs
-> - Broken Link Checker – check all links inside the URL that you are testing
-> - Visual Monitoring – compare a screenshot taken during a canary run with a baseline screenshot
-> - Canary Recorder – used with CloudWatch Synthetics Recorder (record your actions on a website and automatically generates a script for that)
-> - GUI Workflow Builder – verifies that actions can be taken on your webpage (e.g.,test a webpage with a login form)
+> - Heartbeat Monitor - load URL, store screenshot and an HTTP archive file
+> - API Canary - test basic read and write functions of REST APIs
+> - Broken Link Checker - check all links inside the URL that you are testing
+> - Visual Monitoring - compare a screenshot taken during a canary run with a baseline screenshot
+> - Canary Recorder - used with CloudWatch Synthetics Recorder (record your actions on a website and automatically generates a script for that)
+> - GUI Workflow Builder - verifies that actions can be taken on your webpage (e.g.,test a webpage with a login form)
 
 
 ### Event Bridge
@@ -2373,7 +2373,7 @@ sending events from one account to the <cloud>EventBridge</cloud> in another acc
 >   - Add log statements everywhere
 >   - Re-deploy in production
 > - Log formats differ across applications using CloudWatch and analytics is hard.
-> - Debugging: monolith “easy", distributed services “hard"
+> - Debugging: monolith "easy", distributed services "hard"
 > - No common views of your entire architecture!
 >
 > X-Ray compatibility
@@ -2500,7 +2500,7 @@ we can integrate <cloud>CloudTrail</cloud> with <cloud>EventBridge</cloud> and c
 </details>
 
 ## Lambda Functions
-<!-- <details> -->
+<details>
 <summary>
 Serverless Computing.
 </summary>
@@ -2667,12 +2667,12 @@ Lambda functions have IAM roles with permissions, they usually need to write to 
 
 > Grants the Lambda function permissions to AWS services / resources\
 > Sample managed policies for Lambda:
-> - `AWSLambdaBasicExecutionRole` – Upload logs to CloudWatch.
-> - `AWSLambdaKinesisExecutionRole` – Read from Kinesis
-> - `AWSLambdaDynamoDBExecutionRole` – Read from DynamoDB Streams
-> - `AWSLambdaSQSQueueExecutionRole` – Read from SQS
-> - `AWSLambdaVPCAccessExecutionRole` – Deploy Lambda function in VPC
-> - `AWSXRayDaemonWriteAccess` – Upload trace data to X-Ray.
+> - `AWSLambdaBasicExecutionRole` - Upload logs to CloudWatch.
+> - `AWSLambdaKinesisExecutionRole` - Read from Kinesis
+> - `AWSLambdaDynamoDBExecutionRole` - Read from DynamoDB Streams
+> - `AWSLambdaSQSQueueExecutionRole` - Read from SQS
+> - `AWSLambdaVPCAccessExecutionRole` - Deploy Lambda function in VPC
+> - `AWSXRayDaemonWriteAccess` - Upload trace data to X-Ray.
 > 
 > When you use an event source mapping to invoke your function, Lambda uses the execution role to read event data.\
 > Best practice: create one Lambda Execution Role per function.
@@ -2713,7 +2713,7 @@ this is used to customize behavior closer to the user
 
 cloudFront functions are light-weight functions written in javascript, they are used to modify viewer request and respones. scales to super hight amounts.
 
-Lambda@Edge are writen in either javascript or python.
+Lambda@Edge are written in either javascript or python.
 
 
 | Action                             | CloudFront Funcions                       | Lambda@Edge                                          |
@@ -2721,9 +2721,9 @@ Lambda@Edge are writen in either javascript or python.
 | Runtime Support                    | JavaScript                                | Node.js, Python                                      |
 | Requests Volume                    | Millions of requests per second           | Thousands of requests per second                     |
 | CloudFront Triggers                | Viewer Request-Response                   | Viewer Request/ Response and Origin Request/Response |
-| Max. Execution Time                | < 1 ms                                    | 5 – 10 seconds                                       |
+| Max. Execution Time                | < 1 ms                                    | 5 - 10 seconds                                       |
 | Max. Memory                        | 2 MB                                      | 128 MB up to 10 GB                                   |
-| Total Package Size                 | 10 KB                                     | 1 MB – 50 MB                                         |
+| Total Package Size                 | 10 KB                                     | 1 MB - 50 MB                                         |
 | Network Access, File System Access | No                                        | Yes                                                  |
 | Access to the Request Body         | No                                        | Yes                                                  |
 | Pricing                            | Free tier available, 1/6th price of @Edge | No free tier, charged per request & duration         |
@@ -2749,8 +2749,159 @@ Lambda@Edge are writen in either javascript or python.
 by default, Lambdas are launched outside <cloud>VPCs</cloud>, and can't access resources inside them (<cloud>RDS</cloud>, elasticCache, internal <cloud>ELB</cloud>). to allow access, we can define the Lambda a VPC id, subnets and security group data. this will create a <cloud>ENI (elastic network interface)</cloud> into the VPC.
 
 when a lambda is inside the VPC, it can't access the internet (even if it's inside a public subnet). to allow the lambda to connect with the global internet, we define a <cloud>NAT Gatway/Instance</cloud> (through the Internet Gatway). if we want to access in-aws resource from the VPC, we can use the global internet of set up a VPC endpoint.
+
+### Lambda Performance
+
+we configure lambda with memory, that's our compute power. starting from 128Mb to 10GB. at 1792 Mb, we get the equivalent of a single CPU, to take advantage of more power than that, we need to use multithreading in our code.\
+By default, the lambda has a timeout of 3 seconds, we can increase it to 900 seconds (15 minutes). anything above that execution time doesn't fit Lambda.
+
+Lambda uses an "Execution context", which is a runtime that handles the external dependencies and static context. this includes database connection, http clients, sdk clients. this context remains up for a while after the lambda finishes, and will be re-used if the lambda is invoked again.\
+the "/tmp" direcotry is also maintained. in case we need to download a big file and use it again. we get 10GB of space. this is only good for speeding up work, it can't be relied on. if we want encrypted files, we need to do that ourselves with <cloud>KMS</cloud> keys.
+
+### Lambda Layers
+
+1. using custom runtimes in lambda, such as C++ or Rust.
+2. externalize dependencies to re-use them.
+
+an application layer that changes often, and other layers that don't change often. we can use the same layer across functions.
+
+in a demo, we use a layer provided by AWS, we click <kbd>Add Layer</kbd> and select SciPy layer, we no longer need to add the libraries inside the application zip, since it exists as a layer.
+
+### File System Mounting
+
+Lambda that are running inside a <cloud>VPC</cloud> can access a file system <cloud>EFS</cloud>, by mounting the file system through an access point. each lambda function is a connection to the system, so must watch for the connection and burst limits.
+
+
+| ?                                      | Ephemeral Storage /tmp    | Lambda Layers                           | Amazon S3                          | Amazon EFS                           |
+| -------------------------------------- | ------------------------- | --------------------------------------- | ---------------------------------- | ------------------------------------ |
+| Max. Size                              | 10,240 MB                 | 5 layers per function up to 250MB total | Elastic                            | Elastic                              |
+| Persistence                            | Ephemeral                 | Durable                                 | Durable                            | Durable                              |
+| Content                                | Dynamic                   | Static                                  | Dynamic                            | Dynamic                              |
+| Storage Type                           | File System               | Archive                                 | Object                             | File System                          |
+| Operations supported                   | any File System operation | Immutable                               | Atomic with Versioning             | any File System operation            |
+| Pricing                                | Included in Lambda        | Included in Lambda                      | Storage + Requests + Data Transfer | Storage + Data Transfer + Throughput |
+| Sharing/Permissions                    | Function Only             | IAM                                     | IAM                                | IAM + NFS                            |
+| Relative Data Access Speed from Lambda | Fastest                   | Fastest                                 | Fast                               | Very Fast                            |
+| Shared Across All Invocations          | No                        | Yes                                     | Yes                                | Yes                                  |
+
+### Concurrency
+
+Lambdas have a default concurrency limit of 1000 concurrent executions for all lambdas in the account. we can limit it down at a function level, saying that a lambda can only have a limited number of invocations. anything above it will get throtelled. synchronous invocations will get an HTTP error, Asynchronous invocations will re-try and start again. The limit can be increased by opening a ticket to AWS support.
+
+Cold start - when we create the lambda instance, we initialize the execution runtime. the first request has a higher latency.\
+We can request a provisioned concurrency for a lambda, which starts it once before the first request even arrives, and keeps it running. we can set this as an application auto scaling (schedule or target utilization). reserved concurrency limits other functions and take away from their pool.
+
+### External Dependencies
+
+adding dependencies, libraries, SDK, etc.. we need to package them together. each language has it's own ways to package them. in our example, we bundle the <cloud>X-Ray</cloud> SDK.
+
+### Lambda and CloudFormation
+
+we can define the lambda code inside the cloudFormation template. this is for simple cases, and we can't include any external dependencies. the other way is by referencing a S3 object (with a version). we can also refer to code that exists in buckets in other accounts by using bucket access policies.
+
+### Lambda Container Images
+
+Deploy ECR container images as lambda functions, including all the dependencies. the base image must implement the lambda runtime API. we can test the containers locally using te Lambda Runtime Interface emulator.
+
+
+> Strategies for optimizing container images:
+> - Use AWS-provided Base Images
+>   - Stable, Built on Amazon Linux 2, cached by Lambda service
+> - Use Multi-Stage Builds
+>   - Build your code in larger preliminary images, copy only the artifacts you need in your final container image, discard the preliminary steps
+> - Build from Stable to Frequently Changing
+>   - Make your most frequently occurring changes as late in your Dockerfile as possible
+> - Use a Single Repository for Functions with Large Layers
+>   -  ECR compares each layer of a container image when it is pushed to avoid uploading and storing duplicates
+
+### Lambda Versions and Aliases
+so far, we've worked on the mutable version of the lambda, which was immutable. if we publish the lambda, it becomes immutable, and we can no longer change it (code or environment variables), and will have an ARN of its' own.\
+We can also give a lambda version an alias, which can be something like "prod", "dev", "test". this alias is mutable, and can act as the constant name for the user to talk to. aliases allow canary deployment (A/B testing as usual). aliases can't reference other aliases.
+
+(demo of creating an alias)\
+under <kbd>Actions</kbd>, we choose <kbd>Publish</kbd> and it gets the new version number when we publish it again. under the <kbd>Aliases</kbd> tab, we can create new alias configuration, it can point to one version and direct all traffic, or point to two versions and distribute traffic to them based on weights.
+
+### Lambda with CodeDeploy
+
+we can automate the traffic shift with <cloud>CodeDeploy</cloud>, this is also part of the <cloud>SAM</cloud> (serverless application model) framework.
+- linear - grow traffic by percent every time period
+- canary - try a percent, wait for a period, then move everything
+- allAtOnce - move everything right now
+
+we can create pre and post traffic hooks to trigger rollbacks if needed,
+
+### Lambda Function URL
+
+exposing the lambda function as an http address, without an api browser or stuff like that. a constant address that won't change. "https://\<url-id>.lambda-url.\<region>.on.aws".\
+This http is accessible only through the public internet. we might need to use CORS configuration, and be based on resource-based policies. this can point to the latest version or an alias, but not a specific function version.
+
+Security is handled with resource-based policy, which is always in effect. we can also define authentication types.
+
+> - AuthType `NONE` - allow public and unauthenticated access
+>   - Resource-based Policy is always in effect (must grant public access)
+> - AuthType `AWS_IAM` - IAM is used to authenticate and authorize requests
+>   - Both Principal's Identity-based Policy & Resource-based Policy are evaluated
+>   - Principal must have lambda:InvokeFunctionUrl permissions
+>   - Same account - Identity-based Policy OR Resource-based Policy as ALLOW
+>   - Cross account - Identity-based Policy AND Resource Based Policy as ALLOW
+
+### CodeGuru Integration
+> Gain insights into runtime performance of your Lambda
+functions using <cloud>CodeGuru</cloud> Profiler. CodeGuru creates a Profiler Group for your Lambda function.
+> - Supported for Java and Python runtimes
+> - Activate from AWS Lambda Console
+> - When activated, Lambda adds:
+> -   CodeGuru Profiler layer to your function
+> -   Environment variables to your function
+> -   `AmazonCodeGuruProfilerAgentAccess` policy to your function
+
+### Lambda Limits and Best Practices
+Per region limits
+
+> Execution:
+> - Memory allocation: 128 MB – 10GB (1 MB increments)
+> - Maximum execution time: 900 seconds (15 minutes)
+> - Environment variables (4 KB)
+> - Disk capacity in the "function container” (in /tmp): 512 MB to 10GB
+> - Concurrency executions: 1000 (can be increased)
+> 
+> Deployment:
+> - Lambda function deployment size (compressed .zip): 50 MB
+> - Size of uncompressed deployment (code + dependencies): 250 MB
+> - Can use the /tmp directory to load other files at startup
+> - Size of environment variables: 4 KB
+
+AWS Lambda Best Practices
+> - Perform heavy-duty work outside of your function handler
+>   - Connect to databases outside of your function handler
+>   - Initialize the AWS SDK outside of your function handler
+>   - Pull in dependencies or datasets outside of your function handler
+> - Use environment variables for:
+>   - Database Connection Strings, S3 bucket, etc… don’t put these values in your code
+>   - Passwords, sensitive values… they can be encrypted using KMS
+> - Minimize your deployment package size to its runtime necessities.
+>   - Break down the function if need be
+>   - Remember the AWS Lambda limits
+>   - Use Layers where necessary
+> - Avoid using recursive code, never have a Lambda function call itself
+
 </details>
 
+
+## DynamoDB
+<!-- <details> -->
+<summary>
+Serverless NoSQL database.
+</summary>
+
+### WCU and RCU
+
+### Indexes
+
+### DAX
+
+### Streams
+</details>
 
 ## Take Away
 <details>
