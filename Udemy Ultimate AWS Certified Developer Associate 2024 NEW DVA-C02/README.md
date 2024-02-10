@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE ONTAP ebextensions Flink Distro
+// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE ONTAP ebextensions Flink Distro PITR
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css"> 
@@ -2540,11 +2540,6 @@ we can modify the memory for the function, the timeout (up to 15 minutes). there
 
 used with the CLI, console, SDK, <cloud>API Gateway</cloud>, <cloud>Application Load Balancer</cloud>. the caller waits for the result, and if there are errors, the client has to handle it.
 
-```sh
-aws lambda list-functions
-aws lambda invoke --function-name hello-world  --cli-binary-format raw-in-base64-out --payload '{"key1": "value1", "key2": "value2"}'
-```
-
 ### Lambda And Application Load Balancer
 
 we can expose the lambda through a load balancer, for this we need the lambda to be inside target group. the load balancer converts the HTTP request into a json payload. it also needs to happen to the json response - needs to be converted back into HTTP response.
@@ -2588,11 +2583,6 @@ for services that run the lambda without waiting for a response. the request are
 - <cloud>Config</cloud>
 - <cloud>IoT</cloud>, <cloud>IoT events</cloud>
 
-
-```sh
-aws lambda list-functions
-aws lambda invoke --function-name hello-world  --cli-binary-format raw-in-base64-out --payload '{"key1": "value1", "key2": "value2"}' --invocation-type Event response.json
-```
 
 we can configure the number of retires, (0,1,2 retires) and set the dead-letter-queue (needs <cloud>IAM Role</cloud> permissions).
 
@@ -2859,10 +2849,10 @@ functions using <cloud>CodeGuru</cloud> Profiler. CodeGuru creates a Profiler Gr
 Per region limits
 
 > Execution:
-> - Memory allocation: 128 MB – 10GB (1 MB increments)
+> - Memory allocation: 128 MB - 10GB (1 MB increments)
 > - Maximum execution time: 900 seconds (15 minutes)
 > - Environment variables (4 KB)
-> - Disk capacity in the "function container” (in /tmp): 512 MB to 10GB
+> - Disk capacity in the "function container" (in /tmp): 512 MB to 10GB
 > - Concurrency executions: 1000 (can be increased)
 > 
 > Deployment:
@@ -2877,7 +2867,7 @@ AWS Lambda Best Practices
 >   - Initialize the AWS SDK outside of your function handler
 >   - Pull in dependencies or datasets outside of your function handler
 > - Use environment variables for:
->   - Database Connection Strings, S3 bucket, etc… don’t put these values in your code
+>   - Database Connection Strings, S3 bucket, etc… don't put these values in your code
 >   - Passwords, sensitive values… they can be encrypted using KMS
 > - Minimize your deployment package size to its runtime necessities.
 >   - Break down the function if need be
@@ -2889,18 +2879,661 @@ AWS Lambda Best Practices
 
 
 ## DynamoDB
-<!-- <details> -->
+<details>
 <summary>
 Serverless NoSQL database.
 </summary>
 
+managed by AWS, scales automatically, NoSQL database, handles better with horizontal scaling.
+
+> - Fully managed, highly available with replication across multiple AZs.
+> - NoSQL database - not a relational database.
+> - Scales to massive workloads, distributed database.
+> - Millions of requests per seconds, trillions of row, 100s of TB of storage.
+> - Fast and consistent in performance (low latency on retrieval).
+> - Integrated with IAM for security, authorization and administration.
+> - Enables event driven programming with DynamoDB Streams.
+> - Low cost and auto-scaling capabilities.
+> - Standard & Infrequent Access (IA) Table Class.
+>
+> DynamoDB is made of Tables
+> 
+> - Each table has a Primary Key (must be decided at creation time).
+> - Each table can have an infinite number of items (= rows).
+> - Each item has attributes (can be added over time - can be null).
+> - Maximum size of an item is 400KB.
+> - Data types supported are:
+>   - Scalar Types - String, Number, Binary, Boolean, Null.
+>   - Document Types - List, Map.
+>   - Set Types - String Set, Number Set, Binary Set.
+
+
+primary keys can be the partition key hash alone, or the combinnation of partition key and sort key. whatever option, the key should be diverse so it creates decent distribution.
+
+demo of creating a table. inside the <cloud>DynamoDb</cloud> page, we click <kbd>Create Table</kbd>, and define the partition key and sort-key (optional), we can customize some settings:
+1. Table class - standard or IA (infrequently accessed)
+2. Capacity Calculator
+3. Read/Write Capacity Setting, autoscaling
+4. additional Indexes
+5. Encrypting (default key, <cloud>KMS</cloud>, user-supplied key)
+
+we can also click <kbd>View Items</kbd>, and then <kbd>Create Item</kbd>. the item must have the partition key defined, and then have any additional attribute. the primary key must be unique (either the partition key alone or the key + sort key).
+
 ### WCU and RCU
 
+- RCU - read capcity unit (throughput)
+- WCU - write capcity unit (throughput)
+
+> Provisioned Mode (default)
+> - You specify the number of reads/writes per second
+> - You need to plan capacity beforehand
+> - Pay for provisioned read & write capacity units
+> 
+> On-Demand Mode
+> - Read/writes automatically scale up/down with your workloads
+> - No capacity planning needed
+> - Pay for what you use, more expensive
+>
+> You can switch between different modes once every 24 hours
+
+we exceed our provisioned capacity by tapping into the "burstCapacity", if we finish it as well, then we will get throughputExceeded errors, and we should start doing exponential retries. two kinds of read modes - strongly consistent read and eventually consistent read.\
+Because DynamoBD is a managed service, it has built-in replication. so if we do a read operation immediately after a write operation, it's possible that the read will go to an instance that wasn't updated yet with the new information, and we will receive "stale" data because of the replication. a strongly consistent read will wait until there are no 'in-transit' replications, and then read the data. we can do this by setting "ConsistentRead" Parameter to `True` in the api calls.
+
+
+
+> One Write Capacity Unit (WCU) represents one write per second for an
+item up to 1 KB in size.\
+> If the items are larger than 1 KB, more WCUs are consumed
+> - Example 1: we write 10 items per second, with item size 2 KB. We need $10 * (\frac{2_{KB}}{1_{KB}}) = 20_{WCU}$.
+> - Example 2: we write 6 items per second, with item size 4.5 KB. We need $6 * (\frac{5_{KB}}{1_{KB}}) = 30_{WCU}$.
+> - Example 3: we write 120 items per minute, with item size 2 KB. We need $\frac{120}{60} * (\frac{2_{KB}}{1_{KB}}) = 4_{WCU}$.
+> 
+> One Read Capacity Unit (RCU) represents one Strongly Consistent Read per
+second, or two Eventually Consistent Reads per second, for an item up to 4
+KB in size.\
+> If the items are larger than 4 KB, more RCUs are consumed .
+> - Example 1: 10 Strongly Consistent Reads per second, with item size 4 KB. we need $10 * (\frac{4_{KB}}{4_{KB}}) = 20_{WCU}$.
+> - Example 2: 16 *Eventually Consistent* Reads per second, with item size 12 KB. we need $(\frac{16}{2}) * (\frac{12_{KB}}{4_{KB}}) = 24_{WCU}$.
+> - Example 3: 10 Strongly Consistent Reads per second, with item size 6 KB. we need $10 * (\frac{8_{KB}}{4_{KB}}) = 20_{WCU}$ (we must round up 6 KB to 8 KB).
+
+Data is stored inside partitions, Partition Keys go through a hashing algorithm to know to which partition they go to. the number of total partitions is based on the capacity and size.
+
+To compute the number of partitions:
+- by capacity: $(\frac{RCUs_{Total}}{3000})+(\frac{WCUs_{Total}}{1000})$
+- by size - the more data we have, the more partition: $\frac{Total Size}{10_{GB}}$
+- the final number is the higher value of the two, with a built in ceiling.
+
+WCU and RCU are spread evenly across partitions. if we exceed RCU or WCU, we will get throrelling. if we have a hot key or a hot partition, then we might get an error reading from on partition but not when using another partition.\
+The solution can be exponential retries, create a better partition key distribution, or switch to <cloud>DynamoDB DAX</cloud>.
+
+On-Demand mode scales up and down based on workloads demand, unlimited capacity (no throtelling), the calculations are the same, but the units are "Read Request Unit" and "Write Request Unit" (RRU, WRU), and are about x2.5 times more expensive.
+
+in our table, we can change the capacity modes after it's been created. we can choose the simple "On-demand" mode or the "Provisioned" mode. if we use the provisioned mode, we can use the capacity calculator to calculate the estimated cost. we can also set a minimum and maximum capacity, based on a target utilization value (read and writes).
+
+### Basic Operations APIs
+
+
+| API              | Operation                | Capacity | Notes                                   |
+| ---------------- | ------------------------ | -------- | --------------------------------------- |
+| `PutItem`        | Create\ Update           | WCU      |                                         |
+| `Update`         | Create\Update            | WCU      | can be used for atomic counters         |
+| `GetItem`        | Read                     | RCU      |                                         |
+| `Query`          | Read                     | RCU      | one partitionKey only                   |
+| `Scan`           | Read                     | RCU      | inefficient, costly                     |
+| `DeleteItem`     | Delete                   | WCU      |                                         |
+| `DeleteTable`    | Delete                   |          | Delete everything                       |
+| `BatchWriteItem` | Write/Delete (no update) | WCU      | some items can partially fail           |
+| `BatchGetItem`   | Read                     | RCU      | one or more tables, some items can fail |
+
+
+> `PutItem`
+> 
+> - Creates a new item or fully replace an old item (same Primary Key).
+> - Consumes WCUs.
+> 
+> `UpdateItem`
+> 
+> - Edits an existing item's attributes or adds a new item if it doesn't exist.
+> - Can be used to implement Atomic Counters - a numeric attribute that's unconditionally incremented.
+> 
+> Conditional Writes
+> - Accept a write/update/delete only if conditions are met, otherwise returns an error.
+> - Helps with concurrent access to items.
+> - No performance impact.
+> 
+> `GetItem`
+> - Read based on Primary key.
+> - Primary Key can be HASH or HASH+RANGE.
+> - Eventually Consistent Read (default).
+> - Option to use Strongly Consistent Reads (more RCU - might take longer).
+> - ProjectionExpression can be specified to retrieve only certain attributes.
+>
+> `Query`- returns items based on:
+> - KeyConditionExpression:
+>   - Partition Key value (must be `=` operator) - required.
+>   - Sort Key value (`=`, `<`, `<=`, `>`, `>=`, `Between`, `Begins with`) - optional.
+> - FilterExpression:
+>   - Additional filtering after the Query operation (before data returned to you).
+>   - Use only with non-key attributes (does not allow HASH or RANGE attributes).
+> - Ability to do pagination on the results
+> - Can query table, a Local Secondary Index, or a Global Secondary Index
+>
+> `Scan`- the entire table and then filter out data (inefficient)
+> Returns up to 1 MB of data - use pagination to keep on reading
+> - Consumes a lot of RCU.
+> - Limit impact using Limit or reduce the size of the result and pause.
+> - For faster performance, use Parallel Scan.
+>   - Multiple workers scan multiple data segments at the same time.
+>   - Increases the throughput and RCU consumed.
+>   - Limit the impact of parallel scans just like you would for Scans.
+> - Can use ProjectionExpression & FilterExpression (**no changes to RCU**).
+>
+> `DeleteItem`
+> - Delete an individual item.
+> - Ability to perform a conditional delete.
+> 
+> `DeleteTable`
+> - Delete a whole table and all its items.
+> - Much quicker deletion than calling `DeleteItem` on all items.
+>
+> `BatchWriteItem`
+> - Up to 25 PutItem and/or DeleteItem in one call.
+> - Up to 16 MB of data written, up to 400 KB of data per item.
+> - Can't update items (use UpdateItem).
+> - UnprocessedItems for failed write operations (exponential backoff or add WCU).
+> 
+> `BatchGetItem`
+> - Return items from one or more tables.
+> - Up to 100 items, up to 16 MB of data.
+> - Items are retrieved in parallel to minimize latency.
+> - UnprocessedKeys for failed read operations (exponential backoff or add RCU).
+
+also has a query language:
+
+> DynamoDB - `PartiQL`
+> -  SQL-compatible query language for DynamoDB
+> -  Allows you to select, insert, update, and delete data in DynamoDB using SQL
+> - (**no JOIN operations**)
+> -  Run queries across multiple DynamoDB tables
+> -  Run PartiQL queries from:
+>   -  AWS Management Console
+>   -  NoSQL Workbench for DynamoDB
+>   -  DynamoDB APIs
+>   -  AWS CLI
+>   -  AWS SDK
+
+```SQL
+SELECT OrderID, Total
+FROM Orders
+WHERE OrderID in [1,2,3]
+ORDER BY OrderID DESC
+```
+
+in the console, we can create items, update and delete them, or do batch delete, filters are client-side, they don't effect the RCU charges. the query conditions (partition + sort key) can reduce the RCU costs.
+
+
+#### WriteTypes
+
+- Concurrent Write - two operations at the same time, one overwrites the other.
+- Conditional Write - one succeeded, one failed. do the write only if some condition applies. (optimistic locking)
+- Atomic Write - both succeed. update value with operations.
+- Batch Write - send both at the same - saves up on WCU and complexity
+
+#### Conditional Writes / Optimistic Locking
+
+> - DynamoDB has a feature called "Conditional Writes"
+> - A strategy to ensure an item hasn't changed before you update/delete it.
+> - Each item has an attribute that acts as a version number
+
+we check and modify this attribute when we do a write, so if two operation happen, only one will be able to change the data
+
+> For `PutItem`, `UpdateItem`, `DeleteItem`, and `BatchWriteItem`:\
+> You can specify a Condition expression to determine which items should be modified:
+> 
+> - `attribute_exists` - delete if attribute exists
+> - `attribute_not_exists` - delete if attribute doesn't exist
+> - `attribute_type` - attribute is of certain
+> - `contains` (for string) - check for substring
+> - `begins_with` (for string) - check for prefix
+> - `IN` - check if value is inside predetermined list
+> - `size` (string length) - size of string
+> 
+> Note: Filter Expression filters the results of read queries, while Condition
+Expressions are for write operations.
+
+if we don't want to overwrite elements, we can use `attribute_not_exists(partition_key)`, so the conditional write will make sure the item isn't overwritten if it exists.
+
+example of updating an item, but only if it fulfills a condition.
+
+```json
+{
+  ":discount":{"N":"150"},
+  ":limit":{"N":"500"},
+  ":lo":{"N":"500"},
+  ":hi":{"N":"500"},
+  ":cat1":{"S":"Cars"},
+  ":cat":{"S":"Shirt"},
+  ":v_sub":{"S":"http://"}
+}
+```
+
+```sh
+# create item
+aws dynamodb update-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --update-expression "SET Price = Price - :discount" --condition-expression "Price > :limit" --expression-attribute-values file://values.json
+# conditional delete item
+aws dynamodb delete-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --condition-expression "attribute_not_exists(Price)"
+aws dynamodb delete-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --condition-expression "attribute_exists(ProductReviews.OneStart)"
+aws dynamodb delete-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --condition-expression "(ProductCategory IN (:cat1, :cat2)) and (Price between :lo and :hi)" --expression-attribute-values file://values.json
+aws dynamodb delete-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --condition-expression "begins_with(Pictures.FrontView, :v_sub)" --expression-attribute-values file://values.json
+```
 ### Indexes
+
+- LSI - Local Secondary Index
+- GSI - Global Secondary Index
+
+LSI acts as alternative **sort key** for the table, same partition key. up to 5 LSI per table, **must be created when the table is created**. the new sort key must be a scalar attribute, can have projections (`KEYS_ONLY`, `INCLUDE_ALL`).
+> - Uses the WCUs and RCUs of the main table.
+> - No special throttling considerations.
+
+GSI acts as an alternative **primary key**, usefull speeding up queries on non-key attributes. must provision RCU and WCU for the new index. can be added and modified after creation. this is basically replication of the table with different partitions.
+>- If the writes are throttled on the GSI, then the main table will be throttled!
+>  - Even if the WCU on the main tables are fine
+>- Choose your GSI partition key carefully!
+>- Assign your WCU capacity carefully!
+
+(demo of creating local and global index, then querying them)
+
+### PartiQL
+
+> Use a SQL-like syntax to manipulate DynamoDB tables
+> Supports some (but not all) statements:
+>   - INSERT
+>   - UPDATE
+>   - SELECT
+>   - DELETE
+> 
+> It supports Batch operations
+
+in the console, we can choose <kbd>PartiQL editor</kbd>, we have a built in statements to start from.
 
 ### DAX
 
+DynamoDB Accelerator
+
+> -  Fully-managed, highly available, seamless in-memory cache for DynamoDB
+> -  Microseconds latency for cached reads & queries
+> -  Doesn't require application logic modification (compatible with existing DynamoDB APIs)
+> -  Solves the "Hot Key" problem (too many reads)
+> -  5 minutes TTL for cache (default)
+> -  Up to 10 nodes in the cluster
+> -  Multi-AZ (3 nodes minimum recommended for production)
+> -  Secure (Encryption at rest with <cloud>KMS</cloud>, <cloud>VPC</cloud>, <cloud>IAM</cloud>, <cloud>CloudTrail</cloud>, etc...)
+
+can be used in combinnation with <cloud>ElasticCache</cloud>, use DAX for simple queries on individual objects, and use <cloud>ElasticCache</cloud> to store aggregate results.
+
+we need to choose the cluster type and number of nodes, we put them into VPCs and subgroup and security group (we need to open a specific port). an endpoint is created which we can direct our applications at.
+
 ### Streams
+
+> Ordered stream of item-level modifications (create/update/delete) in a table.
+> - Stream records can be:
+>   - Sent to <cloud>Kinesis Data Streams</cloud>
+>   - Read by <cloud>Kinesis Client Library applications</cloud>
+>   - Read by <cloud>AWS Lambda</cloud>
+> - Data Retention for up to 24 hours
+> 
+> - Use cases:
+>   - react to changes in real-time (welcome email to users)
+>   - Analytics
+>   - Insert into derivative tables
+>   - Insert into OpenSearch Service
+>   - Implement cross-region replication
+
+all operation are stored in the dynamoDB streams, we can add a processing layer if needed.
+
+> Ability to choose the information that will be written to the stream:
+>   - `KEYS_ONLY` - only the key attributes of the modified item
+>   - `NEW_IMAGE` - the entire item, as it appears after it was modified
+>   - `OLD_IMAGE` - the entire item, as it appeared before it was modified
+>   - `NEW_AND_OLD_IMAGES` - both the new and the old images of the item
+> DynamoDB Streams are made of shards, just like Kinesis Data Streams You don't provision shards, this is automated by AWS. Records are not retroactively populated in a stream after enabling it.
+
+
+to work with lambda, we define the event source mapping, give it the appropriate permissions, and then it starts polling from the stream. we have a batch size, as usual.
+
+### TTL Configuration
+TTL is Time-to-live, automatically delete the item based on the timestamp, expired items don't consume WCU to delete, and deletions will happen within 48 hours since the expiration time. deleted items are removed from the indexes, and it also adds the delete operation into the stream (so we could monitor it like a regular item). the TTL must be a numeric attribute.
+
+### DynamoDB CLI
+
+> - `--projection-expression`: one or more attributes to retrieve
+> - `--filter-expression:` filter items before returned to you
+> 
+> General AWS CLI Pagination options (e.g., <cloud>DynamoDb</cloud>, <cloud>S3</cloud>, etc...)
+> 
+> - `--page-size`: specify that AWS CLI retrieves the full list of items but with a larger number of API calls instead of one API call (default: 1000 items).
+> - `--max-items`: max number of items to show in the CLI (returns *NextToken*)
+> - `--starting-token`: specify the last *NextToken* to retrieve the next set of items
+
+### Transactions
+
+either everyworks, or nothing works and everything failed.
+
+> Coordinated, **all-or-nothing operations** (add/update/delete) to multiple items across one or more tables.
+> - Provides Atomicity, Consistency, Isolation, and Durability (ACID)
+> - Read Modes - Eventual Consistency, Strong Consistency, Transactional
+> - Write Modes - Standard, Transactional
+> - **Consumes 2x WCUs & RCUs**
+> - DynamoDB performs 2 operations for every item (prepare & commit)
+> - Two operations:
+>   - `TransactGetItems` - one or more `GetItem` operations
+>   - `TransactWriteItems` - one or more `PutItem`, `UpdateItem`, and `DeleteItem` operations
+> 
+> - Use cases: financial transactions, managing orders, multiplayer games, etc...
+
+### Session State Table
+using DynamoDB to store session state as cache, common use-case for <cloud>DynamoDB</cloud> and <cloud>ElasticCache</cloud>.
+
+> - vs. <cloud>ElastiCache</cloud> - ElastiCache is in-memory, but DynamoDB is serverless, Both are key/value stores.
+> - vs. <cloud>EFS</cloud> -  EFS must be attached to <cloud>EC2</cloud> instances as a network drive.
+> - vs. <cloud>EBS</cloud> & Instance Store - EBS & Instance Store can only be used for local caching, not shared caching.
+> - vs. <cloud>S3</cloud> - S3 is higher latency, and not meant for small objects.
+
+### Partitioning Strategies
+
+if we don't have a good partition key to act as a distributed key, we might get hot-key and bad distribution. we can get around this by adding a suffix, either randomly or by calculation.
+
+### Patterns with S3
+we shouldn't store large objects in <cloud>DynamoDB</cloud>, instead, we store the large objects in a bucket and save the URL into the record. the client will read the record and then pull the big object from <cloud>S3</cloud>.\
+We can also use <cloud>DynamoDB</cloud> to index <cloud>S3</cloud> data. when an object is created in the bucket, we trigger a lambda and store the data in dynamodb with some relevant data.
+
+### Operations
+
+Table cleanup:
+- Scan + DeleteItem - slow, expensive
+- Drop Table + recreate it
+
+Copying tables
+- use <cloud>Date Pipeline</cloud> (uses <cloud>EMR</cloud> internally)
+- backup and restore data - takes more time.
+- scan + putItem - write your own code
+
+### Security Considerations and Other
+
+> Security
+> - VPC Endpoints available to access DynamoDB without using the Internet
+> - Access fully controlled by IAM
+> - Encryption at rest using AWS KMS and in-transit using SSL/TLS
+> 
+> Backup and Restore feature available
+> - Point-in-time Recovery (PITR) like RDS
+> - No performance impact
+> 
+> Global Tables 
+> - Multi-region, multi-active, fully replicated, high performance
+> 
+> DynamoDB Local
+> - Develop and test apps locally without accessing the DynamoDB web service (without Internet)
+> 
+> AWS <cloud>Database Migration Service</cloud> (AWS DMS) can be used to migrate to DynamoDB (from MongoDB, Oracle, MySQL, S3, ...)
+
+if clients need to interact with the database directly, we can give them temporary credentails through an identity provider. we use the Cognito Identity Pool and have a specific IAM Role policy that limits access based on condition (leading key or attribute).
+</details>
+
+## API Gateway
+<details>
+<summary>
+Build, Deploy And Manage APIs. Exposing our application as REST API.
+</summary>
+
+in our serverless world, we want the client to invoke the Lambda operations, rather than using the lambda directly or a public IP address with a load balancer, we can use <cloud>API Gateway</cloud>.
+
+> - AWS Lambda + API Gateway: No infrastructure to manage
+> - Support for the WebSocket Protocol
+> - Handle API versioning (v1, v2,...)
+> - Handle different environments (dev, test, prod,...)
+> - Handle security (Authentication and Authorization)
+> - Create API keys, handle request throttling
+> - Swagger / Open API import to quickly define APIs
+> - Transform and validate requests and responses
+> - Generate SDK and API specifications
+> - Cache API responses
+
+gateways can integrate with
+- lambda function
+- any http endpoint
+- aws service - connect with any AWS API
+
+even if we don't need the REST api behavior, we can make use of the additional features of authentication, throtelling, etc...
+
+EndPoint Types:
+- Edge optimized (default) - routing through <cloud>CloudFront</cloud> edge locations.
+- Regional - for clients in the same region, for manual configurations.
+- Private - can only be accessed from your VPC using a VPC endpoint (<cloud>ENI</cloud>).
+
+Security:
+- authentication through
+  - IAM roles
+  - <cloud>Cognito</cloud> - for external users
+  - custom Authorizers
+- HTTPS security
+  - using <cloud>AWS Certificate Manager</cloud>
+  - combine with CNAME or A-Alias in <cloud>Route53</cloud>
+
+(demo)\
+we can choose from HTTP API, REST API, REST API private and WebSocket APIs. we select the REST API version and start from a new API. we use the Regional API type. then we define methods with <kbd>Create Methods</kbd> and we define the type and the integration. we use a lambda function for our demo. we need an <cloud>IAM</cloud> role that can invoke it (resource based access polices). API gateway has it's our timeout, regardless of the lambda duration. we also turn on the Lambda Proxy integration (to restructure the http request to an event). we can run test request and set the parameters and headers ourselves. we can also <kbd>Create Resources</kbd> with method on the specific resources.\
+when we're ready, we can deploy the API, which gives us an invoke URL, which we can use in the broweser.
+
+### Stages And Deployments
+changes aren't effective until we run a deployment. changes are deployed to "stages", which can have any name, each stage has configuration parametes, and can be rolled back for a history of deployments in this stage. each stage has its' own URL. this allows us to run multiple version and the same time.
+
+stages also have variables, we can change them without deploying the API again. those variables can be used for ARN, HTTP endpoint or parameter mapping templates. they are part of the context object in the lambda.
+
+we create a lambda function with several aliases. and we create new API method, and in the lambda ARN, we add `:${stageVariable.LambdaAlias}`. we might need to change IAM roles. once we deploy the gateway, we can manage the mapping and add the stageVariables for each stage. we can add other configurations, set up specific log behavior, detailed metrics and X-Ray tracing for each stage.
+
+#### Canary Deployment
+
+like a blue/green deployment, we direct some traffic to two stages. we can then promote the canary deployment to 100%.
+
+### Integration Types and Mapping.
+
+> - Integration Type `MOCK`
+>   - API Gateway returns a response without sending the request to the backend.
+> 
+> - Integration Type `HTTP` / `AWS` (Lambda & AWS Services)
+>   - you must configure both the integration request and integration response.
+>   - Setup data mapping using mapping templates for the request & response.
+> 
+> - Integration Type `AWS_PROXY` (Lambda Proxy):
+>   - incoming request from the client is the input to Lambda.
+>   - The function is responsible for the logic of request / response.
+>   - No mapping template, headers, query string parameters are passed as arguments.
+> 
+> - Integration Type `HTTP_PROXY`
+>   - No mapping template.
+>   - The HTTP request is passed to the backend.
+>   - The HTTP response from the backend is forwarded by API Gateway.
+>   - Possibility to add HTTP Headers if need be (ex: API key).
+>
+>
+> Mapping templates can be used to modify request / responses
+> - Rename / Modify query string parameters
+> - Modify body content
+> - Add headers
+> - Uses <cloud>Velocity Template Language</cloud> (VTL): (for loop, if-else)
+> - Filter output results (remove unnecessary data)
+> - Content-Type can be set to "application/json" or "application/xml"
+
+a common example is transforming between json and XML for SOAP apis(which are xml based). we demo this by creating a method and not enabling lambda proxy. we can click on "integration response", and create a mapping template. this is a json document (with extra steps) that modifies the response before returning it.
+
+```json
+{
+  "my-key": "my-value",
+  "renamed-key": $input.json('$.example')
+}
+```
+
+### Open API
+API gateway can be integrated with the OPEN API specifications. we can import or export specification to that format. we can then generate clientSide SDK.\
+we can also use Request Validation to make sure the request conforms to the specification, then we can validate it our the api without going to the backend. this can be defined for all methods of just some of them.
+
+### Gateway Caching
+
+Caching reduces the number of calls made to
+the backend.
+
+> - Default TTL (time to live) is 300 seconds (min: 0s, max: 3600s)
+> - Caches are defined per stage
+> - Possible to override cache settings per method
+> - Cache encryption option
+> - Cache capacity between 0.5GB to 237GB
+> - Cache is expensive, makes sense in production, may not make sense in dev / test
+> - Able to flush the entire cache (invalidate it) immediately
+- Clients can invalidate the cache with header: `Cache-Control: max-age=0` (with proper IAM authorization)
+- If you don't impose an InvalidateCache policy (or choose the Require authorization check box in the console), any client can invalidate the API cache.
+
+### Usage Plans
+
+we can control access to our APIs with usage plans and API Keys.
+
+> Usage Plan:
+> 
+> - who can access one or more deployed API stages and methods
+> - how much and how fast they can access them
+> - uses API keys to identify API clients and meter access
+> - configure throttling limits and quota limits that are enforced on individual client
+> 
+> API Keys:
+> 
+> - alphanumeric string values to distribute to your customers
+>   - Ex: WBjHxNtoAb4WPKBC7cGm64CBibIb24b4jt8jJHo9
+> - Can use with usage plans to control access
+> - Throttling limits are applied to the API keys
+> - Quotas limits is the overall number of maximum requests
+> 
+> To configure a usage plan
+> 1. Create one or more APIs, configure the methods to require an API key, and deploy the APIs to stages.
+> 2. Generate or import API keys to distribute to application developers (your customers) who will be using your API.
+> 3. Create the usage plan with the desired throttle and quota limits.
+> 4. Associate API stages and API keys with the usage plan.
+> 
+> Callers of the API must supply an assigned API key in the `x-api-key` header in requests to the API.
+
+### Monitoring Gateways
+
+we can intgrate the gateway with <cloud>CloudWatch</cloud>, enabled at the stage level, and override with per API settings. the logs contain information about requests and responses.\
+we can enable <cloud>X-Ray</cloud> to have the requests traced (so we could follow them from the gateway to the lambda).\
+There are <cloud>CloudWatch metrics</cloud>, such as `CacheHitCount` and `CacheMissCount` to track the efficacy of the cacheing, we can follow the overhead latency with the `Latency` and `IntegrationLatency` values. we can track the `4XXError` and `5XXError` metrics to count errors of varus types.\
+The maximum time for the API to await a response is 29 seconds.\
+
+Throtelling:
+- Account Limit : by default we have 10000 request per second across all APIs.
+  - can be increased with request to AWS.
+- Stage and Method Limit - limit the number of request for a API so it wouldn't affect other APIs.
+- Usage Plans - throttle per customer
+
+### CORS
+
+CORS - Cross Origin Resource Sharing.
+
+> CORS must be enabled when you receive API calls from another domain.\
+> The `OPTIONS` pre-flight request must contain the following headers:
+>  - Access-Control-Allow-Methods
+>  - Access-Control-Allow-Headers
+>  - Access-Control-Allow-Origin
+> 
+> CORS can be enabled through the console
+
+### Authentication and Authorization
+
+<cloud>IAM</cloud> permissions: attach to user or role and allow the role to invoke the the API. combines with "sig4" to validate the IAM credentials in the headers. both Authentication and Authorization are handled by IAM.\
+Resource Policies can set who can interact with the Gateway, and can be used for Cross Account Access.
+
+><cloud>Cognito User Pools</cloud>
+> - Cognito fully manages user lifecycle, token expires automatically
+> - API gateway verifies identity automatically from AWS Cognito
+> - No custom implementation required
+> - Authentication: Cognito User Pools
+> - Authorization: API Gateway methods
+>
+> Lambda Authorizer (formerly Custom Authorizers)
+> - Token-based authorizer (bearer token) – ex JWT (JSON Web Token) or Oauth
+> - A request parameter-based Lambda authorizer (headers, query string, stage var)
+> - Lambda must return an IAM policy for the user, result policy is cached
+> - Authentication: External service
+> - Authorization: Lambda function
+
+for each method, we can look at the "method request" and see the authentication. we can also use resource policies for the entire gateway. we can also create a custom authorizer (lambda) or use a coginto user pool.
+
+### Gatway Types
+
+different types of gateways:
+- HTTP API
+- REST API
+- WebSocket API
+
+> HTTP APIs
+> - low-latency, cost-effective AWS Lambda proxy, HTTP proxy APIs and private integration (no data mapping)
+> - support OIDC and OAuth 2.0 authorization, and built-in support for CORS
+> - No usage plans and API keys
+> 
+> REST APIs
+> - All features (except Native OpenID Connect / OAuth 2.0)
+>
+> WebSockets:\
+> Two-way interactive communication
+between a user's browser and a server
+> - Server can *push* information to the client
+> - This enables *stateful* application use cases
+> - WebSocket APIs are often used in realtime applications such as:
+>   - chat applications.
+>   - collaboration platforms.
+>   - multiplayer games.
+>   - financial trading platforms.
+> - Works with AWS Services (<cloud>Lambda</cloud>, <cloud>DynamoDB</cloud>) or HTTP endpoints.
+
+uses different lambda methods for each event (or message):
+- `onConnect` - first request, establishing connection
+- `onDisconnect` - when connection is closed, best-effort behavior. not guarantted to happen
+- `default` - fallback
+- other messages can be defined for each api.
+
+the webSocket url has this form: "wss://[some-unique-id].execute-api.[region].amazonaws.com/[stage-name]". each message in the connection is called "a frame", and re-uses the connectionId. the client can listen to messages from the backend via a request to a callaback url "wss://[some-unique-id].execute-api.[region].amazonaws.com/[stage-name]/@connection/[connection-id]". the client will listen to this and respond.
+- `POST` - Send a message from the server to the connected WS client
+- `GET` - Gets the larest connection status of the connected WS Client
+- `DELETE` - Disconnect the connected client from the WS connection.
+
+routing for websockets are based on fields in the message. if there is no match, then `$default` is route is used.
+
+| <>                              | HTTP                          | REST       | Websocket             |
+| ------------------------------- | ----------------------------- | ---------- | --------------------- |
+| <cloud>Lambda Authorize</cloud> | YES                           | YES        |                       |
+| <cloud>IAM</cloud>              | YES                           | YES        |                       |
+| Resource Policies               | NO                            | YES        |                       |
+| <cloud>Cognito</cloud>          | YES                           | YES        |                       |
+| Native OpenId/OAth 2.0/ JWT     | YES                           | NO         |                       |
+| Data Mapping                    | NO                            | YES        |
+| Usage Plans and API Keys        | No                            | YES        |
+| Use case                        | low cost proxies, integration | normal use | realtime applications |
+
+</details> 
+
+## AWS CI/CD: CodeCommit, CodeBuild and CodeDeploy
+<!-- <details> -->
+<summary>
+Devops tools and flows.
+</summary>
+
+CI/CD - Continues Integration, Continues Deployment
+
+### CodeCommit
+### CodePipeline
+### CodeBuilt
+### CodeDeploy
+### CodeStar
+### CodeArtifact
+### CodeGuru
+### Cloud9
 </details>
 
 ## Take Away
@@ -2916,19 +3549,64 @@ shell commands
 aws --version # check cli version
 aws configure # configure user
 aws iam list-users # show all users in account
+
+# MFA
+aws sts get-session-token --serial-number <arn-of-the-mfa-device> --tokencode <code-from-token> --duration-seconds 3600
+
+# S3
+aws s3 ls --profile <profile_name>
+
+# ECR
+aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
+docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/<image_name>:<image_tag>
+
+# CloudWatch
+aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-data file://metric.json
+aws cloudwatch put-metric-data --namespace "Usage Metrics" --metric-name Buffers --unit Bytes --value 23143433 --dimensions InstanceId=1-234, InstanceType=m1.small
+aws cloudwatch set-alarm-state --alarm-name "MyAlarm" --state-value ALARM --state-reason "testing purposes"
+
+# Kinesis
+## producer
+aws kinesis put-record --stream-name test --partition-key user --data "user sign up"--cli-binary-format raw-in-base64-out
+## consumer
+aws kinesis describe-stream --stream-name test --partition-key user --data "user sign up"--cli-binary-format raw-in-base64-out
+aws kinesis get-shard-iterator --stream-name test --shard-id shardId-00000 --shard-iterator-type TRIM_HORIZON
+aws kinesis getrecords --shard-iterator <from the previous message>
+
+# Lambda
+aws lambda list-functions
+aws lambda invoke --function-name hello-world  --cli-binary-format raw-in-base64-out --payload '{"key1": "value1", "key2": "value2"}'
+aws lambda invoke --function-name hello-world  --cli-binary-format raw-in-base64-out --payload '{"key1": "value1", "key2": "value2"}' --invocation-type Event response.json
+
+# DynamoDB
+aws dynamodb update-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --update-expression "SET Price = Price - :discount" --condition-expression "Price > :limit" --expression-attribute-values file://values.json
+## conditional delete item
+aws dynamodb delete-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --condition-expression "attribute_not_exists(Price)"
+aws dynamodb delete-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --condition-expression "attribute_exists(ProductReviews.OneStart)"
+aws dynamodb delete-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --condition-expression "(ProductCategory IN (:cat1, :cat2)) and (Price between :lo and :hi)" --expression-attribute-values file://values.json
+aws dynamodb delete-item --table-name ProductionCatalog --key '{ "Id": {"N": "456" } }' --condition-expression "begins_with(Pictures.FrontView, :v_sub)" --expression-attribute-values file://values.json
+## scans with expressions
+aws dynamodb scan --table-name UserPost --projection-expression "user_id, content"
+aws dynamodb scan --table-name UserPost --filter-expression "user_id= :u" --expression-attribute-values '{":u":{"S":"john123"}}'
+aws dynamodb scan --table-name UserPost --filter-expression "user_id= :u" --expression-attribute-values '{":u":{"S":"john123"}}'
+aws dynamodb scan --table-name UserPost --page-size 1
+aws dynamodb scan --table-name UserPost --max-items 100
+aws dynamodb scan --table-name UserPost --max-items 100 --starting-token <nextToken>
 ```
 
 1. if we want really high IOPS (More than 250,000), we have to use Instance Store (can't use ELB).
-3. only NLB can have an elastic IP address.
-4. "A Read Replica in a different AWS Region than the source database can be used as a standby database and promoted to become the new production database in case of a regional disruption. So, we'll have a highly available (because of Multi-AZ) RDS DB Instance in the destination AWS Region with both read and write available."
-5. "What is the maximum number of Read Replicas you can add in an ElastiCache Redis Cluster with Cluster-Mode Disabled?" - **5** 
-6. "Elastic Beanstalk application versions can be deployed to **Many "Environments**
-7. "Your deployments on Elastic Beanstalk have been painfully slow. After checking the logs, you realize that this is due to the fact that your application dependencies are resolved on each instance each time you deploy. What can you do to speed up the deployment process with minimal impact?" - **Resolve the dependencies beforehand and package them in the zip file uploaded to Elastic Beanstalk**.
-8. CloudFormation Stacks
+2. only NLB can have an elastic IP address.
+3. "A Read Replica in a different AWS Region than the source database can be used as a standby database and promoted to become the new production database in case of a regional disruption. So, we'll have a highly available (because of Multi-AZ) RDS DB Instance in the destination AWS Region with both read and write available."
+4. "What is the maximum number of Read Replicas you can add in an ElastiCache Redis Cluster with Cluster-Mode Disabled?" - **5** 
+5. "Elastic Beanstalk application versions can be deployed to **Many "Environments**
+6. "Your deployments on Elastic Beanstalk have been painfully slow. After checking the logs, you realize that this is due to the fact that your application dependencies are resolved on each instance each time you deploy. What can you do to speed up the deployment process with minimal impact?" - **Resolve the dependencies beforehand and package them in the zip file uploaded to Elastic Beanstalk**.
+7. CloudFormation Stacks
    1. Cross Stack - different lifecycles, import and export
    2. Nested Stack - same lifecycle, reusable components
    3. StackSet - a master stack in the administrator account, controls stacks in multiple regions, accounts.
-9. "If you set an alarm on a high-resolution metric, you can specify a high-resolution alarm with a period of 10 seconds or 30 seconds, or you can set a regular alarm with a period of any multiple of 60 seconds." - **If you set an alarm on a high-resolution metric, you can specify a high-resolution alarm with a period of 10 seconds or 30 seconds, or you can set a regular alarm with a period of any multiple of 60 seconds.**
+8. "If you set an alarm on a high-resolution metric, you can specify a high-resolution alarm with a period of 10 seconds or 30 seconds, or you can set a regular alarm with a period of any multiple of 60 seconds." - **If you set an alarm on a high-resolution metric, you can specify a high-resolution alarm with a period of 10 seconds or 30 seconds, or you can set a regular alarm with a period of any multiple of 60 seconds.**
+9.  `PartiQL` - SQL-compatible query language for DynamoDB.
+10. <cloud>DynamoDB DAX</cloud> - built-in accelarator, in memory-cache.
 
 <cloud>CoPilot</cloud> manages ECS applications, while <cloud>Beanstalk</cloud> manages instance-based applications.
 </details>
