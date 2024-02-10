@@ -3457,7 +3457,7 @@ Resource Policies can set who can interact with the Gateway, and can be used for
 > - Authorization: API Gateway methods
 >
 > Lambda Authorizer (formerly Custom Authorizers)
-> - Token-based authorizer (bearer token) – ex JWT (JSON Web Token) or Oauth
+> - Token-based authorizer (bearer token) - ex JWT (JSON Web Token) or Oauth
 > - A request parameter-based Lambda authorizer (headers, query string, stage var)
 > - Lambda must return an IAM policy for the user, result policy is cached
 > - Authentication: External service
@@ -3519,21 +3519,291 @@ routing for websockets are based on fields in the message. if there is no match,
 </details> 
 
 ## AWS CI/CD: CodeCommit, CodeBuild and CodeDeploy
-<!-- <details> -->
+<details>
 <summary>
 Devops tools and flows.
 </summary>
 
 CI/CD - Continues Integration, Continues Deployment
 
+so far we did mostly manual steps, but we want to do those actions in an automated way, and have them recorded into code.
+
+
+- <cloud>CodeCommit</cloud> - Store code
+- <cloud>CodePipeline</cloud> - automate building to <cloud>Elastic Beanstalk</cloud>
+- <cloud>CodeBuild</cloud> - building and testing
+- <cloud>CodeDeploy</cloud> - deploy to <cloud>EC2</cloud> instances
+- <cloud>CodeStar</cloud> - manage at a single location
+- <cloud>CodeArtifact</cloud> - store, publish and share software artifacts
+- <cloud>CodeGuru</cloud> - code review by machine learning
+- <cloud>Cloud9</cloud> - in-browser IDE
+
 ### CodeCommit
+
+code repository, like github, gitlab or bitbucket. source code version control. rollbacks. provides the same features as github, but it lives on the AWS cloud and is protected by AWS. integrates seamlessly with industry standard tooling.\
+Can use <cloud>IAM</cloud> as authentication and authorization, uses <cloud>KMS</cloud> for encryption.
+
+(demo)\
+we create a repository and we get the connection options. we can upload files and add a commit message.
+- branches
+- tags
+- pull requests
+- commit visualizers
+- comparisons
+
+we can set up notification rules, which will trigger based on events, and we can set target (<cloud>SNS</cloud> and Slack Chatbot). triggers can happen on specific code events, and can send to <cloud>SNS</cloud> or <cloud>Lambda</cloud>.
+
+We can set approval rules and templates for pull requests.
+
+in <cloud>IAM</cloud>, we can make Access Keys for our repository.
+- SSH keys for <cloud>CodeCommit</cloud>
+- Git Credentails keys for <cloud>CodeCommit</cloud>
+(if we have existing SSH keys, we can upload them here).
+
 ### CodePipeline
-### CodeBuilt
+
+> Visual Workflow to orchestrate your CI/CD
+> - Source - <cloud>CodeCommit</cloud>, <cloud>ECR</cloud>, <cloud>S3</cloud>, Bitbucket, GitHub
+> - Build - <cloud>CodeBuild</cloud>, Jenkins, CloudBees, TeamCity
+> - Test - <cloud>CodeBuild</cloud>, AWS Device Farm, 3rd party tools, etc...
+> - Deploy - <cloud>CodeDeploy</cloud>, <cloud>Elastic Beanstalk</cloud>, <cloud>CloudFormation</cloud>, <cloud>ECS</cloud>, <cloud>S3</cloud>, ...
+> - Invoke - <cloud>Lambda</cloud>, <cloud>Step Functions</cloud>
+> 
+> Consists of stages:
+> - Each stage can have sequential actions and/or parallel actions
+> - Example: Build -> Test -> Deploy -> Load Testing
+> - Manual approval can be defined at any stage.
+
+Each pipeline creates artifcats, they are stored in <cloud>S3</cloud> and are passed to the next stage.
+
+> - For CodePipeline Pipeline/Action/Stage Execution State Changes
+> - Use <cloud>CloudWatch</cloud> Events (Amazon <cloud>EventBridge</cloud>). Example:
+>   - You can create events for failed pipelines
+>   - You can create events for cancelled stages
+> - If CodePipeline fails a stage, your  pipeline stops, and you can get information in the console
+>- If pipeline can't perform an action, make sure the "IAM Service Role" attached does have enough IAM permissions (IAM Policy).
+>- AWS <cloud>CloudTrail</cloud> can be used to audit AWS API calls.
+
+(demo)\
+before we do anything, we create an <cloud>ELastic Beanstalk</cloud> environment, we will use the CI/CD tools to deploy into it.\ in <cloud>CodePipeline</cloud> we first <kbd>Create Pipeline</kbd>, it needs a service Role with appropriate permissions. we can specify the artifact storeage, either the default <cloud>S3 Bucket</cloud> or a different one, and we set the source to be the <cloud>CodeCommit</cloud> repository. we next set the detection rule to use <cloud>CloudWatch Events</cloud>. we can set the build provider (<cloud>CodeBuild</cloud>, Jenkins) and define a deploy stage, can be:
+
+- AWS <cloud>CloudFromation</cloud>
+- AWS <cloud>CodeDeploy</cloud>
+- AWS <cloud>Elastic Beanstalk</cloud>
+- AWS <cloud>Service Catalog</cloud>
+- AWS <cloud>ECS</cloud>, ECS (blue-green)
+- AWS <cloud>S3</cloud>
+
+when the pipeline is created, it does the first run automatically. for our example, it will upload the code to change the beanstalk appplication.\
+We can add stages, and define action groups, they interact with action providers (either aws services or manual), action groups can be sequential or parallel.\
+now we can commit our code to <cloud>CodeCommit</cloud>, and see how the pipeline starts and goes through all of the stages.
+
+### CodeBuild
+
+> A fully managed continuous integration (CI) service.
+> - Continuous scaling (no servers to manage or provision – no build queue)
+> - Compile source code, run tests, produce software packages, etc...
+> - Alternative to other build tools (e.g., Jenkins)
+> - Charged per minute for compute resources (time it takes to complete the builds)
+> - Leverages Docker under the hood for reproducible builds
+> - Use prepackaged Docker images or create your own custom Docker image
+> - Security:
+>   - Integration with KMS for encryption of build artifacts
+>   - IAM for CodeBuild permissions, and VPC for network security
+>   - AWS CloudTrail for API calls logging
+
+- Source - repository (github, bitbucket, <cloud>CodeCommit</cloud>)
+- Build instructions - in the "buildspec.yml" file
+- output logs
+- <cloud>CloudWatch Logs</cloud> and Alarms
+
+supported environments:
+- Java
+- Ruby
+- Python
+- GO
+- Node.js
+- Android
+- .Net Core
+- PHP
+- Docker - extended custom environment
+
+the instructions for the build are inside the "buildspec.yaml" file. this can take some time, but we can add caching if needed. artifacts are stored in S3 bucket.
+
+(demo)\
+rather than simply deploying, we can use <cloud>CodeBuild</cloud> to run tests. we can set the build to run inside a VPC, or give it access to an <cloud>Elastic File System</cloud>. we can also add the build stage to our <cloud>CodePipeline</cloud> from before, this is an action group.
+
 ### CodeDeploy
+
+> - Deployment service that automates application deployment
+> - Deploy new applications versions to EC2 Instances, On-premises servers, Lambda functions, ECS Services
+> - Automated Rollback capability in case of failed deployments, or trigger CloudWatch Alarm
+> - Gradual deployment control
+> - A file named "appspec.yml" defines how the
+deployment happens
+>
+
+Deploys to EC2 machine, Lambda Function or ECS clusters.
+
+> Can deploy to EC2 Instances & on-premises servers
+> - Perform in-place deployments or blue/green deployments
+> - Must run the <cloud>CodeDeploy</cloud> Agent on the target instances. (The CodeDeploy Agent must be running on the EC2 instances as a prerequisites)
+>   - It can be installed and updated
+automatically if you're using Systems Manager.
+>   - The EC2 Instances must have sufficient permissions to access Amazon S3 to get deployment bundles
+> - Define deployment speed
+>   - AllAtOnce: most downtime
+>   - HalfAtATime: reduced capacity by 50%
+>   - OneAtATime: slowest, lowest vailability impact
+>   - Custom: define your %
+> 
+> CodeDeploy can help you automate traffic shift for Lambda aliases.
+> - Feature is integrated within the SAM framework
+> - Linear: grow traffic every N minutes
+until 100%
+>   - LambdaLinear10PercentEvery3Minutes
+>   - LambdaLinear10PercentEvery10Minutes
+> - Canary: try X percent then 100%
+>   - LambdaCanary10Percent5Minutes
+>   - LambdaCanary10Percent30Minutes
+> - AllAtOnce: immediate
+> 
+> CodeDeploy can help you automate
+the deployment of a new ECS Task
+Definition
+> - **Only Blue/Green Deployments**
+> - Linear: grow traffic every N minutes
+until 100%
+>   - ECSLinear10PercentEvery3Minutes
+>   - ECSLinear10PercentEvery10Minutes
+> - Canary: try X percent then 100%
+>   - ECSCanary10Percent5Minutes
+>   - ECSCanary10Percent30Minutes
+> - AllAtOnce: immediate
+
+for our demo, we create <cloud>IAM</cloud> roles, one for the <cloud>CodeDeploy</cloud> service to manage <cloud>EC2</cloud> instances, and one for instances to pull from <cloud>S3</cloud>. we also install the agent on the EC2 instances. we create a deployment group from it, we need to tag our instance with a proper tag, so we would be able to identify which machines belong to the tag group.\
+we set the deployment setting from one of the built-ins, or create a configuration of our own. we can also work with the load balancer.
+
+we look at the "appspec.yml" to see how the deployment behaves.
+
+> CodeDeploy – Deployment to EC2
+> - Define how to deploy the application using appspec.yml + Deployment Strategy
+> - Will do In-place update to your fleet of EC2 instances
+> - Can use hooks to verify the deployment after each deployment phase
+>
+> CodeDeploy – Deploy to an ASG
+> - In-place Deployment 
+>   - Updates existing EC2 instances
+>   - Newly created EC2 instances by an ASG will also get automated-deployments
+> - Blue/Green Deployment
+>   - A new Auto-Scaling Group is created (settings are copied)
+>   - Choose how long to keep the old EC2 instances (old ASG)
+>   - Must be using an ELB
+
+we can do redeploys and rollbacks, either manually or automatically (based on health checks, deployment failure)
+
 ### CodeStar
+
+<cloud>CodeStar</cloud> is being replaced by <cloud>CodeCatalyst</cloud>.
+
+> An integrated solution that groups: GitHub, <cloud>CodeCommit</cloud>, <cloud>CodeBuild</cloud>, <cloud>CodeDeploy</cloud>, cloud>CloudFormation</cloud>, <cloud>CodePipeline</cloud>, <cloud>CloudWatch</cloud>, ...
+> - Quickly create "CI/CD-ready" projects for <cloud>EC2</cloud>, <cloud>Lambda</cloud>, <cloud>Elastic Beanstalk</cloud>
+> - Supported languages: 
+>   - C#
+>   - Go
+>   - HTML 5
+>   - Java
+>   - Node.js
+>   - PHP
+>   - Python
+>   - Ruby
+> - Issue tracking integration with JIRA / GitHub Issues
+> 
+> Ability to integrate with <cloud>Cloud9</cloud> to obtain a web IDE (not all regions)
+> - One dashboard to view all your components
+> - Free service, pay only for the underlying usage of other services
+> - Limited Customization
+
+our demo will use python on <cloud>Elastic Beanstalk</cloud> as the starting template, looking at <cloud>CodeCommit</cloud> repository, we set the <cloud>EC2</cloud> configuration. the project is controlled via <cloud>CloudFormation</cloud> which handles creating the resources for us. we can see everything that was created for us. we can add an issue tracker (jira) or invite other users to our project.
+
 ### CodeArtifact
+
+> Software packages depend on each other to be built (also called code dependencies), and new ones are created.\
+> Storing and retrieving these dependencies is called *artifact management*. Traditionally you need to setup your own artifact management system.\
+> <cloud>CodeArtifact</cloud> is a secure, scalable, and cost-effective artifact
+management for software development
+> - Works with common dependency management tools such as Maven, Gradle, npm, yarn, twine, pip, and NuGet
+> - Developers and CodeBuild can then retrieve dependencies straight from CodeArtifact
+
+Artifacts exists inside the VPC, we can use it as a proxy for public artifact repositories (which gives us some security, ana also gives us caching). <cloud>CodeBuild</cloud> should also use this option. we can have <cloud>EventBridge</cloud> notifications when a package is created/modified/deleted, and we can set up a response, such as re-building an application that has had a dependency change.
+
+we can configure resource policies for cross account access, which can be either all packages or none of them.
+
+(demo)\
+we define an artifact repository that will track an external source (upstream repository). we need to define a domain.
+we connect to the artifactory through the cloudShell console, and install the packages that we want on our repository.
+
+we can have policies for repositories or domains.
+
 ### CodeGuru
+
+> An ML-powered service for automated code reviews and application performance recommendations.\
+> Provides two functionalities
+> - CodeGuru Reviewer: automated code reviews for static code analysis (development)
+> - CodeGuru Profiler: visibility/recommendations about application performance during runtime (production).
+>
+> CloudGuru Reviewer:\
+> Identify critical issues, security vulnerabilities, and hard-to-find bugs
+> Example: common coding best practices,
+resource leaks, security detection, input
+validation
+> - Uses Machine Learning and automated
+reasoning
+> - Hard-learned lessons across millions of
+code reviews on 1000s of open-source and Amazon repositories
+> - Supports Java and Python
+> - Integrates with GitHub, Bitbucket, and
+AWS <cloud>CodeCommit</cloud>
+>
+> CloudGuru Profiler:\
+> Helps understand the runtime behavior of your application
+> - Example: identify if your application is consuming excessive CPU capacity on a logging routine
+> - Features:
+>   - Identify and remove code inefficiencies
+>   - Improve application performance (e.g., reduce CPU utilization)
+>   - Decrease compute costs
+>   - Provides heap summary (identify which objects using up memory)
+>   - Anomaly Detection
+> - Support applications running on AWS or on-premise
+> - Minimal overhead on application
+
+the profiler works with an agent, which has some configurations we can control.
+- MaxStackDepth
+- MemoryUsageLimitPercent
+- MinimumTimeForReportingInMilliseconds
+- ReportingIntervalInMilliseconds
+- SamplingIntervalInMilliseconds
+
 ### Cloud9
+
+> Cloud-based Integrated Development
+Environment (IDE).
+> - Code editor, debugger, terminal in a browser
+> - Work on your projects from anywhere with
+an Internet connection
+> - Prepackaged with essential tools for popular programming languages (JavaScript, Python, PHP, ...)
+> - Share your development environment with your team (pair programming)
+> - Fully integrated with AWS SAM & Lambda to easily build serverless applications
+
+demo of using <cloud>Cloud9</cloud> machines. comes with the <cloud>AWS Explorer</cloud> to list all of our tools. also integrated with <cloud>CloudWhisperer</cloud>.
+</details>
+
+## SAM - Serverless Application Model
+<!-- <details> -->
+<summary>
+
+</summary>
+
 </details>
 
 ## Take Away
