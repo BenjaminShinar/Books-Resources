@@ -3799,7 +3799,130 @@ demo of using <cloud>Cloud9</cloud> machines. comes with the <cloud>AWS Explorer
 </details>
 
 ## SAM - Serverless Application Model
-<!-- <details> -->
+<details>
+<summary>
+Serverless Application Model - easy deployment
+</summary>
+A short cut for <cloud>CloudFormation</cloud>, setting up connections between serverless services.
+
+> - SAM = Serverless Application Model
+> - Framework for developing and deploying serverless applications
+> - All the configuration is YAML code
+> - Generate complex CloudFormation from simple SAM YAML file
+> - Supports anything from CloudFormation: Outputs, Mappings, Parameters, Resources...
+> - Only two commands to deploy to AWS
+> - SAM can use CodeDeploy to deploy Lambda functions
+> - SAM can help you to run Lambda, API Gateway, DynamoDB locally
+
+SAM uses "Recipes", it's yaml files with the top level field of "Transform: 'AWS::Serverless-2016-10-31'".
+
+Types:
+- `AWS::Serverless::Function` - <cloud>Lambda</cloud>
+- `AWS::Serverless::API` - <cloud>ApiGateway</cloud>
+- `AWS::Serverless::SimpleTable` - <cloud>DynamoDb</cloud>
+
+cli commands:
+- `aws cloudformation package`
+- `aws cloudformation deploy`
+- `sam init`
+- `sam build` (local)
+- `sam package`
+- `sam deploy`
+- `sam deploy --guided`
+
+we transform our recipe into a <cloud>CloudFormation</cloud> template with `sam build`, we package (zip and upload to <cloud>S3</cloud>) it with `sam package`, and then deploy with `sam deploy`.
+
+we can also use the CLI tool and combine it with <cloud>AWS Toolkit</cloud> for local debugging. it's integrated with the common IDEs.
+
+we start by installing the sam cli tool, which is not the same as the general `aws` cli tool.
+
+### Our First SAM Project - Lambda Function
+
+we can start with the default sam project by running `sam init`. but instead, we begin with an empty folder and start creating files. one python file and one template file. the python file has a lambda handler, and the template file defines the function name and its' properties (memory size, timeout, policies).
+
+
+```sh
+# create an s3 bucket
+aws s3 mb s3://<unique-bucket-name>
+
+# package cloudformation
+aws cloudformation package  --s3-bucket <unique-bucket-name> --template-file template.yaml --output-template-file gen/template-generated.yaml
+# sam package ... 
+
+# deploy 
+aws cloudformation deploy --template-file gen/template-generated.yaml --stack-name <some-stack-name> --capabilities CAPABILITY_IAM
+```
+
+this will start the flow to create he lambda.
+
+### API Gateway and Table
+
+we can update our template to also deploy an API gateway and a <cloud>DynamoDB</cloud> table. we modify our lambda code to respond with a json, and we update the template. we just add an `Events` field on our Lambda resource and set the path and method (`GET`).\
+we run the same commands as before to transform the template, upload it to an S3 bucket, and run the deploy command. when we add the API part, it creates many more resources for us.
+
+adding a dynamoDB isn't much more complicated, we modify the function again to use the "boto3" client, and add a resource for the table. we also set the environment variables and the <cloud>IAM</cloud> role and policies. this can all be done in a few lines!
+
+### SAM Policies
+
+> List of templates to apply permissions to
+your Lambda Functions.\
+> Full list available here: https://docs.aws.amazon.com/serverlessapplicationmodel/latest/developerguide/serverlesspolicy-templates.html#serverless-policytemplate-table
+>
+> Important examples:
+> - S3ReadPolicy: Gives read only permissions to
+objects in S3
+> - SQSPollerPolicy: Allows to poll an SQS queue
+> - DynamoDBCrudPolicy: CRUD = create read
+update delete
+
+### SAM Code Deploy
+
+integrating <cloud>CodeDeploy</cloud> and <cloud>SAM</cloud>.
+
+> SAM framework natively uses CodeDeploy to update Lambda functions
+> - Traffic Shifting feature
+> - Pre and Post traffic hooks features to validate deployment (before the traffic shift starts and after it ends)
+> - Easy & automated rollback using <cloud>CloudWatch</cloud> Alarms.
+
+the template has some new fields, such as "AutoPublishAlias" and "DeploymentPreference" (which has alarms and hooks).
+
+(demo of deploying)\
+Going over the template file and the traffic shift in codeDeploy.
+### SAM Local Capabilities
+
+> Locally start AWS Lambda. `sam local start-lambda`\
+> Starts a local endpoint that emulates AWS Lambda. Can run automated tests against this local endpoint.
+>
+> Locally Invoke Lambda Function. `sam local invoke`.\
+> Invoke Lambda function with payload once and quit after invocation completes
+> - Helpful for generating test cases
+> - If the function make API calls to AWS, make sure you are using the correct `--profile` option
+>
+> Locally Start an API Gateway Endpoint `sam local start-api`.\
+>  Starts a local HTTP server that hosts all your functions. Changes to functions are automatically reloaded.
+> 
+> Generate AWS Events for Lambda Functions `sam local generate-event`.\
+> Generate sample payloads for event sources
+> - <cloud>S3</cloud>
+> - <cloud>API Gateway</cloud>
+> - <cloud>SNS</cloud>
+> - <cloud>Kinesis</cloud>
+> - <cloud>DynamoDB</cloud>
+
+### 
+> - SAM is built on CloudFormation
+> - SAM requires the Transform and Resources sections
+> - Commands to know:
+>   - `sam build`: fetch dependencies and create local deployment artifacts
+>   - `sam package`: package and upload to Amazon S3, generate CF template
+>   - `sam deploy`: deploy to CloudFormation
+> - SAM Policy templates for easy IAM policy definition
+> - SAM is integrated with CodeDeploy to do deploy to Lambda aliases.
+> 
+</details>
+
+## Cloud Development Kit
+<details>
 <summary>
 
 </summary>
@@ -3862,6 +3985,16 @@ aws dynamodb scan --table-name UserPost --filter-expression "user_id= :u" --expr
 aws dynamodb scan --table-name UserPost --page-size 1
 aws dynamodb scan --table-name UserPost --max-items 100
 aws dynamodb scan --table-name UserPost --max-items 100 --starting-token <nextToken>
+
+# sam
+sam init
+sam package
+sam build
+sam deploy --guided
+sam local start-lambda
+sam local invoke
+sam local start-api
+sam local generate-event
 ```
 
 1. if we want really high IOPS (More than 250,000), we have to use Instance Store (can't use ELB).
