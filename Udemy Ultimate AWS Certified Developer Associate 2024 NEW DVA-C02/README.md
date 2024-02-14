@@ -3909,7 +3909,7 @@ Going over the template file and the traffic shift in codeDeploy.
 > - <cloud>Kinesis</cloud>
 > - <cloud>DynamoDB</cloud>
 
-### 
+### Summary
 > - SAM is built on CloudFormation
 > - SAM requires the Transform and Resources sections
 > - Commands to know:
@@ -3924,8 +3924,77 @@ Going over the template file and the traffic shift in codeDeploy.
 ## Cloud Development Kit
 <details>
 <summary>
+Infrastructure as code.
+</summary>
+
+defining the cloud infra with a programming language. libraries that support creating AWS resources. the componenets are called "constructs", and it's compiled into a cloud formation template.
+
+we can deploy the resource together with the code. we use the cli `cdk synth` to make the template.
+
+| Command                      | Description                                        |
+| ---------------------------- | -------------------------------------------------- |
+| `npm install -g aws-cdk-lib` | Install the CDK CLI and libraries                  |
+| `cdk init app`               | Create a new CDK project from a specified template |
+| `cdk synth`                  | Synthesizes and prints the CloudFormation template |
+| `cdk ls`                  | (list something) |
+| `cdk bootstrap`              | Deploys the CDK Toolkit staging Stack              |
+| `cdk deploy`                 | Deploy the Stack(s)                                |
+| `cdk diff`                   | View differences of local CDK and deployed Stack   |
+`cdk destroy` Destroy the Stack(s)
+
+### Hands on Demo
+
+we install the cdk from npm, and we initialize a new app with `cdk init` and tell which language we want to use. we copy the file from the resources and look at it. it's a javascript file that defines the resources (constructs).\
+`cdk bootstrap` provides the cdk access to our account - we only need to this once per region per account. `cdk synth` creates the cloud formation template. `cdk deploy` creates the stack, and `cdk destroy` removes it. we need to empty the <cloud>S3 bucket</cloud> before removing the stack.
+
+### Constructs
+
+> CDK Construct is a component that encapsulates everything CDK needs to create the final CloudFormation stack.\
+> Can represent a single AWS resource (e.g., S3 bucket) or multiple related resources (e.g., worker queue with compute).
+> 
+> AWS Construct Library
+> - A collection of Constructs included in AWS CDK which contains Constructs for every AWS resource
+> - Contains 3 different levels of Constructs available (L1, L2, L3)
+> - Construct Hub – contains additional Constructs from AWS, 3rd parties, and open-source CDK community
+>
+> Layer 1 Constructs (L1)
+> 
+> Can be called CFN Resources which represents all resources directly
+available in CloudFormation.\
+> Constructs are periodically generated from CloudFormation Resource Specification.
+> - Construct names start with Cfn (e.g., `CfnBucket`)
+> - You must explicitly configure all resource properties.
+>
+> Layer 2 Constructs (L2)
+> 
+> Represents AWS resources but with a higher level (intent-based API).\
+> Similar functionality as L1 but with convenient defaults and boilerplate. You don't need to know all the details about the resource properties.\
+>  Provide methods that make it simpler to work with the resource (e.g., `bucket.addLifeCycleRule()`)
+>
+> Layer 3 Constructs (L3)
+> 
+> Can be called Patterns, which represents multiple related resources.\
+> Helps you complete common tasks in AWS
+> 
+>Examples:
+> - `aws-apigateway.LambdaRestApi` represents an API Gateway backed by a Lambda function
+> - `aws-ecs-patterns.applicationLoadBalancerFargateService` which represents an architecture that includes a Fargate cluster with Application Load Balancer.
+
+### Unit Testing
+
+for unit testing, we can get the CDK Assertion Module to make sure the code we write does what we thing it does. like checking if the template creates a lambda of a specific runtime. we can also check this against a defined <cloud>cloudFormation</cloud> (either in string form or from an actual resource).
+
+</details>
+
+## Amazon Cognito
+<details>
+<summary>
 
 </summary>
+
+### Cognito User Pools
+
+### Cognito Identity Pools
 
 </details>
 
