@@ -3989,13 +3989,106 @@ for unit testing, we can get the CDK Assertion Module to make sure the code we w
 ## Amazon Cognito
 <details>
 <summary>
-
+Give users an identity to interact with our web or mobile application.
 </summary>
+
+> Give users an identity to interact with our web or mobile application.
+> 
+> Cognito User Pools:
+> - Sign in functionality for app users
+> - Integrate with API Gateway & Application Load Balancer
+> 
+> Cognito Identity Pools (Federated Identity):
+> 
+> - Provide AWS credentials to users so they can access AWS resources directly
+> - Integrate with Cognito User Pools as an identity provider
+>
+> Cognito vs IAM: “hundreds of users", "mobile users", “authenticate with SAML"
 
 ### Cognito User Pools
 
-### Cognito Identity Pools
+> Create a serverless database of user for your web & mobile apps.
+> - Simple login: Username (or email) / password combination
+> - Password reset
+> - Email & Phone Number Verification
+> - Multi-factor authentication (MFA)
+> - Federated Identities: users from Facebook, Google, SAML...
+> - Feature: block users if their credentials are compromised elsewhere
+> - Login sends back a JSON Web Token (JWT)
 
+when the user authenticate against <cloud>Cognito</cloud>, they get back a JWT. this token is base64 encoded and contains sections
+- header
+- payload - user information
+- signature - needs to be verified before trusting the payload
+
+intgrates with <cloud>API Gateway</cloud> and <cloud>Application Load Balancer</cloud>, the users pass the token in the request.
+
+we select the requirements for passwords, expiration, MFA, account recovery, registration and sign-in options. we can use the cognito email address for up to 50 emails a day, or use <cloud>SES</cloud>. there is a built-in UI to log in, and we choose a domain if we have one. for this, we must have an <cloud>ACM</cloud> certificate in us-east-1 region.\
+we can connect our application to some clients. the callback url is where the users are sent after the log-in. if we want, we can customize the UI.\
+we can trigger flow via <cloud>Lambda</cloud> to user events like sign-up, log-in, migration...
+
+there is a feature called "adaptive authentication", which assigns a risk score to each sign-in attempt and can require MFA. this is based on device, location, address.
+### Application Load Balancer - Authenticate Users
+
+> Your Application Load Balancer can securely authenticate users.\
+> Offload the work of authenticating users to your load balancer, Your applications can focus on their business logic.
+> 
+> Authenticate users through:
+> - Identity Provider (IdP): OpenID Connect (OIDC) compliant
+> - Cognito User Pools:
+> - Social IdPs, such as Amazon, Facebook, or Google
+> - Corporate identities using SAML, LDAP, or Microsoft AD
+> 
+> Must use an **HTTPS** listener to set `authenticate-oidc` & `authenticate-cognito` rules.\
+> `OnUnauthenticatedRequest` – authenticate (default), deny, allow.
+
+there are some step needed to use OIDC authentication.
+
+### Cognito Identity Pools (Federated Identity)
+
+> Get identities for "users" so they obtain temporary AWS credentials.
+> 
+>  Your identity pool (e.g identity source) can include:
+> - Public Providers (Login with Amazon, Facebook, Google, Apple)
+> - Users in an Amazon Cognito user pool
+> - OpenID Connect Providers & SAML Identity Providers
+> - Developer Authenticated Identities (custom login server)
+> - Cognito Identity Pools allow for unauthenticated (guest) access
+> 
+> Users can then access AWS services directly or through API Gateway. The IAM policies applied to the credentials are defined in Cognito, They can be customized based on the user_id for fine grained control.
+
+`${cognito-identity.amazonaws.com:sub}`
+
+the users assume a role once the authenticate in AWS.
+
+### Summary
+
+> - Cognito User Pools (for authentication = identity verification)
+> - Database of users for your web and mobile application
+> - Allows to federate logins through Public Social, OIDC, SAML...
+> - Can customize the hosted UI for authentication (including the logo)
+> - Has triggers with AWS Lambda during the authentication flow
+> - Adapt the sign-in experience to different risk levels (MFA, adaptive authentication, etc…)
+> 
+> - Cognito Identity Pools (for authorization = access control)
+> - Obtain AWS credentials for your users
+> - Users can login through Public Social, OIDC, SAML & Cognito User Pools
+> - Users can be unauthenticated (guests)
+> - Users are mapped to IAM roles & policies, can leverage policy variables
+> - CUP + CIP = authentication + authorization
+
+
+</details>
+
+## Other Services
+<details>
+<summary>
+
+</summary>
+
+### Step Function
+### AppSync
+### AWS Amplify
 </details>
 
 ## Take Away
