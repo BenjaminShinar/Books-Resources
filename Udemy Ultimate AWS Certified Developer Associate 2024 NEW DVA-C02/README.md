@@ -3936,7 +3936,7 @@ we can deploy the resource together with the code. we use the cli `cdk synth` to
 | `npm install -g aws-cdk-lib` | Install the CDK CLI and libraries                  |
 | `cdk init app`               | Create a new CDK project from a specified template |
 | `cdk synth`                  | Synthesizes and prints the CloudFormation template |
-| `cdk ls`                  | (list something) |
+| `cdk ls`                     | (list something)                                   |
 | `cdk bootstrap`              | Deploys the CDK Toolkit staging Stack              |
 | `cdk deploy`                 | Deploy the Stack(s)                                |
 | `cdk diff`                   | View differences of local CDK and deployed Stack   |
@@ -4083,10 +4083,83 @@ the users assume a role once the authenticate in AWS.
 ## Other Services
 <details>
 <summary>
-
+Additional services
 </summary>
 
 ### Step Function
+
+model a workflow as a state-machine, written in json, visualized as a graphical entity. workflows can start manually or from an <cloud>Event Bridge</cloud>.
+
+Has Tasks and States.
+
+Tasks:
+
+> Invoke one AWS service:
+>   - Can invoke a <cloud>Lambda</cloud> function
+>   - Run an <cloud>AWS Batch</cloud> job
+>   - Run an <cloud>ECS task</cloud> and wait for it to complete
+>   - Insert an item from <cloud>DynamoDB</cloud>
+>   - Publish message to <cloud>SNS</cloud>, <cloud>SQS</cloud>
+>   - Launch another <cloud>Step Function</cloud> workflow...
+> 
+> Run one Activity
+> - <cloud>EC2</cloud>, <cloud>Amazon ECS</cloud>, on-premises
+> - Activities poll the Step functions for work
+> - Activities send results back to Step Functions
+
+States:
+> - Choice State - Test for a condition to send to a branch (or default branch)
+> - Fail or Succeed State - Stop execution with failure or success
+> - Pass State - Simply pass its input to its output or inject some fixed data, without performing work.
+> - Wait State - Provide a delay for a certain amount of time or until a specified time/date.
+> - Map State - Dynamically iterate steps.
+> - Parallel State - Begin parallel branches of execution.
+
+demo of creating a state machine, using the "hello world" example. there is a visual editor to create a flow. we can also use some predefined templates. for a lambda function step, we can define how the output (result) of the function controls how we move to the next state, and define how it behaves in case of errors.
+
+step functions should control how errors are handled, either if there is a problem inside one of the states, or from the step functions flows. we can either "retry" running the task, or "catch" it and move the an failure path.
+
+> Predefined error codes:
+> - States.ALL : matches any error name
+> - States.Timeout: Task ran longer than TimeoutSeconds or no heartbeat received
+> - States.TaskFailed: execution failure
+> - States.Permissions: insufficient privileges to execute code
+
+we can define how many times we retry, on which errors and with what backoff rate. if we run out of retries, we move into the catch state. the catch is defined similarly (based on the error), but it directs to other states.\
+**When we handle the error logic in the state machine flow, we make the application logic much simpler.**
+
+
+
+> Step Functions – Wait for Task Token
+> - Allows you to pause Step Functions during a Task until a Task Token is returned
+> - Task might wait for other AWS services, human approval, 3rd party integration, call legacy systems...
+> - Append `.waitForTaskToken` to the Resource field to tell Step Functions to wait for the Task Token to be returned
+> - Task will pause until it receives that Task Token back with a `SendTaskSuccess` or `SendTaskFailure` API call.
+>
+> Step Functions – Activity Tasks
+> 
+> Enables you to have the Task work performed by an Activity Worker
+> - Activity Worker apps can be running on <cloud>EC2</cloud>, <cloud>Lambda</cloud>,
+mobile device...
+> -  Activity Worker poll for a Task using `GetActivityTask` API.
+> -  After Activity Worker completes its work, it sends a response of its success/failure using `SendTaskSuccess` or `SendTaskFailure`
+> 
+> - To keep the Task active:
+>   - Configure how long a task can wait by setting `TimeoutSeconds`
+>   - Periodically send a heartbeat from your Activity Worker using `SendTaskHeartBeat` within the time you set in `HeartBeatSeconds`
+>   - By configuring a long `TimeoutSeconds` and actively sending a heartbeat, Activity Task can wait up to 1 year.
+
+we can use standard step functions, or express model (asynchronous "at-least once", or synchronous "at-most once").
+
+| Metric            | Standard                                           | Express                                                   |
+| ----------------- | -------------------------------------------------- | --------------------------------------------------------- |
+| Max. Duration     | Up to 1 year                                       | Up to 5 minutes                                           |
+| Execution Model   | Exactly-once Execution                             | "at-least once" and "at-most once"
+| Execution Rate    | Over 2000 / second                                 | Over 100,000 / second                                     |
+| Execution History | Up to 90 days or using <cloud>CloudWatch</cloud>   | <cloud>CloudWatch</cloud> Logs                                           |
+| Pricing           | # of State Transitions                             | # of executions, duration, and memory consumption         |
+| Use cases         | Non-idempotent actions (e.g., processing Payments) | IoT data ingestion, streaming data, mobile app backends.. |
+
 ### AppSync
 ### AWS Amplify
 </details>
