@@ -4161,8 +4161,145 @@ we can use standard step functions, or express model (asynchronous "at-least onc
 | Use cases         | Non-idempotent actions (e.g., processing Payments) | IoT data ingestion, streaming data, mobile app backends.. |
 
 ### AppSync
+
+> <cloud>AppSync</cloud> is a managed service that uses GraphQL
+> GraphQL makes it easy for applications to get exactly the data they need.This includes combining data from one or more sources.
+> - NoSQL data stores, Relational databases, HTTP APIs...
+> - Integrates with DynamoDB, Aurora, OpenSearch & others
+> - Custom sources with AWS Lambda
+> 
+> - Retrieve data in real-time with WebSocket or MQTT on WebSocket
+> - For mobile apps: local data access & data synchronization
+> 
+> It all starts with uploading one GraphQL schema.
+
+replaces something called "CognitoSync".
+
+<cloud>AppSync</cloud> gets a request and knows how to resolve it. resolvers control how the data is retrieved:
+- <cloud>DynamoDb</cloud>
+- <cloud>Aurora</cloud>
+- <cloud>OpenSearch</cloud>
+- <cloud>ElasticSearch</cloud>
+- <cloud>Lambda</cloud>
+
+security is controlled via:
+- API Keys
+- <cloud>AWS IAM</cloud>
+- OPENID_Connect
+- <cloud>Cognito</cloud> User Pools
+
+for the demo, we use the simple option and have it backed by <cloud>DynamoDb</cloud>. we create the table fields and a schema is also generated. we can run the query to create and list our resources. there are cacheing options, authorization settings and monitoring options (<cloud>X-Ray</cloud>). eventually, it can be integrated with applications (web and mobile).
+
 ### AWS Amplify
+
+> Set of tools to get started with creating mobile and web applications.\
+> "Elastic Beanstalk for mobile and web
+applications"
+>
+> - Must-have features such as data storage,
+authentication, storage, and machine-learning,
+all powered by AWS services.
+> - Front-end libraries with ready-to-use
+components for React.js, Vue, Javascript, iOS,Android, Flutter, etc...
+> - Incorporates AWS best practices to for
+reliability, security, scalability
+> - Build and deploy with the Amplify CLI or
+Amplify Studio.
+
+
+- <cloud>Amplify Studio</cloud> - visual designer for a full stack app
+- <cloud>Amplify Cli</cloud> - congifuring an application with a guided cli workflow
+- <cloud>Amplify Libraries</cloud> - connecting to AWS services
+- <cloud>Amplify Hosting</cloud> - hosting the application using <cloud>CloudFront</cloud>
+
+```sh
+amplify init
+amplify add auth
+amplify add api
+amplify add hosting
+```
+
+authentication with <cloud>Cognito</cloud> with pre-built ui componets. DataStore with GraphQL and <cloud>AppSync</cloud>.
+
+(similar to netlify, vercel, etc..)
+
+support end-to-end testing. we define the test in the "amplify.yml" file.
+ 
 </details>
+
+## Advanced Security
+<details>
+<summary>
+More IAM
+</summary>
+
+Other IAM options.
+
+### STS - Security Token Service
+
+Allows to grant limited and temporary access to AWS resources (up to 1 hour).
+> - AssumeRole: Assume roles within your account or cross account
+> - `AssumeRoleWithSAML`: return credentials for users logged with SAML
+> - `AssumeRoleWithWebIdentity`
+>   - return credentials for users logged with an IdP (Facebook Login, Google Login, OIDC compatible...)
+>   - AWS recommends against using this, and using Cognito Identity Pools instead
+> - `GetSessionToken`: for MFA, from a user or AWS account root user
+> - `GetFederationToken`: obtain temporary credentials for a federated user
+> - `GetCallerIdentity`: return details about the IAM user or role used in the API call
+> - `DecodeAuthorizationMessage`: decode error message when an AWS API is denied
+
+we define an IAM role, and a policy with which principals are allowed to assume the role. then we run `aws sts assume-role` to take over the role and act with it's permissions.
+
+### Advanced IAM
+
+authorization model flow - how we evaluate policies. 
+- if there's an explicit deny, DENY
+- if there's a allow, ALLOW
+- else, DENY.
+
+explicit denies are stronger than allowes.
+
+roles and resource polices (like S3) are combined - the *union* of the IAM role and the <cloud>S3</cloud> bucket policy. then the combined policy is evaluated.
+
+Dynamic Polices, assigning special "resources" to users based on the name, without creating multiple policies. we can use special policy variables `${aws:username}` - which is replaced at runtime with the username.
+
+```json
+{
+  "Sid":"AllowAllS3ActionsInUserFolder",
+  "Action":["S3:*"],
+  "Effect": "Allow",
+  "Resource": ["arn:s3:::my-company/home/${aws:username}/*"]
+}
+```
+
+- aws managed policies - maintained by aws
+- customer managed policy - created by the user, version control, rollback, central change management. (best practice)
+- inline - inside the <cloud>IAM</cloud> principal, attached to the user/role lifecycle. has limited size.
+
+### Configuring Services with Roles
+
+when we create resource and use services, we give them <cloud>IAM Roles</cloud>.
+- `iam:PassRole`
+- `iam:GetRole`
+
+roles can only be passed to services based on the Trust Policy (principal secion of the policy) - a role defines what kind of service can Assume it.
+
+### Directory Services
+
+Active Directory, connect with Microsoft Active Directory.
+
+> - Found on any Windows Server with AD Domain Services
+> - Database of objects: User Accounts, Computers, Printers, File Shares, Security Groups
+> - Centralized security management, create account, assign permissions
+> - Objects are organized in trees
+> - A group of trees is a forest
+
+-<cloud>AWS Managed Microsoft AD</cloud> - created on AWS, supports MFA. trust connection with on-premises AD. users exists in both.
+-<cloud>AD Connector</cloud> - connects to on-premises AD. proxy to the on-premises. support MFA. users only exist in the local server.
+-<cloud>Simple AD</cloud> - can't be jointed with on-premises.
+
+</details>
+
 
 ## Take Away
 <details>
