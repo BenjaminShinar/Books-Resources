@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE ONTAP ebextensions Flink Distro PITR
+// cSpell:ignore boto xlarge POSIX Proto AWSELB AWSALBTG AWSALBAPP NAPTR NACL DSSE ONTAP ebextensions Flink Distro PITR certutil fileb FIPS
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css"> 
@@ -809,7 +809,7 @@ cache is an in-memory database: AWS has Redis or Memecached as options. it gives
 > - Backup and restore features
 > - Supports Sets and Sorted Sets
 > 
-> MemCacheD
+> MemCached:
 > 
 > - Multi-node for partitioning of data (sharding)
 > - No high availability (replication)
@@ -4154,9 +4154,9 @@ we can use standard step functions, or express model (asynchronous "at-least onc
 | Metric            | Standard                                           | Express                                                   |
 | ----------------- | -------------------------------------------------- | --------------------------------------------------------- |
 | Max. Duration     | Up to 1 year                                       | Up to 5 minutes                                           |
-| Execution Model   | Exactly-once Execution                             | "at-least once" and "at-most once"
+| Execution Model   | Exactly-once Execution                             | "at-least once" and "at-most once"                        |
 | Execution Rate    | Over 2000 / second                                 | Over 100,000 / second                                     |
-| Execution History | Up to 90 days or using <cloud>CloudWatch</cloud>   | <cloud>CloudWatch</cloud> Logs                                           |
+| Execution History | Up to 90 days or using <cloud>CloudWatch</cloud>   | <cloud>CloudWatch</cloud> Logs                            |
 | Pricing           | # of State Transitions                             | # of executions, duration, and memory consumption         |
 | Use cases         | Non-idempotent actions (e.g., processing Payments) | IoT data ingestion, streaming data, mobile app backends.. |
 
@@ -4225,12 +4225,154 @@ authentication with <cloud>Cognito</cloud> with pre-built ui componets. DataStor
 
 support end-to-end testing. we define the test in the "amplify.yml" file.
  
+### SES
+SES - <cloud>Simple Email Service</cloud> send and receive emails.
+
+integrates with
+- <cloud>S3</cloud>
+- <cloud>SNS</cloud>
+- <cloud>Lambda</cloud>
+
+### OpenSearch Service
+
+The successor to <cloud>ElasticSearch</cloud>. 
+
+> - In <cloud>DynamoDB</cloud>, queries only exist by primary key or indexes. With OpenSearch, you can search any field, even partially matches.\
+> It's common to use OpenSearch as a complement to another database
+> - Two modes: managed cluster or serverless cluster
+> - Does not natively support SQL (can be enabled via a plugin)
+> - Ingestion from
+>   - <cloud>Kinesis Data Firehose</cloud>
+>   - <cloud>AWS IoT</cloud>
+>   - <cloud>CloudWatch Logs</cloud>
+> - Security through <cloud>Cognito</cloud> & <cloud>IAM</cloud>, <cloud>KMS encryption</cloud>, TLS
+> - Comes with OpenSearch Dashboards (visualization)
+
+common use case is to have a <cloud>DynamoDB</cloud> stream that sends data to a lambda, which puts it into <cloud>OpenSearch</cloud>, and now we can search for item based on all kinds of patterns. Another case is using <cloud>CloudWatch Logs</cloud> via a subscription filter and a lambda or <cloud>Kinesis Data Firehose</cloud> and write to <cloud>OpenSearch</cloud>.
+
+
+### Athena
+
+> Serverless query service to analyze data stored in Amazon <cloud>S3</cloud>. Uses standard SQL language to query the files (built on Presto).
+>
+> Supports file formats:
+> - CSV
+> - JSON
+> - ORC
+> - Avro
+> - Parquet
+> 
+> Pricing: $5.00 per TB of **data scanned**, Commonly used with <cloud>Amazon Quicksight</cloud> for reporting/dashboards.\
+> Use cases: 
+>   - Business intelligence 
+>   - analytics
+>   - reporting, 
+>   - analyze and query logs from our services
+
+we can improve the performance by scanning less data, such as formats with "columnar data" such as Parquet or ORC. we can use <cloud>AWS GLUE</cloud> to transform our data into those forms.\
+we also want to compress the data so it will be smaller. we can partition the data in S3 based on the Columns. so the path to each object becomes part of the query. for example "s3://athena-examples/flight/parquet/year=1991/month=1/day=1". it's also better to use larger files (combined together). we can also use <cloud>Athena</cloud> to run queries on other data sources by using a DataSource Connector plugin, this is called <cloud>Federated Query</cloud>, and we can store the result back into S3.
+
+demo of creating a bucket, we use the <cloud>S3</cloud> access logs as the data source. we run SQL commands such as `create database` and `create external table` to set up the database sources and `SELECT`, `WHERE`, `GROUP BY` and others...
+
+### Amazon Managed Streaming for Apache Kafka
+
+<cloud>MSK</cloud> - Amazon Managed Streaming for Apache Kafka. Kafka is a way to process and handle near-live data streams. Alternative to Amazon Kinesis.
+
+> - Fully managed Apache Kafka on AWS
+>   - Allow you to create, update, delete clusters
+>   - MSK creates & manages Kafka brokers nodes & Zookeeper nodes for you
+>   - Deploy the MSK cluster in your VPC, multi-AZ (up to 3 for HA)
+>   - Automatic recovery from common Apache Kafka failures
+>   - Data is stored on <cloud>EBS</cloud> volumes for as long as you want
+> 
+> - **MSK Serverless**
+>   - Run Apache Kafka on MSK without managing the capacity
+>   - MSK automatically provisions resources and scales compute & storage
+
+
+| Feature            | <cloud>Kinesis</cloud>                           | <cloud>MSK</cloud>                                            |
+| ------------------ | ------------------------------------------------ | ------------------------------------------------------------- |
+| Message Size Limit | 1Mb                                              | 1Mb by default, can go higher                                 |
+| Partition          | Data Streams and Shards                          | Kafka Topics and partitions                                   |
+| Operations         | Shard Splitting and merging                      | Can only add partitions to a topic                            |
+| Security           | TLS In-flight encryption, KMS at-rest encryption | PlainText or TLS In-flight encryption, KMS at-rest encryption |
+
+Producers:
+- <cloud>Kinesis</cloud>
+- <cloud>IOT</cloud>
+- <cloud>RDS</cloud>
+- others...
+
+Consumers
+- <cloud>Kinesis Data Analytics for Apache Flink</cloud>
+- <cloud>AWS Glue</cloud>, streaming ETL (extract-transform-load) jobs with apache spark streaming
+- <cloud>Lambda</cloud>
+- <cloud>EC2</cloud>
+- <cloud>ECS</cloud>
+- <cloud>EKS</cloud>
+
+### Amazon Certificate Manager
+
+<cloud>ACM</cloud> - Amazon Certificate Manager.  SSL/TLS Certificates
+
+> Used to provide in-flight encryption for websites (HTTPS).  Supports both public and private TLS
+> certificates.
+> - Free of charge for public TLS certificates
+> - Automatic TLS certificate renewal
+> - Integrations with (load TLS certificates on)
+>   - Elastic Load Balancers
+>   - CloudFront Distributions
+>   - APIs on API Gateway
+
+in the console, we can provision public and private certificates, we can <kbd>Import a Certificate</kbd> or <kbd>Request a Certificate</kbd>. we choose the domain name, select the validation (DNS), we need a CNAME record in <cloud>Route53</cloud>.
+
+we can use this certifcate in <cloud>ElasticBeanStalk</cloud>, we create a web server environment with an application load balancer, we add a listener on port 443 and add the SSL certificates and choose a SSL security policy. we can disable HTTP access if we want to. we create the CNAME record in <cloud>Route53</cloud> and point it to the load balancer.\
+now we can access the environment securely using the HTTPS protocol.
+
+we can also create private certificate authorities "x.509". they are only trusted by our organization and not the internet. we can issue them for users, devices, apis and others.
+
+### Amazon Macie
+> Amazon Macie is a fully managed data security and data privacy service
+that uses machine learning and pattern matching to discover and
+protect your sensitive data in AWS.\
+> Macie helps identify and alert you to sensitive data, such as personally identifiable information (PII).
+
+we set it to analyze a source, and then it can send an <cloud>EventBridge</cloud> notification which we can integrate with.
+
+### AppConfig
+
+> Configure, validate, and deploy dynamic configurations.
+> 
+> - Deploy dynamic configuration changes to your
+applications independently of any code deployments
+>   - You don't need to restart the application
+>   - Feature flags, application tuning, allow/block listing…
+>   - Use with apps on EC2 instances, Lambda, ECS, EKS...
+>   - Gradually deploy the configuration changes and rollback if issues occur
+> - Validate configuration changes before deployment
+using:
+>   - JSON Schema (syntactic check) or
+>   - Lambda Function – run code to perform validation
+(semantic check)
+
+### CloudWatch Evidently
+
+> Safely validate new features by serving them to a
+specified % of your users.
+> - Reduce risk and identify unintended consequences, Collect experiment data, analyze using stats, monitor performance.
+>   - Launches (= feature flags): enable and disable features for a subset of users
+>   - Experiments (= A/B testing): compare multiple versions of the same feature
+> - Overrides: pre-define a variation for a specific user (based on user id)
+> - Store evaluation events in CloudWatch Logs or S3
+
+it provides us a piece of code that we can use in the application. instead of embedding the logic in our code.
+
 </details>
 
-## Advanced Security
+## Advanced IAM and Security
 <details>
 <summary>
-More IAM
+More IAM and other Security features - Encryption, KMS, SSM
 </summary>
 
 Other IAM options.
@@ -4298,6 +4440,399 @@ Active Directory, connect with Microsoft Active Directory.
 -<cloud>AD Connector</cloud> - connects to on-premises AD. proxy to the on-premises. support MFA. users only exist in the local server.
 -<cloud>Simple AD</cloud> - can't be jointed with on-premises.
 
+### Encryption
+
+encryption in flight (TLS/SSL)
+> - Data is encrypted before sending and decrypted after receiving
+> - TLS certificates help with encryption (HTTPS)
+> - Encryption in flight ensures no man in the middle attack can
+happen
+
+server side encryption
+> - Data is encrypted after being received by the server
+> - Data is decrypted before being sent
+> - It is stored in an encrypted form thanks to a key (usually a data key)
+> - The encryption / decryption keys must be managed somewhere, and
+the server must have access to it
+
+client side encryption
+> - Data is encrypted by the client and never decrypted by the server
+> - Data will be decrypted by a receiving client
+> - The server should not be able to decrypt the data
+> - Could leverage Envelope Encryption
+
+### Key Management Service
+
+<cloud>KMS</cloud> - Key management service
+
+> - Anytime you hear "encryption" for an AWS service, it's most likely KMS
+> - AWS manages encryption keys for us.
+> - Fully integrated with IAM for authorization.
+> - Easy way to control access to your data.
+> - Able to audit KMS Key usage using <cloud>CloudTrail</cloud>.
+> - Seamlessly integrated into most AWS services (<cloud>EBS</cloud>, <cloud>S3</cloud>, <cloud>RDS</cloud>, <cloud>SSM</cloud>...)
+> - Never ever store your secrets in plaintext, especially in your code!
+> - KMS Key Encryption also available through API calls (SDK, CLI).
+> - Encrypted secrets can be stored in the code / environment variables.
+
+Key types:
+> - Symmetric (AES-256 keys)
+>   - Single encryption key that is used to Encrypt and Decrypt
+>   - AWS services that are integrated with KMS use Symmetric CMKs
+>   - You never get access to the KMS Key unencrypted (must call KMS API to use)
+> - Asymmetric (RSA & ECC key pairs)
+>   - Public (Encrypt) and Private Key (Decrypt) pair
+>   - Used for Encrypt/Decrypt, or Sign/Verify operations
+>   - The public key is downloadable, but you can't access the Private Key unencrypted
+>   - Use case: encryption outside of AWS by users who can't call the KMS API
+
+
+- AWS owned keys, default free keys (SSE-S3, SSE-SQS, SSE-DDB)
+- AWS managed key, free, with their name being based on a pattern "aws/service-name" ("aws/rds", "aws/ebs")
+- customer managed keys - either created in aws or imported. cost one dollar a month.
+- there are additional costs to use the API (a few cents for 1000 calls)
+
+automatic key rotation for aws managed keys, opt-in rotation for customer manager keys. for imported keys it's only possible when using an alias. <cloud>KMS</cloud> keys are scoped to the region. KMS keys have key policies (like S3 bucket policies). the default policy allows everyone in the account to access it, or we can use a customized policy. this is useful for cross-account accesses.
+
+(demo)\
+looking at the web console, seeing the aws managed keys and the key policies attached to them. they have the "kms:ViaService" condition that controls which services is allowed to use them. we can also see the customer managed keys (created there or imported),(custom key store is HSM). we can create symmetric or asymmetric keys, we can define some settings, including cross-account access. when the key is created we can enable yearly rotation and look at aliases.
+
+encrypting and decrypting a local file using KMS.
+
+```sh
+# 1) encryption
+aws kms encrypt --key-id alias/tutorial --plaintext fileb://ExampleSecretFile.txt --output text --query CiphertextBlob  --region eu-west-2 > ExampleSecretFileEncrypted.base64
+
+# base64 decode for Linux or Mac OS 
+cat ExampleSecretFileEncrypted.base64 | base64 --decode > ExampleSecretFileEncrypted
+
+# base64 decode for Windows
+certutil -decode .\ExampleSecretFileEncrypted.base64 .\ExampleSecretFileEncrypted
+
+
+# 2) decryption
+
+aws kms decrypt --ciphertext-blob fileb://ExampleSecretFileEncrypted   --output text --query Plaintext > ExampleFileDecrypted.base64  --region eu-west-2
+
+# base64 decode for Linux or Mac OS 
+cat ExampleFileDecrypted.base64 | base64 --decode > ExampleFileDecrypted.txt
+
+# base64 decode for Windows
+certutil -decode .\ExampleFileDecrypted.base64 .\ExampleFileDecrypted.txt
+```
+#### Encryption Patterns and Evelope Encryption
+
+the kms has a limit of 4kb. if we want to encrypt larger files we use the "envelope pattern", this utilizes the `GenerateDataKey` API. we get both a plain text data key and the encrypted data key. we use it to encrypt our data, and store both the encrypted data and the encrypted data key together. to decrypt it, we call `Decrypt` API to decrypt the data key, and then we use it on the content of the file.
+
+> Encryption SDK
+> 
+> - The AWS Encryption SDK implemented Envelope Encryption for us
+> - The Encryption SDK also exists as a CLI tool we can install
+> - Implementations for Java, Python, C, JavaScript
+> - Feature - Data Key Caching:
+>   - re-use data keys instead of creating new ones for each encryption
+>   - Helps with reducing the number of calls to KMS with a security trade-off
+>   - Use `LocalCryptoMaterialsCache` (max age, max bytes, max number of messages)
+
+
+> KMS Symmetric – API Summary
+> 
+> - `Encrypt`: encrypt up to 4 KB of data through KMS
+> - `GenerateDataKey`: generates a unique symmetric data key (DEK)returns a plaintext copy of the data key AND a copy that is encrypted under the CMK that you specify
+> - `GenerateDataKeyWithoutPlaintext`:- Generate a DEK to use at some point (not immediately), DEK that is encrypted under the CMK that you specify (must use Decrypt later)
+> - `Decrypt`: decrypt up to 4 KB of data (including Data Encryption Keys)
+> - `GenerateRandom`: Returns a random byte string
+
+demo of using the cli
+
+```sh
+pip install aws-encryption-sdk-cli
+aws-encryption-cli --version
+$cmkArn=arn:aws:kms:<region>:<account>:key/<guid>
+mkdir output
+echo "very large text" > hello.txt
+aws-encryption-sdk-cli --encrypt --input hello.txt --wrapping-keys key=$cmkArn --metadata-output metadata/ --encryption-context purpose=test --output output/
+cat metadate | jq
+cat output/hello.txt.encrypted
+mkdir decrypted
+aws-encryption-sdk-cli --decrypt --input output/hello.txt.encrypted --wrapping-keys key=$cmkArn --metadata-output metadata/ --encryption-context purpose=test --output decrypted/
+cat decrypted/hello.txt.encrypted.decrypted
+```
+#### KMS Limits
+
+> - When you exceed a request quota, you get a `ThrottlingException`:
+> - To respond, use exponential backoff (backoff and retry)
+> - For cryptographic operations, they share a quota
+>   - This includes requests made by AWS on your behalf (ex: SSE-KMS)
+> - For `GenerateDataKey`, consider using DEK caching from the Encryption SDK
+> - You can request a Request Quotas increase through API or AWS support.
+
+
+- Decrypt
+- Encrypt
+- GenerateDataKey (symmetric)
+- GenerateDataKeyWithoutPlaintext (symmetric)
+- GenerateRandom
+- ReEncrypt
+- Sign (asymmetric)
+- Verify (asymmetric)
+
+all apis share the quota, even if the request was made by an AWS service. there are different quotas for symmetric and asymmetric CMK resources.
+
+#### KMS and Lambda
+
+we create a lambda, it needs to access a database with a password, we can't put it the code, instead, we can put it in the environment variables and choose to encrypt it. we select which key we use (default "aws/lambda" or customer managed key). we also get the code snippet to decrypt it. we need the lambda to have <cloud>IAM</cloud> role with permissions to <cloud>KMS</cloud>.
+
+#### S3 Bucket Key
+
+uses the same principles as envelope encryption.
+
+> New setting to decrease Number of API calls made to KMS from <cloud>S3</cloud> by 99% and Costs of overall KMS encryption with Amazon S3 by 99%.\
+> This leverages data keys:A "S3 bucket key" is generated. That key is used to encrypt KMS objects with new data keys. You will see less KMS <cloud>CloudTrail</cloud> events in <cloud>CloudTrail</cloud>.
+
+in the <cloud>S3</cloud> bucket settings, when we create a bucket and encrypt it with a customer managed key, we can enable "bucket key".
+
+#### Key Polices
+
+the default policy for anyone inside the account to use kms
+
+```json
+{
+  "Effect": "Allow",
+  "Action": "kms:*",
+  "Principal": {
+    "AWS":"arn:aws:iam:<account>:root"
+  },
+  "Resource": "*"
+}
+```
+
+for federated users
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "kms:Encrypt",
+    "kms:Decrypt",
+    "kms:ReEncrypt*",
+    "kms:GenerateDataKe",
+    "kms:DescribeKey",
+    ],
+  "Principal": {
+    "AWS":"arn:aws:iam:<account>:federated-user/<user-name>"
+  },
+  "Resource": "*"
+}
+```
+
+other examples
+- `"Principal": "*"`
+- `"Principal": {"AWS":"*"}`
+- `"Principal": {"AWS":"<account>"}`
+- `"Principal": {"AWS":"arn:aws:iam:<account>:root"}`
+- `"Principal": {"AWS":"arn:aws:iam:<account>:user/<user-name>"}`
+- `"Principal": {"AWS":"arn:aws:iam:<account>:role/<role-name>"}`
+- `"Principal": {"AWS":"arn:aws:iam:<account>:role/<role-name>/<role-seesion-name>"}`
+- `"Principal": {"Federated":"arn:aws:sts:<account>:federated-user/<user-name>"}`
+- `"Principal": {"Federated":"cognito-identity-amazonaws.com"}`
+- `"Principal": {"Federated":"arn:aws:iam:<account>:saml-provider/<saml-provider-name>"}`
+- - `"Principal": {"Service":["ecs.amazonaws.com", "elasticloadbalancing.amazonaws.com]}`
+
+#### CloudHSM
+
+<cloud>HSM</cloud> - <cloud>Hardware Security Module</cloud>
+
+> - KMS => AWS manages the software for encryption
+> - <cloud>CloudHSM</cloud> => AWS provisions encryption hardware
+> - Dedicated Hardware (HSM = Hardware Security Module)
+> - **You manage your own encryption keys entirely (not AWS)**
+> - HSM device is tamper resistant, FIPS 140-2 Level 3 compliance
+> - Supports both symmetric and asymmetric encryption (SSL/TLS keys)
+> - No free tier available
+> - Must use the CloudHSM Client Software
+> - Redshift supports CloudHSM for database encryption and key management
+> - Good option to use with SSE-C encryption
+> - CloudHSM clusters are spread across Multi AZ (HA)
+> - Great for availability and durability
+> - Integration thorugh <cloud>KMS</cloud> - Configure KMS custom Key Store. (we can see key usage logs in <cloud>CloudTrail</cloud>)
+
+| Feature                    | <cloud>KMS</cloud>                                                                        | <cloud>CloudHSM</cloud>                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Tenancy                    | Multi-Tenant                                                                              | Single-Tenant                                                          |
+| Standard                   | FIPS 140-2 Level 3                                                                        | FIPS 140-2 Level 3                                                     |
+| Master Keys                | AWS Owned CMK, AWS Managed CMK, Customer Managed CMK                                      | Customer Managed CMK                                                   |
+| Key Types                  | Symmetric, Asymmetric, Digital Signing                                                    | Symmetric,Asymmetric, Digital Signing & Hashing                        |
+| Key Accessibility          | Accessible in multiple AWS regions (can't access keys outside the region it's created in) | Deployed and managed in a VPC, Can be shared across VPCs (VPC Peering) |
+| Cryptographic Acceleration | None                                                                                      | SSL/TLS Acceleration, Oracle TDE Acceleration Access & Authentication  | AWS IAM | You create users and manage their permissions |
+| High Availability          | AWS Managed Service                                                                       | Add multiple HSMs over different AZs                                   |
+| Audit Capability           | CloudTrail, CloudWatch                                                                    | CloudTrail, CloudWatch MFA support                                     |
+| Free Tier                  | Yes                                                                                       | No                                                                     |
+
+### SSM Parameter Store And Secrets Manager
+
+> Secure storage for configuration and secrets
+> 
+> - Optional Seamless Encryption using KMS
+> - Serverless, scalable, durable, easy SDK
+> - Version tracking of configurations / secrets
+> - Security through <cloud>IAM</cloud>
+> - Notifications with <cloud>Amazon EventBridge</cloud>
+> - Integration with <cloud>CloudFormation</cloud>
+
+uses hierarchy (prefixes), we can also access secrets from the secrets manager ("/aws/reference/secretsmanager/secret_id") or some publicly available information from aws such as the recent AMI version ("/aws/service/ami-amazon-linux/latest/amzn2-ami-hvm-x86_64-gp2").
+
+we set the IAM policy to allow access based on paths. parameters have tiers: Standard and Advanced
+
+| Feature                                                         | Standard      | Advanced                               |
+| --------------------------------------------------------------- | ------------- | -------------------------------------- |
+| Total number of parameters allowed (per AWS account and Region) | 10,000        | 100,000                                |
+| Maximum size of a parameter value                               | 4 KB          | 8 KB                                   |
+| Parameter policies available                                    | No            | Yes                                    |
+| Cost                                                            | No additional | charge Charges apply                   |
+| Storage Pricing                                                 | Free          | $0.05 per advanced parameter per month |
+
+> Parameters Polices Allow to assign a TTL to a parameter (expiration date) to force updating or deleting sensitive data such as passwords. we Can assign multiple policies at a time.
+
+We can set notifications from <cloud>EventBridge</cloud> before expiration or if it wasn't changed.
+
+(demo), under the AWS <cloud>System Manager</cloud> service, we can create parameters:
+- string
+- string list
+- secure string (encrypted)
+
+parameters have versions (so we can see the history). we can use default <cloud>KMS</cloud> key ("aws/ssm")  another key.
+
+```sh
+aws ssm get-paramaters --names "/path1" "/path2"
+aws ssm get-paramaters --names "/path1" "/path2" --with-decryption
+aws ssm get-paramaters-by-path --path "/path" --recursive
+```
+
+we can also use this in a <cloud>Lambda</cloud> function, we just need the <cloud>IAM</cloud> role to allow it (both to <cloud>SSM</cloud> and <cloud>KMS</cloud>).
+
+```python
+import json
+import boto3
+import os
+
+ssm = boto3.client('ssm', region_name="eu-west-3")
+dev_or_prod = os.environ['DEV_OR_PROD']
+
+def lambda_handler(event, context):
+    db_url = ssm.get_parameters(Names=["/my-app/" + dev_or_prod + "/db-url"])
+    print(db_url)   
+    db_password = ssm.get_parameters(Names=["/my-app/" + dev_or_prod + "/db-password"], WithDecryption=True)
+    print(db_password)
+    return "worked!"
+```
+
+> <cloud>Secrets Manager</cloud> Newer service, meant for storing secrets.
+> 
+> - Capability to force rotation of secrets every X days
+> - Automate generation of secrets on rotation (uses <cloud>Lambda</cloud>)
+> - Mostly meant for <cloud>RDS</cloud> integration: Integration with Amazon RDS (MySQL, PostgreSQL, <cloud>Aurora</cloud>)
+> - Secrets are encrypted using <cloud>KMS</cloud>
+> - Replicate Secrets across multiple AWS Regions
+> - Secrets Manager keeps read replicas in sync with the primary Secret
+> - Ability to promote a read replica Secret to a standalone Secret
+> - Use cases: multi-region apps, disaster recovery strategies, multi-region DB...
+
+pricing is higher than parameter store advanced tier.
+
+there are different secret types:
+- <cloud>RDS</cloud> credentials
+- <cloud>RedShift</cloud> credentials
+- <cloud>DocumentDB</cloud> credentials
+- and more!
+
+must be encrypted, we can configure automatic rotation, which invokes a lambda function that performs the rotation. AWS provides basic lambda functions for some databases. When we use it together with an RDS, the service also sets the values on the database.
+
+
+| Feature                                   | Parameter Store                             | Secrets Manager                                                        |
+| ----------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------- |
+| Cost                                      | Lower                                       | Higher                                                                 |
+| Security                                  | <cloud>KMS</cloud> Optional                 | <cloud>KMS</cloud> Required                                            |
+| Rotation                                  | optional through <cloud>EventBridge</cloud> | built in <cloud>Lambda</cloud> integration                             |
+| <cloud>CloudFormation</cloud> Integration | Yes                                         | Yes                                                                    |
+| Defaults                                  | can pull secret from secrets manager        | <cloud>RDS</cloud>, <cloud>RedShift</cloud>, <cloud>DocumentDB</cloud> |
+| API                                       | Simple, path based                          | Complex                                                                |
+
+#### CloudFormation Integration
+
+we can use <cloud>CloudFormation</cloud> and reference values from SSM (parameter store and secrets manager).
+- *ssm* - plaintext values from parameter store
+- *ssm-secure* - secure string from parameter store
+- *secretsmanager* - secure string from secrets manager
+
+the dynamic reference in the template looks like this: `{{resolve:<service-name>:<reference-key>:<optional-version}}`
+
+if we create the database through cloudformation, we can set the *ManageMasterUserPassword* field to true, and the secret is created automatically. the other option is to explicitly create the Secret resource ("AWS::SecretManager::Secret") and set it to be automatically generated, and then refer to it with the `resolve` and `!Ref`
+
+### CloudWatch Logs Encryption
+
+we can encrypt <cloud>CloudWatch</cloud> with a <cloud>KMS</cloud> key, this is done in the logGroup level, either when created or afterwards. this cannot be done thorough the web console, only through the api.
+
+- `associate-kms-key`
+- `create-log-group`
+
+```sh
+## associate with existing log group
+aws logs associate-kms-key --log-group-name /aws/lambda/hello-world --kms-key-id arn:aws:kms:<region>:<account-id>:key/<kms-guid>> --region <region>
+
+## create new log group
+aws logs create-log-group --log-group-name example-encrypted --kms-key-id arn:aws:kms:<region>:<account-id>:key/<kms-guid>> --region <region>
+```
+the key needs to have it's policy modified to allow it to be used by the <cloud>CloudWatch Logs</cloud> service.
+
+```json
+{
+  "Version" : "2012-10-17",
+  "Id" : "key-default-1",
+  "Statement" : [ {
+      "Sid" : "Enable IAM User Permissions",
+      "Effect" : "Allow",
+      "Principal" : {
+        "AWS" : "arn:aws:iam::Your_account_ID:root"
+      },
+      "Action" : "kms:*",
+      "Resource" : "*"
+    },
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "logs.region.amazonaws.com" },
+      "Action": [ 
+        "kms:Encrypt*",
+        "kms:Decrypt*",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:Describe*"
+      ],
+      "Resource": "*"
+    }  
+  ]
+}
+```
+
+### CodeBuild Security
+
+<cloud>CodeBuild</cloud> can only access <cloud>VPC</cloud> resources if it's inside the it.
+
+Secrets can be environment variables that reference SSM parameter store parameters or secret manager.
+
+### Nitro Enclaves
+
+> Process highly sensitive data in an isolated compute environment.
+>  Personally Identifiable Information (PII), healthcare, financial, ...
+> - Fully isolated virtual machines, hardened, and highly constrained.
+> - Not a container, not persistent storage, no interactive access, no external networking.
+> - Helps reduce the attack surface for sensitive data processing apps
+> -  Cryptographic Attestation – only authorized code can be running in your Enclave
+> - Only Enclaves can access sensitive data (integration with KMS)
+> - Use cases: securing private keys, processing credit cards, secure multi-party computation...
+
+uses a nitro-compatible <cloud>EC2</cloud> instance with the "Enclave Option" set to true. then using the cli to convert it into an <cloud>Enclave Image File</cloud>, we then use the cli again to create it properly. it's created as a separated machine with it's own kernel, memory and CPU. and we can't SSH into it.
+
 </details>
 
 
@@ -4313,10 +4848,12 @@ shell commands
 ```sh
 aws --version # check cli version
 aws configure # configure user
-aws iam list-users # show all users in account
 
-# MFA
+# MFA, IAM and STS
+aws iam list-users # show all users in account
 aws sts get-session-token --serial-number <arn-of-the-mfa-device> --tokencode <code-from-token> --duration-seconds 3600
+
+AWS STS decode-authorization-message
 
 # S3
 aws s3 ls --profile <profile_name>
@@ -4367,6 +4904,30 @@ sam local start-lambda
 sam local invoke
 sam local start-api
 sam local generate-event
+
+# amplify
+
+amplify init
+amplify add auth
+amplify add api
+amplify add hosting
+
+# kms
+aws kms encrypt --key-id alias/tutorial --plaintext fileb://ExampleSecretFile.txt --output text --query CiphertextBlob  --region eu-west-2 > ExampleSecretFileEncrypted.base64
+
+aws kms decrypt --ciphertext-blob fileb://ExampleSecretFileEncrypted   --output text --query Plaintext > ExampleFileDecrypted.base64  --region eu-west-2
+
+# ssm
+aws ssm get-paramaters --names "/path1" "/path2"
+aws ssm get-paramaters --names "/path1" "/path2" --with-decryption
+aws ssm get-paramaters-by-path --path "/path" --recursive
+
+# cloudFormation
+## associate with existing log group
+aws logs associate-kms-key --log-group-name /aws/lambda/hello-world --kms-key-id arn:aws:kms:<region>:<account-id>:key/<kms-guid>
+
+## create new log group
+aws logs create-log-group --log-group-name example-encrypted --kms-key-id arn:aws:kms:<region>:<account-id>:key/<kms-guid>
 ```
 
 1. if we want really high IOPS (More than 250,000), we have to use Instance Store (can't use ELB).
@@ -4384,4 +4945,5 @@ sam local generate-event
 10. <cloud>DynamoDB DAX</cloud> - built-in accelarator, in memory-cache.
 
 <cloud>CoPilot</cloud> manages ECS applications, while <cloud>Beanstalk</cloud> manages instance-based applications.
+
 </details>
