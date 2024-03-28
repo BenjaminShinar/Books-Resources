@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott 
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -360,4 +360,72 @@ int main()
 }
 ```
 
+</details>
+
+## C++ Weekly - Ep 412 - Possible Uses of C++23's [[assume]] Attribute
+
+<details>
+<summary>
+trying to find a potential use-case for the [[assume]] attribute.
+</summary>
+
+[Possible Uses of C++23's [[assume]] Attribute](https://youtu.be/Frl8XKhvA4Q?si=0sWAyEj4GUonnq83)
+
+give the compiler a hint about the nature of the code. we can tell the compiler ahead of time that we know something which we don't have as part of the type system, and then the compiler can optimize with it in mind.
+
+```cpp
+int do_work(int x)
+{
+  if (x<5) {
+    return x +10;
+  }
+  else {
+    return x - 10;
+  }
+}
+
+int main(int argc, const char*[])
+{
+  [[assume(argc == 5)]];
+  return do_work(argc);
+}
+```
+
+a better example uses the assumption attribute to skip a null check.
+
+```cpp
+int get_value(int * ptr)
+{
+  if (ptr == nullptr)
+  {
+    throw "oops!";
+  }
+  return *ptr;
+}
+
+int * get_ptr();
+
+int main()
+{
+  int *ptr = get_ptr();
+  [[assume(ptr != nullptr)]];
+  return get_value(ptr);
+}
+```
+</details>
+
+## C++ Weekly - Ep 413 - (2x Faster!) What are Unity Builds (And How They Help)
+<details>
+<summary>
+Using Unity Build to increase build speed.
+</summary>
+
+[(2x Faster!) What are Unity Builds (And How They Help)](https://youtu.be/POYVF6urMwg?si=FYPHn6wPXH-J-c76)
+
+we usually compile source files one by one, we can maybe compile them in parallel (depending on the number of cores), but we always need to parse the same headers again and again.\
+A unity Build takes the files and concatenates their content together, which can potentially speed up the process. it can also act as a kind of LTO (link time optimization), since the compiler has more information about the code. another upside is that it detects ODR violations much quicker.
+
+this is a built in option in CMake, we can set it globally and then make exceptions for specific target projects.
+
+we might get a warning about redefinition of macro across files (but we shouldn't be using macro anyway).
 </details>
