@@ -429,3 +429,53 @@ this is a built in option in CMake, we can set it globally and then make excepti
 
 we might get a warning about redefinition of macro across files (but we shouldn't be using macro anyway).
 </details>
+
+## C++ Weekly - Ep 414 - C++26's Placeholder Variables With No Name
+<details>
+<summary>
+special way to re-use the underscore as a variable name.
+</summary>
+
+[C++26's Placeholder Variables With No Name](https://youtu.be/OZ1gNuF60BU?si=yTfYAzQ0bRV32AIb)
+
+
+allows usage of placeholders for unused variables.
+
+```cpp
+std::tuple<int, double, float> get_values();
+
+int main()
+{
+  const auto &[count, volume, rate] = get_values();
+
+  return count;
+}
+```
+we could one instance of `_` underscore in c++23, but starting in c++26, multiple uses are allowed.
+
+```cpp
+int main()
+{
+    const auto &[count, _, _] = get_values();
+    int _ = 2;
+    float _ = 3.0;
+
+  //return _; // not allowed, ambiguous
+  return count;
+}
+```
+</details>
+
+## C++ Weekly - Ep 415 - Moving From C++98 to C++11
+<details>
+<summary>
+Continue from episode 407.
+</summary>
+
+[Moving From C++98 to C++11](https://youtu.be/84Zy1D8MWaI?si=4TJ_OnRadt4mVa9j)
+
+first we move the project to the toolchain, and then we can start upgrading the code to c++11. removing casts, using standard containers. using <cpp>auto</cpp> sometimes when we don't care about the types and we don't want conversions (we get the compiler to warn us about them).
+
+</details>
+
+
