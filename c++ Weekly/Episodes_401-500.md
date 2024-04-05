@@ -304,6 +304,7 @@ int main()
 | 08        | V    | V   | V         |
 
 we can create a struct and based on the order of the members, we get different sizes. some compiler have an option to warn about padding (`-Wpadded` in clang). **changing layout will break the ABI.**
+
 </details>
 
 ## C++ Weekly - Ep 411 - Intro to C++ Exceptions
@@ -412,9 +413,11 @@ int main()
   return get_value(ptr);
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 413 - (2x Faster!) What are Unity Builds (And How They Help)
+
 <details>
 <summary>
 Using Unity Build to increase build speed.
@@ -428,16 +431,17 @@ A unity Build takes the files and concatenates their content together, which can
 this is a built in option in CMake, we can set it globally and then make exceptions for specific target projects.
 
 we might get a warning about redefinition of macro across files (but we shouldn't be using macro anyway).
+
 </details>
 
 ## C++ Weekly - Ep 414 - C++26's Placeholder Variables With No Name
+
 <details>
 <summary>
 special way to re-use the underscore as a variable name.
 </summary>
 
 [C++26's Placeholder Variables With No Name](https://youtu.be/OZ1gNuF60BU?si=yTfYAzQ0bRV32AIb)
-
 
 allows usage of placeholders for unused variables.
 
@@ -451,6 +455,7 @@ int main()
   return count;
 }
 ```
+
 we could one instance of `_` underscore in c++23, but starting in c++26, multiple uses are allowed.
 
 ```cpp
@@ -464,9 +469,11 @@ int main()
   return count;
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 415 - Moving From C++98 to C++11
+
 <details>
 <summary>
 Continue from episode 407.
@@ -478,4 +485,120 @@ first we move the project to the toolchain, and then we can start upgrading the 
 
 </details>
 
+## C++ Weekly - Ep 416 - Moving From C++11 to C++14
 
+<details>
+<summary>
+Continuing from previous episode.
+</summary>
+
+[Moving From C++11 to C++14](https://youtu.be/_Rq8gWimRcA?si=VvdY9F_N2komXyg1)
+
+next we move from C++11 to C++14. some of the stuff could be done using the automatic tools.
+
+we can add Cpp attributes, such as c++11 <cpp>[[noreturn]]</cpp> and <cpp>[[deprecated]]</cpp> (<cpp>[[nodiscard]]</cpp> is from cpp++17).\
+Each time we move in standards, we can use more external libraries, and in our case, we can use the testing framework of <cpp>Catch2</cpp>. we add it to the CMake file (some stuff to uncomment).
+
+in the test.cpp file we previously had custom unit tests code.
+
+```cpp
+int main()
+{
+  bool all_passed = true;
+  runt_test("3 + 2", RationalNumber(5,1), all_passed);
+  runt_test("(3 + 2)", RationalNumber(5,1), all_passed);
+  // more tests
+  if (all_passed) {
+    return EXIT_SUCCESS;
+  }
+  else {
+    return EXIT_FAILURE;
+  }
+}
+```
+
+which we can replace with the test framework, which better integrates with the IDE. we also can create constexpr tests, which will prevent the code from compiling.
+
+```cpp
+TEST_CASE("addition")
+{
+  CHECK(evaluate("3 + 2") == RationalNumber(5,1));
+  CHECK(evaluate("(3 + 2)") == RationalNumber(5,1));
+}
+
+TEST_CASE("constexpr constructor")
+{
+  STATIC_REQUIRE(RationalNumber(5,1) == RationalNumber(5,1));
+  STATIC_REQUIRE(RationalNumber(1,1) + RationalNumber(2,1) == RationalNumber(3,1));
+  //STATIC_REQUIRE(RationalNumber(5,1) == RationalNumber(4,1)); // will fail compilation
+}
+```
+
+we can make some more code to be <cpp>constexpr</cpp>, but for now it's mostly preparation for the future.
+</details>
+
+## C++ Weekly - Ep 417 - Turbocharge Your Build With Mold?
+
+<details>
+<summary>
+A linker that utilizes mutiple cpus and parallel processing
+</summary>
+
+[Turbocharge Your Build With Mold?](https://youtu.be/gOBbu2dL_R8?si=C84ki0_Uy2Z3ARp3), [github](https://github.com/rui314/mold)
+
+getting faster linking, especially when multiple object files rely on the same libraries. we switch linkers with by passing the `-fuse-ld=<linker>` flag (`-fuse-ld=mold` in our case). it also reduces memory usage.
+
+it can also help when building debug versions, which are usually slower.
+</details>
+
+## C++ Weekly - Ep 418 - Moving From C++14 to C++17
+
+<details>
+<summary>
+Another upgrade
+</summary>
+
+[Moving From C++14 to C++17](https://youtu.be/yL0DWa2LxNU?si=XX8iAq79FGWh8pyQ)
+
+we can start by adding the attributes, mostly the <cpp>[[nodiscard]]</cpp> one. when we move to using <cpp>std::string_view</cpp> (pass by value) we start getting into issues of lifetime management. we also replace <cpp>atoi</cpp> with <cpp>std::from_chars</cpp>, there is also an added bonus of better <cpp>constexpr</cpp> support. we can also add fuzz-testing to check our string tokenizer.
+
+</details>
+
+## C++ Weekly - Ep 419 - The Important Parts of C++23
+
+<details>
+<summary>
+overview of the major changes in C++23.
+</summary>
+
+[The Important Parts of C++23](https://youtu.be/N2HG___9QFI?si=0GVPU_ZMFLrpPPit)
+
+- <cpp>std::print</cpp> and <cpp>std::println</cpp> - easily format argument
+- <cpp>import std;</cpp> - replace headers with modules. still not supported in compiler explorer.
+- <cpp>std::stacktrace</cpp> - access the stacktrace.
+- <cpp>std::flat_map</cpp>, <cpp>std::flat_set</cpp> - container adapters for contiguously allocated map and set behavior. somehow not constexpr yet. default uses vectors.
+- multidimensional subscript. use commas inside the `[]` operator.
+- ranges upgrades - many stuff, includes <cpp>zip</cpp> to iterate over multiple containers at a time.
+- constexpr "cmath" - except for trigonometry functions (c++26).
+- <cpp>std::expected</cpp> - an alternate error handling mechanism. like an optional pair. the downside is  that it interferes with return value optimization and would require explicit move semantics.
+- generators for coroutines
+- <cpp>md_span</cpp> - multiple dimension span (not owning the data itself)
+- explicit `this` (deducing `this`)
+- size literal suffix - signed and and unsigned size_t suffixes.
+- <cpp>std::start_lifetime_as</cpp> - allows us to avoid <cpp>std::reinterpret_cast</cpp> in another case. tells the compiler there is an object at that memory point, which clears up some undefined behavior cases.
+
+```cpp
+#include <print>
+// import std;
+int main(int argc, const char[]*)
+{
+  std::println("{} argument passed to main", argc);
+}
+
+void foo()
+{
+  std::println("{}", std::stacktrace::current());
+}
+```
+
+</details>

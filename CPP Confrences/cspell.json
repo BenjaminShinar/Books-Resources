@@ -8,6 +8,7 @@
     "Metaprogramming",
     "Architecting",
     "ccmake",
+    "conan",
     "Chrono",
     "Clonable",
     "consteval",
@@ -175,6 +176,8 @@
     "Sutter",
     "Szalay",
     "Spertus",
+    "Anastasiia",
+    "Kazakova",
     "Teodorescu",
     "Theophil",
     "Toth",
@@ -236,7 +239,11 @@
     "Talmor",
     "Bernat",
     "Yehezkel",
-    "Gili","Kamma"
+    "Gili",
+    "Kamma",
+    "Rozen",
+    "Pora",
+    "Leonovich"
   ],
   "import": []
 }

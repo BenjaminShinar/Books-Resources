@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib Dennard alon Metaparse Lexy ctre idents crend crbegin truncatable awslabs
+// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib Dennard alon Metaparse Lexy ctre idents crend crbegin truncatable awslabs composability toolset ftest fprofile, fcoverage
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -2570,6 +2570,170 @@ This caused a problem, data waiting for transmission remained in the RAM until b
 
 the take away is to measure everything, test the assumptions, check if your theories are correct. have a simulator (injecting events), the earlier the better, don't wait for the problems to come from the field. another suggestion is to separate the business logic from the networking, keep a queue for input and output messages. an application that is simple is harder to write, but easier to understand. multiple threads are a source of problems.
 
+</details>
+
+## Amir Kirsh :: C++ Incidental Explorations
+
+<details>
+<summary>
+Learning C++ from questions and answers on StackOverflow.
+</summary>
+
+[C++ Incidental Explorations](https://youtu.be/Vibfa1GqP18?si=QtAEFCUa3Jo6tSZI)
+
+Learning from stackOverflow, either by reading question, asking them or trying to answer. it teaches us how to convey our knowledge, and other people can comment and request fixes to the answer, like a code review session.
+
+the questions act as a knowledge database which we can return to in a later time or send to other people.
+
+- does <cpp>auto</cpp> increase performance?
+- how to implement a custom iterator?
+
+some questions also teach us about nuances of the language, what is possible, what is legal, and what works. even bad questions can teach us something, since they come from a misunderstanding.
+
+- why can you access discarded local variables through the address?
+- can an object hold a member data of it self?
+
+we can also run queries on SO and see questions by metrics, like the most answered questions and most down-voted, and which tags are most popular.
+
+other stuff
+
+- why isn't <cpp>std::unique_ptr::release</cpp> marked with <cpp>[[nodiscard]]</cpp>?
+
+questions that the answer changes for over the year.
+
+- best practices
+- changes of the standards
+- old questions that didn't have an answer back when they wre created, but now do
+
+_can Chat-GPT do better than a human as a Q&A site?_
+
+</details>
+
+## Roi Barkan :: More Ranges Please
+
+<details>
+<summary>
+Discussing Ranges, Views and algorithms.
+</summary>
+
+[More Ranges Please](https://youtu.be/rfPq6hYCvWI?si=yXwJwp2cLfxc_fvq), [slides](https://docs.google.com/presentation/d/115iU6rA6gAUNErenmBIPqdl_HHlcYp9_YoYLOFSUNho/present?slide=id.p)
+
+### Libraries
+
+starting with the defintion of libraries. what they do and why they exist. layers of abstraction, the reason we should write our own. what can future libraries give us? composing and stacking library code together. the steps that we go through when writing library (any of our code can become one).
+
+- API layer
+  - easy to use, hard to misuse
+  - specifying pre and post conditions
+- data types - regular
+  - value semantics
+  - algebraic - do they behave according to mathmatical rules (groups, monads, monoid)?
+
+### Ranges
+
+we got ranges as one of C++20 big four features (ranges, coroutines, concepts, modules). they are extension of the iterator based algorithms, and draw inspiration from functional languages. they also focus on composability, the algorithms take ranges and return ranges back. and we can use range adaptors (algorithms as objects), views (lazy initialization) and projections (unary transformations).
+
+```cpp
+// chaining algorithms
+std::ranges::reverse(std::ranges::search(str, "abc"sv));
+// views as composable lazy ranges
+str | 
+   std::views::split(' ') |
+   std::views::take(2);
+// views have a value/algorithm duality
+auto square_evens =
+   std::views::filter([] (auto x) { return (int(x) % 2 == 0;)}) |
+   std::views::transform([] (auto x) { return x * x; });
+```
+
+example of assigning seats in parliament based on proportional voting. using ranges and views to make the calculation simpler and faster.
+
+### The Future
+
+suggestions for new views and ranges, we look at what we use in our codebase and that's how we discover what kinds of algorithms we need. even if we don't create new views, we can still extract common behaviors into composable objects.
+
+```cpp
+auto histogram = std::ranges::views::chunk_by(std::equals{}) |
+   std::ranges::views::transform([] (const auto& rng) {return std::make_pair(std::begin(rng), std::size(rng));});
+```
+
+we can potentially break the sorting algorithm apart, inspired by the R standard library. a sorting algorithm makes a number of comparisons (O(NlogN) complexity) and swaps elements with <cpp>iter_swap</cpp>. if the cost of swapping elements is high, maybe we can avoid that action. like getting the index order without performing the swap (will require allocating memory) and then we just need to perform the final swaps (N operations), and then we can use the same order to reverse the ordering. also applies to permutations of ranges.
+
+</details>
+
+## Anastasiia Kazakova :: Standard C++ toolset
+
+<details>
+<summary>
+C++ doesn't have a complete toolset, but it has the tools.
+</summary>
+
+[Standard C++ toolset](https://youtu.be/9WYhDD3YY-k?si=ZynJoQLJdvW3YfF4)
+
+C++ doesn't have a standard toolset, and we can look at the frustration point from developer surveys and see that many of them involve tool (managing libraries, building projects, creating a new project). we have essential tools such as the compiler, build-system, libraries and dependency management and debugging tools. we also have complementary tools, which are nice to have, but not required, analyzers, profilers, unit-testing framework and code-coverage reports.
+
+other languages have a standardized (or nearly standard) toolset.
+
+having a toolset has benefits:
+
+1. help new developers
+2. onboarding via dev environments
+3. code unification
+4. easy to adopt best practices
+5. code sharing via libraries
+
+In c++ we have four big compilers
+
+- GCC
+- Clang
+- MSVC
+- Intel
+
+They generate different assemblies, have different error reporting, each with it's own predefined macros.
+
+```sh
+gcc -E -dM -O3 c++ /dev/null # gcc, also clang
+cl /EP /Zc:preprocessor /PD empty.cpp 2>nul # msvc
+```
+
+different compilation flags.
+
+```cmake
+if (MSVC)
+   add_compile_options(/W4 /WX)
+else()   
+   add_compile_options(-Wall -Wextra -Werror)
+endif()
+```
+
+Clang by itself isn't just the compiler, it as analysis, formatting and tidy tools, AST (abstract syntax tree) parsing tool. so it becomes the basis for other tools.
+
+CMake is the most popular build system, with msBuild and makefile behind. the adoption starts with the IDEs, package managers and libraries. there are even cmake debuggers and profilers in the CLION IDE. there was a big effort to have support for c++ modules. Dependency management is still far wide spread adoption, even with some tools gaining popularity (conan, vcpkg).
+
+- formatting tools - clangFormat
+- code analysis - most developers don't use at all
+- data flow analysis
+- domain specific analyzers
+- doing work in the ci pipeline
+- unit tests - google tests, catch(no longer header only)
+- test code coverage - llvm-com (`-fprofile-instr-generate -fcoverage-mapping`), gcov (`-profile-arcs -ftest-coverage`).
+
+</details>
+
+## Dor Rozen, Igor Pora-Leonovich :: Performance-related coding guidelines
+
+<details>
+<summary>
+benchmarking performance for containers and guidelines to improve it.
+</summary>
+
+[Performance-related coding guidelines](https://youtu.be/PGd7vG1CMD0?si=r2vDVmvVTqDjo003)
+
+This talk will compare data structures, go into the implementation, and look at the differences between theoretical and practical considerations.
+
+Starting with benchmarking <cpp>std::vector</cpp>, <cpp>std::list</cpp>, <cpp>std::deque</cpp>. going over the usual operations, and seeing that the main contributor to high speed is spacial locality (line cacheing), and that increasing the element size makes pointer based data structures perform better.
+
+Move semantics in containers, benchmarking performance. how move semantics affect the containers common actions. optimizing by shifting calculations to compile-time.
 </details>
 
 ## Separator

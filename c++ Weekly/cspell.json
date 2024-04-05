@@ -1,9 +1,19 @@
 {
-    "version": "0.2",
-    "ignorePaths": [],
-    "dictionaryDefinitions": [],
-    "dictionaries": ["cpp"],
-    "words": ["Wconversion"],
-    "ignoreWords": ["smallpt","IIFE","lefticus","libfmt","Godbolt", "fmtlib", "Sutter", "println"],
-    "import": []
+  "version": "0.2",
+  "ignorePaths": [],
+  "dictionaryDefinitions": [],
+  "dictionaries": ["cpp"],
+  "words": ["Wconversion"],
+  "ignoreWords": [
+    "smallpt",
+    "IIFE",
+    "lefticus",
+    "libfmt",
+    "Godbolt",
+    "fmtlib",
+    "Sutter",
+    "println",
+    "nodiscard"
+  ],
+  "import": []
 }
