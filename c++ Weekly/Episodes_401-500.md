@@ -602,3 +602,171 @@ void foo()
 ```
 
 </details>
+
+## C++ Weekly - Ep 420 - Moving From C++17 to C++20 (More constexpr!)
+
+<details>
+<summary>
+continuing from Episode 418.
+</summary>
+
+[Moving From C++17 to C++20 (More constexpr!)](https://youtu.be/s2XWAxbxk9M?si=SOta0gZ_qCS8QgYZ)
+
+we start by improving the error handling, this is noticeable since we have fuzzy testing to generate test cases that fail.
+
+replacing runtime asserts with <cpp>std::throw</cpp>, sometimes we see division by zero, sometimes we get inputs that overflow the limits of the integer type.
+
+in the cmake file, we set ourselves to to C++20.
+
+now we can continue making things <cpp>constexpr</cpp>. sometimes all it takes is moving code into header file. we also add constexpr test. we just have a problem with <cpp>std::from_chars()</cpp> which wasn't compile time until C++23. so we create a similarly named function that is compile time compatible.
+
+```cpp
+template<std::integral Type>
+[[nodiscard]] constexpr Type from_chars(std::string_view input) -> auto
+{
+  Type result = 0;
+  for (const char digit: input) {
+    result *= 10;
+    if (digit >= '0' && digit <= '9')
+    {
+      result += static_cast<Type>(digit - '0');
+    }
+  }
+  return result;
+}
+```
+at this point, it means that we have only header files, so our project is now a header only library. which means some changes to the CMake file.
+
+C++20 also has <cpp>consteval</cpp>, which forces a function to be evaluated at compile time. we can use it to create a user defined suffix and force the compiler to evaluate our test cases during compilation.
+
+```cpp
+consteval auto operator""_rn(const char* str, std::size_t len) noexcept
+{
+  return evaluate(std::string_view(str, len));
+}
+```
+
+we can take advantage the three way comparison (spaceship) operator to get some default implementation. **which is wrong!**.
+
+</details>
+
+## C++ Weekly - Ep 421 - You're Using optional, variant, pair, tuple, any, and expected Wrong!
+
+<details>
+<summary>
+THings that break return value optimizations
+</summary>
+
+[You're Using optional, variant, pair, tuple, any, and expected Wrong!](https://youtu.be/0yJk5yfdih0?si=5ps0Zl5n30DMKAba)
+
+using the lifetime struct which prints when it's created or destroyed to show some interesting behavior.
+
+in each of these cases, we create and destroy two objects, which isn't what we want. we want return value optimization, but we don't get it!
+```cpp
+std::optional<Lifetime> get_value_move()
+{
+  std::optional<Lifetime> retval;
+  retval = Lifetime{42}; // move ctor
+  
+  return retval;
+}
+
+std::optional<Lifetime> get_value_copy()
+{
+  std::optional<Lifetime> Lifetime myLifeTime{42};
+  retval = myLifeTime; // copy ctor
+  
+  return retval;
+}
+  
+std::optional<Lifetime> get_value_move2()
+{
+  return Lifetime{42}; // also move
+}
+
+std::optional<Lifetime> get_value_move3()
+{
+  Lifetime l{42}
+  return l; // also move
+}
+
+int main()
+{
+  get_value();
+}
+```
+
+if we use <cpp>.emplace()</cpp> on our value, then it's fine. but it's horrible to write.
+
+```cpp
+std::optional<Lifetime> get_value_emplace()
+{
+  std::optional<Lifetime> l;
+  l.emplace(42);
+  return l; // here we get optimization
+}
+```
+a one liner return statement works. but only if we get the type correct.
+
+```cpp
+std::optional<Lifetime> get_value()
+{
+  //return Lifetime{42}; // not RVO
+  return std::optional<Lifetime>{42}; // RVO
+}
+```
+
+we could try `return {42};`, which would work, but if we mark our single parameter constructor as <cpp>explicit</cpp> (which we should), then it doesn't work anymore.
+
+this issue get more serious when using c++23 <cpp>std::expected</cpp>.
+</details>
+
+## C++ Weekly - Ep 422 - Moving from C++20 to C++23
+
+<details>
+<summary>
+continuing from episode 420.
+</summary>
+
+[Moving from C++20 to C++23](https://youtu.be/dvxj39gZ22I?si=fOigTKMKfPVAwCSu)
+
+we can put attribute on lambda, so we use <cpp>[[noreturn]]</cpp> on a lambda that throws exception.
+
+we have a new tool for error handling instead of exceptions, <cpp>std::expected</cpp> allows us to return an object of a different type, which also makes it possible to work in compile time. **but we don't use it for now**. 
+</details>
+
+## C++ Weekly - Ep 423 - Complete Guide to Attributes Through C++23
+
+<details>
+<summary>
+Going over the existing attributes.
+</summary>
+
+[Complete Guide to Attributes Through C++23](https://youtu.be/BpulWncdn9Y?si=vltQs2GgLWxpoTSK), 
+[cppreference](https://en.cppreference.com/w/cpp/language/attributes).
+
+- <cpp>[[noreturn]]</cpp> - tell the compiler a function will not return (abort, terminate, throws).
+- <cpp>[[carries_dependency]]</cpp> - very weird and not commonly used. something about memory order. also <cpp>std::kill_dependency</cpp> which removes it.
+- <cpp>[[deprecated("reason")]]</cpp> - warning on compile.
+-  <cpp>[[fall_through]]</cpp> - inside switch statements, silence warning on cases that do something and fall through.
+- <cpp>[[no_discard]]</cpp> - warning about functions or types which must be captured.
+- <cpp>[[maybe_unused]]</cpp> - avoid the warning about unused variable.
+- <cpp>[[likely]]</cpp>, <cpp>[[unlikely]]</cpp> - hints to the compiler which case to optimize to.
+- <cpp>[[no_unique_address]]</cpp> - optimizing for empty objects inside our struct.
+- <cpp>[[assume]]</cpp> - place pre-conditions which aren't enforced by the type system, allows for optimizations.
+
+</details>
+
+## C++ Weekly - Ep 424 - `.reset()` vs `->reset()`
+
+<details>
+<summary>
+A thing that can confuse us.
+</summary>
+
+[.reset() vs ->reset()](https://youtu.be/HgPfbYfV9eE?si=5lO3tmaeIx9wXyTL)
+
+anything that is a pointer-like thing to a pointer-like thing. are we changing the internal value or the holder object.
+
+there's no static analysis for this.
+</details>
