@@ -635,6 +635,7 @@ template<std::integral Type>
   return result;
 }
 ```
+
 at this point, it means that we have only header files, so our project is now a header only library. which means some changes to the CMake file.
 
 C++20 also has <cpp>consteval</cpp>, which forces a function to be evaluated at compile time. we can use it to create a user defined suffix and force the compiler to evaluate our test cases during compilation.
@@ -662,6 +663,7 @@ THings that break return value optimizations
 using the lifetime struct which prints when it's created or destroyed to show some interesting behavior.
 
 in each of these cases, we create and destroy two objects, which isn't what we want. we want return value optimization, but we don't get it!
+
 ```cpp
 std::optional<Lifetime> get_value_move()
 {
@@ -706,6 +708,7 @@ std::optional<Lifetime> get_value_emplace()
   return l; // here we get optimization
 }
 ```
+
 a one liner return statement works. but only if we get the type correct.
 
 ```cpp
@@ -732,7 +735,7 @@ continuing from episode 420.
 
 we can put attribute on lambda, so we use <cpp>[[noreturn]]</cpp> on a lambda that throws exception.
 
-we have a new tool for error handling instead of exceptions, <cpp>std::expected</cpp> allows us to return an object of a different type, which also makes it possible to work in compile time. **but we don't use it for now**. 
+we have a new tool for error handling instead of exceptions, <cpp>std::expected</cpp> allows us to return an object of a different type, which also makes it possible to work in compile time. **but we don't use it for now**.
 </details>
 
 ## C++ Weekly - Ep 423 - Complete Guide to Attributes Through C++23
@@ -742,13 +745,13 @@ we have a new tool for error handling instead of exceptions, <cpp>std::expected<
 Going over the existing attributes.
 </summary>
 
-[Complete Guide to Attributes Through C++23](https://youtu.be/BpulWncdn9Y?si=vltQs2GgLWxpoTSK), 
+[Complete Guide to Attributes Through C++23](https://youtu.be/BpulWncdn9Y?si=vltQs2GgLWxpoTSK),
 [cppreference](https://en.cppreference.com/w/cpp/language/attributes).
 
 - <cpp>[[noreturn]]</cpp> - tell the compiler a function will not return (abort, terminate, throws).
 - <cpp>[[carries_dependency]]</cpp> - very weird and not commonly used. something about memory order. also <cpp>std::kill_dependency</cpp> which removes it.
 - <cpp>[[deprecated("reason")]]</cpp> - warning on compile.
--  <cpp>[[fall_through]]</cpp> - inside switch statements, silence warning on cases that do something and fall through.
+- <cpp>[[fall_through]]</cpp> - inside switch statements, silence warning on cases that do something and fall through.
 - <cpp>[[no_discard]]</cpp> - warning about functions or types which must be captured.
 - <cpp>[[maybe_unused]]</cpp> - avoid the warning about unused variable.
 - <cpp>[[likely]]</cpp>, <cpp>[[unlikely]]</cpp> - hints to the compiler which case to optimize to.

@@ -2637,7 +2637,7 @@ we got ranges as one of C++20 big four features (ranges, coroutines, concepts, m
 // chaining algorithms
 std::ranges::reverse(std::ranges::search(str, "abc"sv));
 // views as composable lazy ranges
-str | 
+str |
    std::views::split(' ') |
    std::views::take(2);
 // views have a value/algorithm duality
@@ -2701,7 +2701,7 @@ different compilation flags.
 ```cmake
 if (MSVC)
    add_compile_options(/W4 /WX)
-else()   
+else()
    add_compile_options(-Wall -Wextra -Werror)
 endif()
 ```
@@ -2734,6 +2734,524 @@ This talk will compare data structures, go into the implementation, and look at 
 Starting with benchmarking <cpp>std::vector</cpp>, <cpp>std::list</cpp>, <cpp>std::deque</cpp>. going over the usual operations, and seeing that the main contributor to high speed is spacial locality (line cacheing), and that increasing the element size makes pointer based data structures perform better.
 
 Move semantics in containers, benchmarking performance. how move semantics affect the containers common actions. optimizing by shifting calculations to compile-time.
+
+</details>
+
+## Alex Dathskovsky :: To Int or to Uint, This is the Question
+
+<details>
+<summary>
+Looking into signed and unsigned types, how they differ and what should we do with them.
+</summary>
+
+[To Int or to Uint, This is the Question](https://youtu.be/Iz2UOgLMj58?si=T0UwTLCir9QUqsqw)
+
+is there a difference between these two pieces of code?
+
+```cpp
+int64_t add_and_divide_s(int64_t a, int64_t b) {
+   return (a+b)/2;
+}
+
+uint64_t add_and_divide_u(uint64_t a, uint64_t b) {
+   return (a+b)/2;
+}
+```
+
+turns out there is, if we look at the assembly code: the signed code is much longer and more complex. they both use shifts and now division instructions (which is cheaper). but the signed version has additional instructions.
+
+```mips
+# add_and_divide_s(long, long)
+lea rcx, [rdi + rsi]
+mov rac, rcx
+shr rax, 63
+add rax, rcx
+sar rax # arithmetical shift right
+ret
+
+# add_and_divide_u(unsigned long, unsigned long)
+lea rax, [rdi + rsi]
+shr rax # logical shift right
+ret
+```
+
+unsigned integers are represented in a very simple way, with a consistent overflow defintion. in contrast, signed integers can be stored in different ways (sign and magnitude, Ones complement, Twos complement), and overflow is undefined behavior.\
+To represent a negative number with Ones complement, we simply invert the bits. for negative numbers with Twos complement, we start with the positive number, invert the bits and add 1 (ignoring overflow)
+
+| Bits | Unsigned Value | Ones' Complement | Twos' Complement |
+| ---- | -------------- | ---------------- | ---------------- |
+| 000  | 0              | 0                | 0                |
+| 001  | 1              | 1                | 1                |
+| 010  | 2              | 2                | 2                |
+| 011  | 3              | 3                | 3                |
+| 100  | 4              | -3               | -4               |
+| 101  | 5              | -2               | -3               |
+| 110  | 6              | -1               | -2               |
+| 111  | 7              | -0               | -1               |
+
+Since C++20, negative numbers must be represented with Twos Complement.
+
+there are two kinds of Shift instructions: logical and arithmetical
+
+- `SHR` (logical shift right) - shifting the bits to the right and the most significant bit (MSB) becomes zero. `shr 10110111` -> `01011011`.
+- `SAR` (arithmetical shift right) - maintains the MSB as it was in the original number. `sar 10110111` -> `11011011`.
+
+but because of some rounding mode, the compiler must do some work with the signed numbers so it could use shifts and not division.
+
+the difference between the performance isn't great, but unsigned numbers are faster.
+
+### Pitfalls
+
+```cpp
+auto add_uint8(uint8_t a, uint8_t b)
+{
+   return a+b;
+}
+
+// compiler sees
+int add_uint8(uint8_t a, uint8_t b)
+{
+   return static_cast<int>(a)+static_cast<int>(b);
+}
+```
+
+if we call the above function `add_uint8(255u, 1u)`, what would we get?
+we actually get integer promotions. the compiler prefers to do arithmetic operations only on types which are at least 32-bit.\
+And because we used <cpp>auto</cpp> as the return type, the result is an int with the value 256. had we used <cpp>uint8_6</cpp> as the return type, we would get overflow, and the result would have been narrowed to zero.
+
+```cpp
+uint8_t add_uint8(uint8_t a, uint8_t b)
+{
+   return a+b;
+}
+
+// compiler sees
+uint8_t add_uint8(uint8_t a, uint8_t b)
+{
+   return static_cast<unsigned_char>(static_cast<int>(a)+static_cast<int>(b));
+}
+```
+
+another possible surprise, what if everything was automatically deduced?
+
+```cpp
+auto my_add(auto a, auto b)
+{
+   return a+b;
+}
+```
+
+if we call `my_add(uint64_t(1), int64_t(-2))`, what would be the result? the actually does an integer promotion, turning the signed number to unsigned, and the result is some monster number.
+
+```cpp
+// compiler sees
+unsigned long my_add(unsigned long a, long b)
+{
+   return a + static_cast<unsigned long>(b);
+}
+```
+
+another example of mixing can happen with loop counters. in this case, we get infinite loop.
+
+```cpp
+uint64_t count(uint64_t size)
+{
+   uint64_t count;
+   for (int i = 0; size - i >= 0; i++) {
+      count++;
+   }
+   return count;
+}
+```
+
+a different example, a promotion causes buffer overflow.
+
+```cpp
+void decode(std::byte* bytes, int size)
+{
+   if (size == 0) return;
+   std::byte decoded[255];
+   for (uint64_t i = 0; i < size, i++) {
+      decoded[i] = static_cast<std::byte>(static_cast<uint8_t>(bytes[i])^0xc);
+   }
+}
+```
+
+this is a pattern to be aware of, using <cpp>auto</cpp> is good, but can lead to problems. using it with a number causes it to become a concrete type.
+
+```cpp
+auto a1 = 0; // int
+auto a2 = 0u; // unsigned int
+auto a3 = 0l; // long
+auto a4 = 0ul; // unsigned long
+auto a5 = 0ll; // long long
+auto a6 = 0ull; // unsigned long long
+
+// C++23 additions
+auto a7 = 0z; // signed size_t
+auto a8 = 0uz; // unsigned size_t
+```
+
+there are special integer types:
+
+> - <cpp>size_t</cpp> - unsigned integer
+>   - used for size operations
+>   - defined in cstddef
+>   - limit is `SIZE_MAX`
+>   - introduced in C89 to eliminate portability problems.
+> - <cpp>ssize_t</cpp> - signed integer
+>   - defined by POSIX.1-2017
+>   - represent at least the range of [-1, {SSIZE_MAX}]
+>   - limit is `SSIZE_MAX`
+
+the option for -1 size is good for vectors.
+
+this program tries to shift a signed integer 1, but it can overflow.
+
+```cpp
+uint64_t do_it(uint64_t count) {
+   return 1 << (count % 64);
+}
+```
+
+### Arithmetic Series
+
+> Series of numbers where the difference between any two sequential number is constant.\
+> For example, _1,2,3,4,5,6,7,8,9,10,...,n_ is a an Arithmetic Series where the difference between any two sequential numbers is _1_.
+
+we know the quick formula to get the result without doing the entire computation.
+$$
+\sum\limits_{k=1}^{n}a_k = \frac{n(a_1 + a_n)}{2}
+$$
+
+we can write the same code with signed and unsigned numbers,
+
+```cpp
+uint64_t arc_unsigned(uint64_t n)
+{
+   uint64_t sum = 0;
+   for (uint64_t i = 0; i < n; i++) {
+      sum += i;
+   }
+   return sum;
+}
+
+int64_t arc_signed(int64_t n)
+{
+   int64_t sum = 0;
+   for (int64_t i = 0; i < n; i++) {
+      sum += i;
+   }
+   return sum;
+}
+```
+
+if we look at the assembly, the compiler creates the loop for the unsigned number, but for the singed version it uses the formula and makes things faster. the performance difference is noticeable. the reason is that overflow is defined behavior in unsigned numbers, so the compilers must give the 'correct response' of doing the loop calculation. with signed numbers, overflow is undefined, so the compiler can do what it wants and optimize away the loop.\
+Newer compilers optimize better, and we can use sanitizers to force the same behavior `-fsanitize=signed-integer-overflow` and `-fsanitize=unsigned-integer-overflow`.\
+We can also use special types that are defined for better performance <cpp>int_fastN_t</cpp> or <cpp>uint_fastN_t</cpp> to ask to compiler to choose the correct type for us. \
+There are also helpers from the standard: <cpp>std::make_signed_t</cpp> and <cpp>std::make_unsigned_t</cpp> which can be used to created signed and unsigned number safely.\
+since C++20 we have safe comparisons for signed and unsigned numbers:
+
+- <cpp>std::cmp_equal</cpp> `==`
+- <cpp>std::cmp_not_equal</cpp> `!=`
+- <cpp>std::cmp_less</cpp> `<`
+- <cpp>std::cmp_less_equal</cpp> `<=`
+- <cpp>std::cmp_greater</cpp> `>`
+- <cpp>std::cmp_greater_equal</cpp> `>=`
+
+in general, we should avoid using <cpp>auto</cpp> when we aren't sure about the correct integer type, and prefer using concrete types when possible. a better alternative is using explicit strong types. modern loops are also a good way to avoid bugs.
+</details>
+
+## Sebastian Theophil :: A Practical and Interactive Guide to Debugging C++ Code
+
+<details>
+<summary>
+Ways to debug code.
+</summary>
+
+[A Practical and Interactive Guide to Debugging C++ Code](https://youtu.be/ogV0olQJax4?si=u7fVLO888bstrVm0)
+
+A bug is behavior in the software that doesn't conform to the specification. we usually see a "bug report", a symptom of the bug, something that happened, an event that shouldn't have. it can be a crash, core dump, error message, log line. we don't always see them, especially if they happen on the client's machine.
+
+we have a few ways of detecting bugs before shipping. some of them even at compile time.
+
+- type checking
+- <cpp>static_assert</cpp>
+- <cpp>constexpr</cpp> evaluation
+
+at build time and QA we use unit testing and other automated testing systems. but that still leaves undiscovered bugs. even at runtime, we should:
+
+> - Strict Error Checking
+>   - Check all API return values and report unexpected values
+>   - Assert pre-conditions and post-conditions
+>   - Report if they fail
+> - Enforce invariants, notice unexpected behavior sooner
+
+we need the bugs from the customers, even if we can't reproduce them in the lab. sometimes the fix is obvious, sometimes we can just try something to get better error reporting and understand the problem better if it happens again.
+
+here is an example of a bug.
+
+```cpp
+enum EState { WAITING, DATA, ERROR };
+struct http_delegate {
+   EState m_estate = WAITING;
+   std::mutex m_mtx;
+   std::condition_variable m_cv;
+
+   void on_new_data()
+   {
+      {
+         std::lock_guard lock(m_mtx);
+         m_estate = is_error() ? ERROR : DATA;
+         // copy data to buffer
+      }
+      m_cv.notify_all();
+   }
+};
+
+struct sync_http_request {
+   http_delegate m_delegate;
+   
+   sync_http_request(/*... */) 
+   {
+      // set up everything
+
+      // wait for response
+      std::unique_lock lock{m_delegate.m_mtx};
+      m_delegate.m_cv.wait(lock, [&](){
+         return m_delegate.m_estate != WAITING;
+      });
+
+      if (m_delegate.m_estate == ERROR) {
+         throw http_exception();
+      }
+
+      // do something with the data
+   }
+};
+```
+
+the reason for the bug is spurious wake-ups, there is a tiny chance that the conditional variable will wake up between the time the state was changed, but before it was supposed to wake up by the call `m_cv.notify_all()`. and if that one in a million thing happened, the delegate might be destroyed while the member is being accessed. for this reason, the standard says the action on the conditional variable should also be inside the lock.
+
+### Debugging Process
+
+An iterative process, it's important to do right, not fast. we form an hypothesis, test it, repeat, and eventually fix it.
+
+the first step is to be able to reproduce it. there are different levels of "reproducibility" - the best case is that it always occurs, on any machine, with the interactive debugger attached. the worst case are bugs which sometime occur, only on release build, only on specific machines. part of debugging is moving up the chain, even if we don't know the underlying issue.\
+we can use tools to make bugs appear:
+
+- address sanitizer
+- thread sanitizer
+- undefined behavior sanitizer
+
+interactive debuggers make some bugs disappear if they are based on timing issues, and won't appear if the program is too slow. we want to be able to force the bug to appear and diagnose the system when the problem happens.\
+if the issue happens only on a specific machine, it could be the result of other software interfering, such as virus scanners, system tools, drm software. we want to be able to reproduce the environments as a VM.\
+If everything fails, there are still things we can do, such as writing more logs, or more detailed reporting, and even trying out solutions in production, if possible.
+
+an example of another bug, this time with <cpp>std::bad_alloc</cpp> error. it started with a bad configuration file. part of the bug was the difference between the value of <cpp>std::size_t</cpp> in 32 and 64bit machines.
+
+we can use logging statements to debug the issue, but a better way is to take advantage of **tracing breakpoints** (available in gdb, lldb, visual studio), which don't require re-compilation of the source code, can be added to OS functions and binary code. if we suspect the reason is interaction between the software and the OS, we can use specific tools
+
+- Process Monitor for windows
+- dtrace for macOS
+- strace for linux
+
+if we know a bug is new, we can look at the changes that introduced the bug, and find a solution for both the bug and the issue the code was meant to address.
+
+```cpp
+std::array<int, 4> an ={1,5,7,8};
+auto rng = GetItemFromIndices(&an[0],4); // external code
+assert(rng.size() == 4); // fails with rng.size == 2?
+```
+
+we can set a watch point `watch set expression -s 4 -- &an[0]` and see where the input variable is touched.
+
+before we fix the bug, we take a moment and think about it. some bugs are because we didn't write what we meant - we made a mistake such as using uninitialized data, using memory that was freed (other memory management problems). sometimes we wrote what we meant, but our mental model was wrong. we didn't understand the specification (ours, or external tools), and we need to think about our code base again.
+
+when we fix the bug, we can have two approaches - one is "smallest fix possible", but that might not fix the root cause. the other option is to continue working on the root cause of the bug. we can combine the two - small fix now to production, and a more through fix at the development branch.
+
+the next step is reviewing how the bug happened in the first place, and what can we do to avoid it in the future. we also need to document that changes.
+</details>
+
+## Rainer Grimm :: Concurrency Improvements in C++20: A Deep Dive
+
+<details>
+<summary>
+Discussion of Concurrency mechanisms and the changes in C++20.
+</summary>
+
+[Concurrency Improvements in C++20: A Deep Dive](https://youtu.be/J-s5jNq3VA0?si=9zK2cgxwgy_wmx3D)
+
+Things we got in C++20.
+
+- Atomics
+- Semaphores
+- Latches and Barriers
+- Cooperative interruption
+- Joinable Threads
+
+### Atomics
+
+> "Atomic operation on atomic define the synchronization and ordering constraints"
+
+we had atomics since C++11, they are the foundation for the C++ memory model, and are used by higher-level threading interfaces such as:
+
+- threads and tasks
+- mutexes and locks
+- condition variables
+
+C++ has the <cpp>std::atomic_flag</cpp> inteface, which is guaranteed to be lock-free. the interface is:
+
+- `test_and_set` - set the value and return previous one
+- `clear` - clear the value (make false)
+
+can't be read without modification.
+
+C++20 added support for floating point and smart pointers to also be atomic with <cpp>std::atomic<></cpp>, which has a more complex interface
+
+- `is_lock_free` - check if lock free
+- `load` - return the value of the atomic
+- `store` - set the value of the atomic with non-atomic
+- `exchange` - replace with new value and return the old
+- `compare_exchange_weak`, `compare_exchange_strong` - check condition, return boolean and either replace the atomic value or the other one (input value).
+- `fetch_add`, `fetch_sub` - adds the vales and return the pervious value
+- `++`, `--` - increment or decrement and return the new value
+
+the "compare-exchange" member functions are the core functionalities, and can be used to create the other operations (multiplication, division). we check the existing value and only do the operation if the state didn't changed.
+
+[compiler explorer](https://godbolt.org/z/YbMarGvoh)
+
+```cpp
+template <std::integral T>
+T fetch_mult(std::atomic<T>& shared, T mult){
+  T oldValue = shared.load();
+  while (!shared.compare_exchange_strong(oldValue, oldValue * mult));
+  return oldValue;
+}
+```
+
+there are also new operations in C++20.
+
+- `notify_one()`
+- `notify_all()`
+- `wait(val)` - wait for notification, blocking if the value of the atomic is `val`.
+
+C++11 gave us <cpp>std::shared_ptr</cpp>, the handling of the control block is thread-safe, but the access to the resource isn't. there are new specializations of <cpp>std::atomic</cpp> for <cpp>std::shared_ptr</cpp> and <cpp>std::weak_ptr</cpp>. there are currently no lock-free implementations for them.\
+The benefits are for consistency, correctness, and speed.
+
+another option is <cpp>std::atomic_ref</cpp> to apply atomic operations to referenced objects, (the lifetime of the object must exceed the lifetime of the reference).
+
+(we should always use `-fsanitize=thread` to when dealing with concurrency).
+
+### Semaphores
+
+> Semaphores are synchronization mechanisms to control access to a shared variable.\
+> A semaphore is initialzed with a counter (limit) greater than zero,
+>
+> 1. requesting a semaphore increases the counter
+> 2. releasing a semaphore decreases the counter
+> 3. a requesting thread is blocked if the counter is 0
+
+C++20 support two semaphores:
+
+- <cpp>std::counting_semaphore</cpp>
+- <cpp>std::binary_semaphore</cpp> (same as counting semaphore initialzed with 1)
+
+we have operations to get the limit, to release (post), to acquire (get, take, wait), and variation on acquire (for time duration or until an absolute time). the semaphore is used for producer-consumer workflows.
+
+There is also <cpp>std::conditional_variables</cpp>, for sender-receiver workflows. it can be activated by spurious wakeups,and there are also "lost wakeups", so we need a predicate protection in both cases.
+
+we can see a comparison table between the options, the slowest is the conditional variables, the other options (semaphores, atomic boolean, atomic flag) are faster.
+
+### Latches and Barriers
+
+<cpp>std::latch</cpp> - a thread waits at a synchronization until a counter reaches zero. useful for managing one task by multiple threads.
+
+- `count_down` - don't block, atomically reduce the counter
+- `wait` -  wait (block) for counter to be zero
+- `try_wait` - check if counter is zero, but don't block
+- `arrive_and_wait` - reduce the counter and wait.
+
+can only be used once, if we want to reuse it, we need a <cpp>std::barrier</cpp>.
+
+- `arrive` - decrements counter
+- `wait`
+- `arrive_and_wait` - decrement counter and wait
+- `arrive_and_drop` - decrement counter for the current and the next phase
+
+### Cooperative interruption
+
+each running entity can be interrupted, using <cpp>std::stop_token</cpp> which is passed to either a joinable thread or a conditional_variable_any. this doesn't force the thread to stop, it tells it that someone asked it to stop.
+
+- `token.stop_possible` - check if the token has a associated stop state
+- `token.stop_requested` - check if `stop_source` was called
+- `source.get_token` - create token if possible,
+- `source.stop_possible` - check if the source has an associated stop state
+- `source.stop_requested` - check if a stop was requested
+- `source.request_stop` - request a stop
+
+there is also a <cpp>std::stop_callback</cpp> which we can register on the token.
+
+### Joinable Threads
+
+<cpp>std::jthread</cpp> automatically joins in the destructor. so we can't have dangling threads which calls terminate when it's destroyed and aborts the entire program. it's an RAII mechanism.
+
+</details>
+
+## Nevin Liber :: MDSPAN: A Deep Dive Spanning C++, Kokkos & SYCL
+
+<details>
+<summary>
+How MSpan got created and accepted to the standard
+</summary>
+
+[MDSPAN: A Deep Dive Spanning C++, Kokkos & SYCL](https://youtu.be/AqibvB5Kl8I?si=KV-q7mVyAfTTmwML)
+
+> MDspan is a non-owning multidimensional array view for C++23
+
+```cpp
+template<
+   class ElementType,
+   class Extents,
+   class LayoutPolicy = layout_right,
+   class AccessorPolicy = default_accessor<ElementType>
+   >
+struct mdspan {
+   template<class... OtherIndexTypes>
+   explicit constexpr mdspan(data_handle_type p, OtherIndexTypes... ext);
+   // ...
+   template<class... OtherIndexTypes>
+   constexpr reference operator[](OtherIndexTypes... indices) const;
+};
+```
+
+- Element type - self explanitory, what kind of elements is stored
+- Extents - dimensions of the multidimensional array, static or dynamic extents
+- LayoutPolicy - row major, column major, stride, or user defined (tiled, symmetric, sparse, compressed, etc...)
+- AccessorPolicy - way to access the data, if we want to customize it to return something special.
+
+### The road to get here
+
+2014 - proposal for "array_view", static extents only, got positive reviews and pushed into Arrays technical Specification. but there was also a suggestion for runtime-sized arrays, the whole suggestion died out in 2016.\
+array view got another revision which was sent to another committee as part of the library fundamentals discussions, which also got some issues raised. multiple revision cycles over the years.
+
+Kokkos had a similar thing, <cpp>Kokkos:View</cpp>, multidimensional view for zero or more dimensions, which sometimes owned the data and sometimes didn't and had some weird syntax to define dynamic and static dimensions.
+
+```cpp
+template <
+   class DataType,
+   [, class LayoutType]
+   [, class MemorySpace]
+   [, class MemoryTraits]
+   >
+class View;
+```
+
+other suggestion were for "shared_array" and "weak_array", fairly complicated stuff. eventually the single dimension `span` got rolling. more talks about multidimensional arrays, some more issues to work through. in 2017 the name was changed to "mdspan", and the proposal was moved to library fundamentals v3 comity. some changes with the comma operator and the brackets operator, the class template deduction guide was also added and made things easier for classes with many template arguments.
+
+eventually it was accepted into C++23.
+hopefully c++26 will have the "mdarray" - an owning version of the multidimensional data. also a proposal for sub-mdspan and atomic references and atomic accessors.
+
 </details>
 
 ## Separator

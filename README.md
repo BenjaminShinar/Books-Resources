@@ -305,8 +305,16 @@ definition and tooltip
 $$
 \begin{align*}
 state_m = state_n + path_{(n,m)} \\
-state_m = state_n + delta_{(n,n+1)} + ... + delta_{(m-1, m)} + metadata_m \\
-\int_0^1 \frac{4.0}{1+x^2}dx = \pi \\
+state_m = state_n + delta_{(n,n+1)} + ... + delta_{(m-1, m)} + metadata_m
+\end{align*}
+$$
+$$
+\begin{align*}
+\int_0^1 \frac{4.0}{1+x^2}dx = \pi 
+\end{align*}
+$$
+$$
+\begin{align*}
 \sum\limits_{i=0}^{n}F(X_i)\Delta \approx \pi
 \end{align*}
 $$

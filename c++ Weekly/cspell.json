@@ -13,7 +13,9 @@
     "fmtlib",
     "Sutter",
     "println",
-    "nodiscard"
+    "nodiscard",
+    "consteval",
+    "cppreference"
   ],
   "import": []
 }
