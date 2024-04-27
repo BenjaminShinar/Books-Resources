@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib Dennard alon Metaparse Lexy ctre idents crend crbegin truncatable awslabs composability toolset ftest fprofile, fcoverage
+// cSpell:ignore objdump Browsable Guttag nsenter setcap getpcaps fsanitize Nlohmann httplib Dennard Metaparse Lexy ctre idents crend crbegin truncatable awslabs composability toolset ftest fprofile fcoverage Doxygen Fuzzers ixin nonstatic
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -12,6 +12,50 @@ Israel C++ Convention.
 </summary>
 
 [playlist](https://www.youtube.com/playlist?list=PLn4wYlDYx4bs0p9S6aFvKaASoCLFVwt_E), [Schedule](https://corecpp.org/schedule/).
+
+- Designing and Implementing Safe C++ Applications
+- Concurrency in Modern C++
+- Linux System Programming Essentials
+- ~~Keynote :: Approaching C++ safety~~
+- ~~Let's talk about C++'s Abstraction Layers~~
+- ~~Instruction Level Parallelism in Your C++ Program~~
+- ~~Being RESTful with billions of dollars in transactions, thanks to C++, JSON and HTTP~~
+- C++23 ranges: conceptual changes and useful practicalities
+- ~~Running Away From Computation - An Introduction~~
+- ~~Accelerated C++ with OpenMP~~
+- ~~Virtual templated methods~~
+- ~~UB effects on real world projects~~
+- ~~Scope Sensitive Programming~~
+- ~~Does the C++ compiler work too hard?~~
+- ~~Linker & Loader: The build process after-party~~
+- ~~Easy to use, hard to misuse: Practical guidelines to tame your API~~
+- ~~Expressive Compile Time Parsers~~
+- ~~Lazy and Proud: How I Failed to Standardize lazy_counted_iterator~~
+- Better Code: Exploring Validity
+- ~~Understanding Linux user namespaces~~
+- ~~From a modern to an unbelievably modern C++~~
+- ~~Multi-Paradigm Programming and Beyond~~
+- ~~The Imperatives Must Go!~~
+- Nobody Can Program Correctly. A Practical and Interactive Guide to Debugging C++ Code
+- ~~MDSPAN: A Deep Dive Spanning C++, Kokkos & SYCL~~
+- ~~C++ Incidental Explorations~~
+- ~~More Ranges Please~~
+- ~~To Int or to Uint, This is the Question~~
+- ~~Improving Compilation Times: Tools & Techniques~~
+- ~~Development Strategies - The stuff around the code~~
+- ~~Standard C++ toolset~~
+- ~~Performance-related coding guidelines~~
+- ~~Building low latency, network intense applications with C++ (in Hebrew)~~
+- ~~Lessons I learn from improving legacy product and doubling its performance (in Hebrew)~~
+- Compile time polymorphism: the optimization that (sometimes) isn't
+- The Concept of Templates
+- ~~C++ Horizons~~
+- ~~Concurrency Improvements in C++20: A Deep Dive~~
+- ~~C++ for the cloud~~
+- Exceptionally Bad : The story on the misuse of exceptions and how to do better
+- ~~Keynote :: Expressing Implementation Sameness and Similarity in Modern C++~~
+- Ready your C++ code for the multi-device, multi-vendor world
+- CUDA and the Latest Innovations in GPU Technology
 
 ## David Sankel :: The Semicolon is a Lie
 
@@ -2920,6 +2964,7 @@ uint64_t do_it(uint64_t count) {
 > For example, _1,2,3,4,5,6,7,8,9,10,...,n_ is a an Arithmetic Series where the difference between any two sequential numbers is _1_.
 
 we know the quick formula to get the result without doing the entire computation.
+
 $$
 \sum\limits_{k=1}^{n}a_k = \frac{n(a_1 + a_n)}{2}
 $$
@@ -2960,6 +3005,7 @@ since C++20 we have safe comparisons for signed and unsigned numbers:
 - <cpp>std::cmp_greater_equal</cpp> `>=`
 
 in general, we should avoid using <cpp>auto</cpp> when we aren't sure about the correct integer type, and prefer using concrete types when possible. a better alternative is using explicit strong types. modern loops are also a good way to avoid bugs.
+
 </details>
 
 ## Sebastian Theophil :: A Practical and Interactive Guide to Debugging C++ Code
@@ -3011,8 +3057,8 @@ struct http_delegate {
 
 struct sync_http_request {
    http_delegate m_delegate;
-   
-   sync_http_request(/*... */) 
+
+   sync_http_request(/*... */)
    {
       // set up everything
 
@@ -3071,6 +3117,7 @@ before we fix the bug, we take a moment and think about it. some bugs are becaus
 when we fix the bug, we can have two approaches - one is "smallest fix possible", but that might not fix the root cause. the other option is to continue working on the root cause of the bug. we can combine the two - small fix now to production, and a more through fix at the development branch.
 
 the next step is reviewing how the bug happened in the first place, and what can we do to avoid it in the future. we also need to document that changes.
+
 </details>
 
 ## Rainer Grimm :: Concurrency Improvements in C++20: A Deep Dive
@@ -3168,7 +3215,7 @@ we can see a comparison table between the options, the slowest is the conditiona
 <cpp>std::latch</cpp> - a thread waits at a synchronization until a counter reaches zero. useful for managing one task by multiple threads.
 
 - `count_down` - don't block, atomically reduce the counter
-- `wait` -  wait (block) for counter to be zero
+- `wait` - wait (block) for counter to be zero
 - `try_wait` - check if counter is zero, but don't block
 - `arrive_and_wait` - reduce the counter and wait.
 
@@ -3251,6 +3298,622 @@ other suggestion were for "shared_array" and "weak_array", fairly complicated st
 
 eventually it was accepted into C++23.
 hopefully c++26 will have the "mdarray" - an owning version of the multidimensional data. also a proposal for sub-mdspan and atomic references and atomic accessors.
+
+</details>
+
+## Daniel Babitsky :: Building low latency, network intense applications with C++
+
+<details>
+<summary>
+Short Hebrew talk about low latency applications.
+</summary>
+
+[Daniel Babitsky :: Building low latency, network intense applications with C++](https://youtu.be/XLoL5vJLvV4?si=ca0ZpU74JHF1ClJy)
+
+Algo-trading companies need low latency and high performance. they want algorithms to run on live data and be as fast as possible.
+
+options to use for low latency:
+
+- Kafka
+- RabbitMQ
+- Redis
+
+but they aren't fast enough, they need a faster way to send messages. that's why the company went with the publisher/subscriber messages.
+
+other stuff - using templates to avoid runtime branches. minimizing memory allocations by using managed memory pools. using lock-free data structures. using kernel bypasses with "openOnload" library (reading from userSpace buffer without copying). using EFVI Api to access the network adapter data path faster than the normal pathway.
+
+</details>
+
+## Marshall Clow :: Development Strategies - The Stuff Around The Code
+
+<details>
+<summary>
+Things That we do which aren't just the application code.
+</summary>
+
+[Development Strategies - The Stuff Around The Code](https://youtu.be/qNdp4C1AS8c?si=ovKZS6yepXzVRqdU)
+
+the stuff that we do that isn't code:
+
+- Documentation
+- Tests
+- Tools
+- Dealing with Users
+- Releases
+- Managing Change
+
+### Documentation
+
+Documentation is the first impression, even a readme file is a documentation. this is how many users evaluate the library, if there aren't any, or if it's bad, people will move on to the next one. and it also helps prevent answering the same question again and again.
+
+parts of the documentation that we might have.
+
+1. Overview - what does the application do.
+2. Getting Started - getting the library, installing it, building, linking.
+3. Examples - Using the library at the most simple way.
+4. Tutorials - How to do more than just the basic.
+5. Reference - What do the calls do, what are the parameters for them.
+
+other things can be a roadmap for the library (future stuff), known bugs, how to contribute if it's an open source, etc...\
+We can use tools like Doxygen to generate documentation from the code, reducing the risk of it going out of date.
+
+### Tests
+
+> Having a good set of test can help with:
+>
+> 1. Making sure you've fixed a bug
+> 2. Catch Regressions
+> 3. Pinpoint problems with someones installation or configuration
+> 4. Porting to a new platform
+
+large projects can go into the realm of "fear-based programming", where changes are dangerous because they might break something, a good test suite (which we trust) can allow us to be more confident about what we write. we add tests to validate the things the user except work as excepted.
+
+> a good test suite is:
+>
+> 1. easy to run
+> 2. always green
+> 3. comprehensive
+> 4. runs often - preferably on every change
+> 5. easy to automate
+
+same principles with compiler warning, if there are always hundreds of warning, then no one will notice a new one. we want the metric to be at zero problems, so if there's a new issue (test fail, warning), it stands out immediately.
+
+There should be documentation for running the test suite, even on different platforms and machines. this especially helps detect hidden assumptions that we made.
+
+performance tests are harder, we can instrument the tests to check for number of operations, but it's much harder to test for timing, as it is dependant on many things.
+
+### Tools
+
+we have tools that can help us:
+
+1. Compilers - first line of defense, should have all flags and warning on.
+2. Static Analyzers - runs on source code, detects cases which are likely to be errors or will find bad code. we can extend it with custom checks that are specific to our codebase.
+3. Dynamic Analyzers - perform their work on running programs, run assertions and debuggers, sanitizers (address, thread, undefined-behavior, etc...) to detect issues - they are very good at finding bugs, and have a very low false-positive rate.
+4. Code Coverage Tools - detect which code is run, which sections aren't tested.
+5. Fuzzers - creating random input and checking how the program handles it - if it misbehaves or crashes. they can combine with code coverage tools to find corner cases. very important when we have parsers.
+
+### Dealing with Users
+
+> Users can:
+>
+> 1. ask questions
+> 2. make comments
+> 3. file bug reports
+> 4. make feature requests
+> 5. offer contributions
+> 6. port to new systems
+
+we need to respond to them and address what the say. answer questions (add to documentation), check if things are bug or not, decide if a feature is really needed or not.
+
+users use the library in ways we didn't expect.
+
+### Releases
+
+do we have release versions, milestones, etc...?
+
+they should be announced, detailed with notes (what changed, what was fixed, what was added) and a way to obtain the specific release.
+
+### Managing Change
+
+When the usage grows, we might run across the need to have breaking changes, this needs to be handled carefully. the benefits are clear, but the costs are obscured since they are experienced by the users and not by you. there needs to be a clear path to upgrade that users can follow and make sure things will keep working.
+
+</details>
+
+## Vittorio Romeo :: Improving Compilation Times: Tools & Techniques
+
+<details>
+<summary>
+understanding what effects build time and what actions can improve them.
+</summary>
+
+[Improving Compilation Times: Tools & Techniques](https://youtu.be/wCajYrd1PIk?si=V_vjWWM0hTCRZ-Uw), [github repo](https://github.com/vittorioromeo/corecpp2023)
+
+SFML - Simple and Fast Multimedia Library
+
+### Why compilation times are important
+
+C++ has reputation for being slow to compile (compared to C), we talk about "zero-cost abstractions", but we mean that they don't have cost at runtime, as we usually pay it in compile time. the costs are often shifted to the CI pipeline, and even in modern hardware, building from scratch can a long time.
+
+However, for projects that never considered build times, there is a lot of room to improve.
+
+> Why can C++ compilation times be poor?
+>
+> - Build model and textual `#include` system is archaic
+> - The language itself is complicated
+>   Overload resolution, template instantiation, SFINAE, etc...
+> - Highly generic and abstracted libraries tend to be bulky
+>   - Think about Boost or the Standard Library
+>   - Many reasons: backwards compatibility, build time not a priority, etc...
+> - Poor "physical design"
+>   - E.g., `#include` when forward declaration is enough
+>   - E.g., templates unnecessarily defined in a header file
+> - Compilation times are often not a priority for low-level libraries
+>   - This includes the Standard Library
+>   - Needs a "cultural" change
+
+C++20 modules will help, but we are far from that point. the compiler support is limited, and many projects haven't migrated yet.
+
+### Low hanging fruit
+
+the first thing we ask is if our compilation time is fast enough - in terms of costs, developer time, frustration, reputation or other stuff. defining "fast enough" is subjective.
+
+the low hanging fruits are small changes, which are fairly easy to introduce and effect the system as a whole.
+
+### Build System
+
+the first option is to switch the build system, moving from _make_ to alternatives such as _ninja_ can speed up the process and provide more advantages. we can use them as drop-in replacements for cmake.
+
+```sh
+cmake -GNinja
+ninja
+```
+
+#### Linker
+
+another option is to replace the default linker `ld` with something else, even switching to llvm linker `lld` can give an order of magnitude change in link time.
+
+```sh
+cmake -GNinja -DCMAKE_CXX_FLAGS="-fuse-ld=lld"
+```
+
+there are even faster options, such as `mold` - "modern open source linker", which focus on high parallelization. the commercial version is called `sold` which also works for macOs and eventually Windows.
+
+#### Compiler Cache
+
+another easy way is to avoid re-compiling unchanged source files, we can have a compilation cache that maps compiler, flags and the file hash to an object file. so even with fresh build, we can re-use existing ".obj" files. there are all sorts of tools (open source and commercial) to assist with this.
+
+#### Precompiled headers
+
+Precompiled headers allow us to avoid re-processing the same header file again and again each time it is used. we can define some headers as commonly used and prepare them ahead of time. there are some pitfalls, but the gains can be massive if we choose the headers correctly.
+
+```cmake
+target_precompile_header(<target> PRIVAE "PCH.hpp")
+target_precompile_header(<base_target> PRIVAE "PCH.hpp")
+target_precompile_header(<other_target> REUSE_FROM <base_target>)
+```
+
+the fle itself will look something like this:
+
+```cpp
+// PCH.hpp
+#pragma once
+// Commonly-used first-party headers (e.g., logging, assertions, basic components)
+#include <SFML/System/Err.hpp>
+#include <SFML/System/String.hpp>
+#include <SFML/System/Time.hpp>
+#include <SFML/System/Vector2.hpp>
+// Expensive headers, like `windows.h`
+#ifdef SFML_SYSTEM_WINDOWS
+#include <SFML/System/Win32/WindowsHeader.hpp>
+#endif
+// Commonly used Standard Library or third-party headers
+#include <algorithm>
+#include <filesystem>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+/* ... */
+```
+
+precompiled headers can cause problems if they grow too large, are unnecessary included, or change too often. there are ways to find which headers are mostly used or which are expensive to compile.
+
+#### Unity Builds
+
+coalesce mutiple source files together, reduce the number of times the same work is done, less files are created, which acts as a substitute for link time optimizations. it also helps with ODR violations and detecting other possible mistakes.
+
+```sh
+cmake -GNinja -DCMAKE_UNITY_BUILD=ON -DCMAKE_CXX_FLAGS="-fuse-ld=lld"
+```
+
+or
+
+```cmake
+set_target_properties(<target> PROPERTIES UNITY_BUIILD ON)
+```
+
+there are drawbacks, and many places which can fail, but it might be worth fixing the code to gain the speedup.
+
+### Profiling and dealing with bottlenecks
+
+There are other ways to improve compilation times, but they are harder. the first step is to profile the compilation and find the bottlenecks. we can add the `-ftime-trace` flag to the clang compiler and then run `./ClangBuildAnalyzer` on the resulting files and see which files are the heaviest and take longest to compile.
+
+#### Physical Design
+
+when we find the bottlenecks in our first-party code, we can start looking into it. simplifying dependency chains, separating the declaration and defintions, using forward declarations when possible (better for internal libraries, not externally facing code). isolating implementation from the declaration (PIMPL idiom) if it's expensive.
+
+we can check the impact of each header from the standard library on the compilation time, so if we include the entire header for just one function, we might be better off writing the code directly. every edition of the standard becomes larger and larger, which also effects the time. if we know what we are doing, we can look at ways to work around it.
+
+</details>
+
+## Daisy Hollman :: Expressing Implementation Sameness and Similarity in Modern C++
+
+<details>
+<summary>
+Different ways to express things are the same.
+</summary>
+
+[Expressing Implementation Sameness and Similarity in Modern C++](https://youtu.be/wp9cf0u2iss?si=iphVXWZ_V4s5NiiC), [slides](https://daisyh.dev/talks/corecpp-2023/expressing-implementation-sameness.html)
+
+"sameness" isn't just polymorphism, and it isn't just solved by code re-use.
+
+> - code is written and read by humans
+>   - we can ask the computer to do the same things in many ways
+>   - we should think about code in terms of "how will the reader experience it"
+> - cognitive load is the amount of mental effort required to and understand and use code
+>   - when we write code, we want to minimize the amount of cognitive load for the reader/user
+> - information loss: when the reader of the code doesn't have an easy way to retrieve a piece of information that is obvious to the writer
+>   - copy-pasting code causes information loss
+>   - imagine how our code would be if we weren't able to copy-paste
+>   - copy-paste code is selfish - it saves time for to the writer at the expense of the reader.
+>
+> things that don't matter
+>
+> - how long it takes to type
+>   - if the function name is long, it's ok. the problem ins't the number of characters, it's the cognitive load that matters.
+> - how many layers of abstraction there are
+> - compilation costs are ok to add, it is cheaper than development time.
+>   - but not exponentially scaling compilation costs
+>   - avoid using arcane (weird language features)
+> - how fast it is to write code.
+>   - this talk is about reading code.
+
+Two kinds of "sameness": Interface Sameness and Implementation Sameness
+
+> Interface Sameness:
+>
+> - Allows user to treat things the same way in their code (create their own sameness)
+> - Hard to remove later, you can't change user code, once you allow users to treat things the same way, it's very hard to change that later
+> - When done well: low code coupling (low interferences between software modules)
+>
+> Implementation Sameness:
+>
+> - Enables readers to understand and use existing sameness or similarity
+> - Can be changed or removed at any point in the future when it stop being helpful.
+> - When done well: high code cohesion (high degree of elements belonging together in the same module)
+
+This goes hand in hand with the DRY principle (don't-repeat-yourself)
+
+> _"Every piece of knowledge must have a single, unambiguous, authoritative representation within a system"_
+>
+> ~ Andy Hunt and Dave Thomas, The Pragmatic Programmer
+
+### Expressing "Sameness" in C++
+
+traditional polymorphism, inheritance, virtual function, using base class pointers, this is interface sameness (with some shared implementation).
+
+we also have templates, which are mostly implementation sameness, but also have interface sameness. we can also use templates to add "interfaces" specific intrusiveness. we sometimes create sameness that we have a problem abstracting away. we have an example with class that contains things and expose more functionalities. we handle it with "mixins" (using inheritance), other languages have other ways to handle this.\
+Other mixins are comparison operators, when we write operator overloads for `==` and `!=`, we usually do the same thing across many classes - **elementwise comparison**. we can fix it with a curiously recurring template pattern (CRTP), we have the `elements()` member function that acts as a customization point.
+
+```cpp
+template <class Derived>
+struct ComparableElementwise {
+   friend bool operator==(Derived const& a, Derived const& b) {
+      return a.elements() == b.elements();
+   }
+
+   friend bool operator!=(Derived const& a, Derived const& b) {
+      return a.elements() != b.elements();
+   }
+   /* ... */
+};
+
+// CRTP
+struct Foo : ComparableElementwise<Foo> {
+   int x;
+   double y;
+   std::string z;
+   auto elements() const { // customization point
+      return std::forward_as_tuple(x,y,z);
+   }
+};
+```
+
+now that we have this customization point, we can re-use it across other operations. like for printing all elements.
+
+```cpp
+template <class Derived>
+struct PrintableElementwise {
+   void print() const
+   {
+      auto const& e = static_cast<Derived const&>(*this).elements();
+      std::apply([](auto const&... el) {
+         ([&]{ cout << el << '\n';}(), ...);
+      }, e);
+   }
+};
+```
+
+we should be careful over coupling, if we have the same name for the customization point, then we run the risk of creating coupling. when in doubt, we should use different names and forward to the common function, making things easier to change later on.
+
+we can also have mixin mixins.
+
+```cpp
+auto const& e = static_cast<Derived const&>(*this).elements();
+```
+
+the code above is a downcast that we commonly do in CRTP, but is still weird arcane code that is repeated, so we should express the sameness in code.
+
+```cpp
+template <class> struct CRTPMixin;
+template <template<class> class Mixin, class Derived>
+struct CRTPMixin<Mixin<Derived>>{
+   consteval auto& self() { return static_cast<Derived&>(*this); }
+   consteval auto& self() const { return static_cast<Derived const&>(*this); }
+};
+
+template <class Derived>
+struct PrintableElementwise : CRTPMixin<PrintableElementwise <Derived>> {
+   void print() const
+   {
+      auto const& e = self().elements();
+      std::apply([](auto const&... el) {
+         ([&]{ cout << el << '\n';}(), ...);
+      }, e);
+   }
+};
+```
+
+and now in C++23, we can be better with the new Deducing `this` syntax.
+
+```cpp
+
+struct PrintableElementwise{
+   void print(this auto const& self)
+   {
+      auto const& e = self.elements();
+      std::apply([](auto const&... el) {
+         ([&]{ cout << el << '\n';}(), ...);
+      }, e);
+   }
+};
+
+struct Foo : PrintableElementwise {
+   int x;
+   double y;
+   std::string z;
+   auto elements() const {
+      return std::forward_as_tuple(x,y,z);
+   }
+};
+```
+
+the problem is that we introduced inheritance, we have interface sameness when we didn't want it.
+
+we still have other forms of "sameness" to look at. when we forward as tuple, we re-write the same members as the struct, but without reflection, we can't easily express the same elements.
+
+### Mixin Language Support
+
+in C++20, the spaceship operator is a mixin, but it's a single piece, a small fix that was introduced as a special thing that is hard to re-use. if we had reflection, it wouldn't be a special case.
+
+### Qualifier Forwarding
+
+we had "perfect forwarding" (universal reference) since c++11. it has a very strict syntax that needs to be maintained. it becomes worse with member functions, which need to created for each combination of const and volatile qualifiers, this is solved with "deducing `this`" in c++23.
+
+```cpp
+template <class T>
+void foo(T&& t) {
+   bar(std::forward<T>(t));
+}
+
+template <class Thing>
+class OwningCollection {
+   private:
+      vector<unique_ptr<Thing>> things_;
+   public:
+      // pre c++23
+      void for_each(invocable<Thing const&> auto && f) const
+      {
+         /*...*/
+      }
+};
+
+//c++23
+template <class Self, class Func>
+void for_each(this Self&& self, Func&& f)
+{
+   for (auto&& ptr: self.things_)
+   {
+      std::forward<Func>(f)(std::forward_like<Self>(*ptr));
+   }
+}
+```
+
+### Name Forwarding
+
+this doesn't exist in C++, but does exist in languages such as ruby, it allows exposing some functionality to the user, but without exposing the data itself. we can re-use names, but not limiting ourself.
+
+### Back to DRY
+
+in our abstractions, we have few pieces of knowledge, we can separate the ownership mechanism from the collection mechanism. it doesn't have to be a unique pointer, it can ba a shared pointer, small buffer optimization, or something else entirely.
+
+for example, in the <cpp>std::vector</cpp> class, we have a customization for the allocator. the expand container "knowledge" is separable from how the storage is created, same with <cpp>std::queue</cpp>, which can use a <cpp>std::deque</cpp> as the underlying data point, but also further customize it itself. same with the smart pointers <cpp>std::unique_ptr</cpp>, which can take a unique deleter function which is separated from the creation of the data (which happens at the construction point).\
+we can follow the rabbit hole of the unique pointer. are allocation and destruction really separate? why are shared pointer and unique pointer different? turns out shared pointers have an allocator for the control block. there also <cpp>std::allocate_shared</cpp> which puts the two together. something weird about type erasure.
+
+### Concepts
+
+C++20 concepts allow users to extract interface sameness without permission, they can force coupling that we didn't intend to. it's basing interface on names. they don't check for namespace, and the same name can mean different things across classes, even if the signatures are the same.
+
+other stuff:
+
+- normal functions
+- macros and code generation
+- customization point objects
+- type erasure
+- constexpr function - "sameness" for compile-time and runtime
+- dependency injection - missing in C++, requires reflection
+- aspect oriented programming - missing in C++, requires reflection
+- decoration - missing in C++, requires reflection
+
+</details>
+
+## Bryce Adelstein Lelbach :: C++ Horizons
+
+<details>
+<summary>
+Features we might see in the future.
+</summary>
+
+[C++ Horizons](https://youtu.be/gQ0n7taWtv4?si=irUiYfI2In-z_wnr)
+
+C++20 is already in the field, with the big four changes:
+
+- Modules
+- Coroutines
+- Concepts
+- Ranges
+
+C++23 is also fresh, with it's own set of changes
+
+- More ranges
+- Formatted output
+- <cpp>std::mdspan</cpp>
+- <cpp>std::expected</cpp>
+- `import std`
+- deducting `this`
+
+there are still long term goals that aren't scheduled yet, but will hopefully change how we write C++ code
+
+### Reflection and Meta-Programming
+
+meta-programming creates source code as the result of code, reflective meta-programming creates code inside the same application that has he source code.
+
+this is a possible example of reflection, we use the symbol `^` as the "reify" operator. it takes an entity and produces a reflected representation. we can then manipulate the date, using the `template for` compile time expansion format to iterate over each of the members. we then use another new operator to splice from the reflection back into an entity `:<reflection>:`.
+
+```cpp
+template <typename T> requires is_enum_v<T>
+constexpr string to_string(T value)
+{
+   template for (constexpr meta::info e : meta::members_of(^T))
+   {
+      if ([:e:] == value)
+         return meta:name_of(e);
+   }
+   return "<unamed>";
+}
+```
+
+moving to another example, we use reflection to get the non-static data members, and then we do another `template for` to iterate over all the members and add them to the hasher.
+
+```cpp
+template <typename Hasher, typename T>
+constexpr void hash_append(Hasher& hasher, T const& t)
+{
+   constexpr meta::info data_members = meta::members_of(^T, meta::is_nonstatic_data_member);
+   template for (constexpr meta::info member : data_members)
+   {
+      hash_append(hasher, t.[:member:]);
+   }
+}
+```
+
+another example of a wrapping class that traces member calls via special splice operator `[#<reflection>#]`, with pack expansion, it generates a new class with the same interface as another one.
+
+```cpp
+template <typename T> requires is_class<T>
+struct traced {
+private:
+   T Payload_;
+   template for (constexpr auto e : member_functions_of(^T))
+   [:protection_of(e):]: [:attributes_of(e):] [:return_of(e):] [#e#]
+   (...[:parameter_types_of(e):] ... [#parameters_of(e)#]...)
+   [:qualifiers_of(e):]
+   {
+      print("Calling {}::{}\n", name_of(^T), name_of(e));
+      return payload_.[:e:](forward<[:parameter_types_of(e):]>{...[#parameter_names_of(e)#]});
+   }
+};
+```
+
+example of how we can use reflection to move between array of struct to struct of arrays.
+
+### Pattern Matching (Selection)
+
+we have the `switch` statement, which only acts on single integral value, and we have the `if` statement, which is general and arbitrary. pattern matching will give us `inspect`, a middle ground expression that matches values against patterns, and bind variables on success.\
+it stops on the first match, not the best one. the matching has to be done against constant values, but they don't have to be integral values.
+
+```cpp
+switch(i)
+{
+   case 0: print("got zero"); break;
+   case 1: print("got one"); break;
+   default: print("don't care");
+}
+
+inspect(i)
+{
+   0 => {print("got zero");}
+   1 => {print("got one");}
+   _ => {print("don't care")};
+};
+```
+
+an example of the Fibonacci function with pattern matching.
+
+```cpp
+unsigned Fibonacci(unsigned n) {
+   return inspect(n){
+      0 => 0;
+      1 => 1;
+      e if ( e > 47 ) => {throw overflow_error("too large");};
+      a => Fibonacci(a-1) + Fibonacci(a-2);
+   };
+}
+```
+
+we can use more complex patterns, using decomposition
+
+```cpp
+inspect (p) {
+   [0, 0, 0] => {print("on origin");}
+   [x, 0, 0] => {print("on x-axis");}
+   [0, y, 0] => {print("on y-axis");}
+   [0, 0, z] => {print("on z-axis");}
+   [x, y, z] => {print("{}, {}, {}", x, y, z);}
+};
+```
+
+we could use pattern matching on types and variant, much like <cpp>std::visitor</cpp>, it can then be combined with de-composition.\
+We could create our own extractor pattern, to match against all sorts of formats. it can be combiner with types and de-composition, and even with reflection. this can create a json serializer.
+
+### Sending (Senders and Receivers)
+
+C++ doesn't have a standard way to express where things should execute, and no standard model for a-synchrony.
+
+_Schedulers_ are handles to execution contexts, _Senders_ are asynchronous work, and _Receivers_ process asynchronous signals.
+
+we get the scheduler from somewhere (thread pool, distributed system), and we schedule work onto it. we can expand it with the pipe syntax to make it composable. the code is the same for a single CPU and a multiple distributed system with hundreds of GPUs.
+
+```cpp
+ex::scheduler auto sch = thread_pool.scheduler();
+
+ex::sender auto begin = ex::schedule(sch);
+ex::sender auto hi = ex::then(begin, [] {return 13;});
+ex::sender auto add = ex::then(hi, [] (int a) {return a + 42;});
+
+auto [i] = this_thread::sync_wait(add).value();
+```
 
 </details>
 
