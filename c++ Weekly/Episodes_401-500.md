@@ -773,3 +773,90 @@ anything that is a pointer-like thing to a pointer-like thing. are we changing t
 
 there's no static analysis for this.
 </details>
+
+## C++ Weekly - Ep 425 - Using string_view, span, and Pointers Safely!
+
+<details>
+<summary>
+Undefined Behavior with non-owning views
+</summary>
+
+[Using string_view, span, and Pointers Safely!](https://youtu.be/cUvdtLTJeec?si=dQBUdW5MkVuQoigO)
+
+non-owning "views" into stuff.
+
+```cpp
+std::string_view get_data() {
+  std::string result {"Check out this data string"};
+  return result;
+}
+```
+
+we have a lifetime issue, and only very new compilers know to identify it as a warning (we can run the address sanitizer, and then we'll catch the problem). our code returns a string view to an object that no longer exists.
+
+It's very easy to create this bug and have undefined behavior.
+
+we can also fix this issue with <cpp>constexpr</cpp>, and we need to have tests for it (when possible), since it doesn't allow for un-defined behavior.
+</details>
+
+## C++ Weekly - Ep 426 - Lambdas As State Machines
+
+<details>
+<summary>
+Thinking of Lambdas in a different way.
+</summary>
+
+[Lambdas As State Machines](https://youtu.be/fZe7gNgjV4A?si=sB6D2fjcWG9U07D_)
+
+
+a lambda with a capture and mutable carries it's own state.
+
+```cpp
+int main()
+{
+  auto fib = [i = 0, j = 1](){
+    i = std::exchange (j, i + j);
+    return i;
+  };
+
+  fib(); // 1
+  fib(); // 1
+  fib(); // 2
+  fib(); // 3
+  fib(); // 5
+}
+```
+
+we can create a more complicated example, something that parses text into numbers. we mark our lambda as mutable.
+
+```cpp
+constexpr auto make_int_parser()
+{
+  enum State {Startup, Numbers, Invalid};
+  return [value = 0, state = Startup, is_negative = false](const char input) mutable -> std::expected<int, char> {
+    switch (state) {
+      case Startup:
+      if (input == '-') {
+        is_negative = true;
+        state = Numbers;
+        return value;
+      }
+      [[fallthrough]]
+      case Numbers:
+      if (input >= '0' && input <= '9') {
+        value *= 10;
+        value += static_cast<int>(input -'0');
+        return (is_negative ? (value * -1) : value);
+      } else {
+        state = Invalid;
+        return std::unexpected(input);  
+      }
+      case Invalid:
+      return std::unexpected(input);
+    };
+    return std::unexpected(input);
+  };
+}
+```
+</details>
+
