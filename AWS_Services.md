@@ -2,15 +2,17 @@
 // cSpell:ignore
 -->
 
-<link rel="stylesheet" type="text/css" href=".markdown-style.css"> 
+<link rel="stylesheet" type="text/css" href=".markdown-style.css">
 
 # AWS Services
 
 ## Compute
+
 - EC2 - Elastic Cloud Compute: Computing Instances
 - EKS - Elastic Kubernetes Service - Managed Kubernetes Cluster
 - ECS - Elastic Container Service - AWS propriety Containers
 - Lambda - Serverless Computer
+
 ## Storage
 
 - S3 (Simple Storage Service): Object Storage
@@ -18,14 +20,18 @@
 - FSx (windows and Lustre) - native windows managed file system. Lustre is for compute intensive data.
 - EBS
 - Instance Storage
+
 ## DataBases
+
 - Aurora - highly available MySQL and PostgresSQL compatible Relational Database.
 - DocumentDB - another NoSQL solution.
 - DynamoDB - AWS serverless NoSQL solution.
 - DataSync: Synchronize data between AWS and on-premises.
 - DMS - Database Migration
 - ElasticCache - in memory "database". redis, memcached
+
 ## Queries
+
 - Athena - Serverless query service to analyze data stored in Amazon S3 with SQL syntax. can also work on other data sources with Data Source Connectors
 - PartiQL - Query DynamoDB with SQL-like language
 - RedShift - AWS data warehouse solution (BI).
@@ -33,6 +39,7 @@
 - OpenSearch - additional database for better searching capabilities replaces ElasticSearch
 
 ## Orchestration
+
 - SES (Simple Email Service) - send emails
 - SNS (Simple Notification Service): send emails
 - SQS (Simple Queue Service)
@@ -41,7 +48,9 @@
 - - EventBridge - Central Events in AWS
 - Kinesis - Streaming Data platform (continuously generated data from multiple source, not video streaming)
 - - MSK - Managed Streaming for Apache Kafka
+
 ## CI-CD
+
 - CodeCommit - Store code, a git-compatible repository
 - CodePipeline - automate building to Elastic Beanstalk
 - CodeBuild - building and testing
@@ -50,12 +59,16 @@
 - CodeArtifact - store, publish and share software artifacts
 - CodeGuru - code review by machine learning
 - Cloud9 - in-browser IDE
+
 ## Deployment and infrastructure
+
 - Elastic Beanstalk - one click solution to provision resource, like CloudFormation for dummies. easily deploy EC2 based applications (web-server, producer consumer) with load balancer.
 - CloudFormation - templates for provisioning aws resources.
 - CoPilot - provisions and manages ECS services.
+
 ## Management
-- IAM (Identity Access Management) - 
+
+- IAM (Identity Access Management)
 - CloudWatch - Monitors Resource usage and other metrics, used for billing alarms. Alarms,Events, Logs and Dashboards.
 - CloudWatch Evidently - Safely validate new features by serving them to a specified % of your users. feature flags and A/B testing.
 - CloutTrail: Monitors AWS actions (from the console or the API), which users and accounts did what
@@ -64,6 +77,7 @@
 - Managed Microsoft AD - Active Directory by AWS
 - RAM - Resources Access Manger - share resources across account
 - SSM - Parameter Store and Secrets Manager
+
 ## Networking and Security
 
 - Internet Gateway - in the VPC, uses route table
@@ -75,17 +89,18 @@
 - Amazon Shield - DDos Protection
 
 ## Machine Learning
-- Macie - data security and data privacy service that uses machine learning and pattern matching to discover and protect your sensitive data. 
-- SageMaker - machine learning model
+
 - Quicksight - data-driven unified business intelligence (BI) at hyper-scale.
+- Macie - data security and data privacy service that uses machine learning and pattern matching to discover and protect your sensitive data.
+- Bedrock - Foundation model as a service
+- SageMaker - training machine learning models from scratch
+- SageMaker JumpStart - re-training models with new custom data
+- HealthScribe - Generative AI tool for transcribing medical conversations.
+- CodeWhisperer - Coding Tool
 
 ## Other
+
 - API Amplify - Full-Stack Web and Mobile Apps
 - AppConfig - Configure, validate, and deploy dynamic configurations
 - Elastic Transcoder - transcode (convert) media files between different formats.
 - Glue - Transform Data
-
-
-
-
-

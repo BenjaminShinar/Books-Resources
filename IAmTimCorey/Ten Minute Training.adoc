@@ -1037,7 +1037,187 @@ foreach (var p in people)
 
 ====
 
+=== Collection Expressions in .NET 8
 
+.New expression to initialize collection using the `[]` syntax.
+[%collapsible]
+====
+different ways to initialize collections, and since .NET 8 we can use `[]` to initialize all sorts of collections. it also helps to create empty collections.
+
+[source, csharp]
+----
+int[] agesArray = {1,2,3};
+list<int> agesList = new(){1,2,3};
+int[] agesArray2 = [1,2,3];
+list<int> agesList2 = [1,2,3];
+
+void PrintAges(IEnumerable<int> ages);
+----
+
+this is the same syntax used in pattern matching expressions to match an empty collection.
+====
+
+=== Periodic Timer in C# Including .NET 8 Updates
+
+.Run Tasks on a Timer
+[%collapsible]
+====
+the `PeriodicTimer` is single timer class that runs tasks asynchronously. it usually runs in the background (a different thread). it takes a TimeSpan as the argument to the constructor.
+
+this example works in .NET 6 and above. but with .NET 8, we can also change to time period after we created it. and we can turn it off indefinably by changing the period to `TimeOut.InfiniteTimeSpan` (the next tick won't arrive, until we turn it back on). each time it is called, all the ticks are consumed, they don't stack together. 
+
+[source, csharp]
+----
+using PeriodicTimer timer = new(TimeSpan.fromMilliseconds(1000));
+var i = 0;
+while (await timer.WaitForNextTickAsync() && i < 5)
+{
+  Console.WriteLine($"Execution #{i+1} ran at: {DateTime.Now.ToString("hh:mm:ss fff")}");
+  i++;
+  timer.Period = TimeSpan.fromMilliseconds(1000 * i); // .NET 8
+  timer.Period = TimeOut.InfiniteTimeSpan; // .NET 8
+}
+----
+====
+
+=== Command Line Arguments in C# Applications in 10 Minutes or Less
+.Using The Command Line Arguments
+[%collapsible]
+====
+
+The command line arguments are hidden from us when we use top-level statements (we have the implicit `public static void main(String []args)`). but we can always access the arguments via the `args` variable.
+
+[source, csharp]
+----
+foreach (var arg in args)
+{
+  Console.WriteLine(arg);
+}
+----
+we need custom logic to match and make sense out of the arguments, but we can always get them.
+
+====
+
+=== CSS Isolation in Blazor Applications in 10 Minutes or Less
+
+.Apply custom style to only a specific component in Blazor
+[%collapsible]
+====
+we create a file with the same name as our razor file, but with the extended ".css" extension, this makes the style apply on to the file with the same name.
+if our component file is "demo.razor", our isolated css file name is "demo.razor.css". +
+under the hood is uses the css `[attribute]` selector and setting the target identifier.
+
+====
+
+=== How To Use Variables in CSS without SASS or LESS in 10 Minutes or Less
+
+.Using variables natively in CSS
+[%collapsible]
+====
+
+in the past, we had to write the css value directly, so there was a need to apply another level of abstraction over it, such as SASS, to keep the styles consistent and avoid manual mistakes. the eventual css file would have the values hard coded.
+[source, css]
+----
+h1 {
+  background-color: #007bff;
+}
+
+h2 {
+  color: #007bff;
+}
+----
+however, today we can use variables in native css. this reduces the need for css managers, and makes the styles easier to understand.+
+we can define them at any level (such as root), and they must begin with two dashes. we then use them with `var(--var-name)`
+
+[source, css]
+----
+:root {
+  --brand-main: #007bff;
+}
+
+h1 {
+  background-color: var(--brand-main);
+}
+
+h2 {
+  color: var(--brand-main);
+}
+----
+====
+=== How IDisposable and Using Statements Work Together in C#
+
+.Ensuring Proper resource managements
+[%collapsible]
+====
+C# and the garbage collector handle some resources, but there are other resources which we need to manage as part of the code (files, connections, graphics, other handles...). the `IDisposable` pattern encapsulates managing the resources as part of the code-flow. when the garbage collector handles the memory allocation, it will also run the custom resource disposal code.
+
+the interface has the `public void Dispose()` method, we call on it when we instantiate the object with the `using` statement (not to be confused with the `using` directive). the object will be disposed when we go out of scope.
+
+====
+
+=== Renaming in Visual Studio Using AI
+.Context Aware renaming tool 
+[%collapsible]
+====
+part of the github co-pilot tool - "rename suggestions". the AI will suggest names based on the field and the general context.
+====
+
+=== Visual Studio Update: Automatically Close Brackets and Quotes
+
+.Surrounding text with brackets
+[%collapsible]
+====
+change to visual studio 2022 (17.9). we can enable it in the tools->options->text editor: display-"automatically surround selections when typing quotes or brackets".
+
+we can select a block of code or text, and then press the open parentheses key and the entire thing is surrounded with it.
+====
+
+=== Containerize Your C# Application Easily with the .NET CLI
+.Putting the C# code into a container
+[%collapsible]
+====
+easy way to create a docker container without a docker file.
+
+we can simply write the command and the image is created. we can then run it from our docker program. 
+[source, shell]
+----
+dotnet publish --os linux --arch x64 -p:PublishProfile=DefaultContainer -c Release
+----
+
+inside our project file, we can set the base image to use something else rather the default.
+====
+
+=== Fixing a Common WinForms Bug (CS0103) in 10 Minutes or Less
+.Fix for a common bug
+[%collapsible]
+====
+
+an error that happens when we have an event but we deleted the event code. the event appears in the generated code, but it was removed. when we double-click the object in the designer, it creates code in two files, one of them is hidden from us.
+
+we can delete it from the generated code, or look the object properties in the side bar and remove it from the "events" property.
+====
+
+=== Create a GitHub Repo From Existing Code in Visual Studio in 10 Minutes or Less
+
+.Built-in github tools from visual studio
+[%collapsible]
+====
+we can click "create git repository" from the "git changes" windows, and then have a form with good defaults to use, and we can directly push it onto github or azure-devops registry.
+
+====
+
+=== 3 WinForms Setup Tasks You Should Do Right Away in 10 Minutes or Less
+
+.Best Practices with WinForms
+[%collapsible]
+====
+
+.First Things to change
+. Changing the default form name. don't forget to change to form display title.
+. Change the default font size in the form - which will be inherited by all elements (if they haven't specified it specifically themselves).
+. Set a folder structure and adjust the namespaces
+
+====
 == Misc
 
 .Stuff Worth Keeping
@@ -1048,6 +1228,5 @@ foreach (var p in people)
 ----
 //sample csharp code block
 ----
- 
 
 ====

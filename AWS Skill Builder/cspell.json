@@ -3,7 +3,7 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": ["aws", "k8s"],
-  "words": ["Fargate"],
+  "words": ["Fargate", "Alexa"],
   "ignoreWords": [],
   "import": [],
   "enabled": true,

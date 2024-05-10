@@ -9,15 +9,32 @@ https://www.iamtimcorey.com[Website], https://www.youtube.com/@IAmTimCorey[youtu
 
 == Some AsciiDoc Stuff
 
-https://docs.asciidoctor.org/asciidoc/latest/asciidoc-vs-markdown/[quick guid to compare with markdowns]
+* https://docs.asciidoctor.org/asciidoc[reference]
+* https://docs.asciidoctor.org/asciidoc/latest/asciidoc-vs-markdown/[quick guid to compare with markdowns]
 
+=== Text Styles
+
+`+http://localhost:8080+` `+/issue/{id}+`
+
+
+line break with `+` +
+(the plus symbol)
+
+----
+quoted text
+----
+
+
+=== Code Blocks
+
+C# code
 [source, csharp]
 ----
 protected string X(){
 
 } 
 ----
-c++ code
+C++ code
 
 [source ,cpp]
 ----
@@ -31,24 +48,57 @@ int main() {
 ----
 
 
-`+http://localhost:8080+`
-`+/issue/{id}+`
-
-
-line break with `+` +
-(the plus symbol)
-
-.block title
+=== Lists
+.List title - unordered
 * a
 * b
 * c
 
-----
-quoted text
-----
+[square]
+.Square markers
+- square 1
+- square 2
+- square 3
 
+[circle]
+.Circle markers
+- Circle 1
+- Circle 2
+- Circle 3
 
-admonition styles
+[disc]
+.Disc markers
+* Disc 1
+* Disc 2
+* Disc 3
+
+[start=4]
+.Numbered (Ordered) List with custom Start
+. Milk
+. Eggs
+. Bread
+
+[%reversed]
+[loweralpha]
+.Revered Numbered List
+. Milk
+. Eggs
+. Bread
+
+.Normal CheckList
+* [*] checked
+* [x] also checked
+* [ ] not checked
+* normal list item
+
+.InterActive CheckList
+[%interactive]
+* [*] checked
+* [x] also checked
+* [ ] not checked
+* normal list item
+
+=== Admonition styles
 
 NOTE: An admonition draws the reader's attention to auxiliary information.
 
@@ -65,11 +115,6 @@ IMPORTANT: Sign off before stepping away from your computer.
 ****
 text inside a box
 ****
-
-.Grocery list
-* Milk
-* Eggs
-* Bread
 
 
 kbd:[F11]

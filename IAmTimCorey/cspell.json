@@ -2,8 +2,8 @@
   "version": "0.2",
   "ignorePaths": [],
   "dictionaryDefinitions": [],
-  "dictionaries": ["csharp", "sql"],
-  "words": ["Deconstructor", "blazor"],
+  "dictionaries": ["csharp", "sql", "softwareTerms"],
+  "words": ["Deconstructor", "blazor", "linux", "dotnet"],
   "ignoreWords": ["Corey", "appsettings", "highlightjs","nullable"],
   "import": []
 }
