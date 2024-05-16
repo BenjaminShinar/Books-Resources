@@ -860,3 +860,85 @@ constexpr auto make_int_parser()
 ```
 </details>
 
+
+## C++ Weekly - Ep 427 - Simple Generators Without Coroutines
+
+<details>
+<summary>
+making a generator from a lambda.
+</summary>
+
+[Simple Generators Without Coroutines](https://youtu.be/F37h3FuA8kM?si=GMwg-Dp6_RCgQ92M)
+
+generators with lambdas.
+
+```cpp
+int main()
+{
+  auto fib = [i=0, j=1]() mutable{return i = std::exchange(j,i+j);};
+  
+  for (const auto val : fib | std::views::take(20)) // doesn't work.
+  {
+    std::cout<< val '\n';
+  }
+  return fib();
+}
+```
+we would want to be able to call range operators (like <cpp>std::views::take</cpp>) and have the generator return the value. but we can't do it just yet.
+
+we need a helper utility. we take advantage of <cpp>std::iota</cpp>
+
+```cpp
+auto generator(auto func) {
+  return std::views::iota(0) | std::views::transform(func);
+}
+
+int main()
+{
+  auto fib = [i=0, j=1](auto) mutable{return i = std::exchange(j,i+j);};
+  
+  for (const auto val : generator(fib) | std::views::take(20)) // this does work
+  {
+    fmt::print("{}\n");
+  }
+  return fib();
+}
+
+```
+</details>
+
+## C++ Weekly - Ep 428 - C++23's Coroutine Support: `std::generator`
+
+<details>
+<summary>
+Now an example with actual coroutine
+</summary>
+
+[C++23's Coroutine Support: std::generator](https://youtu.be/7ZazVQB-RKc?si=O7WzWFHkxaSkSLkx)
+
+finally we have compiler and library support for generators - resumable functions. so we can write the same example from last week.
+
+```cpp
+#include <generator>
+#include <ranges>
+std::generator<int> fib()
+{
+  int i = 0;
+  int j = 1;
+  while (true) {
+    co_yield i = std::exchange(j, i + j);
+  }
+}
+
+int main()
+{
+
+  for (const auto val : fib() | std::views::take(20))
+  {
+    fmt::print("{}\n");
+  }
+  return fib();
+}
+```
+
+</details>
