@@ -942,3 +942,74 @@ int main()
 ```
 
 </details>
+
+## C++ Weekly - Ep 429 - C++26's Parameter Pack Indexing
+
+<details>
+<summary>
+Upcoming feature that simplifies paramater pack expansion and allows direct indexing.
+</summary>
+
+[C++26's Parameter Pack Indexing](https://youtu.be/wl7uWes7Sys?si=sxOIT2tf7Vhcgz8Y).
+
+[CppReference](https://en.cppreference.com/w/cpp/language/pack_indexing), [compiler explorer](https://compiler-explorer.com/z/3vc3Yvf4o).
+
+Until now, if we wanted to do something with a paramater at a specific location (like the 3rd parameter), we had some workaround options:
+
+- create specific overload
+- do some recursive programming and parameter expansion
+- (from video comments: use <cpp>std::tie</cpp> and <cpp>std::get</cpp> to create a tuple.)
+
+```cpp
+template<typename ... Param>
+void func(Param ... param)
+{
+  // how to do something with the 3rd parameter?
+}
+
+// explicit overload
+template<typename Param0, typename Param1, typename Param2, typename ... Param>
+void func(Param0 param0, Param1 param1, Param2 param2, Param ... param)
+{
+  // doing something with third parameter
+  param2 = 42;
+}
+
+// recursive style
+template<std::size_t count, typename Param0, typename ... Param> requires (count > 0)
+auto &get(Param0 param0, Param ... param)
+{
+  return get<count-1>(param...);
+}
+
+template<std::size_t count, typename Param0, typename ... Param> requires (count == 0)
+auto &get(Param0 param0, Param ... param)
+{
+  return param0;
+}
+
+template<typename ... Param>
+void funcR(Param ... param)
+{
+  get<2>(param...) = 42; // modify the third parameter
+}
+
+// from the video comments
+template<typename... Param>
+void funcTuple(Param... param) {
+    std::get<2>(std::tie(param...)) = 42;
+}
+```
+
+In the upcoming C++26 standard, we can directly index to the parameter pack - we use the `[]` brackets operator, just with the `...` before it.
+
+```cpp
+template<typename ... Param>
+void func26(Param ... param)
+{
+  // simple
+  param...[2] = 42;
+}
+```
+
+</details>

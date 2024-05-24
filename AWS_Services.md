@@ -97,6 +97,9 @@
 - SageMaker JumpStart - re-training models with new custom data
 - HealthScribe - Generative AI tool for transcribing medical conversations.
 - CodeWhisperer - Coding Tool
+- Lex - chatbot
+- Kendra - AI based search
+- Amazon Q Business - ai assistant
 
 ## Other
 
