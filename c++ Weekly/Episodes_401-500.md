@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott 
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -535,6 +535,7 @@ TEST_CASE("constexpr constructor")
 ```
 
 we can make some more code to be <cpp>constexpr</cpp>, but for now it's mostly preparation for the future.
+
 </details>
 
 ## C++ Weekly - Ep 417 - Turbocharge Your Build With Mold?
@@ -549,6 +550,7 @@ A linker that utilizes mutiple cpus and parallel processing
 getting faster linking, especially when multiple object files rely on the same libraries. we switch linkers with by passing the `-fuse-ld=<linker>` flag (`-fuse-ld=mold` in our case). it also reduces memory usage.
 
 it can also help when building debug versions, which are usually slower.
+
 </details>
 
 ## C++ Weekly - Ep 418 - Moving From C++14 to C++17
@@ -580,7 +582,7 @@ overview of the major changes in C++23.
 - multidimensional subscript. use commas inside the `[]` operator.
 - ranges upgrades - many stuff, includes <cpp>zip</cpp> to iterate over multiple containers at a time.
 - constexpr "cmath" - except for trigonometry functions (c++26).
-- <cpp>std::expected</cpp> - an alternate error handling mechanism. like an optional pair. the downside is  that it interferes with return value optimization and would require explicit move semantics.
+- <cpp>std::expected</cpp> - an alternate error handling mechanism. like an optional pair. the downside is that it interferes with return value optimization and would require explicit move semantics.
 - generators for coroutines
 - <cpp>md_span</cpp> - multiple dimension span (not owning the data itself)
 - explicit `this` (deducing `this`)
@@ -669,7 +671,7 @@ std::optional<Lifetime> get_value_move()
 {
   std::optional<Lifetime> retval;
   retval = Lifetime{42}; // move ctor
-  
+
   return retval;
 }
 
@@ -677,10 +679,10 @@ std::optional<Lifetime> get_value_copy()
 {
   std::optional<Lifetime> Lifetime myLifeTime{42};
   retval = myLifeTime; // copy ctor
-  
+
   return retval;
 }
-  
+
 std::optional<Lifetime> get_value_move2()
 {
   return Lifetime{42}; // also move
@@ -722,6 +724,7 @@ std::optional<Lifetime> get_value()
 we could try `return {42};`, which would work, but if we mark our single parameter constructor as <cpp>explicit</cpp> (which we should), then it doesn't work anymore.
 
 this issue get more serious when using c++23 <cpp>std::expected</cpp>.
+
 </details>
 
 ## C++ Weekly - Ep 422 - Moving from C++20 to C++23
@@ -736,6 +739,7 @@ continuing from episode 420.
 we can put attribute on lambda, so we use <cpp>[[noreturn]]</cpp> on a lambda that throws exception.
 
 we have a new tool for error handling instead of exceptions, <cpp>std::expected</cpp> allows us to return an object of a different type, which also makes it possible to work in compile time. **but we don't use it for now**.
+
 </details>
 
 ## C++ Weekly - Ep 423 - Complete Guide to Attributes Through C++23
@@ -772,6 +776,7 @@ A thing that can confuse us.
 anything that is a pointer-like thing to a pointer-like thing. are we changing the internal value or the holder object.
 
 there's no static analysis for this.
+
 </details>
 
 ## C++ Weekly - Ep 425 - Using string_view, span, and Pointers Safely!
@@ -797,6 +802,7 @@ we have a lifetime issue, and only very new compilers know to identify it as a w
 It's very easy to create this bug and have undefined behavior.
 
 we can also fix this issue with <cpp>constexpr</cpp>, and we need to have tests for it (when possible), since it doesn't allow for un-defined behavior.
+
 </details>
 
 ## C++ Weekly - Ep 426 - Lambdas As State Machines
@@ -807,7 +813,6 @@ Thinking of Lambdas in a different way.
 </summary>
 
 [Lambdas As State Machines](https://youtu.be/fZe7gNgjV4A?si=sB6D2fjcWG9U07D_)
-
 
 a lambda with a capture and mutable carries it's own state.
 
@@ -849,7 +854,7 @@ constexpr auto make_int_parser()
         return (is_negative ? (value * -1) : value);
       } else {
         state = Invalid;
-        return std::unexpected(input);  
+        return std::unexpected(input);
       }
       case Invalid:
       return std::unexpected(input);
@@ -858,8 +863,8 @@ constexpr auto make_int_parser()
   };
 }
 ```
-</details>
 
+</details>
 
 ## C++ Weekly - Ep 427 - Simple Generators Without Coroutines
 
@@ -876,7 +881,7 @@ generators with lambdas.
 int main()
 {
   auto fib = [i=0, j=1]() mutable{return i = std::exchange(j,i+j);};
-  
+
   for (const auto val : fib | std::views::take(20)) // doesn't work.
   {
     std::cout<< val '\n';
@@ -884,6 +889,7 @@ int main()
   return fib();
 }
 ```
+
 we would want to be able to call range operators (like <cpp>std::views::take</cpp>) and have the generator return the value. but we can't do it just yet.
 
 we need a helper utility. we take advantage of <cpp>std::iota</cpp>
@@ -896,7 +902,7 @@ auto generator(auto func) {
 int main()
 {
   auto fib = [i=0, j=1](auto) mutable{return i = std::exchange(j,i+j);};
-  
+
   for (const auto val : generator(fib) | std::views::take(20)) // this does work
   {
     fmt::print("{}\n");
@@ -905,6 +911,7 @@ int main()
 }
 
 ```
+
 </details>
 
 ## C++ Weekly - Ep 428 - C++23's Coroutine Support: `std::generator`
@@ -1012,4 +1019,162 @@ void func26(Param ... param)
 }
 ```
 
+</details>
+
+## C++ Weekly - Ep 430 - How Short String Optimizations Work
+
+<details>
+<summary>
+A coding example of small string optimizations
+</summary>
+
+[How Short String Optimizations Work](https://youtu.be/CIB_khrNPSU?si=ihFR8bT_4PvuTSK2)
+
+things that usually allocate, but might be able to avoid this allocation if the object is small enough.
+
+- <cpp>std::string</cpp>
+- <cpp>std::function</cpp>
+- <cpp>std::any</cpp>
+
+a small example of how it can be done. we create an internal data object which can either point to the data somewhere else (pointer and size) or be the data itself. we can use the same memory address via a union.
+
+```cpp
+struct string
+{
+  struct allocated_storage
+  {
+    char *m_data_ptr;
+    std::size_t m_capacity; // allocated_size
+  }; // internal things we can use.
+
+  using small_storage = char[sizeof(allocated_storage)];
+
+
+  union storage {
+    allocated_storage m_alloc;
+    small_storage m_small;
+  };
+
+  storage m_storage{.m_small = small_storageP{}}; // default initialize
+
+  std::size_t m_size = 0; // current size - must be known at all times
+  bool m_is_small_storage = true;
+
+  [[nodiscard]] constexpr const char *date() const noexcept const {
+    if (m_is_small_storage) {
+      return m_storage.m_small;
+    }
+    else {
+      return m_storage.m_alloc.m_data_ptr;
+    }
+  }
+
+  // constructors
+
+  constexpr allocated_storage alloc(std::size_t len, const char* data)
+  {
+    auto *allocated = new char[len+1]; // include null termination
+    std::copy(data, data+len+1, allocated);
+    return {allocated, len};
+  }
+
+  constexpr string() = default;
+  constexpr string(const char* data): m_size{std::strlen(data)}
+  {
+    if (m_size < sizeof(small_storage))
+    {
+      std::copy(data, data+m_size + 1, m_storage.m_small); // small string optimization
+    }
+    else
+    {
+      m_storage.m_alloc = alloc(m_size, data);
+      m_is_small_storage = false;
+    }
+  }
+};
+
+constexpr ~string()
+{
+  // C++20 constexpr destructor
+  if (!m_is_small_storage)
+  {
+    delete[] m_storage.m_alloc.m_data_ptr;
+  }
+}
+
+
+consteval void test_string(const char str*)
+{
+  // using consteval makes sure we don't have undefined behavior or memory leaks!
+  string my_str{str};
+}
+int main()
+{
+  tes_string("");
+  tes_string("Hello World");
+  tes_string("Hello World long log string!");
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 431 - CTAD for NTTP
+
+<details>
+<summary>
+Non-type template parameters auto deduction.
+</summary>
+
+[CTAD for NTTP](https://youtu.be/yPB_btV8epo?si=HuHsozVRlR2jpXBK)
+
+- CTAD - class template argument deduction.
+- NTTP - non type template parameters.
+
+```cpp
+
+template<int i> auto get_value() {return i;} // non-type template parameter
+
+// template<auto y> auto get_value() {return y;} // non-type template parameter - templated
+// template<std::integral auto x> auto get_value() {return x;} // non-type template parameter - constrained with concept
+
+int main()
+{
+  std:vector v1{1,2,3}; // vector of int
+  std:vector v2{1.1,2.1,3.1}; // vector of double
+  std:vector<int> v3{1.1,2.1,3.1}; // narrowing!
+  v1 = v2; // ERROR
+
+  return get_value<1>()
+
+}
+```
+
+we can combine the two things together - CNTTP - class non-type template parameters.
+
+```cpp
+template<std::array a> auto get_value() {return a[1];}
+int main()
+{
+  [[maybe_unused]] std::array a{1,2,3};
+  //return get_value<a>();
+  return get_value<{5,4,3}>(); // this also works!
+}
+```
+
+the name of the function actually contains the values of the arguments in the mangled name.
+
+</details>
+
+## C++ Weekly - Ep 432 - Why `constexpr` Matters
+
+<details>
+<summary>
+How `constexpr` helps us.
+</summary>
+
+[Why `constexpr` Matters](https://youtu.be/QZxfyGmpanM?si=1lclZpUOwcieF2Lt)
+
+There is some pushback against `constexpr`, with many people saying that they don't have use for it since they don't have the required information in compile time.
+
+looking back at the string parser example, if we can move some stuff to the `consteval` function, we can get some optimizations to happen, that wouldn't happen unless we made our program `constexpr`-friendly.
 </details>

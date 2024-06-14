@@ -1218,6 +1218,66 @@ we can click "create git repository" from the "git changes" windows, and then ha
 . Set a folder structure and adjust the namespaces
 
 ====
+
+=== Centering With CSS The Easy Way
+
+.Easy way to center an object
+[%collapsible]
+====
+There's a running joke that centering an object is hard to do.
+
+we start with a blazor page:
+
+[source, html]
+----
+<PageTitle>Home</PageTitle>
+<div class="parent">
+  <div class="container">
+    <div class="card">
+      <h1>Coming Soon!</h1>
+      <p>
+        This site is currently under construction. New content is coming soon!
+      </p>
+    </div>
+  </div>
+</div>
+----
+
+so in the css file, we can modify the "container" class. we can center horizontally with `justify-content: center`, and center vertically using the with view height and `align-items: center`. we can change how our items are stacked (columns or rows) with the `flex-direction: column;` property.
+
+[source, css]
+----
+body {
+  background-color: lightgray;
+  margin: 0;
+}
+* {
+  border: 1px solid red;
+}
+
+.parent{
+  height: 500px;
+}
+
+.card {
+  margin: 10px;
+  background-color: blue;
+  color: white;
+  padding: 0 10px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column; // default is row
+  justify-content: center;
+  align-items: center;
+  height: 100vh; // or inherit from parent
+}
+----
+
+if we want to make the container centering aligned with a parent elements, we change the height from the view height to `height: inherit;` to use the parent's height.
+====
+
 == Misc
 
 .Stuff Worth Keeping
