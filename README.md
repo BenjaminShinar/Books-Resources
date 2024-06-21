@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Okun kube fooa SVennam aaaabc kubelet kubernetes nginx openshift linux redhat
+// cSpell:ignore Okun kube fooa SVennam aaaabc kubelet kubernetes nginx openshift linux redhat Silberschatz Korth Sudarshan ntile cume_dist
 -->
 
 # Books-Resources
@@ -220,6 +220,97 @@ service mesh.
 
 </details>
 
+## Database System Concepts
+
+<!-- <details> -->
+<summary>
+Database System Concepts book.
+</summary>
+
+I'm reading a god-damn book about SQL?
+
+Authors: Abraham Silberschatz, Henry F. Korth, S. Sudarshan.
+
+### Chapter 3 - Introduction To SQL
+
+- relations
+- basic sql query structure
+  - `select`
+  - `from`
+  - `where`
+  - `order`
+- Natural Join
+  - `as`
+- Set operations
+  - `union`
+  - `intersect`
+  - `except`
+  - set comparisons
+- Null value (truthiness)
+- Aggregate functions
+  - `avg`, `min`, `max`, `sum`, `count`
+  - `group by`
+  - `having`
+- sub queries
+
+### Chapter 4 - Intermediate SQL
+
+- Joins
+- Views
+  - Materialized views
+- Transactions
+  - `Commit`
+  - `Rollback`
+- Constraints
+- `Check` Clause (arbitrary predicate)
+- Referential Integrity
+- Data Types
+  - user defined types
+  - domains
+- Default values
+- Catalogs and Schemas
+- Authorization
+  - privileges
+  - roles
+
+#### Chapter 5 - Advanced SQL
+
+- Accessing SQL from software
+  - Dynamic SQL - queries are strings and are processed by the database
+  - Embedded SQL - queries are compiled by the client
+  - Prepared Statements - faster and safer
+  - Callable Statements
+- Metadata Features
+- ODBC and JDBC
+- SQL functions and procedures
+- Exception conditions and handlers
+- Triggers
+  - event, condition, action
+  - before or after event
+  - per row or per table
+- Recursive Queries
+  - transitive closures
+- Advanced aggregations
+  - `rank`, `dense_rank`,
+  - `percent_rank`, `ntile`
+  - `cume_dist`
+  - `row_number`
+  - `over`
+  - `partition by`
+- Windowing
+  - `preceding`, `following`
+  - `unbounded`
+  - `current row`
+  - `range between`
+- OLAP - online analytical processing - analytics solutions and tools
+  - `pivot`(cross tabs)
+  - `cube`, `rollup` (generalizations of `group by`)
+  - `decode`
+
+#### Chapter 6 - Formal Relational Query Languages
+
+</details>
+
 ## Regex Stuff
 
 <details>
@@ -310,7 +401,7 @@ state_m = state_n + delta_{(n,n+1)} + ... + delta_{(m-1, m)} + metadata_m
 $$
 $$
 \begin{align*}
-\int_0^1 \frac{4.0}{1+x^2}dx = \pi 
+\int_0^1 \frac{4.0}{1+x^2}dx = \pi
 \end{align*}
 $$
 $$

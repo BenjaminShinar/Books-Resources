@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -1177,4 +1177,46 @@ How `constexpr` helps us.
 There is some pushback against `constexpr`, with many people saying that they don't have use for it since they don't have the required information in compile time.
 
 looking back at the string parser example, if we can move some stuff to the `consteval` function, we can get some optimizations to happen, that wouldn't happen unless we made our program `constexpr`-friendly.
+</details>
+
+## C++ Weekly - Ep 433 - C++'s First New Floating Point Types in 40 Years!
+
+<details>
+<summary>
+New fixed width floating point types.
+</summary>
+
+[C++'s First New Floating Point Types in 40 Years!](https://youtu.be/YM1nbexgGYw?si=deSK4di9RzCTsWNQ)
+
+fixed width (size) floating point types
+
+- <cpp>std::float16_t</cpp>
+- <cpp>std::float32_t</cpp>
+- <cpp>std::float64_t</cpp>
+- <cpp>std::float128_t</cpp>
+- <cpp>std::bfloat16_t</cpp> - (brain floating-point)
+
+the new 16 bits type helps when using small devices, bfloat is used in machine learning algorithms, it optimizes the mantissa and exponents location in the layout to work better on GPU hardware (8 bits for each).
+
+in this example we see how they differ from one another.
+
+```cpp
+#include <stdfloat>
+
+void explore_float16(std::uint16_t val)
+{
+  const auto f16 = std::bit_cast<std::float16_t>(val);
+  const auto bf16 = std::bit_cast<std::bfloat16_t>(val);
+
+  std::cout << std::format("{:#016b} {:#04x} {} {}f16 (0b{:01b}'{:010b}) {}bf16 (0b{:01b}'{:08b}'{:07b})\n", val, val, val, f16, (val >> 15) & 0b1, (val >> 10) & 0b11111, (val & 0b11111_11111_1), bf16, (val >> 15) & 0b1, (val >> 7) & 0b11111_111, (val & 0b11111_11));
+}
+
+int main()
+{
+  explore_float16(0b0_01101_01010_10101);
+  explore_float16(0b0_11110_11111_11111);
+  explore_float16(0b1_11100_00111_11111);
+}
+```
+
 </details>

@@ -99,7 +99,8 @@
 - CodeWhisperer - Coding Tool
 - Lex - chatbot
 - Kendra - AI based search
-- Amazon Q Business - ai assistant
+- Amazon Q Business/Developer - ai assistant
+- Textract - extract text from scanned documents and handwritten text
 
 ## Other
 
