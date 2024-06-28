@@ -65,6 +65,7 @@
 - Elastic Beanstalk - one click solution to provision resource, like CloudFormation for dummies. easily deploy EC2 based applications (web-server, producer consumer) with load balancer.
 - CloudFormation - templates for provisioning aws resources.
 - CoPilot - provisions and manages ECS services.
+- EC2 Image Builder - automate the creation of AMI images or Docker Images
 
 ## Management
 
@@ -77,6 +78,8 @@
 - Managed Microsoft AD - Active Directory by AWS
 - RAM - Resources Access Manger - share resources across account
 - SSM - Parameter Store and Secrets Manager
+- Service Quotes - see the AWS quotas at one place and request to increase them.
+- License Manager - manage software licenses
 
 ## Networking and Security
 
@@ -108,3 +111,4 @@
 - AppConfig - Configure, validate, and deploy dynamic configurations
 - Elastic Transcoder - transcode (convert) media files between different formats.
 - Glue - Transform Data
+- AWSConfig - Monitor and prevent resources according to policy

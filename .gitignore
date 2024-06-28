@@ -31,8 +31,8 @@
 *.out
 *.app
 
-#
-.pdf
+# PDF files
+*.pdf
 
 #
 #workspace.code-workspace

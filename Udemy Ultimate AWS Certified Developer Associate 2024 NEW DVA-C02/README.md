@@ -4193,19 +4193,12 @@ for the demo, we use the simple option and have it backed by <cloud>DynamoDb</cl
 ### AWS Amplify
 
 > Set of tools to get started with creating mobile and web applications.\
-> "Elastic Beanstalk for mobile and web
-applications"
+> "Elastic Beanstalk for mobile and web applications"
 >
-> - Must-have features such as data storage,
-authentication, storage, and machine-learning,
-all powered by AWS services.
-> - Front-end libraries with ready-to-use
-components for React.js, Vue, Javascript, iOS,Android, Flutter, etc...
-> - Incorporates AWS best practices to for
-reliability, security, scalability
-> - Build and deploy with the Amplify CLI or
-Amplify Studio.
-
+> - Must-have features such as data storage, authentication, storage, and machine-learning, all powered by AWS services.
+> - Front-end libraries with ready-to-use components for React.js, Vue, Javascript, iOS,Android, Flutter, etc...
+> - Incorporates AWS best practices to for reliability, security, scalability
+> - Build and deploy with the Amplify CLI or Amplify Studio.
 
 - <cloud>Amplify Studio</cloud> - visual designer for a full stack app
 - <cloud>Amplify Cli</cloud> - congifuring an application with a guided cli workflow

@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Okun kube fooa SVennam aaaabc kubelet kubernetes nginx openshift linux redhat Silberschatz Korth Sudarshan ntile cume_dist
+// cSpell:ignore Okun kube fooa SVennam aaaabc kubelet kubernetes nginx openshift linux redhat Silberschatz Korth Sudarshan ntile cume_dist arity
 -->
 
 # Books-Resources
@@ -273,7 +273,7 @@ Authors: Abraham Silberschatz, Henry F. Korth, S. Sudarshan.
   - privileges
   - roles
 
-#### Chapter 5 - Advanced SQL
+### Chapter 5 - Advanced SQL
 
 - Accessing SQL from software
   - Dynamic SQL - queries are strings and are processed by the database
@@ -307,7 +307,64 @@ Authors: Abraham Silberschatz, Henry F. Korth, S. Sudarshan.
   - `cube`, `rollup` (generalizations of `group by`)
   - `decode`
 
-#### Chapter 6 - Formal Relational Query Languages
+### Chapter 6 - Formal Relational Query Languages
+- operations - can act on one relation and produce one relation back (unary), or run on pairs of relations (binary)
+  - select (unary) - select/filter tuples that satisfy a predicate
+  - project (unary) - project relation into new form with some of the attributes. will remove duplicates.
+  - union (binary) - combine two relations together. will remove duplicates. relations must be the same arity (number of attributes) and the attributes must be the same domain.
+  - set difference (binary) - tuples in one relation but not another. order matters.
+  - cartesian product (binary) - create a new relation with a schema that is the union of the two relations schema. each tuple gets paired with all the tuples in the other relations. 
+  - rename (unary) - give temporary name to a relation as part of the formula (????)
+  - set intersection - appearing in both
+  - natural join - cartesian product which is filtered on some natural common attribute
+  - assignment - give temporary name (???)
+  - outer join - dealing with missing information (right outer join, left outer join, full outer join)
+- aggregations
+- MultiSets (may contain duplicates)
+- Tuple relational calculus - another type of syntax/form to write algebra
+- Domain relation calculus.
+
+the format for unary operator is the symbol, and then the predicate in subscript and finally the relation name in parentheses. 
+
+[symbols](https://www.cs.uleth.ca/~rice/latex/worksheet.pdf)
+
+Symbol name | LATEXcode |symbol
+---|---|---
+leftarrow | `\leftarrow` | $\leftarrow$
+select | `\sigma` | $\sigma$
+project | `\Pi` | $\Pi$
+inner join | `\bowtie` | $\bowtie$
+left outer join | `\sqsubpet\bowtie` | $\sqsupset\bowtie$
+right outer join | `\bowtie\sqsuspet` | $\bowtie\sqsubset$
+full outer join | `\sqsupbset\bowtie\sqsuspet` | $\sqsupset\bowtie\sqsubset$
+cross product | `\times` | $\times$
+rename | `\rho` | $\rho$
+less than | `<` | $<$
+greater than |`>` | $>$
+less than or equal | `\leq`  | $\leq$
+greater than or equal | `\geq` | $\geq$
+equal | `=`  | $=$
+not equal | `\neq` | $\neq$
+and | `\wedge` | $\wedge$
+or | `\vee` | $\vee$
+not | `\neg` | $\neg$
+
+$\sigma_{department\_name="Physics"}(instructor)$
+$\Pi_{ID, Name, Salary}(instructor)$
+
+combining together to find the names of all instructors from the physics department. since the result of all operations on a relation is a relation, we can use them inside the parentheses.
+
+$\Pi_{name}(\sigma_{department\_name="Physics"}(instructor))$
+
+the `set intersection`, `natural join` and `assignment` operators don't add power over the fundamental operators, but make our life easier. 
+
+Extended relation algebra operations:
+
+have the format of symbol, list of arguments which are attributes or constants, and then the relations.
+
+we use them for aggregation, with the calligraphic G denoting aggregation `\mathcal{G}` $\mathcal{G}$. the name of the aggregation is written as it (sum, max, min, count, etc...). we can denote grouping by prefixing the symbol with the attribute we want to group on.
+
+### Chapter 7 - Database Design and the E-R Model
 
 </details>
 

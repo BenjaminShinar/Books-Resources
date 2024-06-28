@@ -1,0 +1,13 @@
+{
+  "version": "0.2",
+  "ignorePaths": [],
+  "dictionaryDefinitions": [],
+  "dictionaries": ["aws", "k8s"],
+  "words": ["Fargate"],
+  "ignoreWords": [
+    "Stephane", "Maarek", "Udemy", "Gbps"
+  ],
+  "import": [],
+  "enabled": true,
+  "allowCompoundWords": true
+}
