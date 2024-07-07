@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat -Wnrvo nrvo
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -1218,5 +1218,65 @@ int main()
   explore_float16(0b1_11100_00111_11111);
 }
 ```
+
+</details>
+
+## C++ Weekly - Ep 434 - GCC's Amazing NEW (2024) `-Wnrvo`
+
+<details>
+<summary>
+New warning flag - named return value optimization.
+</summary>
+
+[GCC's Amazing NEW (2024) -Wnrvo](https://youtu.be/PTCFddZfnXc?si=-6PnRMFCSwumyf2X)
+
+a new warning flag on GCC - warns on named return value optimization - when we thought it would happen but it doesn't.
+
+```cpp
+// compiler is allowed - named return value optimization
+std::string make_sting_nrvo() {
+  std::string retval = "Hello World";
+  return retval;
+}
+
+// compiler is required to do RVO
+std::string make_sting_rvo() {
+ return "Hello World";
+}
+
+// compiler has to decide at compile time which one will be returned, but it can't
+std::string make_string_opt1(const bool input) {
+  std::string val1 = "Hello";
+  std::string val2 = "World";
+  if (input)
+  {
+    return val1;
+  }
+  else
+  {
+    return val2;
+  }
+}
+
+int main()
+{
+  const auto val = make_string_rvo(); // exactly 1 string existed,
+}
+```
+
+return value optimization constructs the data on the callsite, so it elides (removes) the calls to copy or move the object, but if there are two options, it isn't able to choose which one to create on the call stack. the warning will tell us when it can't optimize properly.
+
+</details>
+
+## C++ Weekly - Ep 435 - Easy GPU Programming With AdaptiveCpp (68x Faster!)
+
+<details>
+<summary>
+GPU and parallel algorithms
+</summary>
+
+[Easy GPU Programming With AdaptiveCpp (68x Faster!)](https://youtu.be/ImM7f5IQOaw?si=gxCoJ1KXaKocDMEi)
+
+parallel programming with GPU, using conway's game of life.
 
 </details>
