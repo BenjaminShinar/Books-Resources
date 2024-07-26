@@ -5,7 +5,7 @@
   "dictionaries": ["aws", "k8s"],
   "words": ["Fargate"],
   "ignoreWords": [
-    "Stephane", "Maarek", "Udemy", "Gbps"
+    "Stephane", "Maarek", "Udemy", "Gbps", "GWLB", "ALPN"
   ],
   "import": [],
   "enabled": true,
