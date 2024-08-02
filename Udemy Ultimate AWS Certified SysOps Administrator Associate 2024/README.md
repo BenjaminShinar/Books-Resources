@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore proto deregisteration_delay
+// cSpell:ignore proto deregisteration_delay sysvinit
  -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -893,7 +893,7 @@ instance behind a load balancer.
 
 > - This works for Classic Load Balancer, Application Load Balancer, and Network Load Balancer
 > - For both CLB & ALB, the "cookie" used for stickiness has an expiration date you control
-> - Use case: make sure the user doesn’t lose his session data
+> - Use case: make sure the user doesn't lose his session data
 > - Enabling stickiness may bring imbalance to the load over the backend EC2 instances
 > - NLB doesn't use cookies
 
@@ -1185,54 +1185,1019 @@ we can create scaling plans from the auto-scaling service, rather than from the 
 
 ## Elastic BeanStalk for SysOps
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+A IaaS service to create EC2 based applications.
 </summary>
 
+a way to deploy EC2 based applications, with auto-scaling groups and load balancers.
 
+re-using the same configurations and storing them as code.
+
+- capacity provisioning
+- load balancing
+- scaling
+- health monitoring
+- instance configuration
+
+free service, only the underlying used instances count towards the cost.
+
+> - Application: collection of Elastic Beanstalk components (environments, versions, configurations, ...)
+> - Application Version: an iteration of your application code
+> - Environment-  Collection of AWS resources running an application version (only one application version at a time)
+>   - Tiers: Web Server Environment Tier & Worker Environment Tier
+>   - You can create multiple environments (dev, test, prod, ...)
+
+
+supports many languages, and also container based application, can be used in web-server tier or with worker-tier (based on <cloud>SQS</cloud>).
+
+deployment modes:
+- single instance with elastic IP- great for development
+- high availability mode with load balancer
+
+when we first create the environment, we need to choose between the two environment tiers - web server and worker. then we can give the environment and the application itself a name, add tags, choose a domain if we want (or use he auto-generated one), we next choose the platform, we used node.js for the demo. and we can add the application code, in our case we use the sample application code.\
+there are several pre-sets, controlling the number of instances (single or high availability) and choosing to use on-demand <cloud>EC2</cloud> machines or spot instances. we need some <cloud>IAM</cloud> roles, one for the <cloud>Elastic Beanstalk</cloud> service and another for the virtual machines. we can set up networking, databases, and scaling configurations. and then click <kbd>submit</kbd> to create the environment.\
+under the hood, a <cloud>CloudFormation</cloud> stack is created. and we can see the events, the resources, and the template. once the environment is created, we can navigate to the domain and see that it's operational. we could click <kbd>Upload and deploy</kbd> to release a new version of our application code, and use the tabs to view events, logs, health, alarms and scheduled updates.
 </details>
 
 ## CloudFormation for SysOps
 
+<details>
+<summary>
+IaaS for AWS resources.
+</summary>
+
+Declarative resource managed resource deployment, uses templates.
+
+Benefits:
+> - Infrastructure as code
+>   - No resources are manually created, which is excellent for control
+>   - The code can be version controlled for example using Git
+>   - Changes to the infrastructure are reviewed through code
+> 
+> - Cost
+>   - Each resources within the stack is tagged with an identifier so you can easily see how much a stack costs you
+>   - You can estimate the costs of your resources using the CloudFormation template
+>   - Savings strategy: In Dev, you could automation deletion of templates at 5 PM and recreated at 8 AM, safely
+> 
+> - Productivity
+>   - Ability to destroy and re-create an infrastructure on the cloud on the fly
+> -  Automated generation of Diagram for your templates!
+> -  Declarative programming (no need to figure out ordering and orchestration)
+> 
+> - Separation of concern: create many stacks for many apps, and many layers. Ex:
+>   - VPC stacks
+>   - Network stacks
+>   - App stacks
+>
+> - Don't re-invent the wheel
+>   - Leverage existing templates on the web!
+>   - Leverage the documentation
+
+
+templates are immutable, stored in S3, changes to cloudFormation templates create new templates. a template creates a stack which holds the resources. when a stack is removed, all the resources which it created are removed in reverse order.
+
+the deployment can be done manually from the web console (editing a template, filling in any variable), or automated thorugh the cli or a CI-CD pipeline.
+
+### CloudFormation Hands-On Demo
+
+<details>
+<summary>
+Simple demo of creating, updating and removing a stack.
+</summary>
+
+we should do this demo in the us-east-1 region. at the <cloud>CloudFormation</cloud> service, we can see our stacks if we have them from the <cloud>Elastic Beanstalk</cloud> demo, but we should click <kbd>Create Stack</kbd>. here we can can choose to use a sample template, build one from the application composer, or to provide our own template. we can take a template from S3, git repository or upload directly. for now, we se;ect the wordpress-blog sample, we can click <kbd>View in Application Composer</kbd> for a visual view of the stack, and we see the componenets and how they relate to one another. we can see the template in yaml or json formats. we won't deploy that template, instead, we will use a simple template to just create an <cloud>EC2</cloud> machine.
+
+```yaml
+---
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-0a3c3a20c09d6f377
+      InstanceType: t2.micro
+```
+(we can get a cloud formation plug-in to vscode)
+
+we upload this file, give the stack a name, and for now we skip the other option. we can create the stack, and once it's completed, we can go to the "resources" tab and navigate to the resource we created, the machine will have tags tor the stack (stack id, stack name, resource name).
+
+the only way to update a stack is with a new template, so we will upload the new template file:
+
+```yaml
+---
+Parameters:
+  SecurityGroupDescription:
+    Description: Security Group Description
+    Type: String
+
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-0a3c3a20c09d6f377
+      InstanceType: t2.micro
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+        - !Ref ServerSecurityGroup
+
+  # an elastic IP for our instance
+  MyEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MyInstance
+
+  # our EC2 security group
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+
+  # our second EC2 security group
+  ServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Ref SecurityGroupDescription
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 192.168.1.1/32
+```
+
+in this template we have more resources (ec2 machine, elastic ip, security groups), we have a parameter section for dynamic variables, and the `!Ref` keyword. we can upload the template and view it in the designer. now when we try to create the stack,we are are asked to enter a parameter. before submit the update, we are provided with a change set preview.\
+This change set details what actions will be taken - we are adding some resources, but also modifying the already existing one (either in place or replace). other template updates could remove resources and modify them without replacing them. when we click <kbd>Submit</kbd>, we can wait for the resources to be created and removed as needed.
+
+When we are ready to remove the resources, we could go to each resource and manually remove them, but that is hard manual work which needs to be done in a specific order and is error-prone (we might forget to remove the elasticIP instance after we disassociated it from the <cloud>EC2</cloud> machine). instead, we go to the stack page and click <kbd>Delete</kbd>, which will remove the resources in the correct order, and make sure we don't forget anything.
+
+
+#### YAML Crash Course
+
+a declarative format to store data, like Json or XML.
+
+> - Key value Pairs
+> - Nested objects
+> - Support Arrays
+> - Multi line strings
+> - Can include comments!
+
+```yaml
+key: value # this is a comment
+key2: value2
+object:
+  property: value3
+  property2: value4
+list:
+  - objectNameKey: objectName
+    objectDescription: objectDesc
+  - objectNameKey: object2Name
+    objectDescription: object2Desc
+lines: |
+  long line
+  of text
+  combined together
+```
+</details>
+
+### CloudFormation Template Components
+
+<details>
+<summary>
+The different sections in CloudFormation Template
+</summary>
+
+a <cloud>CloudFormation</cloud> template has different sections, some of which are mandatory and some are optional. all cloudFormation templates have the same structure.
+
+> Template Components
+>
+> - AWSTemplateFormatVersion – identifies the capabilities of the template ("2010-09-09")
+> - Description – comments about the template
+> - Resources (MANDATORY) – your AWS resources declared in the template
+> - Parameters – the dynamic inputs for your template
+> - Mappings – the static variables for your template
+> - Outputs – references to what has been created
+> - Conditionals – list of conditions to perform resource creation
+
+we also have template helpers: *references* and *functions*.
+
+#### CloudFormation Resources
+
+The core of the template, this section defines which resources are used in the stack. this is the mandatory section of the template.
+
+> - Resources are declared and can reference each other
+> - AWS figures out creation, updates and deletes of resources for us
+> - There are over 700 types of resources (!)
+> - Resource types identifiers are of the form: `service-provider::service-name::data-type-name`
+
+example:
+```yaml
+Type: AWS::EC2::Instance
+```
+
+[list of resource types](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html)
+
+we can use the documentation to see how to create each type of resource, what are the required and optional properties, and if that property change requires interrupting the resource (might require replacing the instance) or if it can updated in-place. most of the AWS resources are supported, and if we need to use one that isn't supported yet we can use a custom resource defintion. in theory, there can be non-AWS resources, but there aren't any.
+
+It is possible to create a dynamic number of resources using Macros and transform, but that's outside the scope for now.
+
+#### CloudFormation Parameters
+
+> Parameters are a way to provide inputs to your
+> AWS CloudFormation template.\ 
+> Parameters are extremely powerful, controlled, and can prevent errors from happening in your templates, thanks to types.\
+> They're important to know about if:
+> 
+> -  You want to reuse your templates across the company.
+> -  Some inputs can not be determined ahead of time.
+
+parameters allow us to re-use the same template with small changes, without having to re-upload the template again and again with minor changes.
+
+parameters have a type:
+- string
+- number
+- comma delimited list
+- list\<number>
+- AWS specific parameter (matched against existing values in AWS)
+- list of AWS specific parameters
+- <cloud>SSM</cloud> Parameter (to get from the parameter store)
+
+parameters also have a description with a possible constraint:
+
+- min/max length
+- min/max value
+- default value
+- allowed values array
+- allowed values regex
+- "NoEcho" (boolean option)
+
+```yaml
+Parameters:
+  InstanceType: # parameter Name
+    Description: Choose an EC2 instance type
+    Type: String
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+    Default: t2.micro
+  DBPassword:
+    Description: the database admin password
+    Type: string
+    NoEcho: true #don't expose this value in logs or anywhere else
+```
+we can reference parameters using `Fn::Ref`, or the shorthand form `!Ref`.
+
+there are also "Pseudo Parameters", which are provided by AWS and provide common functionality data. [Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html).
+
+| Reference Value         | Usage                                                                    | Example Returned Value                                                                          |
+| ----------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `AWS::AccountId`        | the accountId running the template                                       | 123456789012                                                                                    |
+| `AWS::Region`           | the region the stack is in                                               | us-east-1                                                                                       |
+| `AWS::StackId`          | The stackId being used                                                   | arn:aws:cloudformation:us-east-1:123456789012:stack/MyStack/1c2fa620-982a11e3-aff7-50e2416294e0 |
+| `AWS::StackName`        | the stack name being use                                                 | MyStack                                                                                         |
+| `AWS::NotificationARNs` | list of notification Amazon Resource Names (ARNs) for the current stack. | arn:aws:sns:us-east-1:123456789012:MyTopic                                                      |
+| `AWS::NoValue`          | no value                                                                 | Doesn't return a value                                                                          |
+
+#### CloudFormation Mappings
+
+> Mappings are **fixed** variables within your CloudFormation template. They're very handy to differentiate between different environments
+> (dev vs prod), regions (AWS regions), AMI types...\
+> All the values are hardcoded within the template
+
+mappings are static, they aren't controlled by the user which runs the template. they are defined with a map name, then a toplevel key, and a secondary level key.
+
+in this example, we set the ami to use based on the region and the machine type.
+```yaml
+Mappings: # section
+  RegionMap: # map name
+    us-east-1: # top level key
+      HVM64: ami-1 # second level key and value
+      HVM32: ami-2
+    us-east-2:
+      HVM64: ami-3
+      HVM32: ami-4
+
+Resources:
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", HMV64] # map name, pseudo parameter, second level key
+```
+
+we can use the `Fn::FindInMap` function (or `!FindInMap`) to get the value.
+
+mapping are used when we know all the options in advance, and we can determine which one to use ahead on time, they are safer to use, but don't allow as much freedom as parameters.
+
+#### CloudFormation Outputs & Exports
+> The Outputs section declares optional outputs values that we can import into other stacks (if you export them first)!
+> - You can also view the outputs in the AWS Console or in using the AWS CLI
+> - They're very useful for example if you define a network CloudFormation, and output the variables such as VPC ID and your Subnet IDs
+> - It's the best way to perform some collaboration cross stack, as you let expert handle their own part of the stack
+
+in this example, we have a Security group that we define once and export, and then we can import it and reUse it in any other stack, the exported name must be unique in the cloud account.
+
+```yaml
+Outputs:
+  StackSSHSecurityGroup:
+    Description: The SSH Security Group for our company
+    Value: !Ref MyCompanyWideSSHSecurityGroup
+    Export:
+      Name: SSHSecurityGroup
+```
+
+Other stacks can reference this value with the `Fn::ImportValue` function (`!ImportValue`). the underlying stack which created the exported value can't be deleted until all stacks which reference it are removed.
+
+```yaml
+Resources:
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-1
+      AvailabilityZone: us-east-1
+      SecurityGroups:
+        - !ImportValue SSHSecurityGroup
+```
+
+#### CloudFormation Conditions
+
+> Conditions are used to control the creation of
+resources or outputs based on a condition
+> Conditions can be whatever you want them to
+be, but common ones are:
+> - Environment (dev / test / prod)
+> - AWS Region
+> - Any parameter value
+> 
+> Each condition can reference another condition,
+parameter value or mapping.
+
+```yaml
+Parameters:
+  EnvType:
+    Type: string
+    Description: environment type (sandbox, dev, prod)
+    
+Conditions:
+  CreateProdResources: !Equals [!Ref EnvType, prod]
+
+Resources:
+  MountPoint:
+    Type: AWS::EC2:VolumeAttachment
+    Condition: CreateProdResources
+```
+
+#### CloudFormation Intrinsic Functions
+
+[documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference.html)
+
+
+| Function           | Shorthand Form  | Arguments                                   | Usage                                                                                | requires "AWS::LanguageExtensions" |
+| ------------------ | --------------- | ------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------- |
+| `Fn::Ref`          | `!Ref`          | resourceName                                | reference value in the template, either get the entire thing or the physical ID      | No                                 |
+| `Fn::FindInMap`    | `!FindInMap`    | [MapName, TopLevelKey, SecondLevelKey]      | return a named value from a specific key                                             | No                                 |
+| `Fn::GetAtt`       | `!GetAtt`       | resourceName.attributeName                  |                                                                                      | get attribute from a resource      | No |
+| `Fn::ImportValue`  | `!ImportValue`  | valueName                                   | reference an exported value from another stack                                       | No                                 |
+| `Fn::And`          | `!And`          | [value1, value2]                            | logical operator                                                                     | No                                 |
+| `Fn::Or`           | `!Or`           | [value1, value2]                            | logical operator                                                                     | No                                 |
+| `Fn::Equals`       | `!Equals`       | [value1, value2]                            | logical operator                                                                     | No                                 |
+| `Fn::Not`          | `!Not`          | value                                       | logical operator                                                                     | No                                 |
+| `Fn::If`           | `!If`           | [condition, valueIfTrue, ValueIfFalse]      | ternary operator                                                                     | No                                 |
+| `Fn::Join`         | `!Join`         | [delimiter, [comma limited list of values]] | join string elements together with a delimiter                                       | No                                 |
+| `Fn::Split`        | `!Split`        | [delimiter, source-string]                  | split a string based on delimiter                                                    | No                                 |
+| `Fn::Sub`          | `!Sub`          |                                             | substitutes                                                                          | No                                 |
+| `Fn::Base64`       | `!Base64`       | stringValue                                 | transform string to base64, used in user data scripts to <cloud>EC2</cloud> machines | No                                 |
+| `Fn::Cidr`         | `!Cidr`         | [ipBlock, count, cidrBits]                  | No                                                                                   |
+| `Fn::GetAZs`       | `!GetAZs`       | region                                      | get a list of availability zones for the region                                      | No                                 |
+| `Fn::Select`       | `!Select`       | [index, list]                               | select an element from a list                                                        | No                                 |
+| `Fn::Length`       | `!Length`       | array                                       | number of elements in array                                                          | No                                 |
+| `Fn::Transform`    |                 |                                             | apply a macro transformation                                                         | No                                 |
+| `Fn::ToJsonString` | (no shortForm?) | object                                      | stringify an object or array to json form                                            | Yes                                |
+| `Fn::ForEach`      |                 |                                             | Iteration Construct                                                                  | Yes                                |
+
+</details>
+
+### CloudFormation Options
+<details>
+<summary>
+Additional options when creating and updating stacks.
+</summary>
+
+Other options such as stack rollbacks, 
+
+#### CloudFormation Rollbacks
+
+When a stack creation fails, the default option is to delete all the created resources. but we can also disable the rollback and keep the resources.\
+When a stack update fails, the default behavior is to rollback into the previous known working state.
+
+A rollback can fail, this might happen if resources were manually changed. we need to find the issue and fix it, and then use <kbd>ContinueUpdateRollback</kbd> from the console or with `continue-update-rollback` api call from the cli.
+
+we can try a demo with a bad template, this will fail since the AMI for the <cloud>EC2</cloud> resource is not a valid ami.\
+```yaml
+---
+Parameters:
+  SecurityGroupDescription:
+    Description: Security Group Description
+    Type: String
+
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-1234
+      InstanceType: t2.micro
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+        - !Ref ServerSecurityGroup
+
+  # an elastic IP for our instance
+  MyEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MyInstance
+
+  # our EC2 security group
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+
+  # our second EC2 security group
+  ServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Ref SecurityGroupDescription
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 192.168.1.1/32
+
+```
+
+When we update the stack, there is a section called "Stack failure Options", where we choose to perform rollback to last known state or to preserve the resources.\
+if we set the option to preserve the resources, the security groups will be created, even though we failed to create the machine.
+
+#### CloudFormation Service Role
+
+> <cloud>IAM</cloud> role that allows CloudFormation to create/update/delete stack resources on your behalf.\
+> Give ability to users to create/update/delete the stack resources even if they don't have permissions to work with the resources in the stack
+> 
+> Use cases:
+> - You want to achieve the least privilege principle
+> - But you don't want to give the user all the required permissions to create the stack resources
+> 
+> User (which creates the template) must have `iam:PassRole` permissions
+
+
+in the <cloud>IAM</cloud> service, we create a role, choose the trusted entity as <cloud>CloudFormation</cloud>, and we give it the capabilites for the resources we want it to create (such as <cloud>S3</cloud>). and when we create a stack, we can define which role will create the resource (rather than using the user role).
+
+#### CloudFormation Capabilities
+
+capabilities that we need to give cloudFormation if we want it to create <cloud>IAM</cloud> resources.
+
+> `CAPABILITY_NAMED_IAM` and `CAPABILITY_IAM`
+> - Necessary to enable when you CloudFormation template is creating or updating IAM resources (IAM User, Role, Group, Policy, Access Keys, Instance Profile... )
+> - Specify `CAPABILITY_NAMED_IAM` if the resources are named.
+>
+>  `CAPABILITY_AUTO_EXPAND`
+> - Necessary when your CloudFormation template includes Macros or Nested Stacks (stacks within stacks) to perform dynamic transformations
+> - You're acknowledging that your template may change before deploying
+>
+> `InsufficientCapabilitiesException` Exception that will be thrown by CloudFormation if the capabilities haven't been acknowledged when deploying a template (security measure).
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Description: An example CloudFormation that requires CAPABILITY_IAM and CAPABILITY_NAMED_IAM
+
+Resources:
+  MyCustomNamedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MyCustomRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+      Policies:
+        - PolicyName: MyPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 's3:*'
+                Resource: '*'
+
+Outputs:
+  RoleArn:
+    Description: The ARN of the created IAM Role
+    Value: !GetAtt MyCustomNamedRole.Arn
+```
+
+if we try creating a stack with this template, we will see a prompt the requires us to confirm that we want to have this stack create IAM resources
+
+#### CloudFormation Deletion Policy
+
+> DeletionPolicy Controls what happens when the
+CloudFormation template is deleted or when a resource is removed from a CloudFormation template.\
+> Extra safety measure to preserve and backup resources.
+
+we attach this policy to resources in the template, we don't need to specify the default behavior.
+
+```yaml
+Resources:
+  MyResource:
+  Type: AWS::DynamoDB:Table
+  Properties:
+    TableName: someName
+  DeletionPolicy: Retain # default is delete
+```
+
+the default option is "Delete", which removes the resource, this won't work on <cloud>S3</cloud> buckets unless they are empty!.\
+The "Retain" option preserves the resource if the stack is deleted. this works for all objects.\
+The "Snapshot" policy will take a final snapshot of the object before deleting it. it is supported in some resources:
+
+- EBS Volume
+- ElastiCache Cluster
+- ElastiCache ReplicationGroup
+- RDS DBInstance
+- RDS DBCluster
+- Redshift Cluster
+- Neptune DBCluster
+- DocumentDB DBCluster
+- and others...
+
+if we skip deleting resources, it's up to us to delete them manually.
+
+#### CloudFormation Stack Policy
+
+> During a CloudFormation Stack update, all update actions are allowed on all resources (default).\
+> A Stack Policy is a JSON document that defines the update actions that are allowed on specific resources during Stack updates.\
+> Protect resources from unintentional updates
+> When you set a Stack Policy, all resources in the Stack are protected by default, Specify an explicit ALLOW for the resources you want to be allowed to be updated.
+
+#### CloudFormation Termination Protection
+
+an option to prevent deleteions of stacks, we can control the termination protection, it must be disable before deleting the stack, and the user must have the permissions to disable it.
+
+</details>
+
+
+### CloudFormation Custom Resources
+
+<details>
+<summary>
+Defining custom resource or logic
+</summary>
+
+> - define resources not yet supported by CloudFormation.
+> - define custom provisioning logic for resources can that be outside of CloudFormation (on-premises resources, 3rd party resources,...)
+> -  have custom scripts run during create / update / delete through Lambda functions (running a Lambda function to empty an S3 bucket before being deleted)
+> 
+> Defined in the template using `AWS::CloudFormation::CustomResource` or
+`Custom::MyCustomResourceTypeName` (recommended).\
+> Backed by a Lambda function (most common) or an SNS topic.
+
+
+we need a service token, either a <cloud>Lambda</cloud> function or a <cloud>SNS</cloud> arn
+```yaml
+Resources:
+  MyCustomResourceUsingLambda:
+    Type: Custom::MyLambdaResource
+    Properties:
+      ServiceToken: some arn
+      # input values (optional)
+      ExampleProperty: "example value"
+```
+
+a common example is to set a custom resource to empty a bucket by using a lambda.
+
+</details>
+
+### CloudFormation Dynamic References
+
+<details>
+<summary>
+Get Values from additional source
+</summary>
+
+> Reference external values stored in Systems Manager Parameter Store and Secrets Manager within CloudFormation templates. CloudFormation retrieves the value of the specified reference during create/update/delete operations.\
+> For example: retrieve RDS DB Instance master password from Secrets Manager.
+> 
+> Supports:
+> 
+> - ssm – for plaintext values stored in SSM Parameter Store
+> - ssm-secure – for secure strings stored in SSM Parameter Store
+> - secretsmanager – for secret values stored in Secrets Manager
+
+the syntax to use in the template is `{{resolve:service-name:reference-key}}`.
+
+- ssm - `{{resolve:ssm:parameter-name:version}}`
+- ssm-secure - `{{resolve:ssm-secure:parameter-name:version}}`
+- secretsmanager - `{{resolve:secretsmanager::secret-id:secret-sting:json-key:version-stage:version-id}}`
+
+```yaml
+Resources:
+  MyResource:
+    Type: AWS::S3:Bucket
+    Properties:
+      AccessControl: `{{resolve::ssm:S3AccessControl:2}}`
+```
+
+somethings to note:
+
+if we create an <cloud>RDS</cloud> resource, we can set the "ManageMasterUserPassword" property to "true", and then we could output it as a secret.
+
+the other option is to create the secret as a cloudFormation resource `AWS::SecretManager::Secret`, and then use the dynamic reference syntax (`{{resolve:}}`) to reference it. we also use `AWS::SecretManager::SecretTargetAttachment` to link the secret together with the RDS and control it for rotations.
+
+</details>
+
+### CloudFormation User Data
+
+<details>
+<summary>
+Passing User Data Scripts and Helper Scripts
+</summary>
+
+passing user Data to <cloud>EC2</cloud> instance. the important thing to remember is to pass the script data in base64 using `Fn::Base64` (or `!Base64`). the script log will be store in "/var/log/cloud-init-output.log" file.
+
+we start with this example
+```yaml
+---
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-0a3c3a20c09d6f377
+      InstanceType: t2.micro
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+      # we install our web server with user data
+      UserData: 
+        Fn::Base64: |
+          #!/bin/bash -xe
+          dnf update -y
+          dnf install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<h1>Hello World from user data</h1>" > /var/www/html/index.html
+
+  # our EC2 security group
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SSH and HTTP
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+      - CidrIp: 0.0.0.0/0
+        FromPort: 80
+        IpProtocol: tcp
+        ToPort: 80
+```
+
+however, something important to know, is that even if we had problem with script running, the stack would still result in success.
+
+also, this works for small scripts, but what if we had a large instance configuration? and what if we wanted to evolve the script without affecting the ec2 machine (terminating and restarting it).\
+we cane use some helper scripts to solver those problems.
+
+[documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html)
+
+- `cfn-init`
+- `cfn-signal`
+- `cfn-get-metadate`
+- `cfn-hup`
+
+#### `cfn-init` Helper Function
+
+under the <cloud>EC2</cloud> resource, there is the `AWS::CloudForamation::Init` metdadate property.
+
+> - Packages: used to download and install pre-packaged apps and components on Linux/Windows (ex. MySQL, PHP, etc...)
+> - Groups: define user groups • Users: define users, and which group they belong to 
+> - Sources: download files and archives and place them on the EC2 instance
+> - Files: create files on the EC2 instance, using inline or can be pulled from a URL
+> - Commands: run a series of commands
+> - Services: launch a list of sysvinit services
+
+we run the `cfn-init` command in the user data script, but we keep the script to only the minimal.
+
+> the `cfn-init` command is used to retrieve and interpret the resource metadata, installing packages, creating files and starting services.\
+> With the cfn-init script, it helps make complex
+EC2 configurations readable. The EC2 instance will query the CloudFormation service to get init data.
+`AWS::CloudFormation::Init` must be in the Metadata of a resource.
+
+`cfn-init` flags:
+- `-s`,`--stack` - stack
+- `-r`, `--resource` - resource name
+- `--region` - AWS region
+
+
+```yaml
+---
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-0a3c3a20c09d6f377
+      InstanceType: t2.micro
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+      # we install our web server with user data
+      UserData: 
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            # Get the latest CloudFormation package
+            dnf update -y aws-cfn-bootstrap
+            # Start cfn-init
+            /opt/aws/bin/cfn-init -s ${AWS::StackId} -r MyInstance --region ${AWS::Region} || error_exit 'Failed to run cfn-init'
+    Metadata:
+      Comment: Install a simple Apache HTTP page
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              httpd: []
+          files:
+            "/var/www/html/index.html":
+              content: |
+                <h1>Hello World from EC2 instance!</h1>
+                <p>This was created using cfn-init</p>
+              mode: '000644'
+          commands:
+            hello:
+              command: "echo 'hello world'"
+          services:
+            sysvinit:
+              httpd:
+                enabled: 'true'
+                ensureRunning: 'true'
+
+  # our EC2 security group
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SSH and HTTP
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+      - CidrIp: 0.0.0.0/0
+        FromPort: 80
+        IpProtocol: tcp
+        ToPort: 80
+```
+
+#### `cfn-signal` & Wait Condition Helper Function
+to make sure the script worked properly, we we use the `cfn-signal` function right after the `cfn-init`. this will send a signal that our template will wait on. so we need to define a "Wait Condition".
+
+this is another resource, which waits for a signal before creation, and if it doesn't receive the signal, the resource will fail and the stack won't succeed.
+
+a success code is zero, if it recives a code other than zero it's counted as a failure, or if it doesn't receive anything until the timeout expires.
+```yaml
+---
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-0a3c3a20c09d6f377
+      InstanceType: t2.micro
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+      # we install our web server with user data
+      UserData: 
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -x
+            # Get the latest CloudFormation package
+            dnf update -y aws-cfn-bootstrap
+            # Initialize EC2 Instance
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource MyInstance --region ${AWS::Region}
+            # Get result of last command
+            INIT_STATUS=$?
+            # send result back using cfn-signal
+            /opt/aws/bin/cfn-signal -e $INIT_STATUS --stack ${AWS::StackName} --resource SampleWaitCondition --region ${AWS::Region}
+            # exit the script
+            exit $INIT_STATUS
+    Metadata:
+      Comment: Install a simple Apache HTTP page
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              httpd: []
+          files:
+            "/var/www/html/index.html":
+              content: |
+                <h1>Hello World from EC2 instance!</h1>
+                <p>This was created using cfn-init</p>
+              mode: '000644'
+          commands:
+            hello:
+              command: "echo 'hello world'"
+          services:
+            sysvinit:
+              httpd:
+                enabled: 'true'
+                ensureRunning: 'true'
+
+  SampleWaitCondition:
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT3M
+        Count: 1
+    Type: AWS::CloudFormation::WaitCondition
+```
+#### `cfn-signal` Helper Function Failures
+
+common reasons for this not to work is if the AMI doesn't have the helper scripts installed, this can be verified by not rolling back the machine and checking the logs.
+
+</details>
+
+### Nested Stacks
+
+<details>
+<summary>
+Reusable stack components
+</summary>
+
+Nested stacks are stacks inside other stacks.
+
+> Nested stacks are stacks as part of other stacks.  They allow you to isolate repeated patterns/ common components in separate stacks and call them from other stacks.\
+> 
+> - Load Balancer configuration that is re-used
+> - Security Group that is re-used
+> 
+> Nested stacks are considered best practice.- To update a nested stack, always update the parent (root stack).\
+> Nested stacks can have nested stacks themselves!
+
+They shouldn't be confused with Cross-Stack references, which are independent of the parent stack and export value to be used by many other stacks.
+
+a nested stack needs the templateURL, and whatever parameters we need to pass to it. 
+
+```yaml
+Resources:
+  MyKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: DemoKeyPair
+      KeyType: rsa
+
+  myStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/cloudformation-templates-us-east-1/LAMP_Single_Instance.template
+      Parameters:
+        KeyName: !Ref MyKeyPair
+        DBName: "mydb"
+        DBUser: "user"
+        InstanceType: t2.micro
+        SSHLocation: "0.0.0.0/0"
+
+Outputs:
+  StackRef:
+    Value: !Ref myStack
+  OutputFromNestedStack:
+    Value: !GetAtt myStack.Outputs.WebsiteURL
+```
+#### "Depends On" Property
+
+> Specify that the creation of a specific resource follows another.
+> - When added to a resource, that resource is created only after the creation of the resource specified in the DependsOn attribute
+> - Applied automatically when using `!Ref` and `!GetAtt`
+> - Use with any resource
+
+</details>
+
+### CloudFormation - StackSets
+
+<details>
+<summary>
+Deploying stacks across multiple accounts and regions.
+</summary>
+
+administrator only operation.
+
+> Create, update, or delete stacks across multiple accounts and regions with a single operation/template
+> - Administrator account to create StackSets
+> - Target accounts to create, update, delete stack instances from StackSets
+> - When you update a stack set, all associated stack instances are updated throughout all accounts and regions
+> - Can be applied into all accounts of an AWS organizations
+
+for normal, personal accounts, we use self-managed permessions, which requires manual work on both the source and the target accounts.
+
+> Self-managed Permissions
+> 
+> - Create the IAM roles (with established trusted relationship) in both administrator and target accounts.
+> - Deploy to any target account in which you have permissions to create IAM role
+
+if we are using AWS organization, we can use service-managed permission, this is a more powerful option.
+> Service-managed Permissions
+> 
+> - Deploy to accounts managed by AWS Organizations
+> - StackSets create the IAM roles on your behalf (enable trusted access with AWS Organizations)
+> - Must enable all features in AWS Organizations
+> - Ability to deploy to accounts added to your organization in the future (Automatic Deployments)
+
+#### StackSets Demo
+
+we first create the two roles, one in each account, the roles will have the AWSCloudFormagonStackSetAdministrationRole and the AWSCloudFormationStackSetExecutionRole, both are assumable by cloud formation, and the administrator role can assume the target execution role.
+
+we set the template to only allow the specific account to assume the execution role.
+
+under <cloud>CloudFormation</cloud>, we can create stackSets, there are many parameters, conditions, etc...
+
+we choose to deploy stacks in different accounts, regions, and across the organization, we can choose how many accounts are affected concurrently, and the failure tolerance.
+
+we can detach stackSets from a target account, but without deleting the resources, or we can delete the stackSet and remove the created resources. then we can delete the parent stackSet.
+
+</details>
+
+### CloudFormation - Troubleshooting
+
+<details>
+<summary>
+failure and possible fixes
+</summary>
+
+> **DELETE_FAILED**
+> - Some resources must be emptied before deleting, such as S3 buckets
+> - Use Custom Resources with Lambda functions to automate some actions
+> - Security Groups cannot be deleted until all EC2 instances in the group are gone
+> - Think about using DeletionPolicy=Retain to skip deletions
+> 
+> **UPDATE_ROLLBACK_FAILED**
+> - Can be caused by resources changed outside of CloudFormation, insufficient permissions, Auto Scaling Group that doesn’t receive enough signals…
+> - Manually fix the error and then `ContinueUpdateRollback`
+>
+> A stack operation failed, and the stack instance status is `OUTDATED`.
+> - Insufficient permissions in a target account for creating resources that are specified in your template.
+> - The template could be trying to create global resources that must be unique but aren't, such as S3 buckets
+> - The administrator account does not have a trust relationship with the target account
+> - Reached a limit or a quota in the target account (too many resources)
+
+</details>
+
+
+
+</details>
+
+## Lambda for SysOps
+
 <!-- <details> -->
 <summary>
 //TODO: add Summary
 </summary>
 
-### CloudFormation - Create Stack - Hands On
-### CloudFormation - Update & Delete Stack - Hands On
-### YAML Crash Course
-### CloudFormation - Resources
-### CloudFormation - Parameters
-###  CloudFormation - Mappings
-###  CloudFormation - Outputs & Exports
-### CloudFormation - Conditions
-### CloudFormation - Intrinsic Functions
-###  CloudFormation - Rollbacks
-### CloudFormation - Service Role
-### CloudFormation - Capabilities
-### CloudFormation - Deletion Policy
-### CloudFormation - Stack Policy
-###  CloudFormation - Termination Protection
-### CloudFormation - Custom Resources
-### CloudFormation - Dynamic References
-### CloudFormation - User Data
-### CloudFormation - cfn-init
-### CloudFormation - cfn-signal & Wait Condition
-### CloudFormation - cfn-signal Failures
-### CloudFormation - Nested Stacks
-### CloudFormation - Depends On
-### StackSets - Warning
-### CloudFormation - StackSets
-### CloudFormation - Create StackSets - Hands On
-### CloudFormation - Update StackSets - Hands On
-### CloudFormation - Delete StackSets - Hands On
-### CloudFormation - Troubleshooting
+### Lambda - Hands On
+### Lambda & CloudWatch Events / EventBridge
+### Lambda & CloudWatch Events / EventBridge - Hands On
+### Lambda & S3 Event Notifications
+### Lambda & S3 Event Notifications - Hands On
+### Lambda Permissions - IAM Roles & Resource Policies
+### Lambda Permissions - IAM Roles & Resource Policies - Hands On
+### Lambda Monitoring & X-Ray Tracing
+### Lambda Monitoring & X-Ray Tracing - Hands On
+### Lambda Function Performance
+### Lambda Concurrency
+### Lambda Concurrency - Hands On
+### Lambda Monitoring - Extras
 
 </details>
 
-## Lambda for SysOps
 ## EC2 Storage and Data Management - EBS and EFS
 ## Amazon S3 Introduction
 ## Advanced Amazon S3 and Athena
@@ -1248,7 +2213,6 @@ we can create scaling plans from the auto-scaling service, rather than from the 
 ## Networking - Route53
 ## Networking - VPC
 ## Other Services
-
 
 ## Misc
 
