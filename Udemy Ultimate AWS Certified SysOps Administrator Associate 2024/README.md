@@ -2150,7 +2150,7 @@ we can detach stackSets from a target account, but without deleting the resource
 
 <details>
 <summary>
-failure and possible fixes
+Failures and possible fixes.
 </summary>
 
 > **DELETE_FAILED**
