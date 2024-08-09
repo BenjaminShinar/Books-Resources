@@ -2177,24 +2177,117 @@ Failures and possible fixes.
 
 ## Lambda for SysOps
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Serverless code execution.
 </summary>
 
-### Lambda - Hands On
-### Lambda & CloudWatch Events / EventBridge
-### Lambda & CloudWatch Events / EventBridge - Hands On
-### Lambda & S3 Event Notifications
-### Lambda & S3 Event Notifications - Hands On
+<cloud>EC2</cloud> machine have to be continuesly running, even when there's no work. we also need to manage the configuration and scaling. with <cloud>Lambda</cloud> functions, we don't need to manage the scaling, and when there's no work to do, we don't use any compute power (so we don't pay).
+
+Lambda functions are also integrated with many services, and it has built-in runtimes for many languages, with other languages as extended runtime support, or by using container images (if they implement the lambda runtime API).
+
+integrations:
+- <cloud>API Gateway</cloud> - REST api to invoke lambda
+- <cloud>Kinesis</cloud> - transform data
+- <cloud>DynamoDB</cloud> - trigger lambda when something changes
+- <cloud>S3</cloud> - trigger lambda when object happens
+- <cloud>CloudFront</cloud> - lambda @ edge
+- <cloud>CloudWatch EventBridge</cloud> - other kinds of events
+- <cloud>CloudWatch Logs</cloud> - stream logs to somewhere else
+- <cloud>SNS</cloud> - react to topic
+- <cloud>SQS</cloud> - process messages in queues
+- <cloud>Cognito</cloud> - react to log-in events
+
+we can navigate to the lambda service page and see examples of different runtime langauges, different sources and how it scales.
+
+we can can create a function starting with a blueprint, we need an <cloud>IAM</cloud> role for the lambda to use, and we can test the function by editing the event.
+
+we can check the configuration (memory, timeout, environment variables), and monitor the lambda, we can see what our lambda can do by looking at the permission tab.
+
+### Lambda Event Integrations
+
+<details>
+<summary>
+Triggering Lambda function from Events
+</summary>
+
+#### Lambda & CloudWatch Events / EventBridge
+intergration with <cloud>EventBridge</cloud> - we can either have a serverless cron rule which runs on a schedule, or a <cloud>CodePipeline</cloud> event that triggers when a state changes.
+
+we create a demo function, and then navigate to the eventBridge service, select <cloud>Create Rule</cloud>. we can set a scheduled rule (cron), or a rule based on event pattern. there is a new way to set cron rules (<cloud>EventBridge Scheduler</cloud>), we need to set the target (Lambda in our case, but can be other services), and make sure the permissions fit.
+
+#### Lambda & S3 Event Notifications
+
+we can also integrate <cloud>S3</cloud> event notification with out lambda, such as object creation. we can set the event to create <cloud>SQS</cloud>, <cloud>SNS</cloud> or directly invoke <cloud>Lambda</cloud> asynchronously. we can fine tune which object trigger the events based on the prefix and suffix.
+
+in the demo, we create a bucket, set the notification rule to invoke a lambda.
+
+</details>
+
 ### Lambda Permissions - IAM Roles & Resource Policies
-### Lambda Permissions - IAM Roles & Resource Policies - Hands On
+
+<details>
+<summary>
+Execution roles and permissions
+</summary>
+
+The lambda has an <cloud>IAM</cloud> execution role, which grants it permissions to other aws services and resources. there are some managed policies for common use cases.\
+When we have an event source mapping which triggers the lambda function, this should be defined either in the role that invokes the lambda, or in the Lambda resource/access policy.
+
+</details>
+
 ### Lambda Monitoring & X-Ray Tracing
-### Lambda Monitoring & X-Ray Tracing - Hands On
+
+<details>
+<summary>
+Different methods of monitoring Lambda functions
+</summary>
+
+- <cloud>CloudWatch Logs</cloud> - write to logs, part of the basic Lambda Role
+- <cloud>CloudWatch Metrics</cloud> - information about innvocations, durations, errors, etc...
+- <cloud>XRayTracing</cloud> - trace the flow of the lambda, requires using the x-ray daemon ("active tracing" option in the configuration), there are several needed environment variables.
+
+
+> - Invocations – number of times your function is invoked (success/failure)
+> - Duration – amount of time your function spends processing an event
+> - Errors – number of invocations that result in a function error
+> - Throttles – number of invocation requests that are throttled (no concurrency available)
+> - DeadLetterErrors – number of times Lambda failed to send an event to a DLQ (async invocations)
+> - IteratorAge – time between when a Stream receives a record and when the Event Source Mapping sends the event to the function (for Event Source Mapping that reads from Stream)
+> - ConcurrentExecutions – number of function instances that are processing event
+
+we can see them in the dashboard, and we can build alarms on top of those metrics. like having an alarm for number of invocations, errors or throtelling. we can use <cloud>CloudWatch</cloud> Logs Insight feature to query the logs, we can also get aggregated insights about the lambda at the system level. we need to set it as a separate lambda layer.
+</details>
+
 ### Lambda Function Performance
+
+<details>
+<summary>
+Getting more compute power
+</summary>
+
+RAM - memory can be as low 128MB and go to 10GB. CPU is linked to the memory, at about 1792Mb we get an additional vCPU unit. to get value of this compute power increase, we need to use multi-threading in our code.
+
+default timeout is three seconds, we can set it up to 15 minutes maximum.
+
+when we run the lambda, it first creates an execution context, which is a temporary runtime environment that initializes any external dependencies of the lambda code. this execution context outlives a single execution, so it can be re-used if we have another invocation. we can use this behavior to our advantage, by opening database connections, taking resources as needed, and doing other work that can persist across invocations.\
+the "/tmp" folder persists across invocations, and we have 10GB of disk space to work with. if we want to encrypt it, we need to manually use <cloud>KMS</cloud> data keys
+
+</details>
+
 ### Lambda Concurrency
-### Lambda Concurrency - Hands On
-### Lambda Monitoring - Extras
+
+<details>
+<summary>
+Cold and Warm starts
+</summary>
+
+there is a limit of 1000 concurrent executions for all lambda functions. this stops our lambda from scaling out of control. we can set "reserved concurrency" to limit the number to something lower, or request an increase from AWS if we need more. we need to be careful that one lambda doesn't hog all the concurrent executions and throttles our system. there is a different behavior for synchronous and asynchronous invocations.
+
+the first time we run a lambda, the execution runtime is created, this can take longer - we have a "cold start", as long as this execution context exists, lambda invocations will be "warm starts", and will be faster.\
+If we want to always have the better performance, we can set a number of "provisioned concurrency", which will ensure some execution contexts remain, even if no one has invoked the lambda in a while. we can set auto-scaling to manage this behavior.
+</details>
+
 
 </details>
 
