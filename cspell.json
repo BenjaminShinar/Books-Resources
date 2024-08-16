@@ -2,7 +2,7 @@
     "version": "0.2",
     "ignorePaths": [],
     "dictionaryDefinitions": [],
-    "dictionaries": ["softwareTerms"],
+    "dictionaries": ["softwareTerms", "latex"],
     "words": [],
     "ignoreWords": ["Udemy"],
     "import": [],

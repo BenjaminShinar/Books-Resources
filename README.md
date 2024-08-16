@@ -366,6 +366,40 @@ we use them for aggregation, with the calligraphic G denoting aggregation `\math
 
 ### Chapter 7 - Database Design and the E-R Model
 
+E-R -> Entity Relationship, focusing on how to choose a schema. which entities are present, what are the main attributes and what relations they have to each other. specifying the required operations on the data.\
+entities are the "things" the system deals with - people, places, products, etc...
+
+*Redundancy* is bad for schema design. data should only appear once, and should not be replicated across entities. if it is replicated, the different representations of the data may become inconsistent across time. *Incompleteness* is another product of bad design. we might end up creating workaround items that belong to one entity and have missing data, because the entity actually covers more than one distinct "thing".
+
+the entity-relationship model has three concepts:
+- entity sets
+- relationship sets
+- attributes
+
+if an entity is a distinct "thing", the entity set is a collection of those different things together, while they still belong to same category of "things". entities have attributes, so while all the entities in set have the same attributes, the value of those attributes differs.
+
+a relationship is an association between entities. the entities are "participants" in the relationship, and we can define them as having a "role", relationships can also have attributes.
+
+attributes themselves have domains (value sets), or possible allowed values. this can numbers, dates, text, etc.\
+we can have simple attributes such as name or address, or composite attributes - first and last name, street, city, state and zip code. in some cases this makes sense, and in some cases it doesn't. (it makes sense to query for all students from a certain state, but less so to query for all student with the same first name). attributes can also be *single-valued* or *multi-valued*. an id is single value, any entity can only have one. but a phone number is a multi-valued attribute, since a single person can have multiple numbers. a derived attribute is something that we can infer from from other relationships or entities, such as deriving someone's age from the date of birth. we don't store the derived values, we compute them instead.
+
+a null value can mean the data is missing for the attribute (unknown) or doesn't exist at all.
+
+schemas have constrains, such as relationships mapping cardinality - how many times can an entity be in the role in the relationship set.
+- one to one
+- one to many
+- many to one
+- many to many
+
+participation can be *total* if every entity from the entity set participates in a relationship (every person has at least one person as a parent), or *partial* if some entities don't participate in it (not every person owns a car).
+
+entities are different from one another because of their "keys", special attributes that must uniquely identify the entity from all other entities. the key can be one or more attributes, as long as the set of the attributes is unique. this is also true for relationships, they also have some unique way to identify them from one another.
+
+- super key
+- candidate key
+- primary key
+
+when we define the schema, we remove all the attributes which aren't unique, that means that we also remove attributes which refer to other entities, since those are conceptually relations, rather than true attributes.
 </details>
 
 ## Regex Stuff

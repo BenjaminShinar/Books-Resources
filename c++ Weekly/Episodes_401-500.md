@@ -1280,3 +1280,337 @@ GPU and parallel algorithms
 parallel programming with GPU, using conway's game of life.
 
 </details>
+
+## C++ Weekly - Ep 436 - Transforming Lambda Captures
+
+<details>
+<summary>
+Transforming lambda capture variables as part of the capture
+</summary>
+
+[Transforming Lambda Captures](https://youtu.be/t6hFPKiOS-Q?si=C64xS3yot4gQvlpN)
+
+
+in this example, we capture a variable and transform it as part of the capture/initialization, and we do this on a parameter pack. we expand the parameter into the closing scope. we usually use <cpp>std::move</cpp> or <cpp>std::forward</cpp>, but we can also do other stuff, like static cast.
+
+```cpp
+#include <string>
+
+template<typename ... StringLike>
+void work_with_string_like_things(const StringLike & ... stringLike)
+{
+  auto l = [&]() {
+    ((std::cout << stringLike << '\n'), ...);
+  };
+  l(); // this works
+
+  auto l2 = [&]() {
+    ((std::cout << stringLike.size() << ' ' << stringLike << '\n'), ...);
+  };
+  l2();  // this doesn't work, const char* doesn't have size()
+
+  auto l3 = [...transformedStringLike = std::string_view{stringLike}...]() {
+    ((std::cout << transformedStringLike.size() << ' ' << transformedStringLike << '\n'), ...);
+  };
+  l3(); // this also works!
+}
+
+int main() 
+{
+  work_with_string_like_things("Hello World",std::string{"Jason was here"}, std::string_view{"Doing some C++ weekly stuff"});
+}
+```
+</details>
+
+## C++ Weekly - Ep 437 - Pointers To Overloaded Functions
+
+<details>
+<summary>
+passing an overload function pointer to a generic function and other issues
+</summary>
+
+[Pointers To Overloaded Functions](https://youtu.be/NMWv2vQQjXE?si=0WMDWW5FHc2To7AV)
+
+
+we can get the address of a function with the `&` operator, but when we try getting the address of an overloaded function, there is a problem to infer the correct one.
+```cpp
+void use_callable(auto);
+
+void callable(int);
+void callable(double);
+
+int main()
+{
+  use_callable(&callable); // this works when there is one callable function, but not when we add the other
+  use_callable(static_cast<void (*)(double)>>(&callable)); // we force this to pass
+}
+```
+
+we can use static casts to force the behavior to pass, but it will interact in weird ways when `auto` is used as the function parameter. there is a different option with wrapping a lambda.
+
+```cpp
+int main()
+{
+  use_callable([](auto v) {return callable(v);});
+}
+```
+</details>
+
+## C++ Weekly - Ep 438 - C++23's ranged-for Fixes
+
+<details>
+<summary>
+Object Life time problem fix for the temporary objects in the range initializer.
+</summary>
+
+[C++23's ranged-for Fixes](https://youtu.be/G6FTtZCtFXU?si=hEFyj00IaOV8eAcM)
+
+there was an object life time issue when using ranged for loops and temporary objects and references. 
+
+```cpp
+struct Thing {
+  std::vector<int> data {1,2,3};
+
+  const auto & get_data() {
+    return data; 
+  }
+};
+
+Thing make_thing() {return Thing{};}
+int main()
+{
+  for (const auto &val: make_thing().get_data())
+  {
+    std::cout << val << ' ';
+  }
+  std::cout << '\n'
+}
+```
+
+the temporary object of Thing has it's lifetime end, so either nothing is printed or we get an error. C++23 changed the lifetime rules to extended it until the end of the for-loop.
+</details>
+
+## C++ Weekly - Ep 439 - `mutable` (And Why To Avoid It)
+
+<details>
+<summary>
+Thread safety doesn't work with `mutable` members.
+</summary>
+
+[`mutable` (And Why To Avoid It)](https://youtu.be/CagZYOdxYcA?si=9GymM9419RdLZYfv). references ["You don't know const and mutable"](https://web.archive.org/web/20130105015101/http://channel9.msdn.com/posts/C-and-Beyond-2012-Herb-Sutter-You-dont-know-blank-and-blank) talk by Herb Sutter.
+
+a value that is declared mutable can be changed by `const` functions.
+
+```cpp
+struct S {
+  int x;
+  int y;
+  mutable int cache = 0;
+  mutable bool cache_set = false;
+
+  int get_stuff() const {
+    return x+y;
+  }
+
+  int change_stuff() const {
+    if (!cache_set)
+    {
+      cache = x+y;
+      cache_set = true;
+    }
+    return cache;
+  }
+};
+
+int main()
+{
+  const S s{3,4};
+  std::jthread t1(&::do_stuff, s);
+  std::jthread t2(&::do_stuff, s);
+}
+```
+
+we can trigger a race condition by running multiple threads accessing the same object, and we can add the thread sanitizer with the `-fsanitize=thread` flag.
+
+
+</details>
+
+## C++ Weekly - Ep 440 - Revisiting Visitors for std::visit
+
+<details>
+<summary>
+Different ways of using the visitor pattern.
+</summary>
+
+[Revisiting Visitors for std::visit](https://youtu.be/et1fjd8X1ho?si=yIy8P2MrM29v_eJA)
+
+we can use a generic lambda, a concrete object which defines the necessary overloads, or use <cpp>variadic template</cpp> inheritance and <cpp>variadic using</cpp> operations, and class argument deduction.
+
+```cpp
+#include <variant>
+#include <print>
+#include <string_view>
+
+std::variant<int, float, std::string_view> get_variant();
+
+template<typename ... Callable>
+struct visitor2 : Callable
+{ 
+  using Callable::operator()....;
+};
+int main()
+{
+  const auto value = get_variant();
+  std::visit([](const auto &param) {std::println("{}", parm);}, value); // generic lambda
+
+  struct Visitor {
+    void operator(float param) const {
+      std::println("Float {}", param);
+    }
+    void operator(int param) const {
+      std::println("Int {}", param);
+    }
+    void operator(std::string_view param) const {
+      std::println("String_view {}", param);
+    }
+  };
+  std::visit(Visitor{}, value); // visitor object
+  
+  std::visit(visitor2{
+    [](int param){std::println("Int: {}", param);},
+    [](float param){std::println("Float: {}", param);},
+    [](std::string_view param){std::println("String_view: {}", param);}}
+    , value); // variadic lambda
+}
+```
+</details>
+
+## C++ Weekly - Ep 441 - What is Multiple Dispatch (and how does it apply to C++?)
+
+<details>
+<summary>
+Playing with double dispatch
+</summary>
+
+[What is Multiple Dispatch (and how does it apply to C++?)](https://youtu.be/l2VemFmfkG4?si=-m87G3p8EwkvS9wB)
+
+also known as multi-method, multi-method dispatch. runtime dynamic type polymorphism on one or more of the arguments. there is the classic example from a fictional game about spaceships.
+
+
+we have an example of a single dispatch (normal virtual polymorphism).
+```cpp
+#include <variant>
+#include <print>
+#include <string_view>
+
+struct SpaceObject {
+  constexpr virtual ~SpaceObject() = default;
+  [[nodiscard]] virtual constexpr std::string_view get_name() const noexcept = 0;
+  int x;
+  int y;
+};
+
+struct Craft : SpaceObject {
+  [[nodiscard]] virtual constexpr std::string_view get_name() override const noexcept {
+    return "Craft";
+    }
+};
+
+struct Asteroid : SpaceObject {
+  [[nodiscard]] virtual constexpr std::string_view get_name() override const noexcept {
+    return "Asteroid";
+    }
+};
+
+std::unique_ptr<SpaceObject> factor();
+
+std::variant<int, float, std::string_view> get_variant();
+
+template<typename ... Callable>
+struct visitor : Callable
+{ 
+  using Callable::operator()....;
+};
+
+int main()
+{
+  auto spaceObject1 = factory();
+  std::println("object is {}", spaceObject1->get_name()); // single dispatch
+  const auto value = get_variant();
+  
+  std::visit(visitor{
+    [](int param){std::println("Int: {}", param);},
+    [](float param){std::println("Float: {}", param);},
+    [](std::string_view param){std::println("String_view: {}", param);}}
+    , value); // variadic lambda
+}
+```
+
+for multiple (or double) dispatch, we add some stuff, and the manual way would take forever and explode
+
+```cpp
+
+void collide(const Craft &, const Craft &) {std::puts("C/C");}
+void collide(const Asteroid &, const Asteroid &) {std::puts("A/A");}
+void collide(const Craft &, const Asteroid &) {std::puts("C/A");}
+void collide(const Asteroid &, const Craft &) {std::puts("A/A");}
+
+std::vector<std::unique_ptr<SpaceObject>> get_objects();
+void process_collisions(const SpaceObject& obj)
+{
+  for (const auto &other : get_objects()) {
+    if (other->x == obj.x && other->y == obj.y)
+    {
+      //collide(obj, *other); // this doesn't work
+      // we need to map everything out
+      const auto *obj_craft = dynamic_cast<const Craft*>(&obj);
+      const auto *obj_asteroid = dynamic_cast<Asteroid Craft*>(&obj);
+      const auto *other_craft = dynamic_cast<const Craft*>(other.get());
+      const auto *other_asteroid = dynamic_cast<Asteroid Craft*>(other.get());
+
+      // this is tedious and error-prone
+      if (obj_craft && other_craft) { collide(obj_craft, other_craft);}
+      if (obj_asteroid && other_asteroid) { collide(obj_asteroid, other_asteroid);}
+      if (obj_craft && other_asteroid) { collide(obj_craft, other_asteroid);}
+      if (obj_asteroid && other_craft) { collide(obj_asteroid, other_craft);}
+    }
+  }
+}
+```
+
+if we work with <cpp>std::variant</cpp>, thing can be simpler
+
+```cpp
+std::vector<std::variant<Craft,Asteroid>> get_objects();
+void process_collisions(const std::variant<Craft, Astroid>& obj)
+{
+  for (const auto &other : get_objects()) {
+    if (other.x == obj.x && other.y == obj.y)
+    {
+      // if we forget one of the options, we get an error!
+      std::visit(visitor{
+        [](const Craft &, const Craft &) {;},
+        [](const Asteroid &, const Asteroid &) {;},
+        [](const Asteroid &, const Craft &) {;}
+        [](const Craft &, const Asteroid &) {;}
+      }, obj, other);
+      // we still don't know what is the 
+    }
+  }
+}
+```
+the better way is to do this, allow the compiler to do the pattern matching (not true pattern matching yet), this will only work when all derived types are known in compile time.
+```cpp
+void process_collisions(const std::variant<Craft, Astroid>& obj)
+{
+  for (const auto &other : get_objects()) {
+      std::visit([] (const auto& lhs, const auto& rhs){
+            if (lhs.x == rhs.x && lhs.y == rhs.y) 
+            {
+              collide(lhs, rhs);
+            }
+          }, obj, other);
+    }
+}
+```
+</details>

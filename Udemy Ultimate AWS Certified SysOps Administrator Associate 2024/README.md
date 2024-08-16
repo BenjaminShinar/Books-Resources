@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore proto deregisteration_delay sysvinit
+// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX
  -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -872,10 +872,10 @@ a way to have all traffic go through a single point of entry (the gateway load b
 
 > - Deploy, scale, and manage a fleet of 3rd party network virtual appliances in AWS
 > - Example: Firewalls, Intrusion Detection and Prevention Systems, Deep Packet Inspection Systems, payload manipulation, etc...
-> - Operates at Layer 3 (Network Layer) – IP packets
+> - Operates at Layer 3 (Network Layer) - IP packets
 > - Combines the following functions:
->   - Transparent Network Gateway – single entry/exit for all traffic
->   - Load Balancer – distributes traffic to your virtual appliances
+>   - Transparent Network Gateway - single entry/exit for all traffic
+>   - Load Balancer - distributes traffic to your virtual appliances
 > - Uses the **GENEVE** protocol on port **6081**
 
 target groups (which analyze the requests):
@@ -1380,13 +1380,13 @@ a <cloud>CloudFormation</cloud> template has different sections, some of which a
 
 > Template Components
 >
-> - AWSTemplateFormatVersion – identifies the capabilities of the template ("2010-09-09")
-> - Description – comments about the template
-> - Resources (MANDATORY) – your AWS resources declared in the template
-> - Parameters – the dynamic inputs for your template
-> - Mappings – the static variables for your template
-> - Outputs – references to what has been created
-> - Conditionals – list of conditions to perform resource creation
+> - AWSTemplateFormatVersion - identifies the capabilities of the template ("2010-09-09")
+> - Description - comments about the template
+> - Resources (MANDATORY) - your AWS resources declared in the template
+> - Parameters - the dynamic inputs for your template
+> - Mappings - the static variables for your template
+> - Outputs - references to what has been created
+> - Conditionals - list of conditions to perform resource creation
 
 we also have template helpers: *references* and *functions*.
 
@@ -1671,7 +1671,7 @@ if we set the option to preserve the resources, the security groups will be crea
 > User (which creates the template) must have `iam:PassRole` permissions
 
 
-in the <cloud>IAM</cloud> service, we create a role, choose the trusted entity as <cloud>CloudFormation</cloud>, and we give it the capabilites for the resources we want it to create (such as <cloud>S3</cloud>). and when we create a stack, we can define which role will create the resource (rather than using the user role).
+in the <cloud>IAM</cloud> service, we create a role, choose the trusted entity as <cloud>CloudFormation</cloud>, and we give it the capabilities for the resources we want it to create (such as <cloud>S3</cloud>). and when we create a stack, we can define which role will create the resource (rather than using the user role).
 
 #### CloudFormation Capabilities
 
@@ -1813,9 +1813,9 @@ Get Values from additional source
 > 
 > Supports:
 > 
-> - ssm – for plaintext values stored in SSM Parameter Store
-> - ssm-secure – for secure strings stored in SSM Parameter Store
-> - secretsmanager – for secret values stored in Secrets Manager
+> - ssm - for plaintext values stored in SSM Parameter Store
+> - ssm-secure - for secure strings stored in SSM Parameter Store
+> - secretsmanager - for secret values stored in Secrets Manager
 
 the syntax to use in the template is `{{resolve:service-name:reference-key}}`.
 
@@ -2082,7 +2082,7 @@ Resources:
       TemplateURL: https://s3.amazonaws.com/cloudformation-templates-us-east-1/LAMP_Single_Instance.template
       Parameters:
         KeyName: !Ref MyKeyPair
-        DBName: "mydb"
+        DBName: "myDb"
         DBUser: "user"
         InstanceType: t2.micro
         SSHLocation: "0.0.0.0/0"
@@ -2160,7 +2160,7 @@ Failures and possible fixes.
 > - Think about using DeletionPolicy=Retain to skip deletions
 > 
 > **UPDATE_ROLLBACK_FAILED**
-> - Can be caused by resources changed outside of CloudFormation, insufficient permissions, Auto Scaling Group that doesn’t receive enough signals…
+> - Can be caused by resources changed outside of CloudFormation, insufficient permissions, Auto Scaling Group that doesn't receive enough signals…
 > - Manually fix the error and then `ContinueUpdateRollback`
 >
 > A stack operation failed, and the stack instance status is `OUTDATED`.
@@ -2248,13 +2248,13 @@ Different methods of monitoring Lambda functions
 - <cloud>XRayTracing</cloud> - trace the flow of the lambda, requires using the x-ray daemon ("active tracing" option in the configuration), there are several needed environment variables.
 
 
-> - Invocations – number of times your function is invoked (success/failure)
-> - Duration – amount of time your function spends processing an event
-> - Errors – number of invocations that result in a function error
-> - Throttles – number of invocation requests that are throttled (no concurrency available)
-> - DeadLetterErrors – number of times Lambda failed to send an event to a DLQ (async invocations)
-> - IteratorAge – time between when a Stream receives a record and when the Event Source Mapping sends the event to the function (for Event Source Mapping that reads from Stream)
-> - ConcurrentExecutions – number of function instances that are processing event
+> - Invocations - number of times your function is invoked (success/failure)
+> - Duration - amount of time your function spends processing an event
+> - Errors - number of invocations that result in a function error
+> - Throttles - number of invocation requests that are throttled (no concurrency available)
+> - DeadLetterErrors - number of times Lambda failed to send an event to a DLQ (async invocations)
+> - IteratorAge - time between when a Stream receives a record and when the Event Source Mapping sends the event to the function (for Event Source Mapping that reads from Stream)
+> - ConcurrentExecutions - number of function instances that are processing event
 
 we can see them in the dashboard, and we can build alarms on top of those metrics. like having an alarm for number of invocations, errors or throtelling. we can use <cloud>CloudWatch</cloud> Logs Insight feature to query the logs, we can also get aggregated insights about the lambda at the system level. we need to set it as a separate lambda layer.
 </details>
@@ -2292,7 +2292,373 @@ If we want to always have the better performance, we can set a number of "provis
 </details>
 
 ## EC2 Storage and Data Management - EBS and EFS
+
+<details>
+<summary>
+Block Storage and File Storage for EC2 instances.
+</summary>
+
+<cloud>EBS</cloud> - Elastic Block Store, <cloud>EFS</cloud> - Elastic File Storage.
+
+> - An EBS (Elastic Block Store) Volume is a network drive you can attach to your instances while they run.
+> - It allows your instances to persist data, even after their termination.
+> - They can normally only be mounted to one instance at a time, unless using "Multi-attach" advanced feature.
+> - They are bound to a specific availability zone.
+
+diving a bit deeper:
+
+> - It's a network drive (i.e. not a physical drive)
+>   - It uses the network to communicate the instance, which means there might be a bit of latency
+>   - It can be *detached* from an EC2 instance and *attached* to another one quickly
+> - It's locked to an Availability Zone (AZ)
+>   - An EBS Volume in us-east-1a cannot be attached to us-east-1b
+>   - To move a volume across, you first need to *snapshot* it
+> - Have a provisioned capacity (size in GBs, and IOPS)
+>   - You get billed for all the provisioned capacity
+>   -  You can increase the capacity of the drive over time
+
+We can create EBS volumes without having them attached to a machine. an <cloud>EC2</cloud> machine can attach more than one volume.\
+When we create the volumes directly from the machine, we can control if it's deleted when the machine is terminated ("delete on termination"). the default behavior is to delete the root volume, but not the others. there is also an option to encrypt the volume using <cloud>KMS</cloud>.
+
+(hands on)\
+in our <cloud>EC2</cloud> machine, we can look at the "Storage" tab, there we can see the root block device and check the details about it. we can also <kbd>Create volume</kbd> to create another one. we need to choose the volume type and the size in GB, we must select the Availability Zone for it. we can also choose to create the volume from an existing snapshot.\
+The newly created volume is not attached to any instance, so we can click <kbd>Actions</kbd> and <kbd>Attach</kbd> to an instance in that Availability Zone. from the machine, we would need to run some commands to mount the volume so it would be usable.\
+We can terminate our instance and observe how the root volume is deleted, but not the volume we created.
+
+### EC2 Instance Store
+
+<details>
+<summary>
+Better Performance with an attached disk space
+</summary>
+
+A non-network store option is <cloud>EC2</cloud> Instance store. it is not a network drive, and is ephemeral, can't be easily moved across machines (it's possible to do so, but requires some steps), and the data can be lost if the machine or hardware fails. but it does offer better performance.
+
+a good use case for instance store is for buffer, cache, scracth data and temporary content, while using network volumes for data that needs to persist.
+
+</details>
+
+### EBS Volume Types Deep Dive
+
+<details>
+<summary>
+Understanding The Differences Between Volume Types.
+</summary>
+
+EBS volume differ in type of disk (SSD vs HDD), size (measured in GB), throughput and IOPS (I/O operation per second).
+
+> - gp2 / gp3 (SSD): General purpose SSD volume that balances price and performance for a wide variety of workloads.
+> - io1 / io2 Block Express (SSD): Highest-performance SSD volume for mission-critical low-latency or high-throughput workloads.
+>  - also called "provisioned iops" volumes
+> - st1 (HDD): Low cost HDD volume designed for frequently accessed, throughput- intensive workloads.
+> - sc1 (HDD): Lowest cost HDD volume designed for less frequently accessed workloads.
+>
+> Only gp2/gp3 and io1/io2 Block Express can be used as boot (root) volumes.
+
+We use the *gp2/gp3* SSD volumes for most cases, when we have mission critical workloads we can use *io1/io2* SSD devices for low latency. when we want lower cost we can switch to the HDD devices, *st1* will give us good performance for frequently accessed data, and can have a very high max throughput. *sc1* volumes have the lowest cost, and are most fit for storing data that is not frequently accessed.
+
+| _                    | gp2                           | gp3                                  | io1                                        | io2                                | st1 (throughput optimized)           | sc1 (cold storage)    |
+| -------------------- | ----------------------------- | ------------------------------------ | ------------------------------------------ | ---------------------------------- | ------------------------------------ | --------------------- |
+| Use Case             | General                       | General                              | Critical workloads, Sustained IOPS         | Critical workloads, Sustained IOPS | Frequently Accessed, high throughput | Infrequently Accessed |
+| Device               | SSD                           | SSD                                  | SSD                                        | SSD                                | HDD                                  | HDD                   |
+| Boot Volume?         | Yes                           | Yes                                  | Yes                                        | Yes                                | No                                   | No                    |
+| Cost                 | Normal                        | Normal                               | Higher                                     | Higher                             | Lower                                | Lowest                |
+| Size                 | 1 GiB - 16 TiB                | 1 GiB - 16 TiB                       | 4 GiB - 16 TiB                             | 4 GiB - 64 TiB                     | 125 Gib - 16 TiB                     | 125 Gib - 16 TiB      |
+| IOPS                 | 3000-16000 (3 Iops per 1 GiB) | 3000-16000                           | max is 32000 normally, 64000 for Nitro EC2 | max is 256000                      | max is 500                           | max is 250            |
+| Throughput           | linked with IOps              | 125-1000 MiB/s (independent of IOPS) | (independent of IOPS)                      | linked with IOps                   | throughput optimized, 500 MiB/s      | nax is 250 MiB/s      |
+| Multi Attach Support | No                            | No                                   | Yes                                        | Yes                                | No                                   | No                    |
+ 
+</details>
+
+
+
+### EBS Operations
+
+<details>
+<summary>
+Different Operations For EBS Volumes.
+</summary>
+
+#### EBS Multi Attach
+
+Attaching the same EBS volume to multiple machines in the same Availability Zone. all machines have full read/write permissions, the use case is when we must support concurrent write operations, or when we have clustered application (such as Teradata). Only in the provision iops family (io1/io2). up to 16 instances can be attach the volume at the same time, and they must use a file system that is cluster-aware (**XFS, EXT4 can't be used**).
+
+#### Volume Resizing
+
+Increasing the size of the EBS volume. this is available in all volume types. in io1 devices it's also possible to increase the IOPS. after this is done, we need to "re-partition" the drive to make the machine aware of the increased size. the volume might go into an "optimization" phase (it will still be usable).\
+This is a one way operation, we **cannot decrease** the size, we would have to create a smaller volume and migrate the data.
+
+we can launch an EC2 instance using the default settings, and now we can connect to it, and we verify the disk space we have and see we have 8Gb of disk space 
+```sh
+lsblk
+df -h
+```
+
+now we select the volume click <kbd>Actions</kbd> and <kbd>Modify Volume</kbd>, and we can increase the size. we connect back to the machine and run some commands
+```sh
+lsblk
+df -h
+sudo growpart /dev/xvda 1
+lsblk
+df -h
+```
+at this stage, we can either run more commands, but it's easier to simply restart the instance.
+
+#### Snapshots
+
+we use snapshots to have a persistent backup of our EBS volumes.
+
+> - Make a backup (snapshot) of your EBS volume at a point in time
+> - Not necessary to detach volume to do snapshot, but recommended
+> - Can copy snapshots across AZ or Region
+
+there is also an AWS service to manage snapshots for us - Amazon Data Lifecycle Manager (DLM)
+
+> - Automate the creation, retention, and deletion of EBS snapshots and EBS-backed AMIs
+> - Schedule backups, cross-account snapshot copies, delete outdated backups, etc...
+> - Uses resource tags to identify the resources (EC2 instances, EBS volumes)
+> - Can't be used to manage snapshots/AMIs created outside DLM
+> - Can't be used to manage instance-store backed AMIs
+
+> Fast Snapshot Restore (FSR)
+> - EBS Snapshots are stored in S3
+> - By default, there's a latency of I/O operations the first time each block is accessed (block must be pulled from S3)
+> - Solution: force the initialization of the entire volume (using the `dd` or `fio` command), or you can enable FSR
+> - FSR helps you to create a volume from a snapshot that is fully initialized at creation (no I/O latency)
+> - Enabled for a snapshot in a particular AZ (billed per minute - very expensive $$$)
+> - Can be enabled on snapshots created by Data Lifecycle Manager
+
+(normal behavior is lazy getting blocks, FSR keeps a warm copy of it)
+
+we can achieve snapshots by moving them to a cheaper storage, they will take more time to restore. we can also setup rules for a snapshot recycle bin, which can help recover from accidental deletion, we can set a retention period (minimum 1 day, maximum one year).
+
+(hands on)
+
+we navigate to one of our volumes, and click <kbd>Actions</kbd> and <kbd>Create Snapshot</kbd>. if the volume is encrypted, the snapshot will also be encrypted. with this snapshot created, we can create volumes out of it, and we are not limited to Availability Zone the volume was in, we can copy it to another region if we want. this is how we migrate data between Availability Zones or regions. we can also add encryption when we copy it to another region or create a volume from it.\
+another option is <kbd>Actions</kbd> and <cloud>Manage fast snapshot restore</cloud>, and we enable it for each AZ. this will incur heavy charges. we can <kbd>Achieve</kbd> the snapshot to move it to a cheaper storage tier.\
+Under the "lifecycle Manager" secion, we can crate a new lifecycle policy for either EBS snapshots, EBS-back AMI or Cross Account Copy events. we choose the snapshot policy. and we define the target (volume or instances), the target tags (which resources will be managed), the <cloud>IAM</cloud> role, and we set the schedule and how many snapshots are stored. we can also set additional tags for the created snapshots, set Fast Snapshot Restore (very pricy!), and manage cross-region copy and cross-account sharing. a policy can be enabled or disabled.\
+we can also navigate to the "Recycle Bin" service and <kbd>Create Retention Rules</kbd>, we choose the target type, the target tags and set the retention period. we can add a rule lock, which adds a delay of time in which the rule can't be deleted, even after being unlocked. now when we delete a snapshot, it is moved to the bin and can be restored.
+
+#### Volume Migration
+
+> EBS Volumes are only locked to a specific AZ.To migrate it to a different AZ (or region):
+> 
+> - Snapshot the volume
+> - (optional) Copy the volume to a different region
+> - Create a volume from the snapshot in the AZ of your choice
+
+#### Volume Encryption
+
+> - When you create an encrypted EBS volume, you get the following:
+>   - Data at rest is encrypted inside the volume
+>   - All the data in flight moving between the instance and the volume is encrypted
+>   - All snapshots are encrypted
+>   - All volumes created from the snapshot
+> - Encryption and decryption are handled transparently (you have nothing to do)
+> - Encryption has a minimal impact on latency
+> - EBS Encryption leverages keys from <cloud>KMS</cloud> (AES-256)
+> - Copying an unencrypted snapshot allows encryption
+> - Snapshots of encrypted volumes are encrypted
+> 
+> Encryption: encrypt an unencrypted EBS volume
+> 
+> - Create an EBS snapshot of the volume
+> - Encrypt the EBS snapshot (using copy)
+> - Create new ebs volume from the snapshot ( the volume will also be encrypted)
+> - Now you can attach the encrypted volume to the original instance
+</details>
+
+
+### Amazon EFS - Elastic File System
+
+<details>
+<summary>
+Managed network file system for linux machines.
+</summary>
+
+<cloud>EFS</cloud> - Elastic File Storage
+
+> Managed NFS (network file system) that can be mounted on many EC2 across different Availability Zones
+> 
+> - Highly available, scalable, expensive (3x gp2), pay per use.
+> - Use cases: content management, web serving, data sharing, Wordpress
+> - Uses NFSv4.1 protocol
+> - Uses security group to control access to EFS
+> - Compatible with Linux based AMI (**not Windows**)
+> - Encryption at rest using KMS
+> - POSIX file system (~Linux) that has a standard file API
+> - File system scales automatically, pay-per-use, no capacity planning
+
+EFS is highly scalable, allows for thousends of concurrent NFS clients, and more than 10 GB/s throughput. it grows automatically in size, and can reach Petabyte scale of storage, without the user having to manage anything.
+
+it has two performance modes, it must be set at creation.
+- General Purpose (default) - latency-sensitive cases (web servers CMS)
+- Max I/O - highter latency, but better parallelization for big data or media processing.
+
+> Throughput Modes:
+> - Bursting - start with (50MiB/s for 1 TB storage) + burst of up to 100MiB/s
+> - Provisioned - set your throughput regardless of storage size (ex: 1 GiB/s for 1 TB storage)
+> - Elastic - automatically scales throughput up or down based on your workloads
+>   - Up to 3GiB/s for reads and 1GiB/s for writes
+>   - Used for unpredictable workloads
+
+supports storage classes and lifecycle management using lifecycle policies to move files between tiers.
+> - Standard: for frequently accessed files
+> - Infrequent access (EFS-IA): cost to retrieve files, lower price to store.
+> - Archive: rarely accessed data (few times each year), 50% cheaper.
+
+Default is multi-AZ mode, but can also be set to a single Availability Zone (backup enabled by default), works with EFS-IA tier and is cheaper.
+
+(hands on)\
+In the <cloud>EFS</cloud> Service, <kbd>Create File System</kbd>, choose the <cloud>VPC</cloud>, select the file system type (Regional multi-az or One Zone), enable or disable backup, control the file lifecycle (transition between tiers) and enable encryption at rest (with more settings). we can set the performance settings (elastic, provisoned, bursting).
+- Bursting - scale with the amount of storage
+- Elastic - scale with usage
+- Provisioned - manually set throughput
+
+if we choose bursing or provisioned, we can select max I/O to get better throughput at the cost of higher latency.
+
+at the network settings, we choose the VPC, and we can mount the file system to different Availability Zones in it, we can choose the subnet and security group. we need a security group that allows for NFS connection (port 2049), but we can have the console manage that for us.\
+We can also control the file system policies to prevent root access, enforce read-only as default, enforce in-transit encryption and other stuff.
+
+now we create a new <cloud>EC2</cloud> machine in the same VPC and subnet, and under storage, we can add the <cloud>EFS</cloud> as a file system. we have EFS and FSx as options, we can set the mount point and have aws set the permssions and the correct user script to mount it.
+
+We can connect to two instances, create a file in the shared file system from one machine, and see it from the other machine.
+
+#### EFS vs EBS
+
+- EFS - Network file system
+- EBS - Network disk device
+- Instance Store - Attached disk device
+
+<cloud>EFS</cloud> is file storage, <cloud>EBS</cloud> is block storage. EFS can support 1000s of instances across Availability Zones by default, EBS usually has one machine, or up to 16 machines when using multi-attach (io1, io2) and even then, all machine must be in the same Availability Zone.
+
+EFS only supports linux machine (unless using <cloud>FSx</cloud>), and it has a higher cost. we can use storage tiers for cost savings.\
+EFS scales automatically, and can reach petabytes of data.
+
+
+</details>
+
+### EFS Access Points
+
+<details>
+<summary>
+Manage Application Accesses
+</summary>
+
+Easily manage applications access to NFS environments, separate what each user can access, so not everybody can access every file
+
+> - Enforce a POSIX user and group to use when accessing the file system
+> - Restrict access to a directory within the file system and optionally specify a different root directory
+> - Can restrict access from NFS clients using IAM policies
+
+in the <cloud>EFS</cloud> service, we navigate to the "Access Point" section, <kbd>Create Access Point</kbd>, select the file system, choose the root directory for this point, and we set the Posix user identity (user id, group id), control what can be done in the root directory.\ Once this is created, we get an arn and the appropriate mounting command to be run on the EC2 machine.
+
+```sh
+sudo mount -t efs -o tls, accesspoint=<accesspoint identifier> <filesystem-identifier>:/ efs
+```
+</details>
+
+### EFS - Operations
+
+<details>
+<summary>
+What can we do with EFS.
+</summary>
+
+> Operations that can be done in place:
+> - Lifecycle Policy (enable IA or change IA settings)
+> - Throughput Mode and Provisioned Throughput Numbers
+> - EFS Access Points
+>  
+> Operations that require a migration using **DataSync** (replicates all file attributes and metadata)
+> - Migration to encrypted EFS
+> - Performance Mode (e.g. Max IO)
+
+</details>
+
+### EFS - CloudWatch Metrics
+
+<details>
+<summary>
+CloudWatch EFS Metrics.
+</summary>
+
+> - `PercentIOLimit` - How close the file system reaching the I/O limit (General Purpose)
+>   - If at 100%, move to Max I/O (migration with **DataSync**)
+> - `BurstCreditBalance` - The number of burst credits the file system can use to achieve higher throughput levels
+> - `StorageBytes` - File system's size in bytes (15 minutes interval)
+>   - Dimensions: Standard, IA, Total (Standard + IA)
+
+</details>
+
+
+</details>
+
 ## Amazon S3 Introduction
+
+<!-- <details> -->
+<summary>
+Object Storage
+</summary>
+
+### S3 Security: Bucket Policy
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+
+</details>
+
+
+### S3 Website Overview
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+
+</details>
+
+
+### S3 Versioning
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+
+</details>
+
+
+### S3 Replication
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+
+</details>
+
+
+### S3 Storage Classes Overview
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+
+</details>
+
+
+
+</details>
+
 ## Advanced Amazon S3 and Athena
 ## Amazon S3 Security
 ## Advanced Storage Section
@@ -2327,9 +2693,13 @@ Additional terms and acronyms to keep.
 - TLS - Transport Layer Security (new SSL)
 - SNI - Server Name Indication (works with SSL)
 - ALPN - Application Level Protocol Negotiation (Certificate)
+- DLM - Data Lifecycle Manager (backup EBS)
+- FSR - Fast Snapshot Restore (restore fully initiliazed EBS snapshots to reduce latency)
 
 </details>
 
+<!-- misc end -->
 </details>
 
+<!-- document end  -->
 </details>
