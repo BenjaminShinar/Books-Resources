@@ -1278,6 +1278,82 @@ body {
 if we want to make the container centering aligned with a parent elements, we change the height from the view height to `height: inherit;` to use the parent's height.
 ====
 
+=== New Extension Manager in Visual Studio 2022 v17.10
+
+.New Extension Manager UI
+[%collapsible]
+====
+full tab view for the extensions, like how things look in vscode or jet-brains editors.
+====
+
+=== Accessing Settings During Setup in ASP.NET Core / .NET 8
+
+.Getting access to configuration data without dependency injection
+[%collapsible]
+====
+
+In blazor pages, we can simply add it with dependency injection.
+
+[source, csharp]
+----
+@page "/"
+@Inject IConfiguration config
+----
+
+but before that, when we create the builder, we want to change the location of the api, instead of writing it directly.
+
+[source, csharp]
+----
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddRazorComponents();
+builder.Services.AddHttpClient("LocalApi", client => {
+  client.BaseAddress = New Uri("https://localhost:7654");
+});
+----
+we add it to "the appsettings.json" file we a key of "localApiBaseAddress", and in the code we grab it using the same key.
+
+[source, csharp]
+----
+var builder = WebApplication.CreateBuilder(args);
+string localApiBaseAddress = builder.Configuration.GetValue<string>("localApiBaseAddress") ?? "defaultValue";
+----
+
+====
+
+=== Alias Any Type in C# 12
+
+.Simplify Code with Type Aliasing
+[%collapsible]
+====
+
+in the demo code, we first need to disable "ImplicitUsing". we can alias any type to a number, including 
+
+[source, csharp]
+----
+// fully qualified
+System.Console.WriteLine("Hello World");
+// usual style
+Using System;
+Console.WriteLine("Hello World");
+// static using
+Using static System.Console;
+WriteLine("Hello World");
+// alias type
+using PersonTuple = (string firstName, string lastName);
+----
+====
+
+=== Partial Classes in C# - What they are for, how to use them, and more
+
+.Separating Code into different files
+[%collapsible%open]
+====
+
+When we have a partial class, we write it across different files, but it's compiled into one single class. the interfaces still apply across files, as well as all the modifiers (access modifiers, inheritance)...
+
+this was probably implemented to support windows forms.
+====
+
 == Misc
 
 .Stuff Worth Keeping

@@ -15,7 +15,9 @@
     "println",
     "nodiscard",
     "consteval",
-    "cppreference"
+    "cppreference",
+    "jthread",
+    "fsanitize"
   ],
   "import": []
 }

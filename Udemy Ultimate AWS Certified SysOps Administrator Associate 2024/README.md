@@ -11,7 +11,7 @@
 Practice towards AWS Certified SysOps Administrator Associate exam.
 </summary>
 
-udemy course [Ultimate AWS Certified SysOps Administrator Associate 2024](ultimate-aws-certified-sysops-administrator-associate). by [_Stephane Maarek_](https://www.stephanemaarek.com/).
+Udemy course [Ultimate AWS Certified SysOps Administrator Associate 2024](ultimate-aws-certified-sysops-administrator-associate). by [_Stephane Maarek_](https://www.stephanemaarek.com/).
 
 ## EC2 for SysOps
 
@@ -23,6 +23,7 @@ Stuff about EC2 machines.
 <cloud>EC2</cloud> - <cloud>Elastic Cloud Compute</cloud> - virtual machines.
 
 ### EC2 Instance Types
+
 <details>
 
 #### Launching an EC2 Instance
@@ -57,13 +58,13 @@ we can see this in action by running the `free -m` shell command before and afte
 Get better networking performance for EC2 instances.
 </summary>
 
-
 > <cloud>EC2 Enhanced Networking (SR-IOV)</cloud>
+>
 > - Higher bandwidth, higher PPS (packet per second), lower latency.
 > - Option 1: Elastic Network Adapter (ENA) up to 100 Gbps.
 > - Option 2: Intel 82599 VF up to 10 Gbps - LEGACY.
 > - Works for newer generation EC2 Instances.
-> 
+>
 ><cloud>Elastic Fabric Adapter (EFA)</cloud>
 >
 > - Improved ENA for <cloud>HPC</cloud> (high performance computing), only works for Linux.
@@ -75,22 +76,20 @@ as a demo, we create a new machine from the "t3.micro" type, and we can check if
 
 </details>
 
-
 ### EC2 Placement Groups
-
 
 <details>
 <summary>
-Controling how the EC2 instances are placed in the data center.
+Controlling how the EC2 instances are placed in the data center.
 </summary>
 
-> - *Cluster* - clusters instances into a low-latency group in a single Availability Zone.
-> - *Spread* - spreads instances across underlying hardware (max 7 instances per group per AZ) - critical applications.
-> - *Partition* - spreads instances across many different partitions (which rely on different sets of racks) within an AZ. Scales to 100s of EC2 instances per group (Hadoop, Cassandra, Kafka)
+> - _Cluster_ - clusters instances into a low-latency group in a single Availability Zone.
+> - _Spread_ - spreads instances across underlying hardware (max 7 instances per group per AZ) - critical applications.
+> - _Partition_ - spreads instances across many different partitions (which rely on different sets of racks) within an AZ. Scales to 100s of EC2 instances per group (Hadoop, Cassandra, Kafka)
 
-In the *cluster* placement group, we stick all the instances in the same AZ, which gives us better networking, and we can use enhanced networking. the risk is that if the Availability Zone fails, all the instances fail. we use this strategy when we have big jobs that need to complete fast, or when our applications need extremely low latency and high network throughput.\
-For the *spread* placement groups, we span across multiple Availability Zone and hardware, this reduces the risk of failure (better Availability). however, we ate limited to having 7 instances per Availability Zone per placement group.
-The *Partition* group uses partitions to separate machines. instances in a partition don't share physical racks with instances from other partitions, so the partition represents a rack inside the data center. EC2 instances have the partiton information as part of the metadata. this is usually used in big-data application which are partition-aware
+In the _cluster_ placement group, we stick all the instances in the same AZ, which gives us better networking, and we can use enhanced networking. the risk is that if the Availability Zone fails, all the instances fail. we use this strategy when we have big jobs that need to complete fast, or when our applications need extremely low latency and high network throughput.\
+For the _spread_ placement groups, we span across multiple Availability Zone and hardware, this reduces the risk of failure (better Availability). however, we ate limited to having 7 instances per Availability Zone per placement group.
+The _Partition_ group uses partitions to separate machines. instances in a partition don't share physical racks with instances from other partitions, so the partition represents a rack inside the data center. EC2 instances have the partiton information as part of the metadata. this is usually used in big-data application which are partition-aware
 
 under the <cloud>EC2</cloud> service, we can choose the<kbd>Placement Group</kbd> tab and <kbd>Create Placement Group</kbd>, we give it a name, tags, and select the placement strategy. there are some options for the "spread" strategy (racks and outhosts) and the "partition" (number of partitions).\
 If we launch an instance, we look under the "advanced details" configuration and select which placement group to use.
@@ -98,6 +97,7 @@ If we launch an instance, we look under the "advanced details" configuration and
 </details>
 
 ### EC2 Shutdown Behavior & Termination Protection
+
 <details>
 <summary>
 Shutdown from inside the machine.
@@ -194,7 +194,7 @@ Capacity reservations - always have capacity available, but no discounts, always
 
 this is an auction - we define a max spot price which are willing to pay, and as long as the current spot price is below that price then we get the instance. if the price raises above what we are willing to pay, our instances will either stop or terminate (within a two minutes grace period). we can stop if we care about the state of the machine, or terminate if we can restart from an empty state at any time.
 
-there is an old option of *Spot Blocks*, which allowed to get spot instances that won't be interrupted once they started (it wasn't 100% guranteed either).
+there is an old option of _Spot Blocks_, which allowed to get spot instances that won't be interrupted once they started (it wasn't 100% guranteed either).
 
 to start using a spot instance, we need a **spot request**.
 
@@ -209,10 +209,11 @@ we can only cancel requests that are either in the 'open', 'active' or 'disabled
 A Spot Fleet is a way to have a set of Spot Instances with additional (optional) On-Demand Instances. ir will launch from possible launch pools (based on instance type, OS, Availability Zone), and the fleet will choose from the possible launch pools until reaching cpacity or maximum cost.
 
 Allocation strategies
+
 - lowestPrice - from the lowest priced pool
 - diversifed - distributed across all pools
 - capacityOptimized - pool with the optimal cpacity for the number of instances.
-- priceCapacityOptimized (recommended) - first the pool with the highest cpacity available. then select the lowest priced pool.
+- priceCapacityOptimized (recommended) - first the pool with the highest capacity available. then select the lowest priced pool.
 
 #### EC2 Instances Launch Types Hands On
 
@@ -231,9 +232,9 @@ we can also launch a spot instance directly, when we launch an EC2 machine we ca
 > - If the machine stops bursting, credits are  accumulated over time
 > - Burstable instances can be amazing to handle unexpected traffic and getting the insurance that it will be handled correctly.
 > - If your instance consistently runs low on credit, you need to move to a different kind of non-burstable instance
-> 
+>
 > T2, T3 "Unlimited" - It is possible to have an "unlimited burst credit balance"
-> 
+>
 > - You pay extra money if you go over your credit balance, but you don't lose in performance
 > - If average CPU usage over a 24-hour period exceeds the baseline, the instance is billed for additional usage per vCPU/hour
 > - Be careful, costs could go high if you're not monitoring the CPU health of your instances
@@ -275,13 +276,14 @@ we have metrics that AWS automatically pushes for EC2, either at 5 minutes inter
 > - Includes:
 >   - CPU - utilization, credit usage and balance
 >   - Network - in/out
->   - Status Checks 
->       - Instance statues for the EC2 VM
->       - System status for the underlying hardware
+>   - Status Checks
+>     - Instance statues for the EC2 VM
+>     - System status for the underlying hardware
 >   - Disk (instance store only) - read/write for ops/bytes. (doesn't apply to <cloud>EBS</cloud>-based instances).
 > - **Doesn't Include RAM**
-> 
+>
 > Custom metric (yours to push):
+>
 > - Basic Resolution: 1 minute resolution
 > - High Resolution: all the way to 1 second resolution
 > - Include RAM, application level metrics
@@ -289,11 +291,11 @@ we have metrics that AWS automatically pushes for EC2, either at 5 minutes inter
 
 for each EC2 machine, we click the <kbd>Monitoring</kbd> tab and see the metrics, we can also add them to <cloud>CloudWatch</cloud> dashboards for a centralized location. we can enabled detailed monitoring for the machine if we want, but it will cost us more.
 
-#### Unified CloudWatch Agent 
+#### Unified CloudWatch Agent
 
 This agent allows us to gather metrics from EC2 instances or from other servers (such as on-premises machines). this can collect system level metrics (RAM, processes, used disk space), and can send the to <cloud>AWS CloudWatch</cloud>.
 
-we can configure the agent with <cloud>SSM parameter store</cloud> or a configuration file, the machine needs to have the correct <cloud>IAM role</cloud> and permissions. the metrics from the unified agent all have the default "CWAgent" namespace. there is a *procstat* plugin that can collect metrics for individual processes running on the machine. we can select which processes are monitored with the pid identification number or based on regex (process name, command line which started it). mertics from the plugin will have the "procstat" prefix.
+we can configure the agent with <cloud>SSM parameter store</cloud> or a configuration file, the machine needs to have the correct <cloud>IAM role</cloud> and permissions. the metrics from the unified agent all have the default "CWAgent" namespace. there is a _procstat_ plugin that can collect metrics for individual processes running on the machine. we can select which processes are monitored with the pid identification number or based on regex (process name, command line which started it). mertics from the plugin will have the "procstat" prefix.
 
 (demo of installing the Unified CloudWatch Agent)
 
@@ -332,11 +334,10 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-c
 # get the configuration from local file
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
 ```
+
 now our agents push the logs from inside the machine directly to cloudWatch, and we can see the metrics being sent from the cloudWatch Agent.
 
-
 #### EC2 Instance Status Checks
-
 
 Automatic Checks to Identify hardware and sotware issues.
 
@@ -359,25 +360,25 @@ aws cloudwatch set-alarm-state --alarm-name <alarm-name> --state-vale ALARM --st
 ```
 
 > SYSTEM status checks - System status checks monitor the AWS systems on which your instance runs.\
-> Problem with the underlying host. Example: 
-> 
+> Problem with the underlying host. Example:
+>
 > - Loss of network connectivity
 > - Loss of system power
 > - Software issues on the physical host
 > - Hardware issues on the physical host that impact network reachability
-> 
+>
 > Either wait for AWS to fix the host, OR Move the EC2 instance to a new host = STOP & START the instance (if EBS backed).
 >
 > INSTANCE status checks - Instance status checks monitor the software and network configuration of your individual instance.\
 > Example of issues
-> 
+>
 > - Incorrect networking or startup configuration
 > - Exhausted memory
 > - Corrupted file system
 > - Incompatible kernel
-> 
+>
 > Requires your involvement to fix Restart the EC2 instance, OR Change the EC2 instance configuration.
-> 
+>
 </details>
 
 ### EC2 Hibernate
@@ -388,6 +389,7 @@ Preserving Data in RAM
 </summary>
 
 we can stop or terminate instances.
+
 - stop - the data on disk (EBS) is kept intact
 - terminate - any EBS volumes (root) also set-up to be destroyed is lost.
 
@@ -395,7 +397,7 @@ the first time a machine starts it boots the OS and runs the EC2 user data scrip
 
 Hibernate allows us to store and preserve the data in RAM, we don't stop and restart the operation system. instead, we dump the data in RAM inside a special file in the root EBS volume. when we start the machine after hibernating, the data is loaded back into RAM, without requireing the OS to start up.
 
-it is supported in many instance families, and for most popular AMI images. the root volume must be EBS based, and enctyped (not instance store) and has enough storage space. there is a limit for the instance RAM size (no more than 150GB), and it's not supported on *bare metal* instances. an instance can not be hibernated for more than 60 days.
+it is supported in many instance families, and for most popular AMI images. the root volume must be EBS based, and enctyped (not instance store) and has enough storage space. there is a limit for the instance RAM size (no more than 150GB), and it's not supported on _bare metal_ instances. an instance can not be hibernated for more than 60 days.
 
 we can see this in action by running the `uptime` command after hibernating compared to running the same command after "stopping" it.
 
@@ -460,7 +462,6 @@ this service is used to automate the creation of virtual machines or container i
 we can create AMIs or Docker Images, and then we apply components as part of the recipe. there are pre-built components and we can make them ourselves. we can also use pre-built tests of define them. we need a <cloud>IAM</cloud> role wih some policies.
 </details>
 
-
 ### AMI In Production
 
 <details>
@@ -483,7 +484,7 @@ Built-in Utilities for managing EC2 instances.
 </summary>
 
 > Helps you manage your <cloud>EC2</cloud> and On-Premises systems at scale.
-> 
+>
 > - Get operational insights about the state of your infrastructure
 > - Easily detect problems
 > - Patching automation for enhanced compliance
@@ -555,6 +556,7 @@ SSM Documents can be Json or yaml, and can have parameters and actions, and serv
 (like github actions)
 
 we can use documents in
+
 - run commands
 - state manager
 - patch manager
@@ -637,7 +639,6 @@ Parameter policies allow us to set TTL to a parameter (expiration policy), and w
 
 we navigate to the <kbd>Shared Resources</kbd> section and choose the <kbd>Parameter Store</kbd> option. now we can <kbd>Create Parameter</kbd>, give it a name (path), description, type (string, list of stings, secure string with <cloud>KMS</cloud>), choose the tier (standard or advanced) and the value of the parameter.
 
-
 we can get the parameter value in the cli, and we can also ask to decrypt the secure strings if we have the permissions to access the key.
 
 ```sh
@@ -655,7 +656,7 @@ aws ssm get-parameters-by-path --path <parameter-path> --recursive
 Collect metadata from your managed instances.
 </summary>
 
-SSM Inventory 
+SSM Inventory
 
 > Collect metadata from your managed instances (EC2/On-premises)
 >
@@ -670,6 +671,7 @@ in the console, under <kbd>Node Management</kbd> section, we choose <kbd>Invento
 State Manager
 
 > automate the process of keeping your managed instances (EC2/On-premises) in a state that you define
+>
 > - Use cases: bootstrap instances with software, patch OS/software Updates on a schedule...
 > - State Manager Association:
 >   - Defines the state that you want to maintain to your managed instances.
@@ -710,8 +712,8 @@ find which patches are installed on instances, and which instances are missing p
 
 there are predefined patch baselines managed by aws, and we can usually run a SSM document to apply them. we can also define our own custom patch baselines, with operating systems, allowed and rejected patches, and have external patch repositories.
 
-
 we can define Maintenance windows, specifying when the actions are perfromed:
+>
 > - schedule
 > - duration
 > - set of registered instances
@@ -754,9 +756,9 @@ Load Balancers and Auto-Scaling.
 </summary>
 
 > What is High Availability and Scalability?
-
+>
 > Scalability means that an application / system can handle greater loads by adapting. There are two kinds of scalability:\
-> 
+>
 > - Vertical Scalability - scale up/down.
 > - Horizontal Scalability (= elasticity) - scale out/in.
 >
@@ -786,6 +788,7 @@ Managed Load Balancers.
 > - Separate public traffic from private traffic.
 
 <cloud>ELB</cloud> is a managed load balancer service, so it's managed by AWS, which takes care of the upgrades, patching and High Availability requirements. it is also integrated with many other services:
+
 - <cloud>EC2</cloud> AutoScaling Groups
 - <cloud>ECS</cloud> - elastic container service
 - <cloud>ACM</cloud> - aws certificate manager
@@ -796,6 +799,7 @@ Managed Load Balancers.
 Load Balancers work with health checks, which tell the upstream load balancer if the downstream instance can handle traffic at the current moment.
 
 there are four types of elastic load balancers, but one of them is already deprecated:
+
 - Classic Load Balancer - http, https, TCP, SSL - not used anymore.
 - Application Load Balancer - http, https, websocket
 - Network Load Balancer - TCP, TLS (secure TCP), UDP
@@ -812,6 +816,7 @@ Basic Layer 7 load balancer.
 
 Layer 7 load balancer (HTTP layer), routes to multiple http applications across machine (target groups), and even multiple applications on the same machine (like different containers). supports HTTP/2 and websocket, and allows for redirects.\
 Routing options:
+
 - url path (example.com/**users** and example.com/**posts**)
 - url hostname (**one**.example.com and **two**.example.com)
 - query string headers (example.com?**order=false**)
@@ -819,6 +824,7 @@ Routing options:
 ALB are a great fit for micro services and container based applications (docker, kubernetes, ECS), and it has port mapping feature to redirect to a dynamic port in ECS.
 
 target groups can be:
+
 - <cloud>EC2</cloud> instances
 - <cloud>ECS</cloud> tasks
 - <cloud>Lambda</cloud> functions
@@ -839,7 +845,6 @@ we can go to the instances and and fix the security group, and remove the access
 we can also set more complex listener rules, we can modify the routing by adding rules to match requests and set different targets. rules have conditions (url path, url hostname, query parameters, request method, ip source) and then we can set the target group, redirect or return a fixed response. rules also have priority, with the last one being the default rule - what happens when no rule matches the request.
 </details>
 
-
 #### Network Load Balancer (NLB)
 
 <details>
@@ -851,6 +856,7 @@ forwards TCP and UDP traffic to instances. handles millions of requests per seco
 it has only one static IP per Availability Zone, and it supports assinging elastic IP (usefull  when whitelisting a specific IP).
 
 target groups can be:
+
 - <cloud>EC2</cloud> instances
 - private IP addresses
 - application load balancer
@@ -879,11 +885,11 @@ a way to have all traffic go through a single point of entry (the gateway load b
 > - Uses the **GENEVE** protocol on port **6081**
 
 target groups (which analyze the requests):
+
 - <cloud>EC2</cloud> instances
 - private Ip addresses
 
 </details>
-
 
 #### Sticky Sessions
 
@@ -922,6 +928,7 @@ if we set "cross zone load balancing" the traffic will be directed evenly across
 > - SSL certificates have an expiration date (you set) and must be renewed.
 >
 > The load balancer uses an X.509 certificate (SSL/TLS server certificate)
+>
 > - You can manage certificates using <cloud>ACM</cloud> (AWS Certificate Manager).
 > - You can create and upload your own certificates alternatively.
 > - HTTPS listener:
@@ -977,17 +984,17 @@ Response codes are standard for HTTP requests:
 
 - Successful request: Code 200.
 - Unsuccessful at client side: 4XX code.
-    - 400: Bad Request    
-    - 401: Unauthorized   
-    - 403: Forbidden  
-    - 460: Client closed connection.  
-    - 463: X-Forwarded For header with >30 IP (Similar to malformed request). 
+  - 400: Bad Request
+  - 401: Unauthorized
+  - 403: Forbidden  
+  - 460: Client closed connection.  
+  - 463: X-Forwarded For header with >30 IP (Similar to malformed request).
 - Unsuccessful at server side: 5xx code.
-    - 500: Internal server error would mean some error on the ELB itself.
-    - 502: Bad Gateway
-    - 503: Service Unavailable
-    - 504: Gateway timeout: probably an issue within the server.
-    - 561: Unauthorized
+  - 500: Internal server error would mean some error on the ELB itself.
+  - 502: Bad Gateway
+  - 503: Service Unavailable
+  - 504: Gateway timeout: probably an issue within the server.
+  - 561: Unauthorized
 
 there are metrics for the load balancers which are directly pushed into <cloud>CloudWatch</cloud>
 
@@ -1006,9 +1013,10 @@ there are metrics for the load balancers which are directly pushed into <cloud>C
 > - SpillOverCount: The total number of requests that were rejected because the surge queue is full.
 >
 > Load Balancer troubleshooting using metrics
-> -  HTTP 400: BAD_REQUEST => The client sent a malformed request that does not meet HTTP specifications.
-> -  HTTP 503: Service Unavailable => Ensure that you have healthy instances in every Availability Zone that your load balancer is configured to respond in. look for HealthyHostCount in CloudWatch.
-> -  HTTP 504: Gateway Timeout => Check if keep-alive settings on your EC2 instances are enabled and make sure that the keep-alive timeout is greater than the idle timeout settings of load balancer.
+>
+> - HTTP 400: BAD_REQUEST => The client sent a malformed request that does not meet HTTP specifications.
+> - HTTP 503: Service Unavailable => Ensure that you have healthy instances in every Availability Zone that your load balancer is configured to respond in. look for HealthyHostCount in CloudWatch.
+> - HTTP 504: Gateway Timeout => Check if keep-alive settings on your EC2 instances are enabled and make sure that the keep-alive timeout is greater than the idle timeout settings of load balancer.
 
 Access Logs can be stored in S3, we only pay for hte S3 storage, we might need them for compliance or debugging.\
 There is also a built-in request tracing custom header (`X-Amzn-Trace-Id`), but it's ELB isn't integrated with <cloud>X-Ray</cloud> yet.
@@ -1031,6 +1039,7 @@ deregistering a target
 slow start mode is a way to slowly ramp up new instances, during the slow start duration, the instance receive less traffic, gradually increasing towards the weighted amount.
 
 the request routing is done based on algorithms, which determine which request should go to which instance.
+
 - Round Robin - equally choose instances from the target group, cycle in order. works with application load balancers and classic load balancers.
 - Least Outstanding Requests - send the request to the instance with the lowest number of pending or unfinished requests. works with application load balancers and classic load balancers. **doesn't work with slow start**.
 - Flow Hash - selects the target based on hasing of the request (protocol, source and destination ip and port, TCP sequence number), same request from the same user will reach the same target. works with network load balancers.
@@ -1040,11 +1049,13 @@ the request routing is done based on algorithms, which determine which request s
 Rules are set on a listener, they are processed in order of priority.
 
 supported actions:
+
 - forward
 - redirect
 - fixed-response
 
 rule conditions:
+
 - host-header
 - http-request-method
 - path-pattern
@@ -1069,6 +1080,7 @@ There are no costs for using autoscaling groups, just the cost of the underlying
 when we create an auto-scaling group, we choose the minimum and maximum capacity, and the desired capacity to start with. when combined with ELB, it can remove and replace unhealthy instances based on the health check.
 
 when we create an auto scaling group, we need:
+
 - Launch Template (older "launch configurations" are deprecated) - how to launch instances (ami, storage, networking and security groups)
 - Min/Max/Desired Size
 - auto scaling strategy - can be based on <cloud>CloudWatch</cloud> alarms and metrics (like Average CPU).
@@ -1102,6 +1114,7 @@ after a scaling activity happens, there is a cooldown period when we wait for th
 ways to run scripts on instances during their life cycle.
 
 > Lifecycle Hooks
+>
 > - By default, as soon as an instance is launched in an ASG it's in service
 > - You can perform extra steps before the instance goes in service (Pending state)
 > - Define a script to run on the instances as they start
@@ -1114,15 +1127,16 @@ Launch Configuration (legacy) vs. Launch Template (new)
 Both allow us to set the ID of the Amazon Machine Image (AMI), the instance type, a key pair, security groups, and the other parameters that you use to launch EC2 instances (tags, EC2 user-data...). we can't edit either Launch Configurations or Launch Templates.
 
 > Launch Configuration (legacy):
+>
 > - Must be re-created every time
-> 
+>
 > Launch Template (newer):
+>
 > - Can have multiple versions
 > - Create parameters subsets (partial configuration for re-use and inheritance)
 > - Provision using both On-Demand and Spot instances (or a mix)
 > - Supports Placement Groups, Capacity Reservations, Dedicated hosts, multiple instance types
 > - Can use T2 unlimited burst feature
-
 
 we can scale our AGG based on <cloud>SQS</cloud>, using a <cloud>CloudWatch</cloud> alarm that looks at the number of the messages in the queue.
 
@@ -1138,12 +1152,13 @@ if a ASG fails to launch an instance for more than 24 hours, the process is susp
 #### CloudWatch for ASG
 
 > Metrics are collected every 1 minute
+>
 > - ASG-level metrics: (opt-in)
 >   - You should enable metric collection to see these metrics
 >   - GroupMinSize, GroupMaxSize, GroupDesiredCapacity
 >   - GroupInServiceInstances, GroupPendingInstances, GroupStandbyInstances
 >   - GroupTerminatingInstances, GroupTotalInstances
-> - EC2-level metrics (enabled): 
+> - EC2-level metrics (enabled):
 >   - CPU Utilization, etc...
 >   - Basic monitoring: 5 minutes granularity
 >   - Detailed monitoring: 1 minute granularity
@@ -1177,9 +1192,7 @@ we can create scaling plans from the auto-scaling service, rather than from the 
 > - Options: Disable scale-in, cooldown period, warmup time (for ASG)
 > - Predictive scaling: continuously forecast loadand schedule scaling ahead
 
-
 </details>
-
 
 </details>
 
@@ -1208,10 +1221,10 @@ free service, only the underlying used instances count towards the cost.
 >   - Tiers: Web Server Environment Tier & Worker Environment Tier
 >   - You can create multiple environments (dev, test, prod, ...)
 
-
 supports many languages, and also container based application, can be used in web-server tier or with worker-tier (based on <cloud>SQS</cloud>).
 
 deployment modes:
+
 - single instance with elastic IP- great for development
 - high availability mode with load balancer
 
@@ -1230,21 +1243,22 @@ IaaS for AWS resources.
 Declarative resource managed resource deployment, uses templates.
 
 Benefits:
+>
 > - Infrastructure as code
 >   - No resources are manually created, which is excellent for control
 >   - The code can be version controlled for example using Git
 >   - Changes to the infrastructure are reviewed through code
-> 
+>
 > - Cost
 >   - Each resources within the stack is tagged with an identifier so you can easily see how much a stack costs you
 >   - You can estimate the costs of your resources using the CloudFormation template
 >   - Savings strategy: In Dev, you could automation deletion of templates at 5 PM and recreated at 8 AM, safely
-> 
+>
 > - Productivity
 >   - Ability to destroy and re-create an infrastructure on the cloud on the fly
-> -  Automated generation of Diagram for your templates!
-> -  Declarative programming (no need to figure out ordering and orchestration)
-> 
+> - Automated generation of Diagram for your templates!
+> - Declarative programming (no need to figure out ordering and orchestration)
+>
 > - Separation of concern: create many stacks for many apps, and many layers. Ex:
 >   - VPC stacks
 >   - Network stacks
@@ -1253,7 +1267,6 @@ Benefits:
 > - Don't re-invent the wheel
 >   - Leverage existing templates on the web!
 >   - Leverage the documentation
-
 
 templates are immutable, stored in S3, changes to cloudFormation templates create new templates. a template creates a stack which holds the resources. when a stack is removed, all the resources which it created are removed in reverse order.
 
@@ -1278,6 +1291,7 @@ Resources:
       ImageId: ami-0a3c3a20c09d6f377
       InstanceType: t2.micro
 ```
+
 (we can get a cloud formation plug-in to vscode)
 
 we upload this file, give the stack a name, and for now we skip the other option. we can create the stack, and once it's completed, we can go to the "resources" tab and navigate to the resource we created, the machine will have tags tor the stack (stack id, stack name, resource name).
@@ -1340,7 +1354,6 @@ This change set details what actions will be taken - we are adding some resource
 
 When we are ready to remove the resources, we could go to each resource and manually remove them, but that is hard manual work which needs to be done in a specific order and is error-prone (we might forget to remove the elasticIP instance after we disassociated it from the <cloud>EC2</cloud> machine). instead, we go to the stack page and click <kbd>Delete</kbd>, which will remove the resources in the correct order, and make sure we don't forget anything.
 
-
 #### YAML Crash Course
 
 a declarative format to store data, like Json or XML.
@@ -1367,6 +1380,7 @@ lines: |
   of text
   combined together
 ```
+
 </details>
 
 ### CloudFormation Template Components
@@ -1388,7 +1402,7 @@ a <cloud>CloudFormation</cloud> template has different sections, some of which a
 > - Outputs - references to what has been created
 > - Conditionals - list of conditions to perform resource creation
 
-we also have template helpers: *references* and *functions*.
+we also have template helpers: _references_ and _functions_.
 
 #### CloudFormation Resources
 
@@ -1400,6 +1414,7 @@ The core of the template, this section defines which resources are used in the s
 > - Resource types identifiers are of the form: `service-provider::service-name::data-type-name`
 
 example:
+
 ```yaml
 Type: AWS::EC2::Instance
 ```
@@ -1413,16 +1428,17 @@ It is possible to create a dynamic number of resources using Macros and transfor
 #### CloudFormation Parameters
 
 > Parameters are a way to provide inputs to your
-> AWS CloudFormation template.\ 
+> AWS CloudFormation template.\
 > Parameters are extremely powerful, controlled, and can prevent errors from happening in your templates, thanks to types.\
 > They're important to know about if:
-> 
-> -  You want to reuse your templates across the company.
-> -  Some inputs can not be determined ahead of time.
+>
+> - You want to reuse your templates across the company.
+> - Some inputs can not be determined ahead of time.
 
 parameters allow us to re-use the same template with small changes, without having to re-upload the template again and again with minor changes.
 
 parameters have a type:
+
 - string
 - number
 - comma delimited list
@@ -1455,6 +1471,7 @@ Parameters:
     Type: string
     NoEcho: true #don't expose this value in logs or anywhere else
 ```
+
 we can reference parameters using `Fn::Ref`, or the shorthand form `!Ref`.
 
 there are also "Pseudo Parameters", which are provided by AWS and provide common functionality data. [Documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html).
@@ -1477,6 +1494,7 @@ there are also "Pseudo Parameters", which are provided by AWS and provide common
 mappings are static, they aren't controlled by the user which runs the template. they are defined with a map name, then a toplevel key, and a secondary level key.
 
 in this example, we set the ami to use based on the region and the machine type.
+
 ```yaml
 Mappings: # section
   RegionMap: # map name
@@ -1500,7 +1518,9 @@ we can use the `Fn::FindInMap` function (or `!FindInMap`) to get the value.
 mapping are used when we know all the options in advance, and we can determine which one to use ahead on time, they are safer to use, but don't allow as much freedom as parameters.
 
 #### CloudFormation Outputs & Exports
+
 > The Outputs section declares optional outputs values that we can import into other stacks (if you export them first)!
+>
 > - You can also view the outputs in the AWS Console or in using the AWS CLI
 > - They're very useful for example if you define a network CloudFormation, and output the variables such as VPC ID and your Subnet IDs
 > - It's the best way to perform some collaboration cross stack, as you let expert handle their own part of the stack
@@ -1536,10 +1556,11 @@ Resources:
 resources or outputs based on a condition
 > Conditions can be whatever you want them to
 be, but common ones are:
+>
 > - Environment (dev / test / prod)
 > - AWS Region
 > - Any parameter value
-> 
+>
 > Each condition can reference another condition,
 parameter value or mapping.
 
@@ -1562,12 +1583,11 @@ Resources:
 
 [documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference.html)
 
-
 | Function           | Shorthand Form  | Arguments                                   | Usage                                                                                | requires "AWS::LanguageExtensions" |
 | ------------------ | --------------- | ------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------- |
 | `Fn::Ref`          | `!Ref`          | resourceName                                | reference value in the template, either get the entire thing or the physical ID      | No                                 |
 | `Fn::FindInMap`    | `!FindInMap`    | [MapName, TopLevelKey, SecondLevelKey]      | return a named value from a specific key                                             | No                                 |
-| `Fn::GetAtt`       | `!GetAtt`       | resourceName.attributeName                  |                                                                                      | get attribute from a resource      | No |
+| `Fn::GetAtt`       | `!GetAtt`       | resourceName.attributeName                                                                                                        | get attribute from a resource      | No |
 | `Fn::ImportValue`  | `!ImportValue`  | valueName                                   | reference an exported value from another stack                                       | No                                 |
 | `Fn::And`          | `!And`          | [value1, value2]                            | logical operator                                                                     | No                                 |
 | `Fn::Or`           | `!Or`           | [value1, value2]                            | logical operator                                                                     | No                                 |
@@ -1578,7 +1598,7 @@ Resources:
 | `Fn::Split`        | `!Split`        | [delimiter, source-string]                  | split a string based on delimiter                                                    | No                                 |
 | `Fn::Sub`          | `!Sub`          |                                             | substitutes                                                                          | No                                 |
 | `Fn::Base64`       | `!Base64`       | stringValue                                 | transform string to base64, used in user data scripts to <cloud>EC2</cloud> machines | No                                 |
-| `Fn::Cidr`         | `!Cidr`         | [ipBlock, count, cidrBits]                  | No                                                                                   |
+| `Fn::Cidr`         | `!Cidr`         | [ipBlock, count, cidrBits]                  |  ?|No                                                                                   |
 | `Fn::GetAZs`       | `!GetAZs`       | region                                      | get a list of availability zones for the region                                      | No                                 |
 | `Fn::Select`       | `!Select`       | [index, list]                               | select an element from a list                                                        | No                                 |
 | `Fn::Length`       | `!Length`       | array                                       | number of elements in array                                                          | No                                 |
@@ -1589,12 +1609,13 @@ Resources:
 </details>
 
 ### CloudFormation Options
+
 <details>
 <summary>
 Additional options when creating and updating stacks.
 </summary>
 
-Other options such as stack rollbacks, 
+Other options such as stack rollbacks,
 
 #### CloudFormation Rollbacks
 
@@ -1604,6 +1625,7 @@ When a stack update fails, the default behavior is to rollback into the previous
 A rollback can fail, this might happen if resources were manually changed. we need to find the issue and fix it, and then use <kbd>ContinueUpdateRollback</kbd> from the console or with `continue-update-rollback` api call from the cli.
 
 we can try a demo with a bad template, this will fail since the AMI for the <cloud>EC2</cloud> resource is not a valid ami.\
+
 ```yaml
 ---
 Parameters:
@@ -1663,13 +1685,13 @@ if we set the option to preserve the resources, the security groups will be crea
 
 > <cloud>IAM</cloud> role that allows CloudFormation to create/update/delete stack resources on your behalf.\
 > Give ability to users to create/update/delete the stack resources even if they don't have permissions to work with the resources in the stack
-> 
+>
 > Use cases:
+>
 > - You want to achieve the least privilege principle
 > - But you don't want to give the user all the required permissions to create the stack resources
-> 
+>
 > User (which creates the template) must have `iam:PassRole` permissions
-
 
 in the <cloud>IAM</cloud> service, we create a role, choose the trusted entity as <cloud>CloudFormation</cloud>, and we give it the capabilities for the resources we want it to create (such as <cloud>S3</cloud>). and when we create a stack, we can define which role will create the resource (rather than using the user role).
 
@@ -1678,10 +1700,12 @@ in the <cloud>IAM</cloud> service, we create a role, choose the trusted entity a
 capabilities that we need to give cloudFormation if we want it to create <cloud>IAM</cloud> resources.
 
 > `CAPABILITY_NAMED_IAM` and `CAPABILITY_IAM`
+>
 > - Necessary to enable when you CloudFormation template is creating or updating IAM resources (IAM User, Role, Group, Policy, Access Keys, Instance Profile... )
 > - Specify `CAPABILITY_NAMED_IAM` if the resources are named.
 >
->  `CAPABILITY_AUTO_EXPAND`
+> `CAPABILITY_AUTO_EXPAND`
+>
 > - Necessary when your CloudFormation template includes Macros or Nested Stacks (stacks within stacks) to perform dynamic transformations
 > - You're acknowledging that your template may change before deploying
 >
@@ -1769,7 +1793,6 @@ an option to prevent deleteions of stacks, we can control the termination protec
 
 </details>
 
-
 ### CloudFormation Custom Resources
 
 <details>
@@ -1779,14 +1802,14 @@ Defining custom resource or logic
 
 > - define resources not yet supported by CloudFormation.
 > - define custom provisioning logic for resources can that be outside of CloudFormation (on-premises resources, 3rd party resources,...)
-> -  have custom scripts run during create / update / delete through Lambda functions (running a Lambda function to empty an S3 bucket before being deleted)
-> 
+> - have custom scripts run during create / update / delete through Lambda functions (running a Lambda function to empty an S3 bucket before being deleted)
+>
 > Defined in the template using `AWS::CloudFormation::CustomResource` or
 `Custom::MyCustomResourceTypeName` (recommended).\
 > Backed by a Lambda function (most common) or an SNS topic.
 
-
 we need a service token, either a <cloud>Lambda</cloud> function or a <cloud>SNS</cloud> arn
+
 ```yaml
 Resources:
   MyCustomResourceUsingLambda:
@@ -1810,9 +1833,9 @@ Get Values from additional source
 
 > Reference external values stored in Systems Manager Parameter Store and Secrets Manager within CloudFormation templates. CloudFormation retrieves the value of the specified reference during create/update/delete operations.\
 > For example: retrieve RDS DB Instance master password from Secrets Manager.
-> 
+>
 > Supports:
-> 
+>
 > - ssm - for plaintext values stored in SSM Parameter Store
 > - ssm-secure - for secure strings stored in SSM Parameter Store
 > - secretsmanager - for secret values stored in Secrets Manager
@@ -1849,6 +1872,7 @@ Passing User Data Scripts and Helper Scripts
 passing user Data to <cloud>EC2</cloud> instance. the important thing to remember is to pass the script data in base64 using `Fn::Base64` (or `!Base64`). the script log will be store in "/var/log/cloud-init-output.log" file.
 
 we start with this example
+
 ```yaml
 ---
 Resources:
@@ -1903,7 +1927,7 @@ we cane use some helper scripts to solver those problems.
 under the <cloud>EC2</cloud> resource, there is the `AWS::CloudForamation::Init` metdadate property.
 
 > - Packages: used to download and install pre-packaged apps and components on Linux/Windows (ex. MySQL, PHP, etc...)
-> - Groups: define user groups • Users: define users, and which group they belong to 
+> - Groups: define user groups • Users: define users, and which group they belong to
 > - Sources: download files and archives and place them on the EC2 instance
 > - Files: create files on the EC2 instance, using inline or can be pulled from a URL
 > - Commands: run a series of commands
@@ -1917,10 +1941,10 @@ EC2 configurations readable. The EC2 instance will query the CloudFormation serv
 `AWS::CloudFormation::Init` must be in the Metadata of a resource.
 
 `cfn-init` flags:
+
 - `-s`,`--stack` - stack
 - `-r`, `--resource` - resource name
 - `--region` - AWS region
-
 
 ```yaml
 ---
@@ -1981,11 +2005,13 @@ Resources:
 ```
 
 #### `cfn-signal` & Wait Condition Helper Function
+
 to make sure the script worked properly, we we use the `cfn-signal` function right after the `cfn-init`. this will send a signal that our template will wait on. so we need to define a "Wait Condition".
 
 this is another resource, which waits for a signal before creation, and if it doesn't receive the signal, the resource will fail and the stack won't succeed.
 
 a success code is zero, if it recives a code other than zero it's counted as a failure, or if it doesn't receive anything until the timeout expires.
+
 ```yaml
 ---
 Resources:
@@ -2041,6 +2067,7 @@ Resources:
         Count: 1
     Type: AWS::CloudFormation::WaitCondition
 ```
+
 #### `cfn-signal` Helper Function Failures
 
 common reasons for this not to work is if the AMI doesn't have the helper scripts installed, this can be verified by not rolling back the machine and checking the logs.
@@ -2057,16 +2084,16 @@ Reusable stack components
 Nested stacks are stacks inside other stacks.
 
 > Nested stacks are stacks as part of other stacks.  They allow you to isolate repeated patterns/ common components in separate stacks and call them from other stacks.\
-> 
+>
 > - Load Balancer configuration that is re-used
 > - Security Group that is re-used
-> 
+>
 > Nested stacks are considered best practice.- To update a nested stack, always update the parent (root stack).\
 > Nested stacks can have nested stacks themselves!
 
 They shouldn't be confused with Cross-Stack references, which are independent of the parent stack and export value to be used by many other stacks.
 
-a nested stack needs the templateURL, and whatever parameters we need to pass to it. 
+a nested stack needs the templateURL, and whatever parameters we need to pass to it.
 
 ```yaml
 Resources:
@@ -2093,9 +2120,11 @@ Outputs:
   OutputFromNestedStack:
     Value: !GetAtt myStack.Outputs.WebsiteURL
 ```
+
 #### "Depends On" Property
 
 > Specify that the creation of a specific resource follows another.
+>
 > - When added to a resource, that resource is created only after the creation of the resource specified in the DependsOn attribute
 > - Applied automatically when using `!Ref` and `!GetAtt`
 > - Use with any resource
@@ -2112,6 +2141,7 @@ Deploying stacks across multiple accounts and regions.
 administrator only operation.
 
 > Create, update, or delete stacks across multiple accounts and regions with a single operation/template
+>
 > - Administrator account to create StackSets
 > - Target accounts to create, update, delete stack instances from StackSets
 > - When you update a stack set, all associated stack instances are updated throughout all accounts and regions
@@ -2120,13 +2150,13 @@ administrator only operation.
 for normal, personal accounts, we use self-managed permessions, which requires manual work on both the source and the target accounts.
 
 > Self-managed Permissions
-> 
+>
 > - Create the IAM roles (with established trusted relationship) in both administrator and target accounts.
 > - Deploy to any target account in which you have permissions to create IAM role
 
 if we are using AWS organization, we can use service-managed permission, this is a more powerful option.
 > Service-managed Permissions
-> 
+>
 > - Deploy to accounts managed by AWS Organizations
 > - StackSets create the IAM roles on your behalf (enable trusted access with AWS Organizations)
 > - Must enable all features in AWS Organizations
@@ -2154,24 +2184,25 @@ Failures and possible fixes.
 </summary>
 
 > **DELETE_FAILED**
+>
 > - Some resources must be emptied before deleting, such as S3 buckets
 > - Use Custom Resources with Lambda functions to automate some actions
 > - Security Groups cannot be deleted until all EC2 instances in the group are gone
 > - Think about using DeletionPolicy=Retain to skip deletions
-> 
+>
 > **UPDATE_ROLLBACK_FAILED**
+>
 > - Can be caused by resources changed outside of CloudFormation, insufficient permissions, Auto Scaling Group that doesn't receive enough signals…
 > - Manually fix the error and then `ContinueUpdateRollback`
 >
 > A stack operation failed, and the stack instance status is `OUTDATED`.
+>
 > - Insufficient permissions in a target account for creating resources that are specified in your template.
 > - The template could be trying to create global resources that must be unique but aren't, such as S3 buckets
 > - The administrator account does not have a trust relationship with the target account
 > - Reached a limit or a quota in the target account (too many resources)
 
 </details>
-
-
 
 </details>
 
@@ -2187,6 +2218,7 @@ Serverless code execution.
 Lambda functions are also integrated with many services, and it has built-in runtimes for many languages, with other languages as extended runtime support, or by using container images (if they implement the lambda runtime API).
 
 integrations:
+
 - <cloud>API Gateway</cloud> - REST api to invoke lambda
 - <cloud>Kinesis</cloud> - transform data
 - <cloud>DynamoDB</cloud> - trigger lambda when something changes
@@ -2212,6 +2244,7 @@ Triggering Lambda function from Events
 </summary>
 
 #### Lambda & CloudWatch Events / EventBridge
+
 intergration with <cloud>EventBridge</cloud> - we can either have a serverless cron rule which runs on a schedule, or a <cloud>CodePipeline</cloud> event that triggers when a state changes.
 
 we create a demo function, and then navigate to the eventBridge service, select <cloud>Create Rule</cloud>. we can set a scheduled rule (cron), or a rule based on event pattern. there is a new way to set cron rules (<cloud>EventBridge Scheduler</cloud>), we need to set the target (Lambda in our case, but can be other services), and make sure the permissions fit.
@@ -2246,7 +2279,6 @@ Different methods of monitoring Lambda functions
 - <cloud>CloudWatch Logs</cloud> - write to logs, part of the basic Lambda Role
 - <cloud>CloudWatch Metrics</cloud> - information about innvocations, durations, errors, etc...
 - <cloud>XRayTracing</cloud> - trace the flow of the lambda, requires using the x-ray daemon ("active tracing" option in the configuration), there are several needed environment variables.
-
 
 > - Invocations - number of times your function is invoked (success/failure)
 > - Duration - amount of time your function spends processing an event
@@ -2288,7 +2320,6 @@ the first time we run a lambda, the execution runtime is created, this can take 
 If we want to always have the better performance, we can set a number of "provisioned concurrency", which will ensure some execution contexts remain, even if no one has invoked the lambda in a while. we can set auto-scaling to manage this behavior.
 </details>
 
-
 </details>
 
 ## EC2 Storage and Data Management - EBS and EFS
@@ -2309,13 +2340,13 @@ diving a bit deeper:
 
 > - It's a network drive (i.e. not a physical drive)
 >   - It uses the network to communicate the instance, which means there might be a bit of latency
->   - It can be *detached* from an EC2 instance and *attached* to another one quickly
+>   - It can be _detached_ from an EC2 instance and _attached_ to another one quickly
 > - It's locked to an Availability Zone (AZ)
 >   - An EBS Volume in us-east-1a cannot be attached to us-east-1b
->   - To move a volume across, you first need to *snapshot* it
+>   - To move a volume across, you first need to _snapshot_ it
 > - Have a provisioned capacity (size in GBs, and IOPS)
 >   - You get billed for all the provisioned capacity
->   -  You can increase the capacity of the drive over time
+>   - You can increase the capacity of the drive over time
 
 We can create EBS volumes without having them attached to a machine. an <cloud>EC2</cloud> machine can attach more than one volume.\
 When we create the volumes directly from the machine, we can control if it's deleted when the machine is terminated ("delete on termination"). the default behavior is to delete the root volume, but not the others. there is also an option to encrypt the volume using <cloud>KMS</cloud>.
@@ -2349,13 +2380,13 @@ EBS volume differ in type of disk (SSD vs HDD), size (measured in GB), throughpu
 
 > - gp2 / gp3 (SSD): General purpose SSD volume that balances price and performance for a wide variety of workloads.
 > - io1 / io2 Block Express (SSD): Highest-performance SSD volume for mission-critical low-latency or high-throughput workloads.
->  - also called "provisioned iops" volumes
+> - also called "provisioned iops" volumes
 > - st1 (HDD): Low cost HDD volume designed for frequently accessed, throughput- intensive workloads.
 > - sc1 (HDD): Lowest cost HDD volume designed for less frequently accessed workloads.
 >
 > Only gp2/gp3 and io1/io2 Block Express can be used as boot (root) volumes.
 
-We use the *gp2/gp3* SSD volumes for most cases, when we have mission critical workloads we can use *io1/io2* SSD devices for low latency. when we want lower cost we can switch to the HDD devices, *st1* will give us good performance for frequently accessed data, and can have a very high max throughput. *sc1* volumes have the lowest cost, and are most fit for storing data that is not frequently accessed.
+We use the _gp2/gp3_ SSD volumes for most cases, when we have mission critical workloads we can use _io1/io2_ SSD devices for low latency. when we want lower cost we can switch to the HDD devices, _st1_ will give us good performance for frequently accessed data, and can have a very high max throughput. _sc1_ volumes have the lowest cost, and are most fit for storing data that is not frequently accessed.
 
 | _                    | gp2                           | gp3                                  | io1                                        | io2                                | st1 (throughput optimized)           | sc1 (cold storage)    |
 | -------------------- | ----------------------------- | ------------------------------------ | ------------------------------------------ | ---------------------------------- | ------------------------------------ | --------------------- |
@@ -2367,10 +2398,8 @@ We use the *gp2/gp3* SSD volumes for most cases, when we have mission critical w
 | IOPS                 | 3000-16000 (3 Iops per 1 GiB) | 3000-16000                           | max is 32000 normally, 64000 for Nitro EC2 | max is 256000                      | max is 500                           | max is 250            |
 | Throughput           | linked with IOps              | 125-1000 MiB/s (independent of IOPS) | (independent of IOPS)                      | linked with IOps                   | throughput optimized, 500 MiB/s      | nax is 250 MiB/s      |
 | Multi Attach Support | No                            | No                                   | Yes                                        | Yes                                | No                                   | No                    |
- 
+
 </details>
-
-
 
 ### EBS Operations
 
@@ -2388,13 +2417,15 @@ Attaching the same EBS volume to multiple machines in the same Availability Zone
 Increasing the size of the EBS volume. this is available in all volume types. in io1 devices it's also possible to increase the IOPS. after this is done, we need to "re-partition" the drive to make the machine aware of the increased size. the volume might go into an "optimization" phase (it will still be usable).\
 This is a one way operation, we **cannot decrease** the size, we would have to create a smaller volume and migrate the data.
 
-we can launch an EC2 instance using the default settings, and now we can connect to it, and we verify the disk space we have and see we have 8Gb of disk space 
+we can launch an EC2 instance using the default settings, and now we can connect to it, and we verify the disk space we have and see we have 8Gb of disk space
+
 ```sh
 lsblk
 df -h
 ```
 
 now we select the volume click <kbd>Actions</kbd> and <kbd>Modify Volume</kbd>, and we can increase the size. we connect back to the machine and run some commands
+
 ```sh
 lsblk
 df -h
@@ -2402,6 +2433,7 @@ sudo growpart /dev/xvda 1
 lsblk
 df -h
 ```
+
 at this stage, we can either run more commands, but it's easier to simply restart the instance.
 
 #### Snapshots
@@ -2419,8 +2451,9 @@ there is also an AWS service to manage snapshots for us - Amazon Data Lifecycle 
 > - Uses resource tags to identify the resources (EC2 instances, EBS volumes)
 > - Can't be used to manage snapshots/AMIs created outside DLM
 > - Can't be used to manage instance-store backed AMIs
-
+>
 > Fast Snapshot Restore (FSR)
+>
 > - EBS Snapshots are stored in S3
 > - By default, there's a latency of I/O operations the first time each block is accessed (block must be pulled from S3)
 > - Solution: force the initialization of the entire volume (using the `dd` or `fio` command), or you can enable FSR
@@ -2442,7 +2475,7 @@ we can also navigate to the "Recycle Bin" service and <kbd>Create Retention Rule
 #### Volume Migration
 
 > EBS Volumes are only locked to a specific AZ.To migrate it to a different AZ (or region):
-> 
+>
 > - Snapshot the volume
 > - (optional) Copy the volume to a different region
 > - Create a volume from the snapshot in the AZ of your choice
@@ -2459,15 +2492,15 @@ we can also navigate to the "Recycle Bin" service and <kbd>Create Retention Rule
 > - EBS Encryption leverages keys from <cloud>KMS</cloud> (AES-256)
 > - Copying an unencrypted snapshot allows encryption
 > - Snapshots of encrypted volumes are encrypted
-> 
+>
 > Encryption: encrypt an unencrypted EBS volume
-> 
+>
 > - Create an EBS snapshot of the volume
 > - Encrypt the EBS snapshot (using copy)
 > - Create new ebs volume from the snapshot ( the volume will also be encrypted)
 > - Now you can attach the encrypted volume to the original instance
+>
 </details>
-
 
 ### Amazon EFS - Elastic File System
 
@@ -2479,7 +2512,7 @@ Managed network file system for linux machines.
 <cloud>EFS</cloud> - Elastic File Storage
 
 > Managed NFS (network file system) that can be mounted on many EC2 across different Availability Zones
-> 
+>
 > - Highly available, scalable, expensive (3x gp2), pay per use.
 > - Use cases: content management, web serving, data sharing, Wordpress
 > - Uses NFSv4.1 protocol
@@ -2492,10 +2525,12 @@ Managed network file system for linux machines.
 EFS is highly scalable, allows for thousends of concurrent NFS clients, and more than 10 GB/s throughput. it grows automatically in size, and can reach Petabyte scale of storage, without the user having to manage anything.
 
 it has two performance modes, it must be set at creation.
+
 - General Purpose (default) - latency-sensitive cases (web servers CMS)
 - Max I/O - highter latency, but better parallelization for big data or media processing.
 
 > Throughput Modes:
+>
 > - Bursting - start with (50MiB/s for 1 TB storage) + burst of up to 100MiB/s
 > - Provisioned - set your throughput regardless of storage size (ex: 1 GiB/s for 1 TB storage)
 > - Elastic - automatically scales throughput up or down based on your workloads
@@ -2503,6 +2538,7 @@ it has two performance modes, it must be set at creation.
 >   - Used for unpredictable workloads
 
 supports storage classes and lifecycle management using lifecycle policies to move files between tiers.
+>
 > - Standard: for frequently accessed files
 > - Infrequent access (EFS-IA): cost to retrieve files, lower price to store.
 > - Archive: rarely accessed data (few times each year), 50% cheaper.
@@ -2511,6 +2547,7 @@ Default is multi-AZ mode, but can also be set to a single Availability Zone (bac
 
 (hands on)\
 In the <cloud>EFS</cloud> Service, <kbd>Create File System</kbd>, choose the <cloud>VPC</cloud>, select the file system type (Regional multi-az or One Zone), enable or disable backup, control the file lifecycle (transition between tiers) and enable encryption at rest (with more settings). we can set the performance settings (elastic, provisoned, bursting).
+
 - Bursting - scale with the amount of storage
 - Elastic - scale with usage
 - Provisioned - manually set throughput
@@ -2535,7 +2572,6 @@ We can connect to two instances, create a file in the shared file system from on
 EFS only supports linux machine (unless using <cloud>FSx</cloud>), and it has a higher cost. we can use storage tiers for cost savings.\
 EFS scales automatically, and can reach petabytes of data.
 
-
 </details>
 
 ### EFS Access Points
@@ -2556,6 +2592,7 @@ in the <cloud>EFS</cloud> service, we navigate to the "Access Point" section, <k
 ```sh
 sudo mount -t efs -o tls, accesspoint=<accesspoint identifier> <filesystem-identifier>:/ efs
 ```
+
 </details>
 
 ### EFS - Operations
@@ -2566,11 +2603,13 @@ What can we do with EFS.
 </summary>
 
 > Operations that can be done in place:
+>
 > - Lifecycle Policy (enable IA or change IA settings)
 > - Throughput Mode and Provisioned Throughput Numbers
 > - EFS Access Points
 >  
 > Operations that require a migration using **DataSync** (replicates all file attributes and metadata)
+>
 > - Migration to encrypted EFS
 > - Performance Mode (e.g. Max IO)
 
@@ -2591,7 +2630,6 @@ CloudWatch EFS Metrics.
 
 </details>
 
-
 </details>
 
 ## Amazon S3 Introduction
@@ -2608,9 +2646,7 @@ Object Storage
 //TODO: add Summary
 </summary>
 
-
 </details>
-
 
 ### S3 Website Overview
 
@@ -2619,9 +2655,7 @@ Object Storage
 //TODO: add Summary
 </summary>
 
-
 </details>
-
 
 ### S3 Versioning
 
@@ -2630,9 +2664,7 @@ Object Storage
 //TODO: add Summary
 </summary>
 
-
 </details>
-
 
 ### S3 Replication
 
@@ -2641,9 +2673,7 @@ Object Storage
 //TODO: add Summary
 </summary>
 
-
 </details>
-
 
 ### S3 Storage Classes Overview
 
@@ -2652,10 +2682,7 @@ Object Storage
 //TODO: add Summary
 </summary>
 
-
 </details>
-
-
 
 </details>
 

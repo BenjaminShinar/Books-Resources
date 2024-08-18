@@ -1277,7 +1277,7 @@ GPU and parallel algorithms
 
 [Easy GPU Programming With AdaptiveCpp (68x Faster!)](https://youtu.be/ImM7f5IQOaw?si=gxCoJ1KXaKocDMEi)
 
-parallel programming with GPU, using conway's game of life.
+parallel programming with GPU, using Conway's game of life.
 
 </details>
 
@@ -1289,7 +1289,6 @@ Transforming lambda capture variables as part of the capture
 </summary>
 
 [Transforming Lambda Captures](https://youtu.be/t6hFPKiOS-Q?si=C64xS3yot4gQvlpN)
-
 
 in this example, we capture a variable and transform it as part of the capture/initialization, and we do this on a parameter pack. we expand the parameter into the closing scope. we usually use <cpp>std::move</cpp> or <cpp>std::forward</cpp>, but we can also do other stuff, like static cast.
 
@@ -1320,6 +1319,7 @@ int main()
   work_with_string_like_things("Hello World",std::string{"Jason was here"}, std::string_view{"Doing some C++ weekly stuff"});
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 437 - Pointers To Overloaded Functions
@@ -1331,8 +1331,8 @@ passing an overload function pointer to a generic function and other issues
 
 [Pointers To Overloaded Functions](https://youtu.be/NMWv2vQQjXE?si=0WMDWW5FHc2To7AV)
 
-
 we can get the address of a function with the `&` operator, but when we try getting the address of an overloaded function, there is a problem to infer the correct one.
+
 ```cpp
 void use_callable(auto);
 
@@ -1354,6 +1354,7 @@ int main()
   use_callable([](auto v) {return callable(v);});
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 438 - C++23's ranged-for Fixes
@@ -1365,7 +1366,7 @@ Object Life time problem fix for the temporary objects in the range initializer.
 
 [C++23's ranged-for Fixes](https://youtu.be/G6FTtZCtFXU?si=hEFyj00IaOV8eAcM)
 
-there was an object life time issue when using ranged for loops and temporary objects and references. 
+there was an object life time issue when using ranged for loops and temporary objects and references.
 
 ```cpp
 struct Thing {
@@ -1432,7 +1433,6 @@ int main()
 
 we can trigger a race condition by running multiple threads accessing the same object, and we can add the thread sanitizer with the `-fsanitize=thread` flag.
 
-
 </details>
 
 ## C++ Weekly - Ep 440 - Revisiting Visitors for std::visit
@@ -1483,6 +1483,7 @@ int main()
     , value); // variadic lambda
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 441 - What is Multiple Dispatch (and how does it apply to C++?)
@@ -1496,8 +1497,8 @@ Playing with double dispatch
 
 also known as multi-method, multi-method dispatch. runtime dynamic type polymorphism on one or more of the arguments. there is the classic example from a fictional game about spaceships.
 
-
 we have an example of a single dispatch (normal virtual polymorphism).
+
 ```cpp
 #include <variant>
 #include <print>
@@ -1599,7 +1600,9 @@ void process_collisions(const std::variant<Craft, Astroid>& obj)
   }
 }
 ```
+
 the better way is to do this, allow the compiler to do the pattern matching (not true pattern matching yet), this will only work when all derived types are known in compile time.
+
 ```cpp
 void process_collisions(const std::variant<Craft, Astroid>& obj)
 {
@@ -1613,4 +1616,5 @@ void process_collisions(const std::variant<Craft, Astroid>& obj)
     }
 }
 ```
+
 </details>

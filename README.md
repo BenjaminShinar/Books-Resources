@@ -308,15 +308,16 @@ Authors: Abraham Silberschatz, Henry F. Korth, S. Sudarshan.
   - `decode`
 
 ### Chapter 6 - Formal Relational Query Languages
+
 - operations - can act on one relation and produce one relation back (unary), or run on pairs of relations (binary)
   - select (unary) - select/filter tuples that satisfy a predicate
   - project (unary) - project relation into new form with some of the attributes. will remove duplicates.
   - union (binary) - combine two relations together. will remove duplicates. relations must be the same arity (number of attributes) and the attributes must be the same domain.
   - set difference (binary) - tuples in one relation but not another. order matters.
-  - cartesian product (binary) - create a new relation with a schema that is the union of the two relations schema. each tuple gets paired with all the tuples in the other relations. 
+  - Cartesian product (binary) - create a new relation with a schema that is the union of the two relations schema. each tuple gets paired with all the tuples in the other relations.
   - rename (unary) - give temporary name to a relation as part of the formula (????)
   - set intersection - appearing in both
-  - natural join - cartesian product which is filtered on some natural common attribute
+  - natural join - Cartesian product which is filtered on some natural common attribute
   - assignment - give temporary name (???)
   - outer join - dealing with missing information (right outer join, left outer join, full outer join)
 - aggregations
@@ -324,30 +325,30 @@ Authors: Abraham Silberschatz, Henry F. Korth, S. Sudarshan.
 - Tuple relational calculus - another type of syntax/form to write algebra
 - Domain relation calculus.
 
-the format for unary operator is the symbol, and then the predicate in subscript and finally the relation name in parentheses. 
+the format for unary operator is the symbol, and then the predicate in subscript and finally the relation name in parentheses.
 
 [symbols](https://www.cs.uleth.ca/~rice/latex/worksheet.pdf)
 
-Symbol name | LATEXcode |symbol
----|---|---
-leftarrow | `\leftarrow` | $\leftarrow$
-select | `\sigma` | $\sigma$
-project | `\Pi` | $\Pi$
-inner join | `\bowtie` | $\bowtie$
-left outer join | `\sqsubpet\bowtie` | $\sqsupset\bowtie$
-right outer join | `\bowtie\sqsuspet` | $\bowtie\sqsubset$
-full outer join | `\sqsupbset\bowtie\sqsuspet` | $\sqsupset\bowtie\sqsubset$
-cross product | `\times` | $\times$
-rename | `\rho` | $\rho$
-less than | `<` | $<$
-greater than |`>` | $>$
-less than or equal | `\leq`  | $\leq$
-greater than or equal | `\geq` | $\geq$
-equal | `=`  | $=$
-not equal | `\neq` | $\neq$
-and | `\wedge` | $\wedge$
-or | `\vee` | $\vee$
-not | `\neg` | $\neg$
+| Symbol name | LATEXcode |symbol|
+|---|---|---|
+| leftarrow | `\leftarrow` | $\leftarrow$ |
+| select | `\sigma` | $\sigma$ |
+| project | `\Pi` | $\Pi$ |
+| inner join | `\bowtie` | $\bowtie$ |
+| left outer join | `\sqsubpet\bowtie` | $\sqsupset\bowtie$ |
+| right outer join | `\bowtie\sqsuspet` | $\bowtie\sqsubset$ |
+| full outer join | `\sqsupbset\bowtie\sqsuspet` | $\sqsupset\bowtie\sqsubset$ |
+| cross product | `\times` | $\times$ |
+| rename | `\rho` | $\rho$ |
+| less than | `<` | $<$ |
+| greater than |`>` | $>$ |
+| less than or equal | `\leq`  | $\leq$ |
+| greater than or equal | `\geq` | $\geq$ |
+| equal | `=`  | $=$ |
+| not equal | `\neq` | $\neq$ |
+| and | `\wedge` | $\wedge$ |
+| or | `\vee` | $\vee$ |
+| not | `\neg` | $\neg$ |
 
 $\sigma_{department\_name="Physics"}(instructor)$
 $\Pi_{ID, Name, Salary}(instructor)$
@@ -356,7 +357,7 @@ combining together to find the names of all instructors from the physics departm
 
 $\Pi_{name}(\sigma_{department\_name="Physics"}(instructor))$
 
-the `set intersection`, `natural join` and `assignment` operators don't add power over the fundamental operators, but make our life easier. 
+the `set intersection`, `natural join` and `assignment` operators don't add power over the fundamental operators, but make our life easier.
 
 Extended relation algebra operations:
 
@@ -369,9 +370,10 @@ we use them for aggregation, with the calligraphic G denoting aggregation `\math
 E-R -> Entity Relationship, focusing on how to choose a schema. which entities are present, what are the main attributes and what relations they have to each other. specifying the required operations on the data.\
 entities are the "things" the system deals with - people, places, products, etc...
 
-*Redundancy* is bad for schema design. data should only appear once, and should not be replicated across entities. if it is replicated, the different representations of the data may become inconsistent across time. *Incompleteness* is another product of bad design. we might end up creating workaround items that belong to one entity and have missing data, because the entity actually covers more than one distinct "thing".
+_Redundancy_ is bad for schema design. data should only appear once, and should not be replicated across entities. if it is replicated, the different representations of the data may become inconsistent across time. _Incompleteness_ is another product of bad design. we might end up creating workaround items that belong to one entity and have missing data, because the entity actually covers more than one distinct "thing".
 
 the entity-relationship model has three concepts:
+
 - entity sets
 - relationship sets
 - attributes
@@ -381,17 +383,18 @@ if an entity is a distinct "thing", the entity set is a collection of those diff
 a relationship is an association between entities. the entities are "participants" in the relationship, and we can define them as having a "role", relationships can also have attributes.
 
 attributes themselves have domains (value sets), or possible allowed values. this can numbers, dates, text, etc.\
-we can have simple attributes such as name or address, or composite attributes - first and last name, street, city, state and zip code. in some cases this makes sense, and in some cases it doesn't. (it makes sense to query for all students from a certain state, but less so to query for all student with the same first name). attributes can also be *single-valued* or *multi-valued*. an id is single value, any entity can only have one. but a phone number is a multi-valued attribute, since a single person can have multiple numbers. a derived attribute is something that we can infer from from other relationships or entities, such as deriving someone's age from the date of birth. we don't store the derived values, we compute them instead.
+we can have simple attributes such as name or address, or composite attributes - first and last name, street, city, state and zip code. in some cases this makes sense, and in some cases it doesn't. (it makes sense to query for all students from a certain state, but less so to query for all student with the same first name). attributes can also be _single-valued_ or _multi-valued_. an id is single value, any entity can only have one. but a phone number is a multi-valued attribute, since a single person can have multiple numbers. a derived attribute is something that we can infer from from other relationships or entities, such as deriving someone's age from the date of birth. we don't store the derived values, we compute them instead.
 
 a null value can mean the data is missing for the attribute (unknown) or doesn't exist at all.
 
 schemas have constrains, such as relationships mapping cardinality - how many times can an entity be in the role in the relationship set.
+
 - one to one
 - one to many
 - many to one
 - many to many
 
-participation can be *total* if every entity from the entity set participates in a relationship (every person has at least one person as a parent), or *partial* if some entities don't participate in it (not every person owns a car).
+participation can be _total_ if every entity from the entity set participates in a relationship (every person has at least one person as a parent), or _partial_ if some entities don't participate in it (not every person owns a car).
 
 entities are different from one another because of their "keys", special attributes that must uniquely identify the entity from all other entities. the key can be one or more attributes, as long as the set of the attributes is unique. this is also true for relationships, they also have some unique way to identify them from one another.
 
