@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX
+// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE
  -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -2632,62 +2632,509 @@ CloudWatch EFS Metrics.
 
 </details>
 
-## Amazon S3 Introduction
+## Amazon S3 And Athena
 
 <!-- <details> -->
 <summary>
-Object Storage
+Object Storage, infinity scaling.
 </summary>
+
+one of the core services of AWS, used for many things:
+
+- Backup and storage
+- Disaster Recovery
+- Archive
+- Hybrid Cloud Storage
+- Application hosting
+- Data lakes & big data analytics
+- Software delivery
+- Static website
+
+<cloud>S3</cloud> uses buckets, which are top-level objects, they must have a globally unique name (across all aws accounts). they are defined in the region level, even if they sometimes behave as if they are global.\
+There are some restrictions on how they can be named.
+
+Inside buckets, there are objects (files), the objects have a key, which is the full path. we can define keys with prefix that look like directories (folder), but basic buckets don't truly support the concept of folders, it's just that the UI behaves as if they do.
+
+the objects themselves also have values - the content of the files. max object size is 5TB (5000 GB), for files which are larger than 5GB, uploading requires using "multi-part upload".\
+Objects also have metadata - such as custom tags and version.
+
+in the <cloud>S3</cloud> service, we cna <kbd>Create a Bucket</kbd>. the bucket has a region. there is a general purpose bucket and directory bucket (which is for a specific use case). we need to use a globally unique bucket name, and match the allowed pattern.\
+Under the ownershop section, we can allow other accounts to own objects in the bucket based on Access Control Lists (ACL). and we can also choose to block public access to the bucket. we can also choose to use versioning, configure the encryption for objects in the bucket, we can use the default setting for now.
+
+we can click <kbd>Upload</kbd> and <kbd>Add File</kbd>, and once uploaded, we can view the objects properties. when we get object url, we can't view it directly, since we blocked public access to the bucket. we can create "folders" inside the bucket and add files to it, and now the files will have the folder prefix.
 
 ### S3 Security: Bucket Policy
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Controlling Access to Objects in the Bucket.
 </summary>
+
+- user-based: using <cloud>IAM</cloud> Policies
+- resource-based: bucket policies, bucket-wide rules, allows for cross-account access
+- Bucket Access Control List (ACL) - can be disabled
+- Object Access Control List (ACL) - even more fine grained (can be disabled).
+
+> Note: an IAM principal can access an S3 object if
+> - The user IAM permissions ALLOW it OR the resource policy ALLOWS it.
+> - AND there’s no explicit DENY.
+
+the common thing to use is bucket policies, they have a similar structure as <cloud>IAM</cloud> policies
+
+> JSON based policies
+> 
+> - Resources: buckets and objects
+> - Effect: Allow / Deny
+> - Actions: Set of API to Allow or Deny
+> - Principal: The account or user to apply the policy to
+>
+> Use S3 bucket for policy to:
+>
+> - Grant public access to the bucket
+> - Force objects to be encrypted at upload
+> - Grant access to another account (Cross Account)
+> - Optional Conditions on:
+>   - Public IP or Elastic IP (not on Private IP)
+>   - Source VPC or Source VPC Endpoint – only works with VPC Endpoints
+>   - CloudFront Origin Identity
+>   - MFA
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicRead",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource":[
+        "arn:aws:s3:::examplebucket/*"
+      ]
+    }
+  ]
+}
+```
+
+the bucket level seetings can stop public acccess, even with ACL and bucket policies, this is another layer of security.
+
+under the "permission tab", we can allow public access, and now objects *CAN* be public. so we can create a bucket policy. we can use the sample policies or the policy generator.
 
 </details>
 
 ### S3 Website Overview
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Static Website hosting
 </summary>
 
+> S3 can host static websites and have them accessible on the Internet.\
+> The website URL will be (depending on the region):
+> 
+> - http://bucket-name.s3-website-aws-region.amazonaws.com
+> - http://bucket-name.s3-website.aws-region.amazonaws.com
+> 
+> If you get a 403 Forbidden error, make sure the bucket
+policy allows public reads!
+
+websites on S3 don't have a "backend" server, they are static and use static html documents. we can specify the index page and error page, and set some redirection rules. all files should be publicly accessible.
 </details>
 
 ### S3 Versioning
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Objects Version Control
 </summary>
 
+> You can version your files in Amazon S3
+> 
+> - It is enabled at the bucket level
+> - Same key overwrite will change the "version": 1, 2, 3...
+> - It is best practice to version your buckets
+>   - Protect against unintended deletes (ability to restore a version)
+>   - Easy roll back to previous version
+> - Any file that is not versioned prior to enabling versioning will have version "null"
+> - Suspending versioning does not delete the previous versions
+
+when we "delete" a file, we actually add a delete marker. we can add lifecycle rules to control what happens with older versions and have them.
 </details>
 
 ### S3 Replication
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Replicating Data from one Bucket to Another
 </summary>
+
+> - Must enable Versioning in source and destination buckets.
+> - Cross-Region Replication (CRR)
+> - Same-Region Replication (SRR)
+> - Buckets can be in different AWS accounts
+> - Copying is asynchronous
+> - Must give proper IAM permissions to S3
+
+we can use replication to move data between buckets, either in the same account and region, or across regions and accounts. replicating data across regions costs more, and replicating across AWS accounts reqires specific permissions.
+
+> - After you enable Replication, only new objects are replicated
+>   - Optionally, you can replicate existing objects using *S3 Batch Replication* - Replicates existing objects and objects that failed replication
+> - For DELETE operations
+>   - Can replicate delete markers from source to target (optional setting)
+>   - Deletions with a version ID are not replicated (to avoid malicious deletes)
+> - There is no "chaining" of replication - If bucket 1 has replication into bucket 2, which has replication into bucket 3. Then objects created in bucket 1 are **not** replicated to bucket 3.
+
+in the origin bucket, under the "management" tab, we can <kbd>Create replication rule</kbd>, we set the scope (which objects will be replicated), and the target bucket. we can also control more settings like storage tiers and lifecycle, and also replicate the delete markers (not enabled by default).
 
 </details>
 
 ### S3 Storage Classes Overview
 
+<details>
+<summary>
+Storage Tiers For S3 Objects
+</summary>
+
+storage classes (tiers) control the durability, availability, retrieval time and pricing of storing an object.
+
+all storage classes have 99.999999999% durability, and avalability from 99% (SLA) to 99.99%.
+
+tiers:
+
+- Amazon S3 Standard - General Purpose
+- Amazon S3 Standard-Infrequent Access (IA)
+- Amazon S3 One Zone-Infrequent Access
+- Amazon S3 Glacier Instant Retrieval
+- Amazon S3 Glacier Flexible Retrieval
+- Amazon S3 Glacier Deep Archive
+- Amazon S3 Intelligent Tiering
+
+glacier storage is for data we don't access usually, we want to store it for long time. storing costs are low, and retrival costs differ based on how fast we want the data.\
+Intelligent tier allows AWS to move the data between storage classes, there is a small fee for the tiering, but it manages the objects for us, and there is no retrival fee.
+
+#### S3 Lifecycle Rules
+
+object can be moved between storage classes automatically using lifecycle rules, from standard to standard-IA, to glacier, etc...
+
+a lifecycle rules has the transition action (where to move), or to expire them (delete), expire old versions or remove incomplete multipart uploads. we can also set the scope of the objects by specifying the path prefix.
+
+we can use S3 analytics on the bucket to get recomendation on our access patterns to help us decide what rules to write. 
+
+</details>
+
+### S3 Event Notifications
+
+<details>
+<summary>
+Integrating S3 events with other services
+</summary>
+
+we can set actions to happen on different S3 events (created objects, removed objects), and have other services react to to them:
+
+- <cloud>SNS</cloud> - directly
+- <cloud>SQS</cloud> - directly
+- <cloud>Lambda</cloud> - directly
+- <cloud>EventBridge</cloud> - more advanced
+
+for this to work, we need to attach <cloud>IAM</cloud> Access Policies. the "Principal" will be the S3 bucket service, with the resource being the topic/queue or lambda, and the condition specifying which specific bucket it is (by ARN).\
+another option is to use <cloud>EventBridge</cloud> to send events to other servies, with advanced filtering options, sending to multiple targets, with extra features.
+
+in our bucket, under the "properties", we can set up event notification or enable the <cloud>EvenBridge</cloud> notifications. for now, we <kbd>Create Event Notification</kbd> set the the event types, specify a destination (<cloud>SNS</cloud> topic, <cloud>SQS</cloud> queue or <cloud>Lambda</cloud> function).\
+We need to allow our S3 bucket to send events to that target, so we first need to modify the target to allow the bucket to operate on it. this is the access policy. the web console will check that we have the permissions.\
+We can now create a queue and set it up, and then upload a file to S3 and see that a message was created in the queue.
+
+</details>
+
+### S3 Performance
+
+<details>
+<summary>
+Limits, multipart upload, S3 Transfer Acceleration and byte-range fetch
+</summary>
+
+> Amazon S3 automatically scales to high request rates, latency 100-200 ms.  Your application can achieve at least 3,500 `PUT`/`COPY`/`POST`/`DELETE` or 5,500 `GET`/`HEAD` requests per second per prefix in a bucket.\
+> There are no limits to the number of prefixes in a bucket.\
+> Examples (object path => prefix):
+> 
+> - bucket/folder1/sub1/file => /folder1/sub1/
+> - bucket/folder1/sub2/file => /folder1/sub2/
+> - bucket/1/file => /1/
+> - bucket/2/file => /2/
+>
+> If you spread reads across all four prefixes evenly, you can achieve 22,000 requests per second for `GET` and `HEAD`
+
+For large files, there is a "multi-part upload" option, which should be used for for files above 100Mb, and must be used for files larger than 5GB.\
+another option to get better performance is "S3 global Transfer Acceleration", which routes the files through AWS edge locations, from which AWS can transfer them faster in it's own network. this works for both downloads and uploads.
+
+when we read files, we can perform GET operations based on byte-ranges, this helps us in resiliency against failures and increse the download speed (acting like multi-part download). we can also use this to get a part of the file (like getting the header) and using that instead of getting the entirety of the file. this will only if we know how the file is formatted.
+</details>
+
+### S3 Batch Operations
+
+<details>
+<summary>
+Bulk operation on multiple object, Inventory objects in the bucket.
+</summary>
+
+> Perform bulk operations on existing S3 objects with a
+single request, example:
+> -  Modify object metadata & properties
+> -  Copy objects between S3 buckets
+> -  Encrypt un-encrypted objects
+> -  Modify ACLs, tags
+> -  Restore objects from S3 Glacier
+> -  Invoke Lambda function to perform custom action on each object
+> 
+>  A job consists of a list of objects, the action to perform, and optional parameters.\
+> S3 Batch Operations manages retries, tracks progress, sends completion notifications, generate reports. You can use S3 Inventory to get object list and use S3 Select to filter your objects.
+
+(demo)\
+we create bucket upload five files into it, including the batch.csv file
+
+```csv
+s3-batch-demo-stephane-v2,beach.jpg
+s3-batch-demo-stephane-v2,coffee.jpg
+s3-batch-demo-stephane-v2,index.html
+s3-batch-demo-stephane-v2,error.html
+```
+
+our batch operation will add tags to the files, so under "Batch Operations" we choose <kbd>Create Job</kbd>. we give it the key to the csv file as a manifest object (we can also use a S3 inventory report). we choose the operation type, we choose to "replace all object tags", and we give them new tags, we can generate a report for the job, set the job priority.\
+we also need an <cloud>IAM</cloud> role with permssions to act on the objects in the bucket. we confirm the job <kbd>Run Job</kbd>, and when it's complete, we can see the status (successes and failures), and view the objects and the newly added tags.
+
+#### S3 Inventory
+
+Listing all the objects and the corresponding metadata - better the using the <cloud>S3</cloud> list API.\
+We can run this in a scheduled job (daily, weekly, etc...)
+
+> - Usage examples:
+> 
+> - Audit and report on the replication and encryption status of your objects
+> - Get the number of objects in an S3 bucket
+> - Identify the total storage of previous object versions
+
+we can get the results in csv, orc or Apahce Parquet format. and then filter using S3 select, use some service to query the data, and also feed it into a batch operation job.
+
+in out bucket, under the "management" tab, we can <kbd>Create inventory Configuration</kbd>. we set up the scope (prefix), where the report is created to (this bucket or another one), and we update the bucket policy. we choose the frequency of the report and the format (choose CSV if we want to use in the S3 batch operations). we can add some additional fields. the first report will be generated in about 48 hours, for each report a folder is created with the schema manifest and the manifest checksum.
+
+#### S3 Select and Glacier Select
+
+> - Retrieve less data using SQL by performing server-side filtering
+> - Can filter by rows & columns (simple SQL statements)
+> - Less network transfer, less CPU cost client-side
+
+</details>
+
+### S3 Glacier
+
+<details>
+<summary>
+Long Term Storage Class
+</summary>
+
+> Low-cost object storage meant for archiving / backup
+> - Data is retained for the longer term (10s of years)
+> - Alternative to on-premises magnetic tape storage
+> - Average annual durability is 99.999999999%
+> - Cost per storage per month ($0.004 / GB – Standard vs $0.00099 / GB Deep Archive)
+>
+> Each item in Glacier is called "Archive" (up to 40TB)
+> 
+> - Archives are stored in "Vaults"
+> - By default, data encrypted at rest using AES-256 – keys managed by AWS
+
+<cloud>S3</cloud> has buckets and objects, Glacier hsa vaults and achieves.
+
+Vaults can be created, but deleted only when they are empty. we can get the metadata of a vault containing the creation data, number of achieves (files) and total size. we can also download the Vault inventory, a list of all the achieves in it.\
+We can upload files into glacier, and when we request to download from it- we actually create a retrival job, so we get a limited time link to download the data. we can choose how fast the retrival job will be, faster == more expensive.
+
+> Retrieval Options:
+>
+> - Expedited (1 to 5 minutes retrieval) – $0.03 per GB and $10 per 1000 requests
+> - Standard (3 to 5 hours) - $0.01 per GB and 0.03 per 1000 requests
+> - Bulk (5 to 12 hours) - $0.0025 per GB and $0.025 per 1000 requests
+
+when we want to use expedited retrival, we need provisioned retrival units, which we purchase from AWS.
+
+#### Glacier Vault Lock and Policies
+
+Glacier vaults can have policies and locks, each vault having one of each and that's all. they are written in json and are like access policies. Locks are immutable, and can't be changed (until they expire), even by the root account. they are used for complainace and regulatory requirements. they control what can be done with the files, like forbiding deleting achieves from vaults if they are younger than one year.\
+We can set notifications on S3 Glacier jobs, like notifying us that a retrival job was completed, or we can use S3 event notifications.
+
+</details>
+
+### S3 Multi-Part Upload Deep Dive
+
+<details>
+<summary>
+Upload large files in parts
+</summary>
+
+> Upload large objects in parts (any order)
+> - Recommended for files > 100MB, must use for files > 5GB
+> - Can help parallelize uploads (speed up transfers)
+> - Max. parts: 10,000
+> - Failures: restart uploading ONLY failed parts (improves performance)
+> - Use Lifecycle Policy to automate old parts deletion of unfinished upload after x days (e.g., network outage)
+> - Upload using AWS CLI or AWS SDK
+
+we finish the upload by running a `Complete` request to concatenate all the files into a single object. we create the lifecycle rule through the "Management" tab.
+
+(hands on)\
+
+we use cloud shell to create a file, split it into 3 parts,create a multi-part upload operation,  and upload each part separately. then we take the Id we got and use it to send a "Complete" command - we need to use the part number instead of the E-TAGS.
+The parts don't appear in the web console, we can only list them from the CLI.
+
+```sh
+BUCKET_NAME=yourbucketnamehere
+
+# create a bucket
+aws s3 mb s3://$BUCKET_NAME
+
+# Generate a 100 MB file
+dd if=/dev/zero of=100MB.txt bs=1MB count=100
+
+# Split it into 3 parts of 35 MB
+split -b 35m 100MB.txt 100MB_part_
+
+# Initiate the multi-part upload
+aws s3api create-multipart-upload --bucket $BUCKET_NAME --key 100MB.txt
+
+# get back the upload_id and insert it below
+UPLOAD_ID=<LO99SQpq7LSDaMiArIV0SWCUlc3fyCBXflTX8yfae8Ux62y2nkceBXProyeV54kN4SIajjOZvE7x8btrohRLXpJKcu0vQd7oomr2ATVu8iTC.lFc4nPDLvwZVpFMoqL9AXiXuQPYANbIw8jT.7q42A-->
+
+# list existing multi part uploads
+aws s3api list-multipart-uploads --bucket $BUCKET_NAME
+
+# Upload the parts
+aws s3api upload-part --bucket $BUCKET_NAME --key 100MB.txt --part-number 1 --body 100MB_part_aa --upload-id $UPLOAD_ID
+
+aws s3api upload-part --bucket $BUCKET_NAME --key 100MB.txt --part-number 2 --body 100MB_part_ab --upload-id $UPLOAD_ID
+
+aws s3api upload-part --bucket $BUCKET_NAME --key 100MB.txt --part-number 3 --body 100MB_part_ac --upload-id $UPLOAD_ID
+
+# list the parts
+aws s3api list-parts --upload-id $UPLOAD_ID --bucket $BUCKET_NAME --key 100MB.txt
+
+# Complete multi-part upload
+# replace the ETag with the part id from the previous command
+aws s3api complete-multipart-upload --bucket $BUCKET_NAME --key 100MB.txt --upload-id $UPLOAD_ID --multipart-upload "{\"Parts\":[{\"ETag\":\"etag1\",\"PartNumber\":1},{\"ETag\":\"etag2\",\"PartNumber\":2},{\"ETag\":\"etag3\",\"PartNumber\":3}]}"
+
+# list the parts
+# nothing will show up here!
+aws s3api list-parts --upload-id $UPLOAD_ID --bucket $BUCKET_NAME --key 100MB.txt
+```
+
+</details>
+
+### Athena
+
+<details>
+<summary>
+Serverless query service to analyze data stored in Amazon S3
+</summary>
+
+> Uses standard SQL language to query the files (built on Presto engine):
+> 
+> - Supports CSV, JSON, ORC, Avro, and Parquet
+> - Pricing: $5.00 per TB of data scanned
+> - Commonly used with <cloud>Amazon Quicksight</cloud> for reporting/dashboards
+> - Use cases: Business intelligence / analytics /  reporting, analyze & query VPC Flow Logs, ELB Logs, CloudTrail trails, etc... 
+
+analyzes data in place, without moving it outside the bucket.
+We can get better performance by scanning less data, so we can use columnar data - either Apache Parquet or ORC. we can transform our data into those types with <cloud>AWS Glue</cloud> service. another option is to compress data. it's better to work on several large files than a large number of small files.
+
+We can partition our data by storing some columns inside the path. such as "bucket/prefix/year=VALUE/month=VALUE/day=VALUE/file.csv", so we can set the job to only scan files from a specific time range. this is called virtual columns partition.
+
+> Federated Queries Allows you to run SQL queries across data stored in relational, non-relational, object, and custom data sources (AWS or on-premises)
+>
+> - Uses Data Source Connectors that run on AWS Lambda to run Federated Queries (e.g., CloudWatch Logs, DynamoDB, RDS...)
+> - Store the results back in Amazon S3
+
+(hands on)\
+In the <cloud>Athena</cloud> service, we choose the query result location, such as an S3 bucket. this is where the results will be saved.\
+In the Query editor, we choose the Data Source, such as access logs. we create the database, and the external table and set the correct location and prefix.\
+We can preview the data by running a `SELECT` command with ten items limit, and we can run other SQL commands,
+
+
+```sql
+create database s3_access_logs_db;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS s3_access_logs_db.my_bucket_logs(
+         BucketOwner STRING,
+         Bucket STRING,
+         RequestDateTime STRING,
+         RemoteIP STRING,
+         Requester STRING,
+         RequestID STRING,
+         Operation STRING,
+         Key STRING,
+         RequestURI_operation STRING,
+         RequestURI_key STRING,
+         RequestURI_httpProtoversion STRING,
+         HTTPstatus STRING,
+         ErrorCode STRING,
+         BytesSent BIGINT,
+         ObjectSize BIGINT,
+         TotalTime STRING,
+         TurnAroundTime STRING,
+         Referrer STRING,
+         UserAgent STRING,
+         VersionId STRING,
+         HostId STRING,
+         SigV STRING,
+         CipherSuite STRING,
+         AuthType STRING,
+         EndPoint STRING,
+         TLSVersion STRING
+) 
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.RegexSerDe'
+WITH SERDEPROPERTIES (
+         'serialization.format' = '1', 'input.regex' = '([^ ]*) ([^ ]*) \\[(.*?)\\] ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) \\\"([^ ]*) ([^ ]*) (- |[^ ]*)\\\" (-|[0-9]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) (\"[^\"]*\") ([^ ]*)(?: ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*))?.*$' )
+LOCATION 's3://target-bucket-name/prefix/';
+
+
+SELECT requesturi_operation, httpstatus, count(*) FROM "s3_access_logs_db"."my_bucket_logs" 
+GROUP BY requesturi_operation, httpstatus;
+
+SELECT * FROM "s3_access_logs_db"."my_bucket_logs"
+where httpstatus='403';
+```
+
+There are some other things we can do, like saving queries, seeing previous queries, etc...
+
+</details>
+
+</details>
+
+## Amazon S3 Security
+
 <!-- <details> -->
 <summary>
 //TODO: add Summary
 </summary>
 
-</details>
+
+### [SAA/DVA] S3 Encryption
+
+### [SAA/DVA] S3 CORS
+
+### [SAA/DVA] S3 MFA Delete
+
+### [SAA/DVA] S3 Access Logs
+
+### [SAA/DVA] S3 Pre-signed URLs
+
+### [SAA] Glacier Vault Lock & S3 Object Lock
+### S3 Access Points
+
+### S3 Multi-Region Access Points
+
+### S3 VPC Endpoints
 
 </details>
 
-## Advanced Amazon S3 and Athena
-## Amazon S3 Security
 ## Advanced Storage Section
 ## CloudFront
 ## Databases for SysOps
