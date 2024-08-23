@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE
+// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS
  -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -229,7 +229,7 @@ we can also launch a spot instance directly, when we launch an EC2 machine we ca
 > - When the machine needs to process something unexpected (a spike in load for example), it can burst, and CPU can be VERY good.
 > - If the machine bursts, it utilizes "burst credits"
 > - If all the credits are gone, the CPU becomes BAD
-> - If the machine stops bursting, credits are  accumulated over time
+> - If the machine stops bursting, credits are accumulated over time
 > - Burstable instances can be amazing to handle unexpected traffic and getting the insurance that it will be handled correctly.
 > - If your instance consistently runs low on credit, you need to move to a different kind of non-burstable instance
 >
@@ -457,7 +457,7 @@ we can see the process under the "AMI permissions" tab.
 Automatically build Custom AMIs
 </summary>
 
-this service is used to automate the creation of virtual machines or container images. we can also set validation tests to run on the newly created AMI and have the image be distributed across regions.  this is useful when we have dependencies which update and we want to re-build our AMI each time with the new versions.
+this service is used to automate the creation of virtual machines or container images. we can also set validation tests to run on the newly created AMI and have the image be distributed across regions. this is useful when we have dependencies which update and we want to re-build our AMI each time with the new versions.
 
 we can create AMIs or Docker Images, and then we apply components as part of the recipe. there are pre-built components and we can make them ourselves. we can also use pre-built tests of define them. we need a <cloud>IAM</cloud> role wih some policies.
 </details>
@@ -853,7 +853,7 @@ High performance Layer 4 load balancer.
 </summary>
 
 forwards TCP and UDP traffic to instances. handles millions of requests per second with low latency. it is not part of the AWS free tier.\
-it has only one static IP per Availability Zone, and it supports assinging elastic IP (usefull  when whitelisting a specific IP).
+it has only one static IP per Availability Zone, and it supports assinging elastic IP (usefull when whitelisting a specific IP).
 
 target groups can be:
 
@@ -1587,7 +1587,7 @@ Resources:
 | ------------------ | --------------- | ------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------- |
 | `Fn::Ref`          | `!Ref`          | resourceName                                | reference value in the template, either get the entire thing or the physical ID      | No                                 |
 | `Fn::FindInMap`    | `!FindInMap`    | [MapName, TopLevelKey, SecondLevelKey]      | return a named value from a specific key                                             | No                                 |
-| `Fn::GetAtt`       | `!GetAtt`       | resourceName.attributeName                                                                                                        | get attribute from a resource      | No |
+| `Fn::GetAtt`       | `!GetAtt`       | resourceName.attributeName                  | get attribute from a resource                                                        | No                                 |
 | `Fn::ImportValue`  | `!ImportValue`  | valueName                                   | reference an exported value from another stack                                       | No                                 |
 | `Fn::And`          | `!And`          | [value1, value2]                            | logical operator                                                                     | No                                 |
 | `Fn::Or`           | `!Or`           | [value1, value2]                            | logical operator                                                                     | No                                 |
@@ -1598,7 +1598,7 @@ Resources:
 | `Fn::Split`        | `!Split`        | [delimiter, source-string]                  | split a string based on delimiter                                                    | No                                 |
 | `Fn::Sub`          | `!Sub`          |                                             | substitutes                                                                          | No                                 |
 | `Fn::Base64`       | `!Base64`       | stringValue                                 | transform string to base64, used in user data scripts to <cloud>EC2</cloud> machines | No                                 |
-| `Fn::Cidr`         | `!Cidr`         | [ipBlock, count, cidrBits]                  |  ?|No                                                                                   |
+| `Fn::Cidr`         | `!Cidr`         | [ipBlock, count, cidrBits]                  | ?                                                                                    | No                                 |
 | `Fn::GetAZs`       | `!GetAZs`       | region                                      | get a list of availability zones for the region                                      | No                                 |
 | `Fn::Select`       | `!Select`       | [index, list]                               | select an element from a list                                                        | No                                 |
 | `Fn::Length`       | `!Length`       | array                                       | number of elements in array                                                          | No                                 |
@@ -2634,7 +2634,7 @@ CloudWatch EFS Metrics.
 
 ## Amazon S3 And Athena
 
-<!-- <details> -->
+<details>
 <summary>
 Object Storage, infinity scaling.
 </summary>
@@ -2677,7 +2677,7 @@ Controlling Access to Objects in the Bucket.
 
 > Note: an IAM principal can access an S3 object if
 > - The user IAM permissions ALLOW it OR the resource policy ALLOWS it.
-> - AND there’s no explicit DENY.
+> - AND there's no explicit DENY.
 
 the common thing to use is bucket policies, they have a similar structure as <cloud>IAM</cloud> policies
 
@@ -3002,7 +3002,7 @@ split -b 35m 100MB.txt 100MB_part_
 aws s3api create-multipart-upload --bucket $BUCKET_NAME --key 100MB.txt
 
 # get back the upload_id and insert it below
-UPLOAD_ID=<LO99SQpq7LSDaMiArIV0SWCUlc3fyCBXflTX8yfae8Ux62y2nkceBXProyeV54kN4SIajjOZvE7x8btrohRLXpJKcu0vQd7oomr2ATVu8iTC.lFc4nPDLvwZVpFMoqL9AXiXuQPYANbIw8jT.7q42A-->
+UPLOAD_ID=<LO99SQpq7LSDaMiArIV0SWCUlc3fyCBXflTX8yfae8Ux62y2nkceBXProyeV54kN4SIajjOZvE7x8btrohRLXpJKcu0vQd7oomr2ATVu8iTC.lFc4nPDLvwZVpFMoqL9AXiXuQpYANbIw8jT.7q42A-->
 
 # list existing multi part uploads
 aws s3api list-multipart-uploads --bucket $BUCKET_NAME
@@ -3062,36 +3062,37 @@ We can preview the data by running a `SELECT` command with ten items limit, and 
 create database s3_access_logs_db;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS s3_access_logs_db.my_bucket_logs(
-         BucketOwner STRING,
-         Bucket STRING,
-         RequestDateTime STRING,
-         RemoteIP STRING,
-         Requester STRING,
-         RequestID STRING,
-         Operation STRING,
-         Key STRING,
-         RequestURI_operation STRING,
-         RequestURI_key STRING,
-         RequestURI_httpProtoversion STRING,
-         HTTPstatus STRING,
-         ErrorCode STRING,
-         BytesSent BIGINT,
-         ObjectSize BIGINT,
-         TotalTime STRING,
-         TurnAroundTime STRING,
-         Referrer STRING,
-         UserAgent STRING,
-         VersionId STRING,
-         HostId STRING,
-         SigV STRING,
-         CipherSuite STRING,
-         AuthType STRING,
-         EndPoint STRING,
-         TLSVersion STRING
+  BucketOwner STRING,
+  Bucket STRING,
+  RequestDateTime STRING,
+  RemoteIP STRING,
+  Requester STRING,
+  RequestID STRING,
+  Operation STRING,
+  Key STRING,
+  RequestURI_operation STRING,
+  RequestURI_key STRING,
+  RequestURI_httpProtoversion STRING,
+  HTTPstatus STRING,
+  ErrorCode STRING,
+  BytesSent BIGINT,
+  ObjectSize BIGINT,
+  TotalTime STRING,
+  TurnAroundTime STRING,
+  Referrer STRING,
+  UserAgent STRING,
+  VersionId STRING,
+  HostId STRING,
+  SigV STRING,
+  CipherSuite STRING,
+  AuthType STRING,
+  EndPoint STRING,
+  TLSVersion STRING
 ) 
 ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.RegexSerDe'
-WITH SERDEPROPERTIES (
-         'serialization.format' = '1', 'input.regex' = '([^ ]*) ([^ ]*) \\[(.*?)\\] ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) \\\"([^ ]*) ([^ ]*) (- |[^ ]*)\\\" (-|[0-9]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) (\"[^\"]*\") ([^ ]*)(?: ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*))?.*$' )
+WITH SERDEPROPERTIES(
+  'serialization.format' = '1', 'input.regex' = '([^ ]*) ([^ ]*) \\[(.*?)\\] ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) \\\"([^ ]*) ([^ ]*) (- |[^ ]*)\\\" (-|[0-9]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) (\"[^\"]*\") ([^ ]*)(?: ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*))?.*$'
+)
 LOCATION 's3://target-bucket-name/prefix/';
 
 
@@ -3106,38 +3107,688 @@ There are some other things we can do, like saving queries, seeing previous quer
 
 </details>
 
+### S3 Encryption
+
+<details>
+<summary>
+Encrypting Objects in the bucket and during transport.
+</summary>
+
+SSE - server side encryption
+- SSE-S3 - <cloud>S3</cloud> managed keys, this is the default
+- SSE-KMS - <cloud>KMS</cloud> keys, stored in AWS service
+- DSSE-KMS - <cloud>KMS</cloud> keys, dual-layer encryption
+- SSE-C - Customer provided keys
+
+There is also client side encryption.
+
+SSE-S3 uses AES-256 encryption, so the header should be `"x-amz-server-side-encryption": "AES256"`. SSE-KMS gets the keys from <cloud>KMS</cloud>, so the keys can be audited with <cloud>CloudTrail</cloud>,  and the header is `"x-amz-server-side-encryption": "aws:kms"`, using SSE-KMS counts toward the keys quotas limit of the Decrypt KMS Api.\
+For customer provided keys (SSE-C), the https protocol must be used, the keys aren't stored in AWS, and must be part of the request. to read the file the same key ust be provided.\
+Client side encryption means that the client encrypt and decrypt the data before sending and after receiving it.
+
+In-flight encryption (SSL/TLS) - we have two S3 endpoints, one for HTTP (non-encrypted) and one for HTTPS (encrypted in flight), HTTPS is the recommended option, and must be used for SSE-C. we can set a bucket policy to force in-transit encryption
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InFlightOnly",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::examplebucket/*",
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
+    }
+  ]
+}
+```
+
+when we create a bucket, we choose the default encryption method, if we choose KMS key, we can use the default <cloud>S3-KMS</cloud> key, which saves us a bit of money, or use a different KMS key. we can't use SSE-C (customer provided keys) from the console, only from the command line.
+
+even if we have a default encryption method, we can still override it by providing the encryption headers, but bucket policies can stop that from happening
 </details>
 
-## Amazon S3 Security
+### S3 CORS
+
+<details>
+<summary>
+Cross Origin Resource Sharing
+</summary>
+
+Origin = scheme (protocol) + host (domain) + port. CORS is a web browser based mechanism to allow requests to other origins while visiting the main origin.
+
+"http://example.com/app1" and "http://example.com/app2" have the same origin, scheme is http, host is "example.com", and the port it implicit 80 (since this is http). but "http://www.example.com" and "http://other.example.com" don't share the same origin.
+
+when the browser access the first origin (A), it gets a response telling it needs resources from a different origin (B) are needed. so the browser performs a `OPTION` pre-flight request on origin B, asking it if origin A is approved (CORS), and if it's approved, then the browser performs the requests on origin B.
+
+> For <cloud>S3</cloud>, If a client makes a cross-origin request on our S3 bucket, we need to enable the correct CORS headers. You can allow for a specific origin or for * (all origins).
+
+this will come up if we have a website that uses resources from the bucket (such as images). we can see this in the demo by using two buckets (both hosting static website). we can the CORS request being blocked in developer tools in the browser.
+
+to allow CORS, we go to the target bucket (B), and add the policy to allow the `GET` method from the first bucket static website (A).
+
+```json
+[
+    {
+        "AllowedHeaders": [
+            "Authorization"
+        ],
+        "AllowedMethods": [
+            "GET"
+        ],
+        "AllowedOrigins": [
+            "<url of first bucket with http://...without slash at the end>",
+            "http://<bucket-name>.s3-website.eu-west-1.amazonaws.com"
+        ],
+        "ExposeHeaders": [],
+        "MaxAgeSeconds": 3000
+    }
+]
+```
+
+</details>
+
+### S3 MFA Delete
+
+<details>
+<summary>
+Multi-Factor Authentication, protection from accidental delete.
+</summary>
+
+> MFA (Multi-Factor Authentication) – force users to generate a code on a device (usually a mobile phone or hardware) before doing important operations on S3.\
+> MFA will be required to:
+> 
+> - Permanently delete an object version
+> - Suspend Versioning on the bucket
+> 
+> MFA won't be required to:
+> 
+> - Enable Versioning
+> - List deleted versions
+> 
+> To use MFA Delete, Versioning must be enabled on the bucket. Only the bucket owner (root account) can enable/disable MFA Delete.
+
+we need to have an MFA device configured (with an ARN), and MFA-delete protection can only be done using the api, not the web console.
+
+```sh
+PROFILE_NAME=root-mfa-delete-demo
+MFA_ARN=arn-of-mfa-device
+
+# generate root access keys
+aws configure --profile $PROFILE_NAME
+
+# list all buckets
+aws s3 ls --profile $PROFILE_NAME
+BUCKET_NAME=mfa-demo-stephane
+
+
+# enable mfa delete - get code from device
+aws s3api put-bucket-versioning --bucket $BUCKET_NAME --versioning-configuration Status=Enabled,MFADelete=Enabled --mfa "$MFA_ARN <mfa-code>" --profile $PROFILE_NAME
+
+# disable mfa delete - get code from device
+aws s3api put-bucket-versioning --bucket $BUCKET_NAME --versioning-configuration Status=Enabled,MFADelete=Disabled --mfa "$MFA_ARN <mfa-code>" --profile $PROFILE_NAME
+
+# delete the root credentials in the IAM console!!!
+```
+
+objects with MFA delete can't be deleted in the console, only through the API.
+</details>
+
+### S3 Access Logs
+
+<details>
+<summary>
+Log any access to S3 bucket.
+</summary>
+
+> For audit purpose, you may want to log all access to S3 buckets.
+>
+> - Any request made to S3, from any account, authorized or denied, will be logged into another S3 bucket
+> - That data can be analyzed using data analysis tools (like <cloud>Athena</cloud>)
+> - The target logging bucket must be in the same AWS region
+> 
+> **Warning - Do not set your logging bucket to be the monitored bucket, It will create a logging loop, and your bucket will grow exponentially.**
+
+we can see the log format in the [documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/LogFormat.html), this is also what we used in the above example for Athena.
+
+we need to change the bucket policy to allow the logged bucket to write access logs.
+
+</details>
+
+### S3 Pre-signed URLs
+
+<details>
+<summary>
+Pre-signed URL to allow temporary access and permissions to resources.
+</summary>
+
+> Users given a pre-signed URL inherit the permissions of the user that generated the URL for GET / PUT.\
+> Examples:
+> 
+> - Allow only logged-in users to download a premium video from your S3 bucket
+> - Allow an ever-changing list of users to download files by generating URLs dynamically
+> - Allow temporarily a user to upload a file to a precise location in your S3 bucket
+
+can be generated using the web console, cli or an SDK, this effects the maximum expiration time.
+
+- Web console - from 1 minute to 720 (12 hours).
+- API and SDK - default is 3600 seconds (1 hour), maximum 604800 seconds (168 hours = 7 days = 1 week).
+
+in the console, we can choose an object, <kbd>Object Actions</kbd>, <cloud>Share with a presigned url</cloud>. under the hood, this is what happens when we click <kbd>Open</kbd> on the object.
+</details>
+
+### Glacier Vault Lock & S3 Object Lock
+
+<details>
+<summary>
+Protecting Objects from deletion for legal reasons
+</summary>
+
+S3 glacier vault lock - Adopt a WORM (Write Once ReadMany) model for the vault (analogue to bucket).
+
+> - Create a Vault Lock Policy
+> - Lock the policy for future edits (can no longer be changed or deleted)
+> - Helpful for compliance and data retention
+
+S3 object lock prevents object version deletion for a specific period of time (even if it's not in <cloud>Glacier</cloud>). works on a single object version. has two modes:
+
+- governance mode - some users have permession to change retention time or delete the object - more permissive.
+- complinace mode - can't be deleted, retention perios can't be changed by anyone (including root) - more strict.
+
+in both cases we have a retention period, which can be extended as needed.
+
+another thing is **Legal Hold**, which protects the object indefinitely, regardless of other projects, requires the `s3::PutObjectLegalHold` IAM permission.
+</details>
+
+### S3 Access Points
+
+<details>
+<summary>
+Simplify security management for S3 buckets with Access Points.
+</summary>
+
+granting access points to specific prefixes (paths) in the bucket, with specialized permissions. fine grained permissions, defined not through <cloud>IAM</cloud> roles, but through the bucket and the access points.
+
+Each access point has it's own DNS name (internet origin or VPC origin for private access), and it's own access point policy (like the bucket policy).\
+<cloud>VPC</cloud> origin access points are only accessible from within the VPC. we create a *VPC Endpooint* (gateway or interface) which can connect to the access point. the endpoint policy must allow access to the bucket and the access policy.
+
+(VPC has endPoint, S3 has accessPoint. the endPoint connects to the accessPoint. both have policies)
+
+
+handsOn:\
+Under the <cloud>S3</cloud> console, in the "Access Points" secion, we click <kbd>Create access point</kbd>, we choose the bucket, and we choose the network origin as internet or <cloud>VPC</cloud> (select which one). we choose to block all public access, and we can define the policy for fine grained control. we can look at examples,
+
+in this example, we only allow the user "Alice" to access the bucket through the accessPoint, and only on resources in the specified path.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AccessPointExample",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::<account-number>:user/Alice"
+      },
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource":[
+        "arn:aws:s3:us-west2:<account-number>:accesspoint/my-access-point/objects/Alice/*"
+      ]
+    }
+  ]
+}
+```
+
+we can also define a bucket policy to only allow the bucket to be access through accessPoints in the current account
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "OnlyAllowAccessFromAccessPoint",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "**"
+      },
+      "Action": "*",
+      "Resource":[
+        "<bucket-arn>",
+        "<bucket-arn>/*"
+      ],
+      "Condition":{
+        "StringEquals": {"s3:DataAccessPointAccount": "<account-number>"}
+      }
+    }
+  ]
+}
+```
+
+#### S3 Multi-Region Access Points
+
+> - Provide a global endpoint that span S3 buckets in multiple AWS regions
+> - Dynamically route requests to the nearest S3 bucket (lowest latency)
+> - Bi-directional S3 bucket replication rules are created to keep data in sync across regions
+> - Failover Controls – allows you to shift requests across S3 buckets in
+different AWS regions within minutes (Active-Active or Active-Passive)
+
+hands On:\
+we create two buckets in two regions, and in the "Multi-Region Access Points" section, we choose <kbd>Create Multi-Region Access Point</kbd>. next we add the two bucket we created, we set the security policies as before, and keep the default to block all public access. this might take up to 24 hours to create. under the "Replication and failover" tab, we can see where our buckets are on the map, how they are replicated and the failover.\
+We click <kbd>Create Replication Rules</kbd> to choose bi-directional replication (we need bucket versioning), and we can filter the replication for specific prefixes.
+
+#### S3 VPC Endpoints
+
+usually the S3 bucket is access through the public internet, VPC endpoints allow us to connect to S3 bucket using th private IP of our <cloud>EC2</cloud> machines, using a *VPC EndPoint Gateway* and not the Internet Gateway. the endPoint gateway connects to the bucket, and we can define bucket policies to only allow access from that source
+
+- "AWS:SourceVpce" for one or more endPoints
+- "AWS:SourceVpc" for all possible endPoints
+</details>
+
+</details>
+
+## Advanced Storage Section
+
+<details>
+<summary>
+Additional Storage Stuff
+</summary>
+
+### AWS Snow
+
+<details>
+<summary>
+Offline data transfer Device
+</summary>
+
+Physical Devices to store and migrate data to and from AWS.
+
+> Highly-secure, portable devices to collect and process data at the
+edge, and migrate data into and out of AWS
+
+| Device         | SnowCone             | SnowBall Edge  |
+| -------------- | -------------------- | -------------- |
+| Capacity       | 8 TB hdd / 14 TB SSD | 80 TB / 210 TB |
+| Migration Size | terabyes             | petabyes       |
+
+there used to be something called snowmobile.
+
+the devices allow us to transfer data from our machines (on-prem) to the <cloud>snowball</cloud> device using the local connection, and then we ship the device back to AWS, which uploads the data to the cloud. we use them when we have limited connectivity, limited bandwidth, high network costs, when we are sharing the bandwidth with others, and when the connection is not stable.
+
+we use the snowball client (or AWS OpsHub) to manage the data transfer, the device is completely wiped by AWS after the transfer is complete, so there is no risk of the next customer seeing your data.
+
+SnowBall Edge devices act as an edge location, they can run <cloud>EC2</cloud> or <cloud>Lambda</cloud> functions directly on the device, without going to the global AWS. this acts as an "local-aws" datacenter. they come with a large number of Virtual CPUs. we can change the AMI that comes with the device, and configure some other stuff.
+</details>
+
+### Amazon FSx
+
+<details>
+<summary>
+Additional managed file systems.
+</summary>
+
+similar to <cloud>EFS</cloud> - Elastic file system, but using third-party file systems. a fully managed service
+
+- Lustre
+- Windows File Server
+- NetApp ONTAP
+- OpenZFS
+
+#### Amazon FSx for Windows (File Server)
+ 
+> FSx for Windows is a fully managed Windows file system share drive:
+> 
+> - Supports SMB protocol & Windows NTFS
+> - Microsoft Active Directory integration, ACLs, user quotas
+> - Can be mounted on Linux EC2 instances
+> - Supports Microsoft's Distributed File System (DFS) Namespaces (group files across multiple FS)
+> - Scale up to 10s of GB/s, millions of IOPS, 100s PB of data
+> - Storage Options:
+>   - SSD – latency sensitive workloads (databases, media processing, data analytics, ...)
+>   - HDD – broad spectrum of workloads (home directory, CMS, ...)
+> - Can be accessed from your on-premises infrastructure (VPN or <cloud>Direct Connect</cloud>)
+> - Can be configured to be Multi-AZ (high availability)
+> - Data is backed-up daily to <cloud>S3</cloud>
+
+#### Lustre - Linux Cluster
+> Lustre is a type of parallel distributed file system, for large-scale computing.\
+> The name Lustre is derived from “Linux” and “cluster
+> 
+> - Machine Learning, High Performance Computing (HPC)
+> - Video Processing, Financial Modeling, Electronic Design Automation
+> - Scales up to 100s GB/s, millions of IOPS, sub-ms latencies
+> 
+> Storage Options:
+> - SSD – low-latency, IOPS intensive workloads, small & random file operations
+> - HDD – throughput-intensive workloads, large & sequential file operations
+> 
+> Seamless integration with S3:
+> - Can “read S3” as a file system (through FSx)
+> - Can write the output of the computations back to S3 (through FSx)
+> 
+> Can be used from on-premises servers (VPN or <cloud>Direct Connect</cloud>)
+
+Two files system options:
+
+> Scratch File System
+> - Temporary storage
+> - Data is not replicated (doesn’t persist if file server fails)
+> - High burst (6x faster, 200MBps per TiB)
+> - Usage: short-term processing, optimize costs
+> 
+> Persistent File System
+> 
+> - Long-term storage
+> - Data is replicated within same AZ
+> - Replace failed files within minutes
+> - Usage: long-term processing,sensitive data
+
+#### Amazon FSx for NetApp ONTAP
+
+> Managed NetApp ONTAP on AWS, File System compatible with NFS, SMB, iSCSI protocol. Move workloads running on ONTAP or NAS to AWS.
+> 
+> - Works with:
+>   - Linux
+>   - Windows
+>   - MacOS
+>   - VMware Cloud on AWS
+>   - Amazon Workspaces & AppStream 2.0
+>   - Amazon EC2, ECS and EKS
+>
+> - Storage shrinks or grows automatically
+> - Snapshots, replication, low-cost, compression and data de-duplication
+> - Point-in-time instantaneous cloning (helpful for testing new workloads)
+
+#### Amazon FSx for OpenZFS
+>  Managed OpenZFS file system on AWS. File System compatible with NFS (v3, v4, v4.1, v4.2), Move workloads running on ZFS to AWS.
+> - Works with:
+>   - Linux
+>   - Windows
+>   - MacOS
+>   - VMware Cloud on AWS
+>   - Amazon Workspaces & AppStream 2.0
+>   - Amazon EC2, ECS and EKS
+> 
+> - Up to 1,000,000 IOPS with < 0.5ms latency
+> - Snapshots, compression and low-cost
+> - Point-in-time instantaneous cloning (helpful for testing new workloads)
+
+#### Hands On
+in the amazon <cloud>Fsx</cloud> server, we can <kbd>Create File System</kbd>, we choose the type, the configuration, where it's deployed, persistent and scratch storage.\
+We can also look at the option for windows file server, enable Active Directory authentication, adn other stuff.
+
+Windows fileserver has single or multi Availability Zone option.
+</details>
+
+### Storage Gateway Overview
+
+<details>
+<summary>
+Bridging between local server and the cloud.
+</summary>
+
+Hybrid Cloud - part of infrastructure is on-premises, and part of it is on the cloud.\
+there can be many reasons, such as being in the middle of a long migration, having to store some workloads locally for security or compliance reasons, or for other performance and costs reasons.
+
+for the on-premises data to interact cleanly with S3 buckets, we can use <cloud>Storage Gateway</cloud> as a bridge.
+
+- Block storage: <cloud>EBS</cloud>
+- File storage: <cloud>EFS</cloud>, <cloud>FSX</cloud>
+- Object storage: <cloud>S3</cloud>, <cloud>Glacier</cloud>
+
+use cases:
+- disaster recovery
+- backup and restore
+- tiered storage
+- on-premises cache and low-latency file access
+
+there are different types of storage gateways:
+
+- <cloud>S3</cloud> file gateway
+- <cloud>Fsx</cloud> file gateway
+- Volume Gateway
+- Tape Gateway
+
+The <cloud>S3</cloud> file gateway (not glacier) uses the NFS or SMB protocol to expose the data on the bucket as files. the on-premises machines will see the bucket as another disk, and the gateway will translate the commands to HTTP requests, and will store the recently used data cached. the file gateway needs <cloud>IAM</cloud> role and for SMB protocol requires Active Directory authentication.
+
+The <cloud>Fsx</cloud> file gateway provides native access for Windows File Server, even if it's already possible without the gateway. but it adds the local cache and low latency.
+
+The Volume Gateway is for block storage, using the iSCSI protocol (backed by <cloud>S3</cloud>). the data is backed into <cloud>EBS</cloud> snapshots.
+- Cached Volume: Low latency access to most recent data
+- Stored Volume: entire dataset is on-premies, scheduled backup to <cloud>S3</cloud>
+
+The Tape gateway is a a way to store Tape Data into the cloud.
+
+> - Some companies have backup processes using physical tapes (!).
+> - With Tape Gateway, companies use the same processes but, in the cloud.
+> - Virtual Tape Library (VTL) backed by Amazon S3 and Glacier.
+> - Back up data using existing tape-based processes (and iSCSI interface).
+> - Works with leading backup software vendors.
+
+For all gateways, it needs to be installed locally, either on a virtual server (virtual machine), or by buying a hardware appliance and setting it as one of the gateway options.
+
+
+The file gateway is posix compliant (linux file system), there are some considerations for rebooting the storage gateways (especially for volume and tape gateways, stop the service, reboot, start the service).\
+The Storage Gateway needs to be activated with an activation key. activation can fail if port 80 isn't opened or if the time isn't synchronized.
+
+for volume gateway where we ise it as a cache, we want the cache to be efficient, we need to look at some metrics (CacheHitPercent, CachePercentUsed), we can use a larger disk.
+</details>
+
+</details>
+
+## CloudFront
+
+<details>
+<summary>
+Content Delivery Network Using Edge Locations.
+</summary>
+
+CDN - Content Delivery Network,  improves read performance by caching data at edge locations around the world. also protects against DDOS attacks, integrates with <cloud>Shield</cloud> and <cloud>WAF</cloud> (Web Application Firewall) services.
+
+Origins:
+- <cloud>S3</cloud> buckets, using Origin Access Control for enhanced security (only <cloud>CloudFront</cloud> will access the files)
+  - can also be used as an ingress to upload files into S3
+- Custom Origin HTTP
+  - Application Load Balancer
+  - <cloud>EC2</cloud> instace
+  - <cloud>S3</cloud> website (enable bucket as static website)
+  - Any HTTP backend
+
+the client connects to the edge location, and will return a cached result, or use the quicker AWS network (faster than public internet) to grab the value.
+
+### CloudFront with S3
+
+<details>
+<summary>
+Using S3 as the origin
+</summary>
+
+Origin Access Control and the Bucket Policy make the objects more secure.
+
+this is not the same as <cloud>S3</cloud> Cross-Region Replication.
+
+> CloudFront:
+> 
+> - Global Edge network
+> - Files are cached for a TTL (maybe a day)
+> - Great for static content that must be available everywhere
+> 
+> S3 Cross Region Replication:
+> 
+> - Must be setup for each region you want replication to happen
+> - Files are updated in near real-time
+> - Read only
+> - Great for dynamic content that needs to be available at low-latency in few regions
+
+hands on:\
+we need a bucket with our files, and in the <cloud>CloudFront</cloud> service, we choose the bucket as the origin domain, we can set the path in it, and we can control the origin access, we choose Origin Access Control, <kbd>Create Control Setting</kbd>, and we update the <cloud>S3</cloud> bucket policy. we disable <cloud>WAF</cloud> for now, and set the default root object for "index.html".\
+the bucket policy needs to be updated to allow he cloudFront service distribution to access the files, we can always regenerate the policy from the console.\
+When everything finishes, we get a domain name, which we can put in the address bar.
+
+</details>
+
+### CloudFront - ALB as an Origin
+
+<details>
+<summary>
+EC2 machines and Application Load Balancer as origin.
+</summary>
+
+now we want to make our origin an <cloud>EC2</cloud> instance or the Application Load Balancer. for this we need to allow connection form the edge location to the security group of the resource.\
+The other option is to have the <cloud>EC2</cloud> machine in a private subnet, and just expose the load balancer in the public subnet.
+
+</details>
+
+### CloudFront Geo Restriction
+
+<details>
+<summary>
+Limiting Who Can Access.
+</summary>
+
+we can restrict the access based on countries. anyone accessing the edge location from outside the allow list won't be approved and won't get the data.\
+we can use allow or block lists, this is done usually for copyright restriction reasons.
+
+under the security tab, we can edit the list of countries, and allow or block countries
+
+</details>
+
+### CloudFront Reports, Logs and Troubleshooting
+
+<details>
+<summary>
+Other Stuff
+</summary>
+
+> Logs every request made to CloudFront into a logging S3 bucket.
+Like <cloud>S3</cloud> access logs, we can maintain a log of every request done through the distribution.
+
+even without the access logs
+> It's possible to generate reports on:
+> 
+> - Cache Statistics Report 
+> - Popular Objects Report 
+> - Top Referrers Report 
+> - Usage Reports 
+> - Viewers Report
+
+under the settings tab, we can set the S3 bucket as the target.
+
+> CloudFront caches HTTP 4xx and 5xx status codes returned by S3 ( or the origin server)
+> - 4xx error code indicates that user doesn’t have access to the underlying bucket (403) or the object user is requesting is not found (404)
+> - 5xx error codes indicates Gateway issues
+>
+> 
+</details>
+
+### CloudFront Caching - Deep Dive
+
+<details>
+<summary>
+Understanding Cache Performance
+</summary>
+
+> Cache based on
+> - Headers
+> - Session Cookies
+> - Query String Parameters
+> 
+> The cache lives at each CloudFront Edge Location. You want to maximize the cache hit rate to minimize requests on the origin.
+> 
+> - Control the TTL (0 seconds to 1 year), can be set by the origin using the "Cache-Control" header, "Expires" header
+> - You can invalidate part of the cache using the `CreateInvalidation` API
+
+#### Header Caching
+we can configure CloudFront to forward all headers to the origin, which would mean there is no caching. the TTL must be set zero.\
+We can set a "white-list" set of headers, so the caching will be done based on only those values.\
+We can also choose to only forward the default headers, or have no caching based on request headers at all, this will give us the best caching performance.
+
+#### CloudFront Headers
+when we use cloudFront, we can add constant headers to all requests which we send to the origin, they are constant values. a use case for this is to define custom behavior in the origin for requests coming from cloudFront.\
+We can also set behavior settings, which are used for caching
+
+#### Caching TTL
+TTL - Time To live
+
+"Cache-Control: max-age" replaces the "Expires" header. we can use this header in the response from the origin to control the TTL. we can also choose minimum, maximum and default values for the cache, to augment the response from the origin
+
+#### Cookies and Query Parameters Caching
+
+cookies are a special kind of headers, with additional data headers.
+
+we have different settings:
+
+> - Default: do not process the cookies
+  > - Caching is not based on cookies
+  > - Cookies are not forwarded
+> - Forward a whitelist of cookies
+>   - caching based on values in all the specified cookies
+> - Forward all cookies
+>   - Worst caching performance
+
+for Query Parameters, there are similar options:
+
+> - Default: do not process the query strings
+>   - Caching is not based on query strings
+>   - Parameters are not forwarded
+> - Forward a whitelist of query strings
+>   - Caching based on the parameter whitelist
+> - Forward all query strings
+>   - Caching based on all parameters
+
+#### Dynamic and Static Caching
+
+for static content, we don't need to forward headers, we can cache everything. for dynamic data, we need to forward some headers/cookies/parameter strings, so our cache will be worse. we should have two distributions, one for static content and one for dynamic (with two origins).
+
+</details>
+
+### CloudFront with ALB Sticky Sessions
+
+<details>
+<summary>
+Sticky Sessions with CloudFront
+</summary>
+
+Sticky Sessions is a feature of <cloud>ELB</cloud> (Elastic Load Balancer) that tries to always pair the same request from the same user to the same instance that handled it before.\
+For this to work, we need to forward the cookie that controls the seession affinity to the backend origin, so the sticky session behavior will remain.
+
+</details>
+
+
+</details>
+
+## Databases for SysOps
 
 <!-- <details> -->
 <summary>
 //TODO: add Summary
 </summary>
 
+### [SAA/DVA] RDS Overview
+### [SAA/DVA] RDS Multi AZ vs Read Replicas
+### [SAA/DVA] RDS Hands On
+### RDS Multi AZ – Failover Conditions
+### RDS Proxy
+### RDS Parameter Groups
+### RDS Backups and Snapshots
+### RDS Events and Logs
+### RDS & CloudWatch
+### RDS Performance Insights
+### [SAA/DVA] Amazon Aurora
 
-### [SAA/DVA] S3 Encryption
+### [SAA/DVA] ElastiCache Overview
 
-### [SAA/DVA] S3 CORS
-
-### [SAA/DVA] S3 MFA Delete
-
-### [SAA/DVA] S3 Access Logs
-
-### [SAA/DVA] S3 Pre-signed URLs
-
-### [SAA] Glacier Vault Lock & S3 Object Lock
-### S3 Access Points
-
-### S3 Multi-Region Access Points
-
-### S3 VPC Endpoints
-
+### ElastiCache Redis Cluster Modes
+### ElastiCache Redis for SysOps
+### ElastiCache Memcached for SysOps
 </details>
 
-## Advanced Storage Section
-## CloudFront
-## Databases for SysOps
 ## Monitoring, Auditing and Performance
 ## Aws Account Management
 ## Disaster Recovery
@@ -3154,6 +3805,19 @@ There are some other things we can do, like saving queries, seeing previous quer
 Stuff worth remembering.
 </summary>
 
+
+arn format: `arn:<aws-partition>:<service>:<region>:<account-number>:<resource>`
+
+partition is usually aws, but can also one of the following:
+- aws
+- aws-us-gov
+- aws-cn
+
+The resource suffix can be one of the following, and can include a parent resource, sub type, resource path, version, etc...
+
+- `<resource-id>`
+- `<resource-type>/<resource-id>`
+- `<resource-type>:<resource-id>`
 ### Additional Terms
 
 <details>
@@ -3169,7 +3833,10 @@ Additional terms and acronyms to keep.
 - ALPN - Application Level Protocol Negotiation (Certificate)
 - DLM - Data Lifecycle Manager (backup EBS)
 - FSR - Fast Snapshot Restore (restore fully initiliazed EBS snapshots to reduce latency)
-
+- SSE - Server side encryption
+- CORS - Cross Origin Resource Sharing
+- WORM - Write Once, Read Many (Glacier)
+- HPC - High Performance Computing
 </details>
 
 <!-- misc end -->

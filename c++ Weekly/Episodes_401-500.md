@@ -1618,3 +1618,20 @@ void process_collisions(const std::variant<Craft, Astroid>& obj)
 ```
 
 </details>
+
+## C++ Weekly - Ep 442 - Stop Using .h For C++ Header Files!
+
+<details>
+<summary>
+Reasons to use .hpp files instead.
+</summary>
+
+[Stop Using .h For C++ Header Files!](https://youtu.be/mr3sOT-Delg?si=KQPUhr6pByWk6vTk)
+
+only use ".h" files for libraries that are intended for C library, this is what the tools assume. if we have a "c" header that's actually a "c++" file, things can go haywire.
+
+we should actually wrap all our ".h" files with `extern C++ {}` (but maybe not).
+
+this a problem of mixed language projects, with some C libraries and other C++ libraries.
+
+</details>
