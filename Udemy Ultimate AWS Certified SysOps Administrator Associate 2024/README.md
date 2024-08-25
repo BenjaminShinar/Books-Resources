@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS
+// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS PITR
  -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -3458,7 +3458,7 @@ similar to <cloud>EFS</cloud> - Elastic file system, but using third-party file 
 
 #### Lustre - Linux Cluster
 > Lustre is a type of parallel distributed file system, for large-scale computing.\
-> The name Lustre is derived from “Linux” and “cluster
+> The name Lustre is derived from "Linux" and "cluster
 > 
 > - Machine Learning, High Performance Computing (HPC)
 > - Video Processing, Financial Modeling, Electronic Design Automation
@@ -3469,7 +3469,7 @@ similar to <cloud>EFS</cloud> - Elastic file system, but using third-party file 
 > - HDD – throughput-intensive workloads, large & sequential file operations
 > 
 > Seamless integration with S3:
-> - Can “read S3” as a file system (through FSx)
+> - Can "read S3" as a file system (through FSx)
 > - Can write the output of the computations back to S3 (through FSx)
 > 
 > Can be used from on-premises servers (VPN or <cloud>Direct Connect</cloud>)
@@ -3478,7 +3478,7 @@ Two files system options:
 
 > Scratch File System
 > - Temporary storage
-> - Data is not replicated (doesn’t persist if file server fails)
+> - Data is not replicated (doesn't persist if file server fails)
 > - High burst (6x faster, 200MBps per TiB)
 > - Usage: short-term processing, optimize costs
 > 
@@ -3681,7 +3681,7 @@ even without the access logs
 under the settings tab, we can set the S3 bucket as the target.
 
 > CloudFront caches HTTP 4xx and 5xx status codes returned by S3 ( or the origin server)
-> - 4xx error code indicates that user doesn’t have access to the underlying bucket (403) or the object user is requesting is not found (404)
+> - 4xx error code indicates that user doesn't have access to the underlying bucket (403) or the object user is requesting is not found (404)
 > - 5xx error codes indicates Gateway issues
 >
 > 
@@ -3765,31 +3765,697 @@ For this to work, we need to forward the cookie that controls the seession affin
 
 ## Databases for SysOps
 
+<details>
+<summary>
+Relation Database Service
+</summary>
+
+<cloud>RDS</cloud> - Relation Database Service
+
+> It's a managed DB service for DB use SQL as a query language.\
+> It allows you to create databases in the cloud that are managed by AWS:
+> 
+> - Postgres
+> - MySQL
+> - MariaDB
+> - Oracle
+> - Microsoft SQL Server
+> - IBM DB2
+> - <cloud>Aurora</cloud> (AWS Proprietary database)
+
+it's easier to use RDS than hand rolling our own DB on machines.
+
+> RDS is a managed service:
+> 
+> - Automated provisioning, OS patching
+> - Continuous backups and restore to specific timestamp (Point in Time Restore)!
+> - Monitoring dashboards
+> - Read replicas for improved read performance
+> - Multi AZ setup for DR (Disaster Recovery)
+> - Maintenance windows for upgrades
+> - Scaling capability (vertical and horizontal)
+> - Storage backed by EBS
+> - BUT you can't SSH into your instances
+
+Storage Auto Scaling - if we enable this option, then AWS can auto-scale the database storage, up to a maximum threshold. we can auto-incrase the storage, depending on some conditions.
+
+handsOn:\
+in the <cloud>RDS</cloud> service, we click <kbd>Create Database</kbd>. we need to select the database engine:
+
+- <cloud>Aurora</cloud>
+  - MySQL compatible edition
+  - PostgreSQL compatible edition
+- MySQL
+- MariaDB
+- PostgreSQL
+- Oracle
+- Microsoft SQL Server
+
+we will use MySQL for the demo, and we can choose a pre-set configuration for production, dev/test or free-tier. in the availability and durability section, we can choose a single instance, multi-az DB instances for Disaster recovery, or multi-AZ DB cluster for disaster recovery and read performance.\
+We need a user name and password for the database, we can integrate this with other services for password rotation, but we won't do this for the demo.\
+We next choose the instance configuration - which <cloud>EC2</cloud> machine will run the database, we also select the storage type and size, for real cases we will want the io2 type, but for free-tier we will keep with gp2. we can enable auto-scaling for storage and set the limits.\
+Under the connectivity section, we can set a connection between an existing <cloud>EC2</cloud> machine and the new database. this will set up the security group and subnets to match the instance. otherwise, we create the new VPC, subnets and security groups.\
+The next section is database authentication (not the same as the database master password), and we can use passwords authentication or combine it with <cloud>IAM</cloud> credentials.\
+We can enable enhanced monitoring, control back-up configurations (retention period, mainline window), select the option to export logs, and enable/disable deletion protection.
+
+we can download a SQL client (sql-electron) to connect to the database. this will allow us to connect to the database.\
+when the DB is created, we get an endpoint address, we put it in the database connection screen in the client, and we can run queries.
+
+```sql
+CREATE TABLE films (
+    code        char(5) CONSTRAINT firstkey PRIMARY KEY,
+    title       varchar(40) NOT NULL,
+    did         integer NOT NULL,
+    date_prod   date,
+    kind        varchar(10),
+    len         interval hour to minute
+);
+
+INSERT INTO films VALUES
+    ('UA502', 'Bananas', 105, '1971-07-13', 'Comedy', '82 minutes');
+```
+
+we can click <kbd>Create Read Replica</kbd> to add a instance as a read-replica, we simply choose the instance type and storage, and either use a single or multi AZ deployment. we can <kbd>Take snapshots</kbd>, <kbd>Restore to a Point in Time</kbd>
+
+under the monitoring tab, we can see CPU Utilization, Database connection count, and other options.
+
+### RDS Multi AZ vs Read Replicas
+
+<details>
+<summary>
+High availability and Disaster recovery
+</summary>
+
+Read-Replicas help for scaling read operations, we can create up to 15 read replicas, which can be in the same Availability Zone, same region or even another region. they are replicated asynchronously, so there is eventual consistency.\
+Each of the read-replicas can be promoted to a read/write Database.\
+a common use-case is to add read-performance when we have an analytics job. so the additional queries won't effect the production.
+
+Unlike most AWS services, when using read replicas in the same Region (cross Availability Zone), there **AREN'T** network costs. this behavior usually happens only with managed services. and this is another reason to use <cloud>RDS</cloud> over manually managing the DB on <cloud>EC2</cloud> machines. there are still network costs for cross-region replication.
+
+Multi-AZ is used for disaster recovery. in this case, the replication is done synchronously. there is one master instance that is currently taking requests, and one stand-by that is replicating it.\
+In case of a problem, a failover happens, and the stand-by instance is promoted to being the master. there is a single DNS name, no need for manual intervention in the application.
+
+A read replica instance can be used as a secondary-instance for disaster recovery. there is no down-time moving from a single-AZ to multi-AZ. AWS takes a snapshot of the database, restores it in another Availability Zone, and then synchronizes them again for any recent changes.
+
+failover from the primary to the standby instance will happen when one of the following has happend to the primary instance.
+
+> - Failed
+> - OS is undergoing software patches
+> - Unreachable due to loss of network connectivity
+> - Modified (e.g., DB instance type changed)
+> - Busy and unresponsive
+> - Underlying storage failure
+> - An Availability Zone outage
+> - A manual failover of the DB instance was initiated using Reboot with failover.
+
+</details>
+
+
+### RDS Proxy
+
+<details>
+<summary>
+Having Lambda functions connect to RDS without creating too many connections.
+</summary>
+
+> By default, your <cloud>Lambda</cloud> function is
+launched outside your own <cloud>VPC</cloud> (in
+an AWS-owned VPC). Therefore, it cannot access resources in your VPC (<cloud>RDS</cloud>, <cloud>ElastiCache</cloud>,
+internal <cloud>ELB</cloud>...).\
+> to run a lambda in a VPC,  You must define the VPC ID, the Subnets and the Security Groups, so  Lambda will create an ENI (Elastic Network Interface) in your subnets.
+>
+> this requires the IAM AWSLambdaVPCAccessExecutionRole.
+
+however, this only works for a small number of connections. since each lambda crates a connection to the database, it's easy to reach a "TooManyConnections" error state.\
+The RDS Proxy manages the connection pool and cleaning up idle connections. we no longer to write code for this. we can deploy it an the same subnet or a different one, the lambdas will connect to the Proxy and all share the same connection pool. the proxy itself can auto-scale up.\
+The lambda function must have a connection to the subnet in which the proxy resides. if the RDS subnet allows public connections, there is no need for special configuration. but if the proxy is in a subnet with restrictions on incoming traffic, then the lambdas should also be deployed in a subnet that can connect to it.
+
+in the <cloud>RDS</cloud> service, we can select <kbd>Create Proxy</kbd>, select the engine (MySql, PostgreSQL), and we can set timeouts for idle connections. we need a secret from the secret manager to allow the proxy to connect to the database, this also requires an IAM role. we can use the connection URL in our application client.
+
+</details>
+
+### RDS Parameter Groups
+
+<details>
+<summary>
+Customize Database configuration with Parameter groups.
+</summary>
+
+> You can configure the DB engine using Parameter Groups
+> - Dynamic parameters are applied immediately
+> - Static parameters are applied after instance reboot
+> - You can modify parameter group associated with a DB (must reboot)
+> - See documentation for list of parameters for a DB technology
+> 
+> Must-know parameter:
+> - PostgreSQL / SQL Server: rds.`force_ssl=1` => force SSL connections
+> - MySQL / MariaDB: `require_secure_transport=1` => force SSL connections
+
+in the RDS service, under "Parameter group", we can view the existing groups or <kbd>Create parameter group</kbd>. a parameter group applies to a DB engine and a version, there is a pre-defined list of parameters which can be modified to suit our needs. each parameter can be dynamic (applied immediately) or static (applied on instance reboot).\
+in the database options, we can assign the parameter group to the database, so it will use the defaults from there.
+
+</details>
+
+### RDS Backups and Snapshots
+
+<details>
+<summary>
+Backup and Snapshots
+</summary>
+
+restoring from an automated backup or a snapshot creates a new DB instance. Backups can't be shared, but snapshots can be. backups happen during maintenance windows, and don't interrupt the performance of the database. snapshots take I/O and effect the performace. snapshots can be done manually or in a schedule.
+
+> RDS Backup:
+> 
+> - Backups are "continuous" and allow point in time recovery
+> - Backups happen during maintenance windows
+> - When you delete a DB instance, you can retain automated backups
+> - Backups have a retention period you set between 0 and 35 days
+> - To disable backups, set retention period to 0
+>
+> RDS Snapshot:
+> 
+> - Snapshots takes IO operations and can stop the database from seconds to minutes
+> - Snapshots taken on Multi AZ DB don't impact the master – just the standby
+> - Snapshots are incremental after the first snapshot (which is full)
+> - You can copy & share DB Snapshots
+> - Sharing:
+>   - Manual snapshots: can be shared with AWS accounts
+>   - Automated snapshots: can't be shared, copy first
+>   - You can only share unencrypted snapshots and snapshots encrypted with a customer managed key
+>   - If you share an encrypted snapshots, you must also share any customer managed keys used to encrypt them
+> - Manual Snapshots don't expire
+> - You can take a "final snapshot" when you delete your DB
+
+</details>
+
+### RDS Monitoring
+
+<details>
+<summary>
+Events, Logs, Metrics and insights
+</summary>
+
+#### RDSEvents and Logs
+
+> RDS keeps record of events related to:
+> 
+> - DB instances (state)
+> - Snapshots
+> - Parameter groups, security groups, etc..
+
+we can subscribe to those events using an <cloud>SNS</cloud> topic filtered on the event source (which instance or resource) and category (what kind of event). the other option is to use <cloud>EventBridge</cloud> and set rules about them.\
+for example, we can set a rule about database snapshots, and have some actions associated with it.
+
+The DB instance creates some logs while running:
+
+- general
+- audit
+- error
+- slow queries
+
+we can view the events and logs from the "events and logs" tab of our instances. if we want all the logs, we need to enable <cloud>Log exports</cloud> to have them stored in <cloud>CloudWatch</cloud>.\
+we can send them into <cloud>cloudWatch Logs</cloud> and apply filters (like for errors) and add <cloud>CloudWatch Alarms</cloud> to be notified about them.
+
+#### RDS & CloudWatch Metrics
+
+there are two levels of metrics that RDS monitors, we can use them for monitoring, trouble-shooting and for alerts. enhanced tier uses an agent on the instance.
+
+> Basic CloudWatch metrics associated with RDS (gathered from the hypervisor):
+> 
+> - DatabaseConnections
+> - SwapUsage
+> - ReadIOPS / WriteIOPS
+> - ReadLatency / WriteLatency
+> - ReadThroughPut / WriteThroughPut
+> - DiskQueueDepth
+> - FreeStorageSpace
+> 
+> Enhanced Monitoring (gathered from an agent on the DB instance). Useful when you need to see how different processes or threads use the CPU.
+> - Access to over 50 new CPU, memory, file system, and disk I/O metrics
+
+we enable the enhanced monitoring for the instance, and we choose the granularity (what frequency the metrics are sent). to view them we need to select "enhanced monitoring" on the monitoring tab of the database.
+
+#### RDS Performance Insights
+
+we can enable performance insights for our database, and then get a visualized view of what affects it.
+
+> Visualize your database performance and analyze any issues that affect it.\
+> DBLoad = the number of active sessions for the DB engine.
+> With the Performance Insights dashboard, you can visualize the database load and filter it:
+> 
+> - By Waits => find the resource that is the bottleneck (CPU, IO, lock, etc...)
+> - By SQL statements => find the SQL statement that is the problem
+> - By Hosts => find the server that is using the most our DB
+> - By Users => find the user that is using the most our DB
+>
+> You can view the SQL queries that are putting load on your database.
+
+</details>
+
+###  Amazon Aurora
+
+<details>
+<summary>
+AWS Cloud-Optimized Database.
+</summary>
+
+> <cloud>Aurora</cloud> is a proprietary technology from AWS (not open sourced).
+> - Postgres and MySQL are both supported as Aurora DB (that means your drivers will work as if Aurora was a Postgres or MySQL database).
+> - Aurora is "AWS cloud optimized" and claims 5x performance improvement over MySQL on RDS, over 3x the performance of Postgres on RDS.
+> - Aurora storage automatically grows in increments of 10GB, up to 128 TB.
+> - Aurora can have up to 15 replicas and the replication process is faster than MySQL (sub 10 ms replica lag).
+> - Failover in Aurora is instantaneous. It's HA (High Availability) native.
+> - Aurora costs more than RDS (20% more) – but is more efficient.
+
+It stores the data in six copies accross 3 Availability Zones. and it requires only 4 for writes and 3 copies for read (so it can handle losing some instances). it has peer-to-peer replication for self-healing, and storage is stripped across 100's of volumes.\
+there is a single instance that accepts writes, and if it doesn't respond, there is an automatic failover that takes up to 30 seconds. for read performance, Aurora supports up to 15 read replica instances (any of them can be promoted), with auto scaling to increase or decrease the number. cross-region replication is supported natively.
+
+Aurora works as a cluster, it has a shared storage volume, and only one writer at a time, the writer is accessed through a *write EndPoint*. since there are so many read replicas, there is also a read *EndPoint*, which acts as a load balancer for read requests.
+
+> The features of <cloud>Aurora</cloud> are:
+>
+> - Automatic fail-over
+> - Backup and Recovery
+> - Isolation and security
+> - Industry compliance
+> - Push-button scaling
+> - Automated Patching with Zero Downtime
+> - Advanced Monitoring
+> - Routine Maintenance
+> - Backtrack: restore data at any point of time without using backups
+
+hands on:\
+
+we <kbd>Create new Database</kbd>, and choose the Aurora option with MySQL compatibility. we can filter for versions that have support for aurora features. we can choose a template like before, and modify the configuration. we can use standard storage of I/O optimized, like before, we select which instance type we need, or use the "serverless v2" option to allow AWS to manage the instances as well. we can choose to create replicas if we want, and like before, decide on connectivity we want (which VPC, security group, etc...). we have monitoring options, parameter groups, deletion protection, and the option to allow write forwarding (forward write requests from the reader instances). we have the writer and reader endpoints, but also an endpoint for each instance.\
+We can create a policy for read replica and have them scale based on target metric (scale in and scale out). we can add Regions to our cluster (if we used a compatible instance) to make it truly global.
+
+to delete the database, we first need to the delete the reader replicas, and only then the database itself.
+
+#### Aurora Backups, Restore and Backtracking
+
+we can do backups like other databases, but also back-track the existing cluster to a previous place in time without creating new instances. and we can clone the database and continue using the same shared storage for data that wasn't changed in the new environment yet.
+
+> Automatic Backups
+> - Retention period 1-35 days (can't be disabled)
+> - PITR, restore your DB cluster within 5 minutes of the current time
+> - Restore to a new DB cluster
+> 
+> Aurora Backtracking
+> - Rewind the DB cluster back and forth in time (up to 72 hours)
+> - Doesn't create a new DB cluster (in-place restore)
+> - Supports Aurora MySQL only
+> 
+> Aurora Database Cloning
+> - Creates a new DB cluster that uses the same DB cluster volume as the original cluster
+> - Uses copy-on-write protocol (use the original/single copy of the data and allocate storage only when changes made to the data)
+>   - Example: create a test environment using your production data
+
+#### Aurora Special Features
+
+Each read replica can have a priority rating (0-15), this controls the failover priority (which replica will be promoted), if two instances have the same priority, the instance with the larger size is promoted.\
+We can migrate RDS MySql into RDS Aurora by taking a snapshot and restoring it.
+
+there are some <cloud>CloudWatch</cloud> metrics regarding aurora:
+
+> - `AuroraReplicaLag`: amount of lag when replicating updates from the primary instance.\
+> If replica lag is high, that means the users willhave a different experience based on which replica they get the data from (eventual consistency)
+>   - `AuroraReplicaLagMaximum`: max. amount of lag across all DB instances in the cluster
+>   - `AuroraReplicaLagMinimum`: min. amount of lag across all DB instances in the cluster
+> - `DatabaseConnections`: current number of connections to a DB instance
+> - `InsertLatency`: average duration of insert operations
+</details>
+
+### RDS Security Options
+
+<details>
+<summary>
+Security options for datbase
+</summary>
+
+> - At-rest encryption:
+> - Database master & replicas encryption using AWS <cloud>KMS</cloud> – must be defined as launch time
+> - If the master is not encrypted, the read replicas cannot be encrypted
+> - To encrypt an un-encrypted database, go through a DB snapshot & restore as encrypted
+> - In-flight encryption: TLS-ready by default, use the AWS TLS root certificates client-side
+> 
+> - IAM Authentication: IAM roles to connect to your database (instead of username/pw)
+> - Security Groups: Control Network access to your RDS / Aurora DB
+> - No SSH available except on RDS Custom
+> - Audit Logs can be enabled and sent to CloudWatch Logs for longer retention
+
+</details>
+
+### ElastiCache Overview
+
+<details>
+<summary>
+Managed Cache Services: Redis and Memcached.
+</summary>
+
+> The same way RDS is to get managed Relational Databases - <cloud>ElastiCache</cloud> is to get managed Redis or Memcached.\
+> 
+> - Caches are in-memory databases with really high performance and low latency
+> - Helps reduce load off of databases for read intensive workloads
+> - Helps make your application stateless
+> - AWS takes care of OS maintenance / patching, optimizations, setup, configuration, monitoring, failure recovery and backups
+> - Using ElastiCache involves heavy application code changes
+
+when using cache, the application first queries the cache, and retrives the data from it if exists (cache hit), or from the database itself if not (cache miss). the cache needs to be invalidated after a time to ensure the most recent data is being used.\
+Caching is also used to store user session data and make the application stateless - no matter which instance handles the request, it will grab the data from the cache and behave as if it has a state.
+
+There are two optios, **Redis** for high availability, and **Memcached** for multi-node partitoning and multi-threading
+
+> REDIS:
+> 
+> - Multi AZ with Auto-Failover
+> - Read Replicas to scale reads and have high availability
+> - Data Durability using AOF persistence
+> - Backup and restore features
+> - Supports Sets and Sorted Sets
+> 
+> MEMCACHED
+> 
+> - Multi-node for partitioning of data (sharding)
+> - No high availability (replication)
+> - Non persistent
+> - No backup and restore
+> - Multi-threaded architecture
+
+HandsOn:\
+In the <cloud>ElasticCache</cloud> service, wee can create a cache (either Redis or Memcached), we will use Redis. we choose the configuration, either using serverless of defining our own instance. we can create the cache from zero or restore it from a backup (redis only).\
+we can set our cache to be replicated across multiple shards, or use on primary node with read replicas. we can also have our cache be hosted on-premises with <cloud>AWS Outposts</cloud>. we can use multi-AZ configuration and set automatic failover. like before, we set the vpc, subnet and security groups, we can add encryption (at rest and in-flight), and control backup (again, redis only) and maintenance windows.
+
+#### ElastiCache Redis
+
+there are two modes for <cloud>ElasticCache Redis</cloud>, with and without cluster-mode (Sharding).
+
+when the cluster mode is disabled, there is a single primary node for read and writes, and replica nodes for reads.
+
+> - One primary node, up to 5 replicas
+> - Asynchronous Replication
+> - The primary node is used for read/write
+> - The other nodes are read-only
+> - One shard, all nodes have all the data
+> - Guard against data loss if node failure
+> - Multi-AZ enabled by default for failover
+> - Helpful to scale read performance
+> - Vertical and horizontal scaling
+>   - vertical scaling creates a new node group
+
+when cluster mode is enabled, we replicate the above behavior across shards (partitions of the data)
+
+> - Data is partitioned across shards (helpful to scale writes)
+> - Each shard has a primary and up to 5 replica nodes (same concept as before)
+> - Multi-AZ capability
+> - Up to 500 nodes per cluster
+> - supports autoscaling for shards and replicas
+>   - Target Tracking
+>   - Scheduled Scaling
+
+the application must use the correct EndPoint.
+
+> Standalone Node:
+> - One endpoint for read and write operations
+> 
+> Cluster Mode Disabled Cluster:
+> 
+> - Primary Endpoint – for all write operations
+> - Reader Endpoint – evenly split read operations across all read replicas
+> - Node Endpoint – for read operations
+> 
+> Cluster Mode Enabled Cluster:
+> 
+> - Configuration Endpoint – for all read/write operations that support Cluster Mode Enabled Commands
+> - Node Endpoint – for read operations
+
+when using Redis with cluster mode disabled (single shard), horizontal scaling adds on removes replica nodes, up to a maximum of 5. vertical scaling creates a new node group with the required instance type, and when all the data is replicated, the DNS is updated and the old instances are terminated.
+
+with cluster mode enabled (multiple shards), there is online scaling - which continues to serve requests during the scaling process, with some performance hit. and offline scaling, which has downtime, but allows for more configuration changes (node type, engine version, etc..,).\
+Horizontal scaling can involve adding and removing shards, or with *Shard Rebalancing*, which re-distributes the keyspaces among the shards for better load distribution, horizontal scaling supports both online and offline scaling.\
+Vertical Scaling (change read/write capacity) supports online scaling as well.
+
+there are metrics we can monitor:
+
+> - `Evictions`: the number of non-expired items the cache evicted to allow space for new writes (memory is overfilled).\
+> Solution:
+>   - Choose an eviction policy to evict expired items (e.g., evict least recently used (LRU) items)
+>   - Scale up to larger node type (more memory) or scale out by adding more nodes
+> - `CPUUtilization`: monitor CPU utilization for the entire host.\
+> Solution: scale up to larger node type (more memory) or scale out by adding more nodes
+> - `SwapUsage`: should not exceed 50 MB.\
+>  Solution: verify that you have configured enough reserved memory
+> - `CurrentConnections`: the number of concurrent and active connections.
+> Solution: investigate application behavior to address the issue
+> - `DatabaseMemoryUsagePercentage`: the percentage of memory utilization
+> - `NetworkBytesIn/Out` & `NetworkPacketsIn/Out`
+> - `ReplicationBytes`: the volume of data being replicated
+> - `ReplicationLag`: how far behind the replica is from the primary node
+
+#### ElastiCache Memcached
+
+Memcached Cluster can have between 1 to 40 nodes (soft limit), horizontal scaling will add and remove nodes, and the *auto-discovery* mechanism will allow the app to find them. vertical scaling means that we create new cluster with the new node type, but our application needs to update the endpoint to use the new one (not automatically), since there is no backup mechanism, the new cluster and the nodes start empty.
+
+> Memcached Auto Discovery
+>
+> - Typically you need to manually connect to individual cache nodes in the cluster using its DNS endpoints
+> - Auto Discovery automatically identifies all of the nodes
+> - All the cache nodes in the cluster maintain a list of metadata about all other nodes
+> - This is seamless from a client perspective
+
+metrics to monitor:
+
+> - `Evictions`: the number of non-expired items the cache evicted to allow space for new writes (memory is overfilled).\
+> Solution:
+>   - Choose an eviction policy to evict expired items (e.g., LRU items)
+>   - Scale up to larger node type (more memory) or scale out by adding more nodes
+> - `CPUUtilization`- Solution: scale up to larger node type or scale out by adding more nodes
+> - `SwapUsage`: should not exceed 50 MB
+> - `CurrentConnections`: the number of concurrent and active connections. Solution: investigate application behavior to address the issue
+> - `FreeableMemory`: amount of free memory on the host
+</details>
+
+</details>
+
+## Monitoring, Auditing and Performance
+
+<!-- <details> -->
+<summary>
+Monitoring Services in AWS
+</summary>
+
+<cloud>CloudWatch</cloud> for logs, metrics and alarms. <cloud>EventBridge</cloud>, <cloud>CloudTrail</cloud> to audit API calls into AWS services
+
+### CloudWatch Service
+
+<details>
+<summary>
+Metrics, Logs, Alarms and Dashboards.
+</summary>
+
+The most common service that holds metrics and logs for other services, and can define alarms and dashboards.
+
+#### CloudWatch Metrics
+
+in the CloudWatch service, we can see all the types of the metrics by service, and look at all the metrics over a range of time.
+
+> CloudWatch provides metrics for every services in AWS:
+> 
+> - Metric is a variable to monitor (CPUUtilization, NetworkIn…)
+> - Metrics belong to namespaces
+> - Dimension is an attribute of a metric (instance id, environment, etc…).
+> - Up to 30 dimensions per metric
+> - Metrics have timestamps
+> - Can create CloudWatch dashboards of metrics
+
+for example, <cloud>EC2</cloud> instances create metrics every five minutes, but we can use "detailed" monitoring to get a higher frequency of metrics. we can use this toegether with AutoScaling groups and <cloud>CloudWatch</cloud> alarms to react faster and scale more quickly.\
+EC2 memory usage (RAM) isn't one of the default metrics, it must be pushed from inside the instace as a custom metric.
+
+we can define custom metrics (RAM, diskspace, number of logged-in users) and push them to <cloud>CloudWatch</cloud> with the `PutMetricData` API call. metrics have dimensions (key-value pairs that identify the metric), and the resolution, either the standard resolution of once every 60 seconds, or higher resolution: [1,5,10,30], this has an increased cost.\
+Custom metrics can be pushed with a delay of two weeks in the past, and up to two hours in the future, so we can push recent backlog data, and we need to be aware of any time differences and how our machine is configured. we can use the unified cloudWatch agent to manage pushing the metrics from our machines.
+
+#### CloudWatch Dashboards
+
+we can take the metrics and display them in a dashboard.
+
+> - Great way to setup custom dashboards for quick access to key metrics and alarms
+> - Dashboards are global
+> - Dashboards can include graphs from different AWS accounts and regions
+> - You can change the time zone & time range of the dashboards
+> - You can setup automatic refresh (10s, 1m, 2m, 5m, 15m)
+> - Dashboards can be shared with people who don’t have an AWS account (public, email address, 3rd party SSO provider through <cloud>Amazon Cognito</cloud>)
+
+we can click <kbd>CreateDashboard</kbd> or use the automatic dashboard templates based on the service. for example, we can use the auto-scaling dahsboard and all the metrics will be shown in widgets (panel). we can add widget for metric data or logs. we can choose metrics from any region and from multiple accounts.
+
+#### CloudWatch Logs
+
+when our instances write logs, they usually end up in cloudWatch Logs service.
+
+> - Log groups: arbitrary name, usually representing an application
+> - Log stream: instances within application / log files / containers
+> - Can define log expiration policies (never expire, 1 day to 10 years...)
+> - CloudWatch Logs can send logs to:
+>   - Amazon <cloud>S3 bucket</cloud> - exports
+>   - <cloud>Kinesis Data Streams</cloud>
+>   - <cloud>Kinesis Data Firehose</cloud>
+>   - AWS <cloud>Lambda</cloud>
+>   - <cloud>OpenSearch</cloud>
+>
+> - Logs are encrypted by default,
+> - Can setup KMS-based encryption with your own keys
+
+common sources for logs:
+
+> - SDK, <cloud>CloudWatch Logs Agent</cloud>, <cloud>CloudWatch Unified Agent</cloud>
+> - <cloud>Elastic Beanstalk</cloud>: collection of logs from application
+> - <cloud>ECS</cloud>: collection from containers
+> - AWS <cloud>Lambda</cloud>: collection from function logs
+> - VPC <cloud>Flow Logs</cloud>: VPC specific logs
+> - <cloud>API Gateway</cloud>
+> - <cloud>CloudTrail</cloud> based on filter
+> - <cloud>Route53</cloud>: Log DNS queries
+
+we can use Logs Insight to query the logs, we can use this same query as part of a dashboard. we can filter, group, aggregate and do all the usual stuff. it's a query engine, but not real-time.
+
+One of the options is to export Logs into S3 buckets, this is done via the `CreateExportTask` API call, and can take up to 12 hours. if we want real-time (or near real-time), we use Logs Subscriptions, the logs are sent to a downstream service for further processing.
+
+possible targets are:
+
+- <cloud>Kinesis Data Streams</cloud>
+- <cloud>Kinesis Data Firehose</cloud>
+- <cloud>Lambda function</cloud>
+
+we can also add filters on the subscriptions, to select which logs are delievered for processing. Log subscriptions can be aggregated across multiple regions and multiple accounts, so all logs (even from different sources) will reach a single location. for this we need to use cross account subscriptions, a filter in the source account (sender), and a subscription destination in the target account (receiver). the recipient account has a destination access policy which allows the sender account to send logs to it. 
+
+IAM Role in the Recipient stream (receiver), needs to be assumed by the sender.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "kinesis:PutRecord",
+      "Resource":"arn:aws:kinesis:us-eas-1:<accountId>:stream/RecipientStream"
+    }
+  ]
+}
+```
+
+destination access policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal":
+      {
+        "AWS":"<senderAccount>"
+      },
+      "Action": [
+        "logs:PutSubscriptionFilter"
+      ],
+      "Resource":"arn:aws:logs:us-east-1:<receiverAccount>:destination:testDestination"
+    }
+  ]
+}
+```
+
+when we look at the logs, we can <kbd>Create Metric Filter</kbd> to have predefined searches that will create metrics from the logs. then we can create alarms on the metric, meaning that we managed to set an alarm on textual data.
+
+we can set the retention period of a log group, create new log groups (which we could send data to), and use the logs insight to better understand how to query logs.
+
+there is also an option called "live-tail", which gives us real-time view of logs. this is helpful for debugging, but has additional costs.
+
+#### CloudWatch Alarms
+
+we can set alarms to respond to metrics, common use cases are acting on <cloud>EC2</cloud> machines (rebooting, terminating, etc), auto scaling actions (removing and adding instances), or send a <cloud>SNS</cloud> notification, which can then trigger a custom lambda.
+
+> - Alarms are used to trigger notifications for any metric
+> - Various options (sampling, %, max, min, etc...)
+> - Alarm States:
+>   - `OK`
+>   - `INSUFFICIENT_DATA`
+>   - `ALARM`
+> 
+> - Period:
+>   - Length of time in seconds to evaluate the metric
+>   - High resolution custom metrics: 10 sec, 30 sec or multiples of 60 sec
+
+Alarms are usually on a single metric, but we can also have composite alarms, which apply on top of other alarms, using boolean conditions (AND, OR) to create complex rules to reduce noise.
+
+> - Alarms can be created based on CloudWatch Logs Metrics Filters
+> - To test alarms and notifications, set the alarm state to Alarm using CLI
+
+```sh
+aws cloudwatch set-alarm-state --alarm-name "myAlarm" --state-value ALARM --state-reason "testing purposes"
+```
+
+in the <cloud>CloudWatch</cloud> service, we select <kbd>Create Alarm</kbd>, we choose the EC2 instance, and the `CPU Utilization` metric. we select the 'average' statictics, choose 5 minutes period as data point, and create the condition for the alarm - if this average is larger than 95 for more than 3 consecutive data points.\
+we choose the EC2 action to terminate the instance on the alarm state. we can trigger the behavior with a custom script to push the cpu, or use the API call to set the alarm state, so we would see the alarm behavior in action.
+
+#### CloudWatch Synthetics Canary
+
+a script (like automation), that tests behavior of our websites or APIs and can trigger an alert if something fails.
+
+> - Configurable script that monitor your APIs, URLs, Websites, etc..
+> - Reproduce what your customers do programmatically to find issues before customers are impacted
+> - Checks the availability and latency of your endpoints and can store load time data and screenshots of the UI
+> - Integration with CloudWatch Alarms
+> - Scripts written in Node.js or Python
+> - Programmatic access to a headless Google Chrome browser
+> - Can run once or on a regular schedule
+
+we can use some bluprints, which are templates for common tests:
+
+> - Heartbeat Monitor – load URL, store screenshot and an HTTP archive file
+> - API Canary – test basic read and write functions of REST APIs
+> - Broken Link Checker – check all links inside the URL that you are testing
+> - Visual Monitoring – compare a screenshot taken during a canary run with a baseline screenshot
+> - Canary Recorder – used with CloudWatch Synthetics Recorder (record your Actions on a website and automatically generates a script for that)
+> - GUI Workflow Builder – verifies that actions can be taken on your webpage (e.g., test a webpage with a login form)
+</details>
+
+### Amazon EventBridge
+
 <!-- <details> -->
 <summary>
 //TODO: add Summary
 </summary>
 
-### [SAA/DVA] RDS Overview
-### [SAA/DVA] RDS Multi AZ vs Read Replicas
-### [SAA/DVA] RDS Hands On
-### RDS Multi AZ – Failover Conditions
-### RDS Proxy
-### RDS Parameter Groups
-### RDS Backups and Snapshots
-### RDS Events and Logs
-### RDS & CloudWatch
-### RDS Performance Insights
-### [SAA/DVA] Amazon Aurora
 
-### [SAA/DVA] ElastiCache Overview
+### [SAA/DVA] Amazon EventBridge - Hands On
 
-### ElastiCache Redis Cluster Modes
-### ElastiCache Redis for SysOps
-### ElastiCache Memcached for SysOps
+### EventBridge Content Filtering - Hands On
+
+### EventBridge Input Transformation - Hands On
+
 </details>
 
-## Monitoring, Auditing and Performance
+### Service Quotas Overview
+
+### Service Quotas Hands On
+
+### [SAA/DVA] CloudTrail
+
+### [CCP/SAA/DVA] CloudTrail - Hands On
+
+### [SAA/DVA] CloudTrail - EventBridge Integration
+
+### CloudTrail for SysOps
+
+### [SAA] Config Overview
+
+### [SAA] Config Hands On
+
+### Config - Aggregators
+
+### [SAA] CloudWatch vs CloudTrail vs Config
+
+</details>
+
 ## Aws Account Management
 ## Disaster Recovery
 ## Security and Compliance for SysOps
@@ -3837,6 +4503,7 @@ Additional terms and acronyms to keep.
 - CORS - Cross Origin Resource Sharing
 - WORM - Write Once, Read Many (Glacier)
 - HPC - High Performance Computing
+- PITR - Point in Time Recovery
 </details>
 
 <!-- misc end -->
