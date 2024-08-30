@@ -4239,7 +4239,7 @@ metrics to monitor:
 
 ## Monitoring, Auditing and Performance
 
-<!-- <details> -->
+<details>
 <summary>
 Monitoring Services in AWS
 </summary>
@@ -4283,7 +4283,7 @@ we can take the metrics and display them in a dashboard.
 > - Dashboards can include graphs from different AWS accounts and regions
 > - You can change the time zone & time range of the dashboards
 > - You can setup automatic refresh (10s, 1m, 2m, 5m, 15m)
-> - Dashboards can be shared with people who don’t have an AWS account (public, email address, 3rd party SSO provider through <cloud>Amazon Cognito</cloud>)
+> - Dashboards can be shared with people who don't have an AWS account (public, email address, 3rd party SSO provider through <cloud>Amazon Cognito</cloud>)
 
 we can click <kbd>CreateDashboard</kbd> or use the automatic dashboard templates based on the service. for example, we can use the auto-scaling dahsboard and all the metrics will be shown in widgets (panel). we can add widget for metric data or logs. we can choose metrics from any region and from multiple accounts.
 
@@ -4420,44 +4420,565 @@ we can use some bluprints, which are templates for common tests:
 
 ### Amazon EventBridge
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+React to AWS events from a centralized location.
 </summary>
 
+Formerly known as <cloud>CloudWatch Events</cloud>.
 
-### [SAA/DVA] Amazon EventBridge - Hands On
+> - Schedule: Cron jobs (scheduled scripts)
+> - Event Pattern: Event rules to react to a service doing something
+> 
+> Trigger Lambda functions, send SQS/SNS messages...
 
-### EventBridge Content Filtering - Hands On
+sources are events from services, including <cloud>CloudTrail</cloud>, which effectively means we can intercept any kind of event based on the api call.
 
-### EventBridge Input Transformation - Hands On
+we can filter events based on conditions, and then send the event as json to other destinations:
+
+- <cloud>Lambda</cloud>
+- <cloud>AWS Batch</cloud>
+- <cloud>ECS</cloud> Task
+- <cloud>SQS</cloud>
+- <cloud>SNS</cloud>
+- <cloud>Kinesis Data Streams</cloud>
+- <cloud>Step Function</cloud>
+- <cloud>CodePipeline</cloud>
+- <cloud>CodeBuild</cloud>
+- <cloud>SSM</cloud> (documents, run commands)
+- <cloud>EC2 Action</cloud>
+
+<cloud>Event Bridge</cloud> can also integrate with AWS SaaS Parteners, such as:
+
+- Zendesk
+- DataDog
+- Saleforce
+- others...
+
+those are referred to as **Partner Event Bus** (opposed to the **Default Event Bus** for aws services). they can also send events to EventBridge and trigger events. we can also create **Custom Event Bus** for our own applications.
+
+Events are in json format, and have a schema, from the schema, we can generate code for our applications to properly handle the data. the schemas are versioned.\
+events can be archived (all, filtered), and we can replay the achieved events.
+
+the event buses can be accessed by other AWS account using resource-based policies. for example, we can aggregate all the events from many AWS accounts into a single event bus.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EventBridge",
+      "Effect": "Allow",
+      "Principal": {"AWS": "<otherAccount>"},
+      "Action": [
+        "events::PutEvents"
+      ],
+      "Resource": "arn:aws:events:us-east-1:123456789012:event-bus/central-event-bus"
+    }
+  ]
+}
+```
+
+
+Hands On:\
+
+in the <cloud>Event Bridge</cloud> service, we can click on the "Event Bus" section and see the default event bus, or <kbd>Create Event Bus</kbd> if we want a cross-account central event bus.\
+We can see the event sources parterns and follow the instructions to send them to one of our buses.
+
+We can <kbd>Create Rule</kbd> and either set it to run it as cron job (scheduled) or to respond to events in one of our event buses. the source can be an aws-service events, custom events, or all events.
+
+there is a sandbox to test a patterns against events, we can use the sample events to create rules with event patterns.
+
+```json
+{
+  "source": ["aws.ec2"],
+  "detail-type": ["EC2 Instance State-Change Notification"],
+  "detail":{
+    "state": ["stopped", "terminated"]
+  }
+}
+```
+
+we then set up the target (destination), which is either an aws service, an API destination, or another event bus (which can be in a different account). a common destination is an <cloud>SNS</cloud> Topic, which many services can subscribe to.
+
+under the "schemas" section, we can see the schema for many events (what fields exist) and <kbd>Download Code Bindings</kbd> to generate code for the specific event.
+
+#### EventBridge Content Filtering
+
+we can filter events to only react to some events which match the event pattern. for example, we can set the rule to only respond to events from a specific bucket, either exactly or with a prefix/suffix.
+
+
+```json
+{
+  "source":["aws.s3"],
+  "detail-type": "Object Created",
+  "detail":{
+    "bucket":{
+      "name":[{"prefix":"myBucket"}]
+    }
+  },
+  "Object":{
+    "key":[{"suffix":".png"}]
+  },
+  "source-ip-address":[{"cidr":"10.0.0.0/24"}]
+}
+```
+
+#### EventBridge Input Transformation
+
+We can also transform the input to modify the event before sending it to the service. for example, we can choose to send a log to a specific <cloud>CloudWatch</cloud> log group to keep a record when an <cloud>EC2</cloud> machine starts running. we can choose <kbd>Configure input Transformer</kbd> and set a transfomer which takes the input path and converts it into a template.
+
+this input path defines 4 variables from the original events.
+
+```json
+{
+  "timestamp" : "$.time",
+  "instance" : "$.detail.instance-id", 
+  "state" : "$.detail.state",
+  "resource" : "$.resources[0]"
+}
+```
+
+and we use those variables to create a new message through our template:
+
+```json
+{
+  "timestamp": <timestamp>,
+  "message": "<instance> is in state <state> at <timestamp>, with arn <resource>."
+}
+```
+
+now the thing we send forward to the target log group is the new transformed object, and not the original thing.
 
 </details>
 
 ### Service Quotas Overview
 
-### Service Quotas Hands On
+<details>
+<summary>
+Monitor AWS Service Quotas
+</summary>
 
-### [SAA/DVA] CloudTrail
+> Notify you when you're close to a service quota value threshold
+> - Create CloudWatch Alarms on the Service Quotas console
+> - Example: Lambda concurrent executions
+> - Helps you know if you need to request a quota increase or shutdown resources before limit is reached
+> 
+> Alternative: Trusted Advisor + CW Alarms:
+> 
+> - Limited number of Service Limits checks in Trusted Advisor (~50)
+> - Trusted Advisor publishes its check results to CloudWatch
+> - You can create CloudWatch Alarms on service quota usage (Service Limits)
 
-### [CCP/SAA/DVA] CloudTrail - Hands On
+In the <cloud>Service Quota</cloud> service dashboard, we can find all the quota, see the default value, create alarms and monitoring, and request quota increase for resources which are adjustable.
 
-### [SAA/DVA] CloudTrail - EventBridge Integration
+in <cloud>Trusted Advisor</cloud>, under "Service Limits", we can use pre-configured checks for some of the services.
+</details>
 
-### CloudTrail for SysOps
 
-### [SAA] Config Overview
 
-### [SAA] Config Hands On
+### CloudTrail
 
-### Config - Aggregators
+<details>
+<summary>
+Audit AWS API actions
+</summary>
 
-### [SAA] CloudWatch vs CloudTrail vs Config
+> Provides governance, compliance and audit for your AWS Account:
+> 
+> - CloudTrail is enabled by default!
+> - Get an history of events / API calls made within your AWS Account by:
+>   - Console
+>   - SDK
+>   - CLI
+>   - AWS Services
+> 
+> - Can put logs from CloudTrail into CloudWatch Logs or S3
+> - A trail can be applied to All Regions (default) or a single Region.
+> - If a resource is deleted in AWS, investigate CloudTrail first!
+
+there are "management events" - which are actions performed on resources, which are then divided into read events (which don't modify the resources) and write events (which do). management events are stored by default into the trail.\
+in contrast, there are also "data events" - they aren't stored by default, and they represent high-volume events, like <cloud>S3</cloud> objects events or <cloud>Lambda</cloud> invocations. we can still choose to store the events into the trail.
+
+finally, <cloud>CloudTrail</cloud> **Insights** events are a special feature (we need to enable it) that creates a baseline of operations in the account, and then analyzes write events to detect unusual patterns. 
+
+> - Enable CloudTrail Insights to detect unusual activity in your account:
+> 
+> - inaccurate resource provisioning
+> - hitting service limits
+> - Bursts of AWS IAM actions
+> - Gaps in periodic maintenance activity
+> 
+> CloudTrail Insights analyzes normal management events to create a baseline. And then continuously analyzes write events to detect unusual patterns:
+> 
+> - Anomalies appear in the CloudTrail console
+> - Event is sent to Amazon S3
+> - An EventBridge event is generated (for automation needs)
+
+Events are stored for 90 days by default, but we can send them to <cloud>S3</cloud> to store them for a longer time, and then use <cloud>Athena</cloud> to query them.
+
+Hands On:\
+in the <cloud>CloudTrail</cloud> service, we can see the events history, if we terminate an <cloud>EC2</cloud> machine we can see the termination event in the console.
+
+#### EventBridge Integration And Other Stuff
+
+we can integrate <cloud>CloudTrail</cloud> with <cloud>EventBridge</cloud>, we can set up rules to listen to specific API calls and respond to them.
+
+- when a <cloud>DynamoDB</cloud> table is deleted
+- when a user assumes a different role
+- when a user edits the <cloud>EC2</cloud> security groups inbound rules.
+
+> CloudTrail is not "real-time":
+> 
+> - Delivers an event within 15 minutes of an API call
+> - Delivers log files to an S3 bucket every 5 minutes
+
+Organizations Trails can store all events from different aws accounts in the same AWS Organization.
+
+> - A trail that will log all events for all AWS accounts in an AWS Organization
+> - Log events for management and member accounts
+> - Trail with the same name will be created in every AWS account (IAM permissions)
+> - Member accounts can’t remove or modify the organization trail (view only)
+
+Log File Integrity Validation - Create a hash of all the events being stored in <cloud>S3</cloud> to make sure they weren't tempered with.
+
+> Digest Files:
+> - References the log files for the last hour and contains a hash of each
+> - Stored in the same S3 bucket as log files (different folder)
+> 
+> Helps you determine whether a log file was modified/deleted after CloudTrail delivered it.
+> - Hashing using SHA-256, Digital Signing using SHA- 256 with RSA
+> 
+> - Protect the S3 bucket using bucket policy, versioning, MFA Delete protection, encryption, object lock
+> - Protect CloudTrail using IAM
+
+</details>
+
+
+### AWS Config
+
+<details>
+<summary>
+Monitor and detect changes in AWS resource configurations.
+</summary>
+
+> Helps with auditing and recording compliance of your AWS resources. Helps record configurations and changes over time\
+> - Questions that can be solved by AWS Config:
+>   - Is there unrestricted SSH access to my security groups?
+>   - Do my buckets have any public access?
+>   - How has my ALB configuration changed over time?
+> - You can receive alerts (SNS notifications) for any changes
+> - AWS Config is a per-region service
+> - Can be aggregated across regions and accounts
+> - Possibility of storing the configuration data into S3 (analyzed by <cloud>Athena</cloud>)
+
+<cloud>AWS Config</cloud> has predefined rules, or we can create our own rules using <cloud>AWS Lambda</cloud>. rules can be triggered at each config change or at regular time intervals.\
+
+the cost is based on configuration item recorded (per region) and for each rule evaluation (per region). no free-tier.
+
+we can view the configuration of a resource and how it changed over time, and we can link it to <cloud>CloudTrail</cloud> logs which effected it.
+
+The rules are compliance only, they don't have prevent the changes from happening, they only detect and notify on them. but we can set up "remediation" action using <cloud>SSM Automation Document</cloud> that will be triggered. we can use the pre-configured documents or custom ones, and we can use a custom lambda.
+
+we can also integrate <cloud>AWS Config</cloud> with <cloud>Event Bridge</cloud> and respond to non-compliant configuration events through them (send message to <cloud>SNS</cloud> topic and respond from there).
+
+#### AWS Config Hands On
+
+in the <cloud>AWS Config</cloud> service, we can choose to record all resource types or just some of them, and we can choose to include or exclude global resources. we need an <cloud>IAM</cloud> role and a <cloud>S3</cloud> bucket to store the configurations, and we can set a <cloud>SNS</cloud> target.\
+There is a list of pre-defined rules which we can use to mark resources as non-compliant. once the operation is completed, we can see the list of all resources, and see the <kbd>Resource Timeline</kbd> to view all the linked <cloud>CloudTrail</cloud> events which effected the configuration.
+
+we can <kbd>Add Rule</kbd>, either from the managed rules or a custom rule, for example, we can use the managed rule that controls which AMIs are allowed for <cloud>EC2</cloud> machines. we can also set the "restricted-ssh" rule that will mark security groups if they allow ssh access. if we delete the inbound access from the security group, the rule will be evaluated again and be marked as compliant.\
+in the rule, we can <kbd>Action</kbd> and <kbd>Manage Remediation</kbd> to choose what happens when a non-compliant resource is detected. we can use automatic remediation, choose a pre-configured action with parameters, or use a custom action.
+
+#### AWS Config Aggregators
+we can use <kbd>AWS Config</kbd> aggregator to store a view of all the configurations from many AWS accounts. the single accounts is called the aggregator account, with the other accounts being the source accounts.\
+The source accounts need to authorize the aggregator account and send the data to it, when using AWS organizations, there is no need for that.\
+The configuration and rules are created in each of the source accounts, and are not shared from the aggregator. this is a "view-only" aggregation.\
+If we want to deploy rules to multiple accounts, we should use <cloud>CloudFormation</cloud> StackSets.
+
+</details>
+
+
+
+### CloudWatch vs CloudTrail vs Config
+
+<!-- <details> -->
+<summary>
+Comparison between the services.
+</summary>
+
+- <cloud>CloudWatch</cloud> - logs, mertics, events, alerts
+- <cloud>CloudTrail</cloud> - AWS api and actions
+- <cloud>AWS Config</cloud> - resource configurations
+
+> <cloud>CloudWatch</cloud>
+> 
+> - Performance monitoring (metrics, CPU, network, etc...) & dashboards
+> - Events & Alerting
+> - Log Aggregation & Analysis
+> 
+> <cloud>CloudTrail</cloud>
+> 
+> - Record API calls made within your Account by everyone
+> - Can define trails for specific resources
+> - Global Service
+>
+> <cloud>AWS Config</cloud>
+> 
+> - Record configuration changes
+> - Evaluate resources against compliance rules
+> - Get timeline of changes and compliance
+
+for example, with an <cloud>Elastic Load Balancer</cloud> resource, each of the services will give us different information:
+
+> - CloudWatch:
+>   - Monitoring Incoming connections metric
+>   - Visualize error codes as a % over time
+>   - Make a dashboard to get an idea of your load balancer performance
+> - AWS Config:
+>   - Track security group rules for the Load Balancer
+>   - Track configuration changes for the Load Balancer
+>   - Ensure an SSL certificate is always assigned to the Load Balancer (compliance)
+> - CloudTrail:
+>   - Track who made any changes to the Load Balancer with API calls
+
+</details>
+
 
 </details>
 
 ## Aws Account Management
+
+<details>
+<summary>
+Service Health, Multiple Accounts Management and Monitoring Costs
+</summary>
+
+Health Dashboards, Billing Console, AWS Organizations
+
+### AWS Health Dashboard
+
+<details>
+<summary>
+Learn about issues effecting AWS
+</summary>
+
+Service health, either for AWS services or for your specific account.
+
+AWS Service History is for tracking issues with AWS globally.
+
+> - Shows all regions, all services health
+> - Shows historical information for each day
+> - Has an RSS feed you can subscribe to
+> - Previously called AWS Service Health Dashboard
+
+AWS Health Dashboard is for when aws has issues that affect resources in the account, it is a global service, and we can see what might effect us in the future and history.
+
+> - AWS Account Health Dashboard provides alerts and remediation guidance when AWS is experiencing events that may impact you.
+> - While the Service Health Dashboard displays the general status of AWS services, Account Health Dashboard gives you a **personalized** view into the performance and availability of the AWS services underlying your AWS resources.
+> - The dashboard displays relevant and timely information to help you manage events in progress and provides proactive notification to help you plan for scheduled activities.
+> - Can aggregate data from an entire AWS Organization
+> - Previously called AWS Personal Health Dashboard (PHD)
+
+we can search for issues effecting specific services in a specific region, and look at historical data.
+
+#### AWS Health Dashboard - Events & Notifications
+
+we can use <cloud>EventBridge</cloud> to react to Health Event Notifications, such as getting an email when an instance is set to a scheduled update, or when a resource is potentially effected by an outage in AWS.\
+Another example is when there was a leak of <cloud>IAM</cloud> access keys, we can invoke a lambda to delete the keys from our account if they belong to us. or if an AMI or instance type is scheduled for retirement.
+
+</details>
+
+### AWS Organizations and Control Tower
+
+<details>
+<summary>
+Managing multiple accounts at once
+</summary>
+
+Manage multiple accounts, one management and multiple member accounts (each account can only be a member of one organization), allows for consolidated billing across all account - a single payment method.Getting pricing benefits from aggregated usage and sharing reserved instances and saving plans discounts across member accounts.\
+Supports an API to automate AWS account creation.
+
+we have a root organization unit which holds the management account, and inside it we can have a hierarchy of organizational units, which can hold member accounts or other organizational units. we can separate the OUs by business unit, project, environment (prod, dev, sandbox).
+
+> Advantages:
+> 
+> - Multi Account vs One Account Multi VPC
+> - Use tagging standards for billing purposes
+> - Enable CloudTrail on all accounts, send logs to central S3 account
+> - Send CloudWatch Logs to central logging account
+> - Establish Cross Account Roles for Admin purposes
+> 
+> Security: Service Control Policies (SCP)
+> 
+> - IAM policies applied to OU or Accounts to restrict Users and Roles
+> - They do not apply to the management account (full admin power)
+> - Must have an explicit allow from the root through each OU in the direct path to the target account (does not allow anything by default – like IAM)
+
+#### AWS Organizations Service Control Policies
+
+in the <cloud>AWS Organization</cloud> service, we <kbd>Create Organization</kbd> from the account we want to be the management account. we can then <kbd>Add Account</kbd> and either create a new account under the organization, or invite an existing account to join the organization. the management organization has full control over the member accounts, until the account decides to leave the AWS organization or the management account removes it.\
+From the management account, we can <kbd>Create Organizational Unit</kbd> to partition our members accounts, we can create OUs inside other OUs and for each one we can add member accounts and set policies.
+
+(we can move the management account into an OU, but it's best practice to keep it at the root).
+
+there are different kinds of policies, they are disabled by default.
+
+- AI Services
+- Backup Policies
+- Service Control Policies
+- Tag Policies
+
+Service Control Policies allow us to define what the member accounts can do. there is a default *FullAwsAccess* policy, and we can add explicit deny policies to prevent unwanted behavior. policies are inherited from the containing Organizational units.
+
+#### AWS Organizations Misc
+
+> For billing purposes, the consolidated billing feature of AWS Organizations treats all the accounts in the organization as one account.
+> 
+> - This means that all accounts in the organization can receive the hourly cost benefit of Reserved Instances that are purchased by any other account.
+> - The payer account (master account) of an organization can turn off Reserved Instance (RI) discount and Savings Plans discount sharing for any accounts in that organization, including the payer account.
+> - This means that RIs and Savings Plans discounts aren't shared between any accounts that have sharing turned off.
+> - To share an RI or Savings Plans discount with an account, both accounts must have sharing turned on.
+
+use the AWS organization id in policy condition instead of specific accounts
+
+> Use `aws:PrincipalOrgID` condition key in your resource-based policies to restrict access to IAM principals from accounts in an AWS Organization.
+
+Tag Policies are used to standardize tags across resources in an AWS Organization
+> - Ensure consistent tags, audit tagged resources,maintain proper resources categorization, etc...
+> - You define tag keys and their allowed values
+> - Helps with AWS Cost Allocation Tags and Attribute based Access Control
+> - Prevent any non-compliant tagging operations on specified services and resources (has no effect on resources without tags)
+> - Generate a report that lists all tagged/on-compliant resources
+> - Use CloudWatch Events to monitor non-compliant tags
+
+#### AWS Control Tower
+
+<cloud>Control Tower</cloud> is a higher layer than <cloud>AWS Organizations</cloud>, everything is configured inside a *Landing Zone*.
+
+> Easy way to set up and govern a secure and compliant multi-account AWS environment based on best practices\
+> Benefits:
+> 
+> - Automate the set up of your environment in a few clicks
+> - Automate ongoing policy management using guardrails
+> - Detect policy violations and remediate them
+> - Monitor compliance through an interactive dashboard
+> 
+> AWS Control Tower runs on top of AWS Organizations:
+> - It automatically sets up AWS Organizations
+
+we can use <cloud>Control Tower</cloud> to deny creation of resources in specific resources, it creates the <cloud>AWS Organization</cloud> with pre-defined OUs and accounts (audit, logs), we can enable <cloud>CloudTrail</cloud> across all accounts, set up centeralized logs, and disable custom <cloud>KMS</cloud> keys use in accounts inside the landing zone.\
+We can continue to define stuff in <cloud>Control Tower</cloud>, add users, modify guardrails on the accounts, control organizational units, manage user access, etc...
+
+</details>
+
+### AWS Service Catalog
+
+<details>
+<summary>
+Simplified AWS Resource creation through a custom AWS portal.
+</summary>
+
+> Users that are new to AWS have too many options, and may create stacks that are not compliant / in line with the rest of the organization
+> - Some users just want a quick self-service portal to launch a set of authorized products pre-defined by admins
+> -  Includes: virtual machines, databases, storage options, etc...
+> -  Enter AWS Service Catalog!
+
+Admins create products - <cloud>CloudFormation</cloud> templates, and gather them inside "portfolios" and define <cloud>IAM</cloud> policies of who can access the portfolios.\
+Users can view those products in portfolios, and choose which ones to launch, and those services will be properly configured with the correct tags.
+
+catalogs (portfolios) can be shared to other accounts and be used by them.
+
+> Catalog Sharing - Share portfolios with individual AWS accounts or AWS Organizations
+> Sharing options:
+> - Share a reference of the portfolio, then import the shared portfolio in the recipient account (stays in-sync with the original portfolio)
+> - Deploy a copy of the portfolio into the recipient account (must re-deploy any updates)
+> - Ability to add products from the imported portfolio to the local portfolio
+
+the portfolios have `TagOptions`, which are inherited to products deployed from the catalog, and make sure the resources are properly tagged.
+
+in the <cloud>Service Catalog</cloud>, we can submit a request to AWS to change the branding of the Service catalog that other accounts will see.\
+Under the "administration" section, we can <kbd>Create Product</kbd>, we can use <cloud>Terraform</cloud> or <cloud>CloudFormation</cloud> stack. we can add the product into a portfolio, which we first <kbd>Create Portfolio</kbd>, we can add constraints to on the portfolio, and we need to modify the access to it.\
+
+from a different account, we can navigate to <cloud>Service Catalog</cloud> and use the product to create the stack
+</details>
+
+### AWS Billing And Costs
+
+<details>
+<summary>
+Costs and Pricing.
+</summary>
+
+billing data is stored in <cloud>CloudWatch</cloud> in one region (us-east-1), but it contains the costs of all regions.\
+we first need to enable billing alerts in the account preferences (settings). in the <cloud>CloudWatch</cloud> service, we can expand the "Alarms" section and choose "billing alarms", and then <kbd>Create Alarm</kbd>. we select the metrics either by service or the total cost. we can set a condition when to trigger the alarm.
+
+#### AWS Cost Explorer
+
+we use the <cloud>Cost Explorer</cloud> to visualize the costs and usage, we can create reports based on region, service, tags and understand how much we spend on AWS services. we can also get forcast estimation based on past usage, and see how saving plans would effect our costs.
+
+#### AWS Budgets
+
+we can create a budget and send alarms based on more granular data than normal cost alarms.
+
+> - Create budget and send alarms when costs exceeds the budget
+> - 4 types of budgets: Usage, Cost, Reservation, Savings Plans
+> - For Reserved Instances (RI)
+>   -  Track utilization
+>   -  Supports EC2, ElastiCache, RDS, Redshift
+> - Up to 5 SNS notifications per budget
+> - Can filter by: Service, Linked Account, Tag, Purchase Option, Instance type, Region, Availability Zone, API Operation, etc...
+> - Same options as AWS Cost Explorer!
+> - 2 budgets are free, then $0.02/day/budget
+
+we can use pre-defined templates for common use-cases, or customize the budget for specific services, tags, regions, etc...\
+We can set the alerts based on thresholds (more than one), and they can be based on actual cost or  forecasted spending.\
+We can also have actions taken based on the budget alerts, so we need the proper <cloud>IAM</cloud> role. the role can apply actions such as attaching IAM policies (like deny permissions) or stopping EC2 instances.
+
+#### AWS Cost Allocation Tags & Cost & Usage Reports
+
+> Use cost allocation tags to track your AWS costs on a detailed level
+> - AWS generated tags
+>   - Automatically applied to the resource you create
+>   - Starts with Prefix `aws:` (e.g. aws: createdBy)
+> - User-defined tags
+>   - Defined by the user
+>   - Starts with Prefix `user:`
+
+we can go the billing service and see the tags (aws and user created tags), and we can enable/disable tags to define which tags will be part of the cost allocation reports. we can create the report and have it exported to <cloud>S3</cloud> and then analyze it. we can set integration with services and control the compression of the data.
+
+#### AWS Compute Optimizer 
+
+> Reduce costs and improve performance by recommending optimal AWS resources for your workloads. Helps you choose optimal configurations and rightsize your workloads (over/under provisioned).\
+> Uses Machine Learning to analyze your resources configurations and their utilization CloudWatch metrics.\
+> Supports some services:
+> 
+>   - EC2 instances
+>   - EC2 Auto Scaling Groups
+>   - EBS volumes
+>   - Lambda functions
+> - Lower your costs by up to 25%
+> - Recommendations can be exported to S3
+
+</details>
+
+
+
+</details>
+
 ## Disaster Recovery
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+### AWS DataSync
+### AWS Backup
+### AWS Backup Hands On
+
+</details>
+
 ## Security and Compliance for SysOps
 ## Identity
 ## Networking - Route53
@@ -4504,6 +5025,7 @@ Additional terms and acronyms to keep.
 - WORM - Write Once, Read Many (Glacier)
 - HPC - High Performance Computing
 - PITR - Point in Time Recovery
+- SCP - Service Control Policies (IAM organization)
 </details>
 
 <!-- misc end -->
