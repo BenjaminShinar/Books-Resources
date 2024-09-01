@@ -2,10 +2,22 @@
   "version": "0.2",
   "ignorePaths": [],
   "dictionaryDefinitions": [],
-  "dictionaries": ["aws", "k8s", "linux"],
-  "words": ["Fargate"],
+  "dictionaries": [
+    "aws",
+    "k8s",
+    "linux"
+  ],
+  "words": [
+    "Fargate",
+    "vunrabilites"
+  ],
   "ignoreWords": [
-    "Stephane", "Maarek", "Udemy", "Gbps", "GWLB", "ALPN" 
+    "Stephane",
+    "Maarek",
+    "Udemy",
+    "Gbps",
+    "GWLB",
+    "ALPN"
   ],
   "import": [],
   "enabled": true,

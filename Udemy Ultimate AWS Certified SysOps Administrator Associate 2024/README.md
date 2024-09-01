@@ -1,6 +1,6 @@
 <!--
-// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS PITR
- -->
+// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS PITR HDFS MITM fileb certutil FIPS
+-->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
 
@@ -4638,7 +4638,7 @@ Organizations Trails can store all events from different aws accounts in the sam
 > - A trail that will log all events for all AWS accounts in an AWS Organization
 > - Log events for management and member accounts
 > - Trail with the same name will be created in every AWS account (IAM permissions)
-> - Member accounts can’t remove or modify the organization trail (view only)
+> - Member accounts can't remove or modify the organization trail (view only)
 
 Log File Integrity Validation - Create a hash of all the events being stored in <cloud>S3</cloud> to make sure they weren't tempered with.
 
@@ -4968,19 +4968,592 @@ we can go the billing service and see the tags (aws and user created tags), and 
 
 ## Disaster Recovery
 
+<details>
+<summary>
+Synchronized data and backups.
+</summary>
+
+### AWS DataSync
+
+<details>
+<summary>
+Synchronize data with AWS from other sources and between AWS services.
+</summary>
+
+> Move large amount of data to and from On-premises / other cloud to AWS (NFS, SMB, HDFS, S3 API...) – needs agent. Or move data from AWS to AWS (different storage services) – no agent needed.\
+> 
+> Can synchronize to:
+> 
+> - <cloud>Amazon S3</cloud> (any storage classes – including Glacier)
+> - <cloud>Amazon EFS</cloud>
+> - <cloud>Amazon FSx</cloud> (Windows, Lustre, NetApp, OpenZFS...)
+> 
+> - Replication tasks can be scheduled hourly, daily or weekly.
+> - File permissions and metadata are preserved (NFS POSIX, SMB…)
+> - One agent task can use 10 Gbps, can setup a bandwidth limit.
+
+can synchronize two-ways (not just backup to the cloud), <cloud>Snowcone</cloud> devices come pre-installed with the agent.
+
+</details>
+
+### AWS Backup
+
+<details>
+<summary>
+Central Management of Backups across services.
+</summary>
+
+> Fully managed service. Centrally manage and automate backups across AWS services, No need to create custom scripts and manual processes.\
+> 
+> Supported services:
+> 
+> - <cloud>Amazon EC2</cloud> / <cloud>Amazon EBS</cloud>
+> - <cloud>Amazon S3</cloud>
+> - <cloud>Amazon RDS</cloud> (all DBs engines) / <cloud>Amazon Aurora</cloud> / <cloud>Amazon DynamoDB</cloud>
+> - <cloud>Amazon DocumentDB</cloud> / <cloud>Amazon Neptune</cloud>
+> - <cloud>Amazon EFS</cloud> / <cloud>Amazon FSx</cloud> (Lustre & Windows File Server)
+> - AWS <cloud>Storage Gateway</cloud> (Volume Gateway)
+> 
+> Supports cross-region and cross-account backups.
+
+PITR - point in time recovery, on demand schedules, can backup resources based on tags, controls the backup frequency, retention period, transition to cold storage.\
+<cloud>AWS Backup</cloud> can work with Vault Lock and the WORM model (write Once, read Many), which prevents changes and deletions to the data, locks the retention period, and even the root account user can not delete data when the Vault Lock policy is in-place.
+
+hands On:\
+in the <cloud>AWS Backup</cloud> service, we can look at the pre-defined template, we can see the backup rule - target, frequency, window for update, retention and transitions.\
+once we create the backup plan, we need to assign resources to it, which is both the types of resources and filtering them by tags. we need to provide an <cloud>IAM</cloud> role for the backup task to use.
+</details>
+
+
+</details>
+
+## Security and Compliance for SysOps
+
+<details>
+<summary>
+Security Tools and Encryption Services
+</summary>
+
+AWS uses the Shared Responsibility Model - depending on the service, AWS handles some of the security, and the user handles other parts. The more managed the service, the more AWS is in charge of it.\
+At all cases, AWS handles security of the cloud - physical security, infrastructure and networking. the user allways controls the data and access permessions.
+
+The division of responsabilities is different depending on the service, RDS is more managed than EC2, for example.
+
+### DDoS, AWS Shield and AWS WAF
+
+<details>
+<summary>
+DDoS protection, firewall
+</summary>
+
+DDoS - distributed denial of service - an attack by sending a large volume of requests to the application.
+
+<cloud>AWS Shield</cloud> is a service to protect against DDoS attacks. the standard version is enabled without costs. the Advanced version provides a premium protection around at all times.\
+<cloud>AWS WAF</cloud> is a firewall service that filters requests based on rules.\
+<cloud>CloudFront</cloud> (CDN) and <cloud>Route53</cloud> can be combined with the <cloud>AWS Shield</cloud> service to form a global edge network that is more resilient to attacks.\
+
+(scaling might be required to support all the features and to provide high quality service when there is high demand)
+
+The standard version of <cloud>Shield</cloud> protects against common types of attacks:
+
+- SYN/UDP floods
+- Reflection Attacks
+- layer 3 and layer 4 common attacks
+
+the advanced version of shield has higher costs:
+- provides protection against more complicated attacks
+- gives access to a DDoS Respone Team (DRP) for 24/7 support
+- reduced fees during usage spike when they are caused by DDoS (if you are attacked, you pay less for for resources that were consumed during that attack).
+
+#### AWS WAF
+
+Web Application Firewall service, protection against layer 7 attacks (HTTP). can only be deployed on services which support HTTP protocol
+
+- Application Load Balancer (<cloud>ELB</cloud>)
+- <cloud>API gateway</cloud>
+- <cloud>CloudFront</cloud>
+
+we define web ACL rules (access control list):
+
+> - Rules can include: IP addresses, HTTP headers, HTTP body, or URI strings
+> - Protects from common attack - SQL injection and Cross-Site Scripting (XSS)
+> - Size constraints, geo-match (block countries)
+> - Rate-based rules (to count occurrences of events) – for DDoS protection
+
+in the <cloud>WAF</cloud> service, we can <kbd>Create IP set</kbd>. the IP set is a list of ips (or cider), we can later use this set. then we <kbd>Create Web ACL</kbd>, and we attach either <cloud>CloudFront</cloud> distribution or some regional resource. each rule consumes capacity unit, which means there is a limit to how many rules we can apply to a single request.\
+There are some predefined rules, each with a know capacity cost. but we can also <cloud>Create Rules</cloud>, and we can create a rule to only allow requests from inside our IpSet. we can also have rate-limit based rules, which can block requests if they exceed a threshold. we can filter them even more. another example is to block SQL injections commands in the request body. we can set the sensitivity level to low or high (which will have more false positives).\
+each rule we create will have the capacity cost and priority, we can choose to allow or block requests that don't match any of the rules.\
+
+Rule Groups are a combination of rules which we can attach to a resource together.
+
+
+</details>
+
+
+### Penetration Testing on AWS
+
+<details>
+<summary>
+Attacking our own infrastructure and services
+</summary>
+
+Permitted penteration attempts (List can increase over time): 
+
+> AWS customers are welcome to carry out security assessments or penetration tests against their AWS infrastructure without prior approval for 8 services:
+>
+> - Amazon EC2 instances, NAT Gateways, and Elastic Load Balancers
+> - Amazon RDS
+> - Amazon CloudFront
+> - Amazon Aurora
+> - Amazon API Gateways
+> - AWS Lambda and Lambda Edge functions
+> - Amazon Lightsail resources
+> - Amazon Elastic Beanstalk environments
+
+Prohibited penteration attempts
+
+> - DNS zone walking via Amazon Route 53 Hosted Zones
+> - Denial of Service (DoS), Distributed Denial of Service (DDoS), Simulated DoS, Simulated DDoS
+> - Port flooding
+> - Protocol flooding
+> - Request flooding (login request flooding, API request flooding)
+
+</details>
+
+### Amazon Inspector
+
+<details>
+<summary>
+Automated Security Assessments
+</summary>
+
+automatic security checks - network access, known vunrabilites (package CVEs)
+
+> For <cloud>EC2</cloud> instances
+> 
+> - Leveraging the <cloud>AWS System Manager</cloud> (SSM) agent
+> - Analyze against unintended network accessibility
+> - Analyze the running OS against known vulnerabilities
+> 
+> For Container Images push to Amazon <cloud>ECR</cloud>
+> 
+> - Assessment of Container Images as they are pushed
+> 
+> For <cloud>Lambda</cloud> Functions
+> 
+> - Identifies software vulnerabilities in function code and package dependencies
+> - Assessment of functions as they are deployed
+
+reports the findings to the <cloud>Security Hub</cloud> and to <cloud>EventBridge</cloud>.
+
+hands on:\
+in the <cloud>Amazon Inspector</cloud> service, we need to enable permissions to the service and <kbd>Enable inspector</kbd>. we can launch an <cloud>EC2</cloud> machine and wait for it to be detected and scanned. we can see the state of the instance, and it might have the "Unmanaged Ec2 Instance" message. we can see the trouble-shooting guide and it will tell us we didn't give the instance the correct permissions. we can fix is through the <cloud>System Manager</cloud> to apply the permissions to all machines.\
+we can look at the findings, and see if there are issues like vulnerable OS or possible network access from the public internet.
+
+</details>
+
+### Logging in AWS
+
+<details>
+<summary>
+Logs and data from security services
+</summary>
+
+> To help compliance requirements, AWS provides many service-specific security and audit logs.\
+> Service Logs include:
+> 
+> - CloudTrail trails - trace all API calls
+> - Config Rules - for config & compliance over time
+> - CloudWatch Logs - for full data retention
+> - VPC Flow Logs - IP traffic within your VPC
+> - ELB Access Logs - metadata of requests made to your load balancers
+> - CloudFront Logs - web distribution access logs
+> - WAF Logs - full logging of all requests analyzed by the service
+> 
+> Logs can be analyzed using AWS Athena if they're stored in S3:
+> - You should encrypt logs in S3, control access using IAM & Bucket Policies, MFA
+> - Move Logs to Glacier for cost savings
+
+</details>
+
+
+### Additional Security Services
+
+<details>
+<summary>
+anomaly detection, private data detection, best practices assessments
+</summary>
+
+- <cloud>GuardDuty</cloud> - machine learning to detect anomalies from event logs.
+- <cloud>Amazon Macie</cloud> - detect personal data and private data that shouldn't be stored.
+- <cloud>Trusted Advisor</cloud> - account assessments
+#### Amazon GuardDuty
+
+> Intelligent Threat discovery to protect your AWS Account. Uses Machine Learning algorithms, anomaly detection, 3rd party data.\
+> One click to enable (30 days trial), no need to install software.\
+> Input data includes:
+> - <cloud>CloudTrail</cloud> Events Logs – unusual API calls, unauthorized deployments
+>   - Management Events – create VPC subnet, create trail, etc...
+>   - <cloud>S3</cloud> Data Events – get object, list objects, delete object, etc...
+> - <cloud>VPC</cloud> Flow Logs – unusual internal traffic, unusual IP address
+> - DNS Logs – compromised EC2 instances sending encoded data within DNS queries
+> - Optional Features 
+>   - EKS Audit Logs
+>   - RDS & Aurora
+>   - EBS
+>   - Lambda
+>   - S3 Data Events
+> 
+> Can setup EventBridge rules to be notified in case of findings. EventBridge rules can target AWS Lambda or SNS\
+> Can protect against CryptoCurrency attacks (has a dedicated "finding" for it)
+
+
+#### Amazon Macie
+
+> Amazon Macie is a fully managed data security and data privacy service  that uses machine learning and pattern matching to discover and protect your sensitive data in AWS.\
+> Macie helps identify and alert you to sensitive data, such as personally identifiable information (PII)
+
+#### Trusted Advisor
+
+> AWS account assessment - Analyze your AWS accounts and provides recommendation on 6 categories:
+> - Cost optimization
+> - Performance
+> - Security
+> - Fault tolerance
+> - Service limits
+> - Operational Excellence
+> 
+> Business & Enterprise Support plan
+> 
+> - Full Set of Checks
+> - Programmatic Access using AWS Support API
+
+</details>
+
+### Key Management Service and Encryption
+
+<details>
+<summary>
+Encryption and Keys.
+</summary>
+
+<cloud>KMS</cloud> - Key Management Service.
+
+Encryption can happen inFlight - during transit, or atRest - server side, client-side - encrypted by the client (and not decrypted by the server).
+
+> Encryption in flight (TLS / SSL)
+> - Data is encrypted before sending and decrypted after receiving
+> - TLS certificates help with encryption (HTTPS)
+> - Encryption in flight ensures no MITM (man in the middle attack) can happen.
+> 
+> Server-side encryption at rest
+> - Data is encrypted after being received by the server
+> - Data is decrypted before being sent
+> - It is stored in an encrypted form thanks to a key (usually a data key)
+> - The encryption / decryption keys must be managed somewhere, and the server must have access to it
+> 
+> Client-side encryption
+> - Data is encrypted by the client and never decrypted by the server
+> - Data will be decrypted by a receiving client
+> - The server should not be able to decrypt the data
+> - Could leverage Envelope Encryption
+
+
+KMS is a managed Key service
+
+> - AWS manages encryption keys for us
+> - Fully integrated with IAM for authorization
+> - Easy way to control access to your data
+> - Able to audit KMS Key usage using <cloud>CloudTrail</cloud>
+> - Seamlessly integrated into most AWS services (<cloud>EBS</cloud>, <cloud>S3</cloud>, <cloud>RDS</cloud>, <cloud>SSM</cloud> and others)
+> - Never ever store your secrets in plaintext, especially in your code!
+> - KMS Key Encryption also available through API calls (SDK, CLI)
+> - Encrypted secrets can be stored in the code / environment variables
+
+Support symmetric (AES-256) and asymmetric (RSA, ECC key pairs) keys. symmetric keys use the same key to encrypt and decrypt the data, this is what intgrated services use. we never get access to the key itself. Asymmetric encryption uses two keys (private and public), we can download and share the public key, but not the private one. this is used for services outside of AWS which can't call the <cloud>KMS</cloud> api.
+
+Keys can be owned by AWS - default keys for services, or be managed by the user - keys which are created or imported by the user
+
+> - AWS Owned Keys (free): 
+>   - SSE-S3
+>   - SSE-SQS 
+>   - SSE-DDB (default key)
+> 
+> - AWS Managed Key: free (aws/service-name, example: aws/rds or aws/ebs)
+>
+> Customer managed
+> - Customer managed keys created in KMS: $1 / month
+> - Customer managed keys imported: $1 / month
+>   - + pay for API call to KMS ($0.03 / 10000 calls)
+
+keys are scoped per region, so if we want to copy an encrypted <cloud>EBS</cloud> volume from one region to another, there are things we must do:
+- make a snapshot with the same key
+- copy the snapshot and reEncrypt it with a different key
+- restore a volume from the copied snapshot
+
+KMS has key policies, which control access to the keys, just like <cloud>S3</cloud> bucket policies,unlike them, key policies are mandatory and must be used.
+
+> Default KMS Key Policy:
+> 
+> - Created if you don't provide a specific KMS Key Policy
+> - Complete access to the key to the root user = entire AWS account
+> 
+> Custom KMS Key Policy:
+> 
+> - Define users, roles that can access the KMS key
+> - Define who can administer the key
+> - Useful for cross-account access of your KMS key
+
+if we want to copy a snapshot between accounts, the snapshot is first enctypted using a KMS key. then we attach a key policy to authorize cross-account access,
+we can share the snapshot with the target account, which can then create a copy with a different key or create a volume from it.
+
+#### KMS Demo and CLI
+in the <cloud>KMS</cloud> service, under "AWS Managed Keys" section, we can see the keys created for each service that we've used in the account. the key has an alias and a key policy that defines it can only be accessed from that service.\
+Under the "Customer Managed Keys", we can <kbd>Create Key</kbd>, either symmetric or asymmetric, and we can choose if the key will be used for encryption and decryption, or for hash based authentication.\
+Keys can be regional or multi-regional (which means the can be replicated across regions), and can be created in <cloud>KMS</cloud> or imported from a file. we can give the key an alias name, and then define who can manage the key and who can use it (including other accounts). this is what creates the key polices.\
+The key can have automatic rotation, between 90 days and 2560 days (around seven years). we initate on-demand rotation if we want. keys can be disabled or be scheduled for deletion.
+
+("customer key stores" are used for HSM - later)
+
+We can use the CLI to encrypt and decrypt data. when we run the command we get a base64 coding on top of the encrypted binary file.
+
+```sh
+# 1) encryption
+aws kms encrypt --key-id alias/tutorial --plaintext fileb://ExampleSecretFile.txt --output text --query CiphertextBlob  --region eu-west-2 > ExampleSecretFileEncrypted.base64
+
+# base64 decode for Linux or Mac OS 
+cat ExampleSecretFileEncrypted.base64 | base64 --decode > ExampleSecretFileEncrypted
+
+# base64 decode for Windows
+certutil -decode .\ExampleSecretFileEncrypted.base64 .\ExampleSecretFileEncrypted
+
+
+# 2) decryption
+
+aws kms decrypt --ciphertext-blob fileb://ExampleSecretFileEncrypted   --output text --query Plaintext > ExampleFileDecrypted.base64  --region eu-west-2
+
+# base64 decode for Linux or Mac OS 
+cat ExampleFileDecrypted.base64 | base64 --decode > ExampleFileDecrypted.txt
+
+
+# base64 decode for Windows
+certutil -decode .\ExampleFileDecrypted.base64 .\ExampleFileDecrypted.txt
+```
+
+#### KMS Key Rotation
+
+> Automatic Key rotation:
+> - AWS-managed KMS Key: automatic every 1 year
+> - Customer-managed KMS Key: (must be enabled) automatic & on-demand
+> - Imported KMS Key: only manual rotation possible using alias
+
+when we rotate a key, the key id remains the same, but the backing key changes (the old one remains for decryption).
+
+manual key rotation requires creating new keys and new key ids, so it's best to use aliases. the application only knows the alias, not the underlying key id.
+
+#### KMS Operations
+
+Encrypting and sharing Volumes and snapshots
+
+> Changing The KMS Key For An Encrypted EBS Volume
+> - You can't change the encryption keys used by an EBS volume
+> - Create an EBS snapshot and create a new EBS volume and specify the new KMS key
+> 
+> Sharing KMS Encrypted RDS DB Snapshots
+> - You can share RDS DB snapshots encrypted with KMS CMK with other accounts, but must first share the KMS CMK with the target account using Key Policy
+
+Deleting KMS keys
+
+> KMS Key Deletion Considerations
+> - Schedule CMK for deletion with a waiting period of 7 to 30 days
+>   - CMK's status is "Pending deletion" during the waiting period.
+> - During the CMK's deletion waiting period:
+>   - The CMK can't be used for cryptographic operations (e.g., can't decrypt KMSencrypted objects in S3 – SSE-KMS)
+>   - The key is not rotated even if planned
+> - You can cancel the key deletion during the waiting period
+> - Consider disabling your key instead of deleting it if you're not sure!
+
+we can create a <cloud>CloudWatch</cloud> alarm to monitor <cloud>CloudTrail</cloud> events regarding the keys in the "Pending Deletion" state to get notified if some user or service tries using the keys.
+
+#### CloudHSM
+
+HSM - Hardware Security Module
+- KMS - encryption software
+- HSM - encryption hardware
+
+we manage the encryption keys, not AWS
+
+> - HSM device is tamper resistant, FIPS 140-2 Level 3 compliance
+> - Supports both symmetric and asymmetric encryption (SSL/TLS keys)
+> - No free tier available
+> - Must use the CloudHSM Client Software
+> - <cloud>Redshift</cloud> supports CloudHSM for database encryption and key management
+> - Good option to use with SSE-C encryption
+> 
+> - CloudHSM clusters are spread across Multi AZ (HA)
+>   - Great for availability and durability
+
+HSM has integration with KMS using the Custom Key Store. this gives us the benefit of getting <cloud>CloudTrail</cloud> audit logs when our HSM keys are used through the <cloud>KMS</cloud>
+
+| Feature                    | AWS KMS                                                                                  | AWS CloudHSM                                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Tenancy                    | Multi-Tenant                                                                             | Single-Tenant                                                          |
+| Standard                   | FIPS 140-2 Level 3                                                                       | FIPS 140-2 Level 3                                                     |
+| Master Keys                | AWS Owned CMK, AWS Managed CMK, Customer Managed CMK                                     | Customer Managed CMK                                                   |
+| Key Types                  | Symmetric, Asymmetric, Digital Signing                                                   | Symmetric, Asymmetric, Digital Signing & Hashing                       |
+| Key Accessibility          | Accessible in multiple AWS regions (can’taccess keys outside the region it’s created in) | Deployed and managed in a VPC, Can be shared across VPCs (VPC Peering) |
+| Cryptographic Acceleration | None                                                                                     | SSL/TLS Acceleration, Oracle TDE Acceleration                          |
+| Access & Authentication    | AWS IAM                                                                                  | You create users and manage their permissions                          |
+| High Availability          | AWS Managed Service                                                                      | Add multiple HSMs over different AZs                                   |
+| Audit Capability           | CloudTrail, CloudWatch,                                                                  | CloudTrail, CloudWatch, MFA support                                    |
+| Free Tier                  | Yes                                                                                      | No                                                                     |
+
+</details>
+
+### AWS Artifact Overview
+
+<details>
+<summary>
+AWS portal for Reports and Compliance agreements (AWS-wide and account specific).
+</summary>
+
+> AWS Artifact (not really a service)
+> - Portal that provides customers with on-demand access to AWS compliance documentation and AWS agreements
+> - Artifact Reports - Allows you to download AWS security and compliance documents from third-party auditors, like AWS ISO certifications, Payment Card Industry (PCI), and System and Organization Control (SOC) reports
+> - Artifact Agreements - Allows you to review, accept, and track the status of AWS agreements such as the Business Associate Addendum (BAA) or the Health Insurance Portability and Accountability Act (HIPAA) for an individual account or in your organization
+> - Can be used to support internal audit or compliance
+
+</details>
+
+### AWS Certificate Manager
+
+<details>
+<summary>
+TLS Certificates for in-flight encryption
+</summary>
+
+ACM - <cloud>AWS Certificate Manager</cloud>
+
+> Easily provision, manage, and deploy TLS Certificates
+> - Provide in-flight encryption for websites (HTTPS)
+> - Supports both public and private TLS certificates
+> - Free of charge for public TLS certificates
+> - Automatic TLS certificate renewal
+> - Integrations with (load TLS certificates on):
+>   - Elastic Load Balancers (CLB, ALB, NLB)
+>   - CloudFront Distributions
+>   - APIs on API Gateway
+> 
+> - Cannot use ACM with EC2 (can't be extracted)
+
+expose an <cloud>ELB</cloud> as a secure endpoint with HTTPS protocol.
+
+we request a Public certificate for a list of domain names, either a fully qualified name or a wild card. then we set validation mode: DNS or Email. if we use DNS validation we need to use a `CNAME` record.\
+This process can take a few hours. certificates are renewed automatically 60 days before expiration.\
+
+We can also import a public certificate, in this case there is no automatic renewal.
+
+we can get notified about certificates expiration through the <cloud>EventBridge</cloud> service, or through <cloud>AWS Config</cloud> with the "acm-certificate-expiration-check" rule, and then we can get a non-complint resource configuration.
+
+in the <cloud>ELB</cloud>, we can set a redirect rule from HTTP to HTTPS, and use the TLS certificates.
+
+for <cloud>API Gateway</cloud>, <cloud>ACM</cloud> integrates with two of the three EndPoints types:
+
+- edge-optimized (default, global clients) - possible
+- regional (only on one regional) - possible
+- private (from <cloud>VPC</cloud> using ENI) - meaningless
+
+we first create a `Custom Domain Name` resource in the gateway.\
+For edge-optimized, the TLS certificate must be created in us-east-1 region, which is where the <cloud>CloudFront</cloud> service operates from.\
+For regional gateways, the certificate in <cloud>ACM</cloud> must be imported from the same region.\
+for both cases we set the `CNAME` or `A-Alias` in <cloud>Route53</cloud>.
+
+HandsOn:
+in <cloud>Certificate Manager</cloud> service, we can <kbd>Request a Certificate</kbd>, either public or private, we select a public, and provide a fully qualified domain. the validation method will be DNS, and using default key. the request is now in pending state, and we are prompted to create a `CNAME` record in <cloud>Route53</cloud>.\
+After a while, the certificate is up and validated, and we can create an application to use it.\
+in the <cloud>Elastic BeanStalk</cloud> service, we <kbd>Create application</kbd> (web server), using the sample application and the custom configuration for availability. we use the default settings, and use a dedicated application load balancer. we then <kbd>Add Listener</kbd> on port 443 with the HTTPS protocol, and here we need to choose the SSL certificate to use. we also need to choose a SSL policy (how strong the HTTPS security is). we continue with the defaults and launch the environment.\
+we navigate to <cloud>Route53</cloud>, and <kbd>Create A Record</kbd> of `CNAME` type, enter the load balancer address, and point our record to it.
+
+</details>
+
+### Secrets Manager
+
+<details>
+<summary>
+Manage Secrets with rotation.
+</summary>
+
+> Newer service, meant for storing secrets. Capability to force rotation of secrets every X days.
+> - Automate generation of secrets on rotation (uses <cloud>Lambda</cloud>)
+> - Mostly meant for RDS integration
+>   - MySQL
+>   - PostgreSQL
+>   - <cloud>Aurora</cloud>
+> - Secrets are encrypted using <cloud>KMS</cloud>
+
+There are also multi-region secrets, which are replicas of the data across other regions, all kept in-sync with the primary secret and automatically change when it is changed. Replica Secrets can be later promoted to StandAlone secrets.
+
+Hands On:\
+in the service console, <kbd>Store New Secret</kbd>, we are prompted with which kid of secret we want to use
+- <cloud>RDS</cloud>
+- <cloud>RedShift</cloud>
+- <cloud>DocumentDB</cloud>
+- Other database secrets
+- other types of secrets (such as api key)
+
+for databases, we get a user-password, and for other types, we can use a list of key-value pairs or plain text (a json). we select the encryption key (default or <cloud>KMS</cloud>) and we can configure the rotation period, and after that time a <cloud>Lambda</cloud> will be invoked and do the required actions to rotate the secret.
+
+for RDS databases, the integration is a bit better, and the secret manager will handle setting the secret on the database directly.
+
+#### Secrets Manager - Monitoring & Troubleshooting
+
+> <cloud>CloudTrail</cloud> captures API calls to the Secrets Manager API. It captures other related events that might have a security or compliance impact on your AWS account or might help you troubleshoot operational problems.\
+> CloudTrail records these events as non-API service events:
+> 
+> - `RotationStarted` event
+> - `RotationSucceeded` event
+> - `RotationFailed` event
+> - `RotationAbandoned` event – a manual change to a secret instead of automated rotation
+> - `StartSecretVersionDelete` event
+> - `CancelSecretVersionDelete` event
+> - `EndSecretVersionDelete` event
+> 
+> Combine with CloudWatch Logs and CloudWatch alarms for automations
+
+we can also monitor the rotation through the <cloud>Lambda</cloud> Logs of the failed rotation.
+
+#### SSM Parameter Store vs Secrets Manager
+
+Secret Manager has rotation and management for secrets, unlike <cloud>SSM Parameter Store</cloud> with secure values.\
+- Secret Manager is more expensive.
+- Integration with Lambda for rotation (we have code templates to use).
+
+Parameter Store uses a simpler API, doesn't require <cloud>KMS</cloud> encryption (it is optional). we can employ scheduled <cloud>EventBridge</cloud> rules to invoke a lambda which replaces the secret and stores the updated value.
+
+</details>
+
+
+
+</details>
+
+## Identity
+
 <!-- <details> -->
 <summary>
 //TODO: add Summary
 </summary>
 
-### AWS DataSync
-### AWS Backup
-### AWS Backup Hands On
+
+### [CCP/SAA/DVA] IAM Security Tools
+### IAM Access Analyzer
+### Identity Federation with SAML & Cognito
+### STS & Cross Account Access
+### [DVA] Cognito User Pools Overview
+### [DVA] Cognito Identity Pools Overview
+### [DVA] Cognito User Pools vs Cognito Identity Pools
 
 </details>
 
-## Security and Compliance for SysOps
-## Identity
 ## Networking - Route53
 ## Networking - VPC
 ## Other Services
@@ -5026,6 +5599,7 @@ Additional terms and acronyms to keep.
 - HPC - High Performance Computing
 - PITR - Point in Time Recovery
 - SCP - Service Control Policies (IAM organization)
+- DRP - DDoS Respone Team - 24/7 support team when under DDoS attack (<cloud>AWS Shield</cloud> advance)
 </details>
 
 <!-- misc end -->

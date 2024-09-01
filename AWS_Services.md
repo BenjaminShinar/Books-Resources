@@ -20,13 +20,14 @@
 - FSx (windows and Lustre) - native windows managed file system. Lustre is for compute intensive data.
 - EBS
 - Instance Storage
+- DataBackup - central backup service
 
 ## DataBases
 
 - Aurora - highly available MySQL and PostgresSQL compatible Relational Database.
 - DocumentDB - another NoSQL solution.
 - DynamoDB - AWS serverless NoSQL solution.
-- DataSync: Synchronize data between AWS and on-premises.
+- DataSync - Synchronize data between AWS and on-premises (or between AWS services).
 - DMS - Database Migration
 - ElasticCache - in memory "database". redis, memcached
 
@@ -45,9 +46,9 @@
 - SQS (Simple Queue Service)
 - Step Functions
 - SWF (Simple Work Flow service)
-- - EventBridge - Central Events in AWS
+- EventBridge - Central Events in AWS
 - Kinesis - Streaming Data platform (continuously generated data from multiple source, not video streaming)
-- - MSK - Managed Streaming for Apache Kafka
+- MSK - Managed Streaming for Apache Kafka
 
 ## CI-CD
 
@@ -80,16 +81,19 @@
 - SSM - Parameter Store and Secrets Manager
 - Service Quotes - see the AWS quotas at one place and request to increase them.
 - License Manager - manage software licenses
+- Health Dashboard
 
 ## Networking and Security
 
 - Internet Gateway - in the VPC, uses route table
-- Elastic Load Balancer - classic, application, network
+- Elastic Load Balancer - classic, application, network, gateway
 - Route53 - DNS
 - API Gateway - publish and maintain APIs
 - ACM (Amazon Certificate Manager) - Used to provide in-flight encryption for websites (HTTPS) SSL/TLS Certificates.
 - KMS - Key Management Service
+- HSM - Hardware Service Module - keys managed by hardware device, not software
 - Amazon Shield - DDos Protection
+- Inspector - Automated Security Assessments (CVEs, network access)
 
 ## Machine Learning
 
@@ -104,6 +108,7 @@
 - Kendra - AI based search
 - Amazon Q Business/Developer - ai assistant
 - Textract - extract text from scanned documents and handwritten text
+- GuardDuty - detect anomalies from audit and event logs
 
 ## Other
 
@@ -111,4 +116,5 @@
 - AppConfig - Configure, validate, and deploy dynamic configurations
 - Elastic Transcoder - transcode (convert) media files between different formats.
 - Glue - Transform Data
-- AWSConfig - Monitor and prevent resources according to policy
+- AWSConfig - Monitor and prevent resources configuration changes according to policy
+- Trusted Advisor - account assessment on how the account fits AWS best practices
