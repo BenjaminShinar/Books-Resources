@@ -70,11 +70,12 @@
 
 ## Management
 
-- IAM (Identity Access Management)
+- IAM - Identity Access Management
+- STS - Security Token Service
 - CloudWatch - Monitors Resource usage and other metrics, used for billing alarms. Alarms,Events, Logs and Dashboards.
 - CloudWatch Evidently - Safely validate new features by serving them to a specified % of your users. feature flags and A/B testing.
 - CloutTrail: Monitors AWS actions (from the console or the API), which users and accounts did what
-- Cognito - Web Identity Federation service
+- Cognito - Web Identity Federation service - not corporate users
 - CognitoSync - allow marinating an offline copy of data on the user device.
 - Managed Microsoft AD - Active Directory by AWS
 - RAM - Resources Access Manger - share resources across account

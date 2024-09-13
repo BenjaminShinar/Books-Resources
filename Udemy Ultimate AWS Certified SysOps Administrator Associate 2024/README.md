@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS PITR HDFS MITM fileb certutil FIPS
+// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS PITR HDFS MITM fileb certutil FIPS ADFS OIDC ICANN NAPTR nslookup IMDSV
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -2695,7 +2695,7 @@ the common thing to use is bucket policies, they have a similar structure as <cl
 > - Grant access to another account (Cross Account)
 > - Optional Conditions on:
 >   - Public IP or Elastic IP (not on Private IP)
->   - Source VPC or Source VPC Endpoint – only works with VPC Endpoints
+>   - Source VPC or Source VPC Endpoint - only works with VPC Endpoints
 >   - CloudFront Origin Identity
 >   - MFA
 
@@ -2937,12 +2937,12 @@ Long Term Storage Class
 > - Data is retained for the longer term (10s of years)
 > - Alternative to on-premises magnetic tape storage
 > - Average annual durability is 99.999999999%
-> - Cost per storage per month ($0.004 / GB – Standard vs $0.00099 / GB Deep Archive)
+> - Cost per storage per month ($0.004 / GB - Standard vs $0.00099 / GB Deep Archive)
 >
 > Each item in Glacier is called "Archive" (up to 40TB)
 > 
 > - Archives are stored in "Vaults"
-> - By default, data encrypted at rest using AES-256 – keys managed by AWS
+> - By default, data encrypted at rest using AES-256 - keys managed by AWS
 
 <cloud>S3</cloud> has buckets and objects, Glacier hsa vaults and achieves.
 
@@ -2951,7 +2951,7 @@ We can upload files into glacier, and when we request to download from it- we ac
 
 > Retrieval Options:
 >
-> - Expedited (1 to 5 minutes retrieval) – $0.03 per GB and $10 per 1000 requests
+> - Expedited (1 to 5 minutes retrieval) - $0.03 per GB and $10 per 1000 requests
 > - Standard (3 to 5 hours) - $0.01 per GB and 0.03 per 1000 requests
 > - Bulk (5 to 12 hours) - $0.0025 per GB and $0.025 per 1000 requests
 
@@ -3200,7 +3200,7 @@ to allow CORS, we go to the target bucket (B), and add the policy to allow the `
 Multi-Factor Authentication, protection from accidental delete.
 </summary>
 
-> MFA (Multi-Factor Authentication) – force users to generate a code on a device (usually a mobile phone or hardware) before doing important operations on S3.\
+> MFA (Multi-Factor Authentication) - force users to generate a code on a device (usually a mobile phone or hardware) before doing important operations on S3.\
 > MFA will be required to:
 > 
 > - Permanently delete an object version
@@ -3376,7 +3376,7 @@ we can also define a bucket policy to only allow the bucket to be access through
 > - Provide a global endpoint that span S3 buckets in multiple AWS regions
 > - Dynamically route requests to the nearest S3 bucket (lowest latency)
 > - Bi-directional S3 bucket replication rules are created to keep data in sync across regions
-> - Failover Controls – allows you to shift requests across S3 buckets in
+> - Failover Controls - allows you to shift requests across S3 buckets in
 different AWS regions within minutes (Active-Active or Active-Passive)
 
 hands On:\
@@ -3450,8 +3450,8 @@ similar to <cloud>EFS</cloud> - Elastic file system, but using third-party file 
 > - Supports Microsoft's Distributed File System (DFS) Namespaces (group files across multiple FS)
 > - Scale up to 10s of GB/s, millions of IOPS, 100s PB of data
 > - Storage Options:
->   - SSD – latency sensitive workloads (databases, media processing, data analytics, ...)
->   - HDD – broad spectrum of workloads (home directory, CMS, ...)
+>   - SSD - latency sensitive workloads (databases, media processing, data analytics, ...)
+>   - HDD - broad spectrum of workloads (home directory, CMS, ...)
 > - Can be accessed from your on-premises infrastructure (VPN or <cloud>Direct Connect</cloud>)
 > - Can be configured to be Multi-AZ (high availability)
 > - Data is backed-up daily to <cloud>S3</cloud>
@@ -3465,8 +3465,8 @@ similar to <cloud>EFS</cloud> - Elastic file system, but using third-party file 
 > - Scales up to 100s GB/s, millions of IOPS, sub-ms latencies
 > 
 > Storage Options:
-> - SSD – low-latency, IOPS intensive workloads, small & random file operations
-> - HDD – throughput-intensive workloads, large & sequential file operations
+> - SSD - low-latency, IOPS intensive workloads, small & random file operations
+> - HDD - throughput-intensive workloads, large & sequential file operations
 > 
 > Seamless integration with S3:
 > - Can "read S3" as a file system (through FSx)
@@ -3936,7 +3936,7 @@ restoring from an automated backup or a snapshot creates a new DB instance. Back
 > RDS Snapshot:
 > 
 > - Snapshots takes IO operations and can stop the database from seconds to minutes
-> - Snapshots taken on Multi AZ DB don't impact the master – just the standby
+> - Snapshots taken on Multi AZ DB don't impact the master - just the standby
 > - Snapshots are incremental after the first snapshot (which is full)
 > - You can copy & share DB Snapshots
 > - Sharing:
@@ -4026,7 +4026,7 @@ AWS Cloud-Optimized Database.
 > - Aurora storage automatically grows in increments of 10GB, up to 128 TB.
 > - Aurora can have up to 15 replicas and the replication process is faster than MySQL (sub 10 ms replica lag).
 > - Failover in Aurora is instantaneous. It's HA (High Availability) native.
-> - Aurora costs more than RDS (20% more) – but is more efficient.
+> - Aurora costs more than RDS (20% more) - but is more efficient.
 
 It stores the data in six copies accross 3 Availability Zones. and it requires only 4 for writes and 3 copies for read (so it can handle losing some instances). it has peer-to-peer replication for self-healing, and storage is stripped across 100's of volumes.\
 there is a single instance that accepts writes, and if it doesn't respond, there is an automatic failover that takes up to 30 seconds. for read performance, Aurora supports up to 15 read replica instances (any of them can be promoted), with auto scaling to increase or decrease the number. cross-region replication is supported natively.
@@ -4094,7 +4094,7 @@ Security options for datbase
 </summary>
 
 > - At-rest encryption:
-> - Database master & replicas encryption using AWS <cloud>KMS</cloud> – must be defined as launch time
+> - Database master & replicas encryption using AWS <cloud>KMS</cloud> - must be defined as launch time
 > - If the master is not encrypted, the read replicas cannot be encrypted
 > - To encrypt an un-encrypted database, go through a DB snapshot & restore as encrypted
 > - In-flight encryption: TLS-ready by default, use the AWS TLS root certificates client-side
@@ -4180,14 +4180,14 @@ the application must use the correct EndPoint.
 > 
 > Cluster Mode Disabled Cluster:
 > 
-> - Primary Endpoint – for all write operations
-> - Reader Endpoint – evenly split read operations across all read replicas
-> - Node Endpoint – for read operations
+> - Primary Endpoint - for all write operations
+> - Reader Endpoint - evenly split read operations across all read replicas
+> - Node Endpoint - for read operations
 > 
 > Cluster Mode Enabled Cluster:
 > 
-> - Configuration Endpoint – for all read/write operations that support Cluster Mode Enabled Commands
-> - Node Endpoint – for read operations
+> - Configuration Endpoint - for all read/write operations that support Cluster Mode Enabled Commands
+> - Node Endpoint - for read operations
 
 when using Redis with cluster mode disabled (single shard), horizontal scaling adds on removes replica nodes, up to a maximum of 5. vertical scaling creates a new node group with the required instance type, and when all the data is replicated, the DNS is updated and the old instances are terminated.
 
@@ -4410,12 +4410,12 @@ a script (like automation), that tests behavior of our websites or APIs and can 
 
 we can use some bluprints, which are templates for common tests:
 
-> - Heartbeat Monitor – load URL, store screenshot and an HTTP archive file
-> - API Canary – test basic read and write functions of REST APIs
-> - Broken Link Checker – check all links inside the URL that you are testing
-> - Visual Monitoring – compare a screenshot taken during a canary run with a baseline screenshot
-> - Canary Recorder – used with CloudWatch Synthetics Recorder (record your Actions on a website and automatically generates a script for that)
-> - GUI Workflow Builder – verifies that actions can be taken on your webpage (e.g., test a webpage with a login form)
+> - Heartbeat Monitor - load URL, store screenshot and an HTTP archive file
+> - API Canary - test basic read and write functions of REST APIs
+> - Broken Link Checker - check all links inside the URL that you are testing
+> - Visual Monitoring - compare a screenshot taken during a canary run with a baseline screenshot
+> - Canary Recorder - used with CloudWatch Synthetics Recorder (record your Actions on a website and automatically generates a script for that)
+> - GUI Workflow Builder - verifies that actions can be taken on your webpage (e.g., test a webpage with a login form)
 </details>
 
 ### Amazon EventBridge
@@ -4813,7 +4813,7 @@ we have a root organization unit which holds the management account, and inside 
 > 
 > - IAM policies applied to OU or Accounts to restrict Users and Roles
 > - They do not apply to the management account (full admin power)
-> - Must have an explicit allow from the root through each OU in the direct path to the target account (does not allow anything by default – like IAM)
+> - Must have an explicit allow from the root through each OU in the direct path to the target account (does not allow anything by default - like IAM)
 
 #### AWS Organizations Service Control Policies
 
@@ -4980,11 +4980,11 @@ Synchronized data and backups.
 Synchronize data with AWS from other sources and between AWS services.
 </summary>
 
-> Move large amount of data to and from On-premises / other cloud to AWS (NFS, SMB, HDFS, S3 API...) – needs agent. Or move data from AWS to AWS (different storage services) – no agent needed.\
+> Move large amount of data to and from On-premises / other cloud to AWS (NFS, SMB, HDFS, S3 API...) - needs agent. Or move data from AWS to AWS (different storage services) - no agent needed.\
 > 
 > Can synchronize to:
 > 
-> - <cloud>Amazon S3</cloud> (any storage classes – including Glacier)
+> - <cloud>Amazon S3</cloud> (any storage classes - including Glacier)
 > - <cloud>Amazon EFS</cloud>
 > - <cloud>Amazon FSx</cloud> (Windows, Lustre, NetApp, OpenZFS...)
 > 
@@ -5078,7 +5078,7 @@ we define web ACL rules (access control list):
 > - Rules can include: IP addresses, HTTP headers, HTTP body, or URI strings
 > - Protects from common attack - SQL injection and Cross-Site Scripting (XSS)
 > - Size constraints, geo-match (block countries)
-> - Rate-based rules (to count occurrences of events) – for DDoS protection
+> - Rate-based rules (to count occurrences of events) - for DDoS protection
 
 in the <cloud>WAF</cloud> service, we can <kbd>Create IP set</kbd>. the IP set is a list of ips (or cider), we can later use this set. then we <kbd>Create Web ACL</kbd>, and we attach either <cloud>CloudFront</cloud> distribution or some regional resource. each rule consumes capacity unit, which means there is a limit to how many rules we can apply to a single request.\
 There are some predefined rules, each with a know capacity cost. but we can also <cloud>Create Rules</cloud>, and we can create a rule to only allow requests from inside our IpSet. we can also have rate-limit based rules, which can block requests if they exceed a threshold. we can filter them even more. another example is to block SQL injections commands in the request body. we can set the sensitivity level to low or high (which will have more false positives).\
@@ -5112,7 +5112,7 @@ Permitted penteration attempts (List can increase over time):
 
 Prohibited penteration attempts
 
-> - DNS zone walking via Amazon Route 53 Hosted Zones
+> - DNS zone walking via Amazon Route53 Hosted Zones
 > - Denial of Service (DoS), Distributed Denial of Service (DDoS), Simulated DoS, Simulated DDoS
 > - Port flooding
 > - Protocol flooding
@@ -5192,11 +5192,11 @@ anomaly detection, private data detection, best practices assessments
 > Intelligent Threat discovery to protect your AWS Account. Uses Machine Learning algorithms, anomaly detection, 3rd party data.\
 > One click to enable (30 days trial), no need to install software.\
 > Input data includes:
-> - <cloud>CloudTrail</cloud> Events Logs – unusual API calls, unauthorized deployments
->   - Management Events – create VPC subnet, create trail, etc...
->   - <cloud>S3</cloud> Data Events – get object, list objects, delete object, etc...
-> - <cloud>VPC</cloud> Flow Logs – unusual internal traffic, unusual IP address
-> - DNS Logs – compromised EC2 instances sending encoded data within DNS queries
+> - <cloud>CloudTrail</cloud> Events Logs - unusual API calls, unauthorized deployments
+>   - Management Events - create VPC subnet, create trail, etc...
+>   - <cloud>S3</cloud> Data Events - get object, list objects, delete object, etc...
+> - <cloud>VPC</cloud> Flow Logs - unusual internal traffic, unusual IP address
+> - DNS Logs - compromised EC2 instances sending encoded data within DNS queries
 > - Optional Features 
 >   - EKS Audit Logs
 >   - RDS & Aurora
@@ -5368,7 +5368,7 @@ Deleting KMS keys
 > - Schedule CMK for deletion with a waiting period of 7 to 30 days
 >   - CMK's status is "Pending deletion" during the waiting period.
 > - During the CMK's deletion waiting period:
->   - The CMK can't be used for cryptographic operations (e.g., can't decrypt KMSencrypted objects in S3 – SSE-KMS)
+>   - The CMK can't be used for cryptographic operations (e.g., can't decrypt KMSencrypted objects in S3 - SSE-KMS)
 >   - The key is not rotated even if planned
 > - You can cancel the key deletion during the waiting period
 > - Consider disabling your key instead of deleting it if you're not sure!
@@ -5401,7 +5401,7 @@ HSM has integration with KMS using the Custom Key Store. this gives us the benef
 | Standard                   | FIPS 140-2 Level 3                                                                       | FIPS 140-2 Level 3                                                     |
 | Master Keys                | AWS Owned CMK, AWS Managed CMK, Customer Managed CMK                                     | Customer Managed CMK                                                   |
 | Key Types                  | Symmetric, Asymmetric, Digital Signing                                                   | Symmetric, Asymmetric, Digital Signing & Hashing                       |
-| Key Accessibility          | Accessible in multiple AWS regions (can’taccess keys outside the region it’s created in) | Deployed and managed in a VPC, Can be shared across VPCs (VPC Peering) |
+| Key Accessibility          | Accessible in multiple AWS regions (can'taccess keys outside the region it's created in) | Deployed and managed in a VPC, Can be shared across VPCs (VPC Peering) |
 | Cryptographic Acceleration | None                                                                                     | SSL/TLS Acceleration, Oracle TDE Acceleration                          |
 | Access & Authentication    | AWS IAM                                                                                  | You create users and manage their permissions                          |
 | High Availability          | AWS Managed Service                                                                      | Add multiple HSMs over different AZs                                   |
@@ -5513,7 +5513,7 @@ for RDS databases, the integration is a bit better, and the secret manager will 
 > - `RotationStarted` event
 > - `RotationSucceeded` event
 > - `RotationFailed` event
-> - `RotationAbandoned` event – a manual change to a secret instead of automated rotation
+> - `RotationAbandoned` event - a manual change to a secret instead of automated rotation
 > - `StartSecretVersionDelete` event
 > - `CancelSecretVersionDelete` event
 > - `EndSecretVersionDelete` event
@@ -5532,30 +5532,753 @@ Parameter Store uses a simpler API, doesn't require <cloud>KMS</cloud> encryptio
 
 </details>
 
-
-
 </details>
 
 ## Identity
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Identity Security Tools, temporary identity access.
 </summary>
 
+> **IAM Credentials Report** (account-level)
+> - a report that lists all your account's users and the status of their variouscredentials
+> 
+> **IAM Access Advisor (user-level)**
+> - Access advisor shows the service permissions granted to a user and when those services were last accessed.
+> - You can use this information to revise your policies.
 
-### [CCP/SAA/DVA] IAM Security Tools
+
+in the <cloud>IAM</cloud> service page, we can choose "credentials report" and <kbd>download credentials report</kbd> to create a csv file, the file contains the users, password age, MFA, access keys and certificates.\
+in the "Access advisor", we can see which users were accessed, and when. then we can limit the policy permissions we apply to the users.
+
 ### IAM Access Analyzer
+
+<details>
+<summary>
+Find and Remediate public access to resources.
+</summary>
+
+> Find out which resources are shared externally
+> - <cloud>S3</cloud> Buckets
+> - <cloud>IAM</cloud> Roles
+> - <cloud>KMS</cloud> Keys
+> - <cloud>Lambda</cloud> Functions and Layers
+> - <cloud>SQS</cloud> queues
+> - Secrets Manager Secrets
+> 
+> Define Zone of Trust = AWS Account or AWS Organization. Access outside zone of trusts => findings
+
+in the "Access Analyzer" section of <cloud>IAM</cloud>, we <kbd>Create Analyzer</kbd>, we need new role to execute the report, and we can add optional tags. the resulting report shows the users which can be accessed from outside the account, what kind of access is allowed (read, write), and how is the resource shared (like bucket access policy). for each finding we can either approve that this is the intended behavior, or take steps to mitigate it and limit the public access. then we can <kbd>rescan</kbd> the finding to make sure it's no longer the issue.\
+We can create rules to auto archieve findings.
+</details>
+
 ### Identity Federation with SAML & Cognito
+
+<details>
+<summary>
+Accessing AWS resources through non-AWS identities.
+</summary>
+
+We use an identity provider (either corporate or public) to get temporary AWS access.
+
+> Federation lets users outside of AWS to assume temporary role for accessing AWS resources. These users assume identity provided access role. Federation assumes a form of 3rd party authentication:
+> 
+> - LDAP
+> - Microsoft Active Directory (~= SAML)
+> - Single Sign On
+> - Open ID
+> - <cloud>Cognito</cloud>
+>
+> Using federation, you don't need to create <cloud>IAM</cloud> users (user management is outside of AWS).
+
+SAML (Security Assertion Markup Language) for enterprises, this is what Active Directory and ADFS are. any SAML 2.0 compliant identity broker can 
+integrated with AWS. users are given temporary credentials to assume a role, without creating an <cloud>IAM User</cloud>. we can use this to get programattic access and web console access.
+
+programatic access flow:
+1. User identifies itself against the identity provider.
+2.  Idp (identity provider) checks the user credentials against the LDAP identity store.
+3. If authenticated, IdP returns a SAML assertion to the user.
+4. The user calls `AssumeRoleWithSAML` on the <cloud>STS</cloud> service with the SAML.
+5. The service returns temporary security credentials.
+6. The user uses those credentials to access AWS resources
+
+web console (aws portal) access flow is similar, but instead of getting temporary roles credentials, <cloud>STS</cloud> returns an aws sign-in endpoint and the user is re-directed to it.
+
+if we don't have a SAML 2.0 compatible Identity Provider (IdP), we can use the Custom Identity Broker Application instead. in this case we need to create the flow ourselves, and we write the identity broker to communicate with <cloud>STS</cloud> and return the appropriate credentials. there is more manual work required, since we don't have the SAML.
+</details>
+
 ### STS & Cross Account Access
-### [DVA] Cognito User Pools Overview
-### [DVA] Cognito Identity Pools Overview
-### [DVA] Cognito User Pools vs Cognito Identity Pools
+
+<details>
+<summary>
+The STS service - assume other identity for a limited time.
+</summary>
+
+<cloud>STS</cloud> - Security Token Service
+
+> Allows to grant limited and temporary access to AWS resources. Token is valid for up to one hour (must be refreshed).
+> - `AssumeRole` - Within your own account: for enhanced security, Cross Account Access: assume role in target account to perform actions there.
+> - `AssumeRoleWithSAML` - return credentials for users logged with SAML
+> - `AssumeRoleWithWebIdentity` - return credentials for users logged with an IdP (Facebook Login, Google Login, OIDC compatible...). AWS recommends against using this, and using Cognito instead
+> - `GetSessionToken` - for MFA, from a user or AWS account root user
+>
+> Using STS to Assume a Role
+> - Define an IAM Role within your account or cross-account
+> - Define which principals can access this IAM Role
+> - Use AWS STS (Security Token Service) to retrieve credentials and impersonate the IAM Role you have access to (`AssumeRole` API)
+> - Temporary credentials can be valid between 15 minutes to 1 hour
+</details>
+
+### Cognito
+
+<details>
+<summary>
+AWS public Identity service, either for AWS resources with Identity Pools or custom resources with User Pools.
+</summary>
+
+<cloud>AWS Cognito</cloud> is an option for non-corporate users. when we need to give the public some access to resources, but the identity provider is public, rather than corporate:
+- Google
+- Facebook
+- CUP (cognito user pools)
+- Twitter
+- OpenID
+- etc...
+
+> - Goal:
+>   - Provide direct access to AWS Resources from the Client Side
+> - How:
+>   - Log in to federated identity provider - or remain anonymous
+>   - Get temporary AWS credentials back from the Federated Identity Pool
+>   - These credentials come with a pre-defined IAM policy stating their permissions
+> - Example:
+>   - provide (temporary) access to write to S3 bucket using Facebook Login
+
+There is also an alternative service, called <cloud>Web Identity Federation</cloud>, but AWS recommends using <cloud>Cognito</cloud> over it.
+
+#### Cognito User Pools
+
+CUP - Cognito User Pools - simple, serverless, managed authentication option for websites and applications.
+
+> - Create a **serverless database** of user for your web & mobile apps
+> - Simple login: Username (or email) / password combination
+> - Password reset
+> - Email & Phone Number Verification
+> - Multi-factor authentication (MFA)
+> - Federated Identities: users from Facebook, Google, SAML...
+> - Feature: block users if their credentials are compromised elsewhere
+> - Login sends back a JSON Web Token (JWT)
+> 
+> CUP integrates with <cloud>API Gateway</cloud> and Application Load Balancer (<cloud>ELB</cloud>).
+
+#### Cognito Identity Pools
+
+Cognito Identity Pools (Federated Identities). temporary access to AWS resources to a large number of guest users (not corporate), and even for guest access.
+
+> - Get identities for "users" so they obtain temporary AWS credentials
+> - Your identity pool (e.g identity source) can include:
+>   - Public Providers (Login with Amazon, Facebook, Google, Apple)
+>   - Users in an Amazon Cognito user pool
+>   - OpenID Connect Providers & SAML Identity Providers
+>   - Developer Authenticated Identities (custom login server)
+>   - Cognito Identity Pools allow for unauthenticated (guest) access
+> 
+> - Users can then access AWS services directly or through API Gateway
+>   - The IAM policies applied to the credentials are defined in Cognito
+>   - They can be customized based on the user_id for fine grained control
+
+Users log-in into an identity provider, get a token from them and trade that with the Cognito Identity Pool for temporary credentials (through the <cloud>STS</cloud> service). and now the users can access AWS resources.
+
+Policies are applied bas on the IAM role, different roles for authenticated and guest users. we can give policies based on the user_id, and then limit the policies access to resources based on policy variables.
+
+for example, the guest policy gives access to only a single resource.
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGuestUser",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource":[
+        "arn:aws:s3:::examplebucket/assets/my_picture/jpg*"
+      ]
+    }
+  ]
+}
+```
+
+while the authenticated policy will give more permessions, but limits the resource based on the users' cognito identity. we limit access to S3 based on prefix, and limit access to dynamoDB based on the keys. each user can only access their own resources, but they still use the same policy document.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource":[
+        "arn:aws:s3:::examplebucket"
+      ],
+      "Condition" {
+        "StringLike": {"s3:prefix":["${cognito-identity.amazon.aws:sub}/*"]}
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource":[
+        "arn:aws:s3:::examplebucket/${cognito-identity.amazon.aws:sub}/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamoDb:GetItem",
+        "dynamoDb:BatchGetItem",
+        "dynamoDb:Query",
+        "dynamoDb:PutItem",
+        "dynamoDb:UpdateItem",
+        "dynamoDb:BatchWriteItem",
+        "dynamoDb:DeleteItem"
+      ],
+      "Resource":[
+        "arn:aws:dynamodb:us-wes-2:<accountId>:table/MyTable"
+      ],
+      "Condition" {
+        "ForAllValues:StringEquals":{
+          "dynamodb:LeadingKeys": ["${cognito-identity.amazon.aws:sub}"]
+        }
+      }
+    }
+  ]
+}
+```
+
+#### Cognito User Pools vs Cognito Identity Pools
+
+> Cognito User Pools (for authentication = identity verification)
+> - Database of users for your web and mobile application
+> - Allows to federate logins through Public Social, OIDC, SAML…
+> - Can customize the hosted UI for authentication (including the logo)
+> - Has triggers with AWS Lambda during the authentication flow
+> - Adapt the sign-in experience to different risk levels (MFA, adaptive authentication, etc...)
+> 
+> Cognito Identity Pools (for authorization = access control)
+> - Obtain AWS credentials for your users
+> - Users can login through Public Social, OIDC, SAML & Cognito User Pools
+> - Users can be unauthenticated (guests)
+> - Users are mapped to IAM roles & policies, can leverage policy variables
+> 
+> CUP + CIP = authentication + authorization
+</details>
+
 
 </details>
 
 ## Networking - Route53
+
+<details>
+<summary>
+DNS Service, Route Types, Routing Policies, Hosting websites, Resolving DNS requests
+</summary>
+
+> - A highly available, scalable, fully managed and Authoritative DNS
+> - Authoritative = the customer (you) can update the DNS records
+> - Route53 is also a Domain Registrar
+> - Ability to check the health of your resources
+> - The only AWS service which provides 100% availability SLA
+> - Why Route53? 53 is a reference to the traditional DNS port
+
+<cloud>Route53</cloud> use record to control traffic for a domain, Each record contains:
+
+> - Domain/subdomain Name - e.g., example.com
+> - Record Type - e.g., `A` or `AAAA`
+> - Value - e.g., 12.34.56.78
+> - Routing Policy - how Route53 responds to queries
+> - TTL - amount of time the record cached at DNS Resolvers
+
+Route53 supports the following DNS record types ([wikipedia](https://en.wikipedia.org/wiki/List_of_DNS_record_types)):
+> - must Know Types
+>   - A - address record (IPv4)
+>   - AAAA - IPv6 record
+>   - CNAME - Canonical name record
+>   - NS - Name server record
+> - advanced types
+>   - CAA - Certification Authority Authorization
+>   - DS - Delegation signer
+>   - MX - Mail exchange record
+>   - NAPTR - Naming Authority Pointer
+>   - PTR - PTR Resource Record - (similar to CNAME, but without further processing)
+>   - SOA - Start of [a zone of] authority record
+>   - SPF - Sender Policy framework
+>   - SRV - Service Locator
+>   - TXT - Text Record
+
+the important Record types are:
+
+> - `A` - maps a hostname to IPv4
+> - `AAAA` - maps a hostname to IPv6
+> - `CNAME` - maps a hostname to another hostname
+>   - The target is a domain name which must have an `A` or `AAAA` record
+>   - Can't create a `CNAME` record for the top node of a DNS namespace (Zone Apex)
+>   - Example: you can't create for example.com, but you can create for www.example.com
+> - `NS` - Name Servers for the Hosted Zone
+>   - Control how traffic is routed for a domain
+
+Hosted Zones are containers for records, and they define how to route traffic to the domain and the sub domain. there are public Hosted Zones for public domain names, and private hosted zone for records and routing traffic within <cloud>VPC</cloud>s.
+
+- "application1.myPublicDomain.com" - public domain name - anyone from the internet
+- "application1.company.internal" - private domain name - only from inside the <cloud>VPC</cloud>
+
+<cloud>Route53</cloud> is not free, there is a cost for each hosted Zone, and a cost to register a domain name.
+
+### What is a DNS?
+
+<details>
+<summary>
+DNS Overview
+</summary>
+
+DNS - Domain Name System. it takes a human friendly hostname and translates them into machine ip addresses. www.google.com becomes "172.17.18.36". it uses hierarchical naming structure.
+
+- "www.example.com"
+- "api.example.com"
+
+both domains are inside "example.com" Second Level domain, which itself is inside the "com" Top-level domain.
+
+
+DNS Terminologies
+> - Domain Registrar: Amazon <cloud>Route53</cloud>, GoDaddy, etc..
+> - DNS Records: `A`, `AAAA`, `CNAME`, `NS`, etc..
+> - Zone File: contains DNS records.
+> - Name Server: resolves DNS queries (Authoritative or Non-Authoritative)
+> - Top Level Domain (TLD): ".com", ".us", ".in", ".gov", ".org", etc..
+> - Second Level Domain (SLD): "amazon.com", "google.com", etc..
+
+the URL is a combination of the protocol (http, https), and the fully qualified domain name, which is the sub domain(more than one), second-level domain and the top-level domain and the root domain (a hidden dot).
+
+to use the DNS, we register our public IP address in one of the domain Registrars. the web browser uses a series of DNS servers to match the FQDN to an ip address. the first DNS server is usually the local one, either managed by the company or the ISP (internet service provider), if they DNS server doesn't know the address, it can ask the root DNS server (which is managed by ICANN - The Internet Corporation for Assigned Names and Numbers) which either knows the IP address, or can direct us to the next DNS server, which manages the Top-level domain, and it can direct to the Domain Registar that we registered our IP with, at the next step, the Registar actually knows the ip address, so it can return it, and it is then cached in the local DNS server for future requests.
+</details>
+
+
+### Route53 - Demo Setup
+
+<details>
+<summary>
+Using Route53 - setting up.
+</summary>
+
+In the <cloud>Route53</cloud> dashboard, we can see how many hostedZones wer have, how many registered domains, policy records and health checks.
+
+#### Route53 - Registering a Domain
+we can also choose the "Registered Domain" section and <kbd>Register Domains</kbd> if we want to, we could also <kbd>Transfer in</kbd> a domain from a different registar to manage it in <cloud>Route53</cloud>. if we create one, we need to find a domain that nobody else uses, we pay upfront for the entire year, and we can set ao renewal for it. we provide our contact information and confirm. once it's created, we will have new hosted ho with two records - `NS` record pointing traffic to route53 and the `SOA` record.
+
+#### Route53 - Creating our first records
+
+we can now <kbd>Create Record</kbd> inside our domain, this record is tha address, so the name must be compliant. we also choose:
+- record type
+- TTL
+- Routing Policy
+- Value (one or more)
+
+since we don't have anything in that IP address, our browser doesn't show us anything. instead, we can use the <cloud>CloudShell</cloud> terminal to get a better understaing of what's going on there.
+
+```sh
+sudo yum install -y bind-utils # install nslookup, dig
+nslookup test.stephaneTheTeacher.com
+dig test.stephaneTheTeacher.com
+```
+
+#### Route53 - EC2 Setup
+
+we will create three <cloud>EC2</cloud> machines to act as our webservers, each in a different Region, each in a security Group that allows public internet access, and each having the following userdate script, which will install the webserver, and create the index page saying where it is located.
+
+```sh
+#!/bin/bash
+yum update -y
+yum install -y httpd
+systemctl start httpd
+systemctl enable httpd
+# updated script to make it work with Amazon Linux 2023
+CHECK_IMDSV1_ENABLED=$(curl -s -o /dev/null -w "%{http_code}" http://169.254.169.254/latest/meta-data/)
+if [[ "$CHECK_IMDSV1_ENABLED" -eq 200 ]]
+then
+    EC2_AVAIL_ZONE="$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)"
+else
+    EC2_AVAIL_ZONE="$(TOKEN=`curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` && curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)"
+fi
+echo "<h1>Hello world from $(hostname -f) in AZ $EC2_AVAIL_ZONE </h1>" > /var/www/html/index.html
+```
+
+we also launch a <cloud>ELB</cloud> of type application load balancer in one of the regions, make it internet facing and set the target group to include the <cloud>EC2</cloud> machine in it. we copy the public ips from the machines and the public dns name from the load balancer.
+</details>
+
+### Route53 - TTL
+
+<details>
+<summary>
+Time To Live Cache
+</summary>
+
+each record has a TTL (time to live), which is the duration of time to cache the result. if the client requests the same address during that period, it will use the cached value and won't request it from <cloud>Route53</cloud>.\
+High TTL values cost us less, since the amount of requests is reduced, but there is a longer period of time until all the records are updated. Low TTL values mean that we can change the address faster, but it will cost us more.
+
+TTL values are mandory for each DNS record, except for `ALIAS` (which is an AWS type).
+
+back in our demo, we can create a new RECORD, point it to one of our ips, and set a TTL with two minutes value. we can run the `nslookup` and `dig` commands on our record to see the TTL going down. we can next update the record to point to another machine, and until the cache expires, we will still go to the earlier machine. only after the cache period changes, we will reach the other machine.
+
+</details>
+
+### CNAME vs Alias
+
+<details>
+<summary>
+Differences between CNAME and ALIAS records
+</summary>
+
+> AWS Resources (<cloud>Elastic Load Balancer</cloud>, <cloud>CloudFront</cloud>...) expose an AWS hostname. for example  lb1-1234.us-east-2.elb.amazonaws.com and you want myApp.myDomain.com.
+> 
+> `CNAME`:
+> - Points a hostname to any other hostname. (app.myDomain.com => blaBla.anything.com)
+> - ONLY FOR NON ROOT DOMAIN (something.myDomain.com)
+> 
+> `Alias`:
+> - Points a hostname to an AWS Resource (app.myDomain.com => blaBla.amazonaws.com)
+> - Works for ROOT DOMAIN and NON ROOT DOMAIN (myDomain.com and something.myDomain.com)
+> - Free of charge
+> - Native health check
+
+ALIAS records can only map to AWS resources, this is an <cloud>Route53</cloud> extensions. the alias record must point to either `A` or `AAAA` records (not `CNAME`), and they don't have TTL values.
+- <cloud>Elastic Load Balancers</cloud>
+- <cloud>CloudFront</cloud> Distributions
+- <cloud>API Gateway</cloud>
+- <cloud>Elastic Beanstalk</cloud> environments
+- <cloud>S3</cloud> Websites
+- <cloud>VPC</cloud> Interface Endpoints
+- <cloud>Global Accelerator accelerator</cloud>
+- <cloud>Route53</cloud> record in the same hosted zone
+- 
+- CAN NOT POINT TO <cloud>EC2</cloud> DNS NAME
+
+we can <kbd>Create Record</kbd> of `CNAME` type and give it the value of the load balancer DNS name. we can also create an `A` record, make it an `ALIAS` and in the dropdown, route the traffic to the load balancer. this will give us automatic health checks, and this is free to access.\
+we can also set apex zone (empty record name) to point to the resource with an `ALIAS`, but not with a `CNAME`.
+
+</details>
+
+
+### Route53 Health Checks
+
+<details>
+<summary>
+Determining which Records are healthy and can be used.
+</summary>
+
+> HTTP Health Checks are only for public resources. Health Check => Automated DNS Failover:
+> 
+> - Health checks that monitor an endpoint (application, server, other AWS resource)
+> - Health checks that monitor other health checks (Calculated Health Checks)
+> - Health checks that monitor <cloud>CloudWatch</cloud> Alarms (full control !!) – e.g., throttles of <cloud>DynamoDB</cloud>, alarms on <cloud>RDS</cloud>, custom metrics,etc... (helpful for private resources)
+> 
+> Health Checks are integrated with <cloud>CloudWatch</cloud>
+metrics.
+
+for example, if we have health check on an <cloud>ELB</cloud> endpoint, there will be about 15 health checkers from all around the world (or what we configure), we can control the frequency, interval, protocol of the check. a certain percentage of those health checks need to pass to consider the endpoint as healthy.\
+Health checks pass if the status code is in the 2xx and 3xx ranges, and we can also check the first 5120 bytes of the response to determine pass/fail status.\
+The router/firewall must allow access from the ip-ranges of the <cloud>Route53</cloud> health checkers.
+
+Calculate Health Checks combine the results of multiple health checks into one. we can aggregate them with
+- OR
+- AND
+- NOT
+
+and monitor up to 256 child health checks, and we choose what percentage needs to pass to make the aggregated health check pass.
+
+we can't check private resources with the default health checkers, since they live outside the VPC. if we want to monitor something private (like a private endpoint), we can create a <cloud>CloudWatch</cloud> metric, assign an alarm to it, and the have the health check monitor the alarm status.
+
+in the <cloud>Route53</cloud> dashboard, we can <kbd>Create Health Check</kbd>, one for each of our EC2 instances. We will monitor an endpoint, we pass the ip address, the port and the path, and under the advance configuration section, we can control the request intervals, decide which health checkers to use, and even create an alarm. now we can modify the security group in one of the regions and remove inbound access on port 80, so the health checkers won't be able to communicate with it, and the health check will fail.\
+We can configure a calculated health check to monitor all three health checks together, or create a health check on a cloudWatch alarm. 
+
+now that we have health checks, our DNS records can use them.
+</details>
+
+### Routing Policies
+<details>
+<summary>
+How Route53 chooses to return IPs
+</summary>
+
+> Define how Route53 responds to DNS queries. Don't get confused by the word "Routing", It's not the same as Load balancer routing which routes the traffic. DNS does not route any traffic, it only responds to the DNS queries.\
+> Route53 Supports the following Routing Policies:
+> 
+> - Simple
+> - Weighted
+> - Failover
+> - Latency based
+> - Geolocation
+> - Multi-Value Answer
+> - Geoproximity (using Route53 Traffic Flow feature)
+
+#### Simple Routing Policy
+
+returns multiple values, client chooses randmoly, no health checks.
+
+> - Typically, route traffic to a single resource
+> - Can specify multiple values in the same record
+> - If multiple values are returned, a random one is chosen by the **client**
+> - When Alias enabled, specify only one AWS resource
+> - Can't be associated with Health Checks
+
+#### Weighted Routing Policy
+
+define multiple records with the same name and all having the `weighted` routing policy type, each with a record id. a record (which can have multiple values) is chosen proportionally to the weight assigned to it. supports health checks.
+
+> - Control the % of the requests that go to each specific resource
+> - Assign each record a relative weight
+> - Weights don't need to sum up to 100
+> - DNS records must have the same name and type
+> - Can be associated with Health Checks
+> - Use cases: load balancing between regions, testing new application versions
+> - Assign a weight of 0 to a record to stop sending traffic to a resource
+> - If all records have weight of 0, then all records will be returned equally
+
+#### Latency Routing Policy
+
+multiple records with the same name, different record id. we give each record a region, and <cloud>Route53</cloud> calculates which region has the best latency for the calling user, and will return that record. supports health checks.
+
+> Redirect to the resource that has the least latency close to us
+> - Super helpful when latency for users is a priority
+> - Latency is based on traffic between users and AWS Regions
+> - Germany users may be directed to the US (if that's the lowest latency)
+> - Can be associated with Health Checks (has a failover capability)
+
+we can test this by using a VPN (virtual private network).
+
+#### Failover Routing Policy
+
+Active-Passive routing,two records with the same name, the primary record has must have a health check associated with it. if the health check passes, the primary record is returned, if it's not health, then the secondary record is returned.\
+We can play with the health check (like before, modify the security group) to trigger the failover from the primary to the secondary record.
+
+#### Geolocation Routing Policy
+
+return records based on given location (not latency), multiple records with the same name, for each record we can choose the location (default, continent, country, US-state), health checks will 
+
+> - Different from Latency-based!
+> - This routing is based on user location
+> - Specify location by Continent, Country or by US State (if there's overlapping, most precise location selected)
+> - Should create a “Default” record (in case there's no match on location)
+> - Use cases: website localization, restrict content distribution, load balancing, etc...
+> - Can be associated with Health Checks
+
+#### Geoproximity Routing Policy
+
+(Routing based on location, can be weighted towards specific resources - imagine it a gravitational pull, with higher bias meaning more mass and more pulling power)
+
+> Route traffic to your resources based on the geographic location of users and resources.\
+> Ability to shift more traffic to resources based on the defined bias.\
+> To change the size of the geographic region, specify bias values:
+> 
+> - To expand (1 to 99) – more traffic to the resource
+> - To shrink (-1 to -99) – less traffic to the resource
+> 
+> Resources can be:
+> - AWS resources (specify AWS region)
+> - Non-AWS resources (specify Latitude and Longitude)
+> - You must use Route53 Traffic Flow to use this feature
+
+#### Traffic Flow
+
+The Traffic Flow tool simplifies the creation and maintenance of DNS records, the records are saved into a traffic flow policy which we can version and use for other hosted zone (different domain names).
+
+in the <cloud>Route53</cloud> service, we can choose "Traffic Policy" and then <kbd>Create Traffic Policy</kbd>, and then we can create a chain of records and routeing policies. for Geoproximity rules, we define the regions, and define the bias. then we have a visual map showing the entire world and where the requests will be directed to. when we create a record through the traffic policy, it can't be edited.
+
+#### IP-based Routing Policy
+
+fine grained routing based on ip addresses. 
+
+> - Routing is based on clients' IP addresses
+> - You provide a list of CIDRs for your clients and the corresponding endpoints/locations (user-IP-to-endpoint mappings)
+> - Use cases: Optimize performance, reduce network costs, etc...
+> - Example: route end users from a particular ISP to a specific endpoint
+
+#### Multi Value Routing Policy
+
+return multiple records, then the client chooses one of them. unlike simple routing policies, this can support health checks. multiple records with the same name, each with a different health check. the user gets back only the healthy records.
+
+> - Use when routing traffic to multiple resources
+> - Route53 return multiple values/resources
+> - Can be associated with Health Checks (return only values for healthy resources)
+> - Up to 8 healthy records are returned for each Multi-Value query
+> - Multi-Value is not a substitute for having an ELB
+</details>
+
+### 3rd Party Domains & Route53
+
+<details>
+<summary>
+Using Route53 with a different DNS Registar
+</summary>
+
+> Domain Registar vs. DNS Service
+> - You buy or register your domain name with a Domain Registrar typically by paying annual charges (e.g., GoDaddy, Amazon Registrar Inc., etc...)
+> - The Domain Registrar usually provides you with a DNS service to manage your DNS records
+> - But you can use another DNS service to manage your DNS records
+> - Example: purchase the domain from GoDaddy and use Route53 to manage
+your DNS records
+
+if we purchase the domain somewhere else (registar), and we want to manage the records in <cloud>Route53</cloud>, we change the nameservers on the registar to point to the nameservers in the <cloud>Route53</cloud> public hosted zone.
+
+</details>
+
+### S3 Website with Route53
+
+<details>
+<summary>
+Serving a S3 static website through Route53
+</summary>
+
+We can host a static website from a <cloud>S3</cloud> bucket. but if we want to give it a DNS address, the bucket should have the exact same name as the target record (such as "acme.example.com"), it needs to be a website, with the objects being publicly available.\
+Then we create a DNS record of type `A` and `ALIAS`, and point it to the S3 website endpoint. this only works for HTTP traffic, not HTTPS (we will need to use <cloud>CloudFront</cloud> to get over that).
+
+we first <kbd>Create Bucket</kbd> in <cloud>S3</cloud>, with the name exactly like what we want in <cloud>Route53</cloud>. in our bucket, we upload some files (index.html), we grant public access, confirm. and at the bucket settings, we enable it as a static website.\
+Next, in <cloud>Route53</cloud>, we <kbd>Create Record</kbd> in the appropriate hostname, the name is like what we gave the bucket. the record type is `A` and we toggle it as `ALIAS`. we choose the S3, the region of the bucket, and if we did everything correctly, it will automatically detect the bucket endpoint, and our website will be reachable through a simple address.
+
+</details>
+
+### Route53 Resolvers & Hybrid DNS
+
+<details>
+<summary>
+Hybrid DNS Resolution
+</summary>
+
+Use Hybrid DNS and Route53 Resolvers to resolve DNS queries across networks, such as communicating the on-premises networks or across VPC boundaries.
+
+> By default, Route53 Resolver automatically answers DNS queries for:
+> - Local domain names for <cloud>EC2</cloud> instances
+> - Records in Private Hosted Zones
+> - Records in public Name Servers
+> 
+> Hybrid DNS – resolving DNS queries between VPC (Route53 Resolver) and
+your networks (other DNS Resolvers).\
+> Networks can be:
+> - VPC itself / Peered VPC
+> - On-premises Network (connected through <cloud>Direct Connect</cloud> or <cloud>AWS VPN</cloud>)
+
+Resolver endpoints: inbound and outbound.
+
+> Inbound Endpoint
+>   - DNS Resolvers on your network can forward DNS queries to Route53 Resolver
+>   - Allows your DNS Resolvers to resolve domain names for AWS resources (e.g., EC2 instances) and records in Route53 Private Hosted Zones
+> 
+> - Outbound Endpoint
+>   - Route53 Resolver conditionally forwards DNS queries to your DNS Resolvers
+>   - Use Resolver Rules to forward DNS queries to your DNS Resolvers
+>
+> - Associated with one or more VPCs in the same AWS Region
+> - Create in two AZs for high availability
+> - Each Endpoint supports 10,000 queries per second per IP address
+
+example, we have the following resources
+- on-premises server "web.onPremise.private"
+- on-premises DNS resolvers "onPremise.private"
+- VPC with two private subnets
+- EC2 instace inside a private subnet "app.aws.private" in the VPC
+- Each subnet has an ENI (elastic network interface) - "10.0.0.10" and "10.0.1.10"
+- The VPC has inbound and outbound Resolver endpoints inside, connected to the ENIs
+- 
+- Route53 Resolver
+- Private Hosted Zone "aws.private"
+- a VPN or <cloud>DX</cloud> connection between the the on-premises network and AWS
+
+if the on-premise server wants to connect to the EC2 instance, it issues a DNS query to the local DNS resolver, which knows that for the domain name "aws.private", it forwards requests to the ENI addresses ("10.0.0.10" and "10.0.1.10") through the VPN connection. the Resolver inbound Endpoint directs the request to the Route53 resolver, which hosts the private hosted zone that can do the lookup itself.
+
+for outbound endpoints, the EC2 instance communicates with route53 resolver, which communicates with an outbound resolver endpoint (which maps the "onPremise.private" domain to the target ip of the local DNS resolver). the local DNS resolvers can respond with the ip address of the on-premises server, and the instance can connect with them.
+
+
+> Route 53 – Resolver Rules\
+> Control which DNS queries are forwarded to DNS Resolvers on your network.
+> 
+> - Conditional Forwarding Rules (Forwarding Rules)
+>   - Forward DNS queries for a specified domain and all its subdomains to target IP addresses
+> - System Rules
+>   - Selectively overriding the behavior defined in Forwarding Rules (e.g.,don't forward DNS queries for a subdomain acme.example.com)
+> - Auto-defined System Rules
+>   - Defines how DNS queries for selected domains are resolved (e.g., AWS internal domain names, Private Hosted Zones)
+> - If multiple rules matched, Route 53 Resolver chooses the most specific match
+> 
+> - Resolver Rules can be shared across accounts using <cloud>AWS RAM</cloud>
+>   - Manage them centrally in one account
+>   - Send DNS queries from multiple VPC to the target IP defined in the rule
+
+System Rules override Conditional Rowarding Rules, if multiple rules match, the more specific rule (more sub domains) is chosen.
+</details>
+
+
+</details>
+
 ## Networking - VPC
+
+<!-- <details> -->
+<summary>
+Virtual Private Cloud
+</summary>
+
+VPC - Virtual Private Cloud
+
+### [SAA] CIDR, Private vs Public IP
+### [SAA] Default VPC Overview
+### [SAA] VPC Overview
+### [SAA] VPC Hands On
+### [SAA] Subnet Overview
+### [SAA] Subnet Hands On
+### [SAA] Internet Gateways & Route Tables
+### [SAA] Internet Gateways & Route Tables Hands On
+### [SAA] Bastion Hosts
+### [SAA] Bastion Hosts Hands On
+### [SAA] NAT Instances
+### [SAA] NAT Instances Hands On
+### [SAA] NAT Gateways
+### [SAA] NAT Gateways Hands On
+### [SAA] DNS Resolution Options & Route 53 Private Zones
+### [SAA] DNS Resolution Options & Route 53 Private Zones Hands On
+### [SAA] NACL & Security Groups
+### [SAA] NACL & Security Groups Hands On
+### [SAA] VPC Reachability Analyzer
+### [SAA] VPC Reachability Analyzer Hands On
+### [SAA] VPC Peering
+### [SAA] VPC Peering Hands On
+### [SAA] VPC Endpoints
+### [SAA] VPC Endpoints Hands On
+### [SAA] VPC Flow Logs
+### [SAA] VPC Flow Logs Hands On + Athena
+### [SAA] Site to Site VPN, Virtual Private Gateway & Customer Gateway
+### [SAA] Site to Site VPN, Virtual Private Gateway & Customer Gateway Hands On
+### [SAA] Direct Connect & Direct Connect Gateway
+### [SAA] Site to Site VPN as a backup to Direct Connect
+### [SAA] AWS PrivateLink - VPC Endpoint Services
+### [SAA] AWS PrivateLink - VPC Endpoint Services Hands On
+### [SAA] AWS ClassicLink
+### [SAA] Transit Gateway
+### [SAA] VPC Traffic Mirroring
+### [SAA] IPv6 for VPC
+### [SAA] IPv6 for VPC Hands On
+### [SAA] Egress Only Internet Gateway
+### [SAA] Egress Only Internet Gateway Hands On
+### [SAA] VPC Section Cleanup
+### VPC Section Summary
+### [SAA] Networking Costs in AWS
+### [SAA] Network Firewall
+
+</details>
+
 ## Other Services
 
 ## Misc
@@ -5600,6 +6323,15 @@ Additional terms and acronyms to keep.
 - PITR - Point in Time Recovery
 - SCP - Service Control Policies (IAM organization)
 - DRP - DDoS Respone Team - 24/7 support team when under DDoS attack (<cloud>AWS Shield</cloud> advance)
+- SAML - Security Assertion Markup Language (IAM federation, Cognito)
+- IdP - Identity Provider (IAM federation, Cognito)
+- CUP - Cognito User Pools - users database for websites and applications managed by AWS
+- CIP - Cognito Identity Pools (federated identities) - access to AWS resources.
+- DNS - Domain Name System
+- TLS - Top Level Domain (DNS) - ".com"
+- SLD - Second Level Domain (DNS) - "amazon.com"
+- FQDN - Fully Qualified Domain Name (DNS)
+- ICANN - The Internet Corporation for Assigned Names and Numbers
 </details>
 
 <!-- misc end -->
