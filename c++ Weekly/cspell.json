@@ -17,7 +17,9 @@
     "consteval",
     "cppreference",
     "jthread",
-    "fsanitize"
+    "fsanitize",
+    "NTTP", "CTAD","CNTTP"
+
   ],
   "import": []
 }

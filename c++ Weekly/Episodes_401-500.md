@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat -Wnrvo nrvo
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat -Wnrvo nrvo fimplicit Decrypter Wpadded
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -1635,3 +1635,173 @@ we should actually wrap all our ".h" files with `extern C++ {}` (but maybe not).
 this a problem of mixed language projects, with some C libraries and other C++ libraries.
 
 </details>
+
+## C++ Weekly - Ep 443 - Stupid `constexpr` Tricks
+
+<details>
+<summary>
+Some things that compile even if they look like they aren't supposed to.
+</summary>
+
+[Stupid `constexpr` Tricks](https://youtu.be/HNn-PmrL5X8?si=cWu6vUj3HlOd_UMy)
+
+things that compile even if they look like they aren't supposed to. <cpp>static_assert</cpp> statements. referencing constant expression in lambdas without capturing them, lambdas are implicitly <cpp>constexpr</cpp> if they can be since C++17.
+
+```cpp
+constexpr auto make_value() { return 42;}
+
+int main()
+{
+  const auto value = make_value();
+  static_assert(value == 42);
+  const x = 10;
+  const auto result = [](){ return x + value + 20; }();
+  static_assert(result == 72);
+}
+```
+</details>
+
+## C++ Weekly - Ep 444 - GCC's Implicit constexpr
+
+<details>
+<summary>
+A flag to make inline functions constexpr if possible.
+</summary>
+
+[GCC's Implicit `constexpr`](https://youtu.be/CHc39_qCgMU?si=b690Hueha66gIw--)
+
+a GCC flag `-fimplicit-constexpr`, which tries to make inline functions <cpp>const</cpp> if possible, so the example below won't compile normally, but if we enable the flag, the function is considered <cpp>constexpr</cpp> and the code will compile.
+
+```cpp
+inline auto make_value() { return 42;} 
+
+int main()
+{
+  const auto value = make_value();
+  static_assert(value == 42);
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 445 - C++11's thread_local
+
+<details>
+<summary>
+a 'static' variable that is private to the current thread.
+</summary>
+
+[C++11's `thread_local`](https://youtu.be/q9_vljSaBDg?si=7RS9-rraccr1HByx)
+
+
+`thread_local` are kind of like `static` variables, but are different for each thread. rather than have one instance for all the program, it has an instance for each of the threads. if we combine `static thread_local` together, it's still the same as `thread_local`. it is only destroyed when thread execution ends, not when it's destroyed (joined)
+
+```cpp
+#include <fmt.format.h>
+#include <thread>
+
+int func()
+{
+  thread_local int count = 0;
+  ++count;
+  auto thread_id = std::this_thread::get_id();
+  fmt::print("Value: {} from thread\n", count, thread_id);
+  return count;
+}
+
+int main()
+{
+  std::jthread t1(&func);
+  func()
+  return func();
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 446 - ImHex: An Awesome Hex Editor
+
+<details>
+<summary>
+Short look at an Hex Editor
+</summary>
+
+[ImHex: An Awesome Hex Editor](https://youtu.be/zJZhyTvL8UM?si=dFDLJ8dq4oZAVyFU)
+
+a full featured hex editor, it can parse files and identify known patterns, it can try to identify what data might be depending on types, AES Decrypter, disassembler and all sorts of stuff.
+
+</details>
+
+## C++ Weekly - Ep 447 - What Are Reference Qualified Members?
+
+<details>
+<summary>
+Functions overloads based on the reference qualified members.
+</summary>
+
+[What Are Reference Qualified Members?](https://youtu.be/5ELoDcqqyX4?si=2b1NwvfXZHUO73gl)
+
+this is needed before we can talk about C++23 <cpp>std::forward_like</cpp>. we know functions are const qualified (this is how we tell apart const and non-const member functions).\
+but function members are also reference qualified, we can add the lvalue `&` or the rvalue `&&` reference qualifies. the reference qualified and the non-qualified overloads can't exists together.
+
+```cpp
+#include <cstdio>
+#include <string>
+#include <utility>
+struct S {
+private:
+  std::string value;
+
+public:
+  std::string & get_value() {
+    std::puts("get_value()");
+    return value;
+  }
+
+  const std::string & get_value() const {
+    std::puts("get_value() const");
+    return value;
+  }
+
+  std::string & get_value_qualified() & {
+    std::puts("get_value_qualified() &");
+    return value;
+  }
+
+  std::string & get_value_qualified() && {
+    std::puts("get_value_qualified() &&");
+    return value;
+  }
+
+};
+
+void call(const S &obj)
+{
+  obj.get_value();
+}
+
+S get_obj() {
+  return {};
+}
+
+int main()
+{
+  const S s0;
+  s0.get_value();
+
+  S s1;
+  s1.get_value();
+  std::as_const(s1).get_value(); // const
+  call(s1); // const
+  s1.get_value_qualified(); // lvalue &
+  std::move(s1).get_value_qualified(); // rvalue &&
+  static_cast<S&&>(s1).get_value_qualified(); // rvalue &&
+  get_obj().get_value_qualified(); // rvalue && // temporary object
+
+}
+```
+
+the use case is pretty rare, but it can allow for changing implementations, which might be good for return value optimizations, or when we are worried about lifetime issues.
+
+</details>
+

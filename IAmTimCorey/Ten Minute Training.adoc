@@ -976,7 +976,7 @@ public class FormalMessages : IInteractionMessages
 {
   public string greetings()
   {
-    return "FORAML MESSAGE";
+    return "FORMAL MESSAGE";
   }
 }
 
@@ -1346,13 +1346,36 @@ using PersonTuple = (string firstName, string lastName);
 === Partial Classes in C# - What they are for, how to use them, and more
 
 .Separating Code into different files
-[%collapsible%open]
+[%collapsible]
 ====
 
 When we have a partial class, we write it across different files, but it's compiled into one single class. the interfaces still apply across files, as well as all the modifiers (access modifiers, inheritance)...
 
 this was probably implemented to support windows forms.
 ====
+
+=== Comments the Easy Way in VS2022 v17.11
+.Simple Commenting
+
+[%collapsible]
+====
+we can now use [CTRl] + [/] to comment and uncomment (one or more lines) in visual studio.
+the old way to do this was [CTRL]+[C], but we needed [CTRL]+[U] to uncomment, now the same key combinations does both
+
+====
+
+=== File Explorer in Visual Studio - Potential New Feature
+
+.View all sorts of files in project
+
+[%collapsible]
+====
+currently requires downloading an extension called "file explorer" to make it work.
+
+instead of clicking the "show all files" for each project, and instead of moving to the "folder view".
+we can see both the solution view and the folder view at the same time.
+====
+
 
 == Misc
 
