@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS PITR HDFS MITM fileb certutil FIPS ADFS OIDC ICANN NAPTR nslookup IMDSV
+// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS PITR HDFS MITM fileb certutil FIPS ADFS OIDC ICANN NAPTR nslookup IMDSV NACL Mbps
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -5570,7 +5570,7 @@ Find and Remediate public access to resources.
 > Define Zone of Trust = AWS Account or AWS Organization. Access outside zone of trusts => findings
 
 in the "Access Analyzer" section of <cloud>IAM</cloud>, we <kbd>Create Analyzer</kbd>, we need new role to execute the report, and we can add optional tags. the resulting report shows the users which can be accessed from outside the account, what kind of access is allowed (read, write), and how is the resource shared (like bucket access policy). for each finding we can either approve that this is the intended behavior, or take steps to mitigate it and limit the public access. then we can <kbd>rescan</kbd> the finding to make sure it's no longer the issue.\
-We can create rules to auto archieve findings.
+We can create rules to auto achieve findings.
 </details>
 
 ### Identity Federation with SAML & Cognito
@@ -6231,55 +6231,551 @@ System Rules override Conditional Rowarding Rules, if multiple rules match, the 
 Virtual Private Cloud
 </summary>
 
-VPC - Virtual Private Cloud
+VPC - Virtual Private Cloud.
 
-### [SAA] CIDR, Private vs Public IP
-### [SAA] Default VPC Overview
-### [SAA] VPC Overview
-### [SAA] VPC Hands On
-### [SAA] Subnet Overview
-### [SAA] Subnet Hands On
-### [SAA] Internet Gateways & Route Tables
-### [SAA] Internet Gateways & Route Tables Hands On
-### [SAA] Bastion Hosts
-### [SAA] Bastion Hosts Hands On
-### [SAA] NAT Instances
-### [SAA] NAT Instances Hands On
-### [SAA] NAT Gateways
-### [SAA] NAT Gateways Hands On
-### [SAA] DNS Resolution Options & Route 53 Private Zones
-### [SAA] DNS Resolution Options & Route 53 Private Zones Hands On
-### [SAA] NACL & Security Groups
-### [SAA] NACL & Security Groups Hands On
-### [SAA] VPC Reachability Analyzer
-### [SAA] VPC Reachability Analyzer Hands On
-### [SAA] VPC Peering
-### [SAA] VPC Peering Hands On
-### [SAA] VPC Endpoints
-### [SAA] VPC Endpoints Hands On
-### [SAA] VPC Flow Logs
-### [SAA] VPC Flow Logs Hands On + Athena
-### [SAA] Site to Site VPN, Virtual Private Gateway & Customer Gateway
-### [SAA] Site to Site VPN, Virtual Private Gateway & Customer Gateway Hands On
-### [SAA] Direct Connect & Direct Connect Gateway
-### [SAA] Site to Site VPN as a backup to Direct Connect
-### [SAA] AWS PrivateLink - VPC Endpoint Services
-### [SAA] AWS PrivateLink - VPC Endpoint Services Hands On
-### [SAA] AWS ClassicLink
-### [SAA] Transit Gateway
-### [SAA] VPC Traffic Mirroring
-### [SAA] IPv6 for VPC
-### [SAA] IPv6 for VPC Hands On
-### [SAA] Egress Only Internet Gateway
-### [SAA] Egress Only Internet Gateway Hands On
-### [SAA] VPC Section Cleanup
+we can have multiple VPCs in each region, the soft limit is 5, but it can be increased. each VPC can have up to 5 CIDR ranges attached to it. with the CIDR minimal size of "/28" (16 ip addresses), and maximum size of "/16" (65,536 ip addresses). only private IPv4 ranges are allowed:
+- 10.0.0.0/8
+- 172.16.0.0/12
+- 192.168.0.0/16
+
+the range should not overlap with other networks (other vpcs, corporate network), so we could connect between them.
+
+(demo)
+
+in the <cloud>VPC</cloud> service page, we click <kbd>Create VPC</kbd>, we give it a name, provide an IPv4 cidr block, choose if we want to provide it with IPv6 cidr, the Tenancy option controls whether <cloud>EC2</cloud> instances launched from the VPC use shared or dedicated hardware. dedicated hardware is more expensive. \
+Once the VPC is created, under <kbd>Actions</kbd>, we can <kbd>Edit CIDR</kbd> to add cidr ranges.
+
+### CIDR, Private vs Public IP
+<details>
+<summary>
+Understaind IP ranges
+</summary>
+
+CIDR - classless inter domain routing, a method for allocating IP addresses. it is composed of the base ip and a subnet mask (how many bits can change in the ip).
+
+- WW.XX.YY.ZZ/32 -> one IP
+- 0.0.0.0/0 -> all ips
+- 192.168.0.0/26 => all ips between [192.168.0.0, 192.168.0.63]
+
+subnet masks:
+- /0  = 000.000.000.000
+- /8  = 255.000.000.000
+- /16 = 255.255.000.000
+- /24 = 255.255.255.000
+- /32 = 255.255.255.255
+
+number of possible address: 
+
+
+$$
+\begin{align*}
+2^{(32 - mask)}\\
+2^{(32-24)}= 2^8 = 256 \\
+2^{(32-26)}= 2^6 = 64 \\
+\end{align*}
+$$
+
+>The Internet Assigned Numbers Authority (IANA) established certain blocks of IPv4 addresses for the use of private (LAN) and public (Internet) addresses.\
+> Private IP can only allow certain values:
+> - 10.0.0.0 – 10.255.255.255 (10.0.0.0/8) - in big networks
+> - 172.16.0.0 – 172.31.255.255 (172.16.0.0/12) - AWS default VPC in that range
+> - 192.168.0.0 – 192.168.255.255 (192.168.0.0/16) - e.g., home networks
+> 
+> All the rest of the IP addresses on the Internet are Public.
+
+</details>
+
+### Default VPC Overview
+
+<details>
+<summary>
+The VPC AWS created for us
+</summary>
+
+all AWS accounts have a default VPC, and new instances are launched in this one if no subnet is specified. the default VPC has internet connectivity and all <cloud>EC2</cloud> instances in it have public IPv4 addresses (and public and private DNS names).
+
+in the demo, the cidr block is 172.31.0.0/16 ([172.31.0.0, 172.31.255.255]), which is inside the 172.16.0.0/12 range ([172.16.0.0, 172.31.255.255]), which has 65,536 ips ($2^{16}$).
+
+the VPC has three subnets, each in a different Availability Zone with a cidr range which is part of the VPC cidr.
+- 172.31.0.0/20 - [172.31.0.0, 172.31.15.255]
+- 172.31.16.0/20 - [172.31.16.0, 172.31.31.255]
+- 172.31.32.0/20 - [172.31.32.0, 172.31.47.255]
+
+each of the ranges covers 4096 ($2^{(32-20)}$) ip addresses, but there are 5 reserved addresses.
+
+THE VPC has a route table and Network ACL (NACL) defined. the route table has routes defined in cidr terms, one with a destination range corresponding to the VPC cidr range (172.31.0.0/16) targeting local (inside the VPC), and one for the rest of the possible ip ranges (0.0.0.0/0), targeting at the internet gateway.\
+subnets which aren't explicitly associated with a table use the main route table, so the default VPC subnets are implicitly associated with it.
+The default NACL inbound and outbound rules allowing any source to access the VPC and allows resources inside the VPC to access any address outside it.\
+
+</details>
+
+### Basic VPC Componenets
+
+<details>
+<summary>
+Components of the VPC: Subnets, Internet Gateways & Route Tables
+</summary>
+
+subnets are created within Availability Zone, they are ranges of IPs from the VPC cidr. we usually define subnets as either public or private, but the distinction is artificial.\
+inside each subnet, AWS reserves 5 ip address: the first 4 address, and the last address.
+
+> These 5 IP addresses are not available for use and can't be assigned to an <cloud>EC2</cloud> instance. Example: if CIDR block 10.0.0.0/24, then reserved IP addresses are:
+> 
+> - 10.0.0.0 – Network Address
+> - 10.0.0.1 – reserved by AWS for the VPC router
+> - 10.0.0.2 – reserved by AWS for mapping to Amazon-provided DNS
+> - 10.0.0.3 – reserved by AWS for future use
+> - 10.0.0.255 – Network Broadcast Address.
+
+in our vpc, we can go to the subnet section, click <kbd>Create Subnet</kbd>, choose our new VPC, and give the subnet a name, choose the Availability Zone, and the cidr range. for public subnets, we want to keep the range relatively small. we can add more subnets as needed.\
+we can define the default setting of auto-assinging public IP addresses to instances in the subnet.
+
+#### Internet Gateway, Route Tables
+
+IGW - Internet Gateway
+
+Internet gateways allows resources (<cloud>EC2</cloud>) in a VPC to connect to the internet. the gateways are managed - scale horizontally for high availability and redundancy. they must be created separately from the VPC. each gateway can be connected to one VPC, and each VPC can connect to only one gateway.\
+In order for internet gateways to provide access to the internet, they must be combined with a route table.
+
+we can check the default behavior (not having internet access) by launching a virtual machine (with a security group allowing SSH access), and trying to connect ot it with "EC2 Instance Connect".
+
+we next <kbd>Create Internet Gateway</kbd>, wi simply provide a name to it an other optional tags. we then <kbd>Actions</kbd> and <kbd>Attach to VPC</kbd>. we next <cloud>Create Route Table</cloud> in our VPC, one called public and one private. then we associate the subnets to the route tables.\
+in the public route table, we click <kbd>Edit Routes</kbd> and add the 0.0.0.0/0 route with the internet gateway as the target. now we can finally connect to the virtual machine with instance connect.
+</details>
+
+### Bastion Hosts, NAT Instances and NAT Gateways
+
+<details>
+<summary>
+Accessing Resource inside a private subnet, Outbound Internet access from private subnets.
+</summary>
+
+#### Bation Hosts
+sometimes called bastion, sometimes called jumpbox.
+
+a bastion Host resides in the public subnet, has it's own security group, and it does have access to the private subnet. so we first connect from the public internet to the bastion host, and then we connect to private instances.\
+The bastion security group must allow SSH access from the internet, usually a restricted CIDR (just one cidr, or the corporate cidr range). the private security group must allow SSH access from either the Bastion security group, or from the ip of the bastion host.
+
+demo:\
+Since we already created an <cloud>EC2</cloud> machine and allowed for SSH access to it, we can rename it to be "Bastion Host". we will an SSH key pair, and we launch a new instance in a private subnet. the security group will allow ssh access from the public security group, rather than from the public internet.
+
+we connect to the bastion host using instance connect, and from it we run the ssh command `ssh ec2-user@10.0.22.82 -i demoKeyPair.pem`, we can try to ping google from inside the private instance, but this won't work.
+
+#### NAT Instances
+
+NAT = Network Address Translation
+
+> NAT Instances allow EC2 instances in private subnets to connect to the Internet.
+> - Must be launched in a public subnet
+> - Must disable EC2 setting: Source/destination Check
+> - Must have Elastic IP attached to it
+> - Route Tables must be configured to route traffic from private subnets to the NAT Instance
+
+NAT instances are not considered best practice anymore, and NAT gateways should be used instead.
+
+> - Pre-configured Amazon Linux AMI was available - Reached the end of standard support on December 31, 2020
+> - Not highly available / resilient setup out of the box - You need to create an ASG in multi-AZ + resilient user-data script
+> - Internet traffic bandwidth depends on EC2 instance type
+>
+> You must manage Security Groups & rules:
+> - Inbound:
+>   - Allow HTTP / HTTPS traffic coming from Private Subnets
+>   - Allow SSH from your home network (access is provided through Internet Gateway)
+> - Outbound:
+>   - Allow HTTP / HTTPS traffic to the Internet
+
+we can still create the NAT instance in our VPC, we create a <cloud>EC2</cloud> machine, name it "NAT Instance", and search for an AMI which was called NAT. we put it the public sub net, and give it it's own security group in, which allows HTTP and HTTPS access from the cidr block of our VPC.\
+we click <kbd>Edit Connection Settings</kbd>, <kbd>Source Destination Check</kbd> and disable it.\
+we next go to the private route table, and we add a route. the route cidr is 0.0.0.0/0 (everything), and the target is the NAT instance we created.
+(we also need to allow the ping protocol in the security group).
+
+#### NAT Gatways
+
+we can remove the NAT instances (and the route table entry) and use a NAT gateway instead.
+
+> - AWS-managed NAT, higher bandwidth, high availability, no administration
+> - Pay per hour for usage and bandwidth
+> - NAT-GW is created in a specific Availability Zone, uses an Elastic IP
+> - Can't be used by EC2 instance in the same subnet (only from other subnets)
+> - Requires an IGW (Private Subnet => NAT-GW => IGW)
+> - 5 Gbps of bandwidth with automatic scaling up to 100 Gbps
+> - No Security Groups to manage / required
+> 
+> High Availability
+> - NAT Gateway is resilient within a single Availability Zone
+> - Must create multiple NAT Gateways in multiple AZs for fault-tolerance
+> - There is no cross-AZ failover needed because if an AZ goes down it doesn't need NAT
+
+| Operation                     | NAT Gateway                                       | NAT Instance                                          |
+| ----------------------------- | ------------------------------------------------- | ----------------------------------------------------- |
+| Availability                  | Highly available within AZ (create in another AZ) | Use a script to manage failover between instances     |
+| Bandwidth                     | Up to 100 Gbps                                    | Depends on EC2 instance type                          |
+| Maintenance                   | Managed by AWS                                    | Managed by you (e.g., software, OS patches, etc...)   |
+| Cost                          | Per hour & amount of data transferred             | Per hour, EC2 instance type and size, + network costs |
+| Public                        | IPv4                                              | Yes                                                   | Yes |
+| Private                       | IPv4                                              | Yes                                                   | Yes |
+| Security Groups               | Not required                                      | required                                              |
+| Can be used  as Bastion Host? | No                                                | Ye                                                    |
+
+we <kbd>Create NAT Gateway</kbd> in the public subnet, choose the connectivity type to be public, and allocate an elastic IP to it.\
+then we edit the route table to direct traffic from the private subnet to the gateway.
+
+</details>
+
+
+### DNS Resolution Options & Route 53 Private Zones
+
+<details>
+<summary>
+DNS resolution
+</summary>
+
+> DNS Resolution (enableDnsSupport)
+> 
+> - Decides if DNS resolution from Route 53 Resolver server is supported for the VPC
+> - True (default): it queries the Amazon Provider DNS Server at 169.254.169.253 or the reserved IP address at the base of the VPC IPv4 network range plus two (.2) (reserved address)
+>
+> DNS Hostnames (enableDnsHostnames)
+> 
+> - By default, True => default VPC, False => newly created VPCs
+> - Won't do anything unless enableDnsSupport=true
+> - If True, assigns public hostname to EC2 instance if it has a public IPv4
+
+if we use custom DNS domains names in a private hosted zone in <cloud>Route53</cloud>, both attributes must be enabled.
+
+in our demo VPC, we <kbd>Edit DNS resolution</kbd> and <kbd>Edit DNS Hostnames</kbd> and enable both. now the bastion host server, which has a public ipv4 address, will also have a public dns name.\
+In <cloud>Route53</cloud>, we can create a private hosted zone, and associate it with our demo VPC.
+</details>
+
+### NACL & Security Groups
+
+<details>
+<summary>
+Security Controls
+</summary>
+
+EC2 instances have security group, but the subnet itself can have an network access control list. the NACL is stateless (unlike security groups).
+
+> NACL are like a firewall which control traffic from and to subnets. One NACL per subnet, new subnets are assigned the Default NACL.\
+> You define NACL Rules:
+> - Rules have a number (1-32766), higher precedence with a lower number
+> - First rule match will drive the decision
+> - Example: if you define #100 ALLOW 10.0.0.10/32 and #200 DENY 10.0.0.10/32, the IP Address will be allowed because 100 has a higher precedence over 200
+> - The last rule is an asterisk (*) and denies a request in case of no rule match
+> - AWS recommends adding rules by increment of 100
+> 
+> Newly created NACLs will deny everything.\
+> NACL are a great way of blocking a specific IP address at the subnet level.
+
+default NCL accepts everything inbound/outbound. this is used for the default VPC.
+
+when two endpoint connect to one another, they use ports, the client connects to a defined port, and expects a response on an ephemeral port. different OS use different port ranges for ephemeral ports. the requests from the client to the server contains the ephemeral port, which is where the server will send it's response to.\
+The NACL must allow outbound and inbound access on the ephemeral port.
+
+| Metric          | Security Group                                                             | NACL                                                                                                      |
+| --------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Effects         | Operates at the instance level                                             | Operates at the subnet level                                                                              |
+| Allow/Deny      | Supports allow rules only                                                  | Supports allow rules and deny rules                                                                       |
+| Statefullness   | Stateful: return traffic is automatically allowed, regardless of any rules | Stateless: return traffic must be explicitly allowed by rules (think of ephemeral ports)                  |
+| Rule Evaluation | All rules are evaluated before deciding whether to allow traffic           | Rules are evaluated in order (lowest to highest) when deciding whether to allow traffic, first match wins |
+| Applies to      | Applies to an EC2 instance when specified by someone                       | Automatically applies to all EC2 instances in the subnet that it's associated with                        |
+
+demo:\
+in our bastion instance, we can start an HTTP server, we download the "httpd" package and start it `sudo systemctl enable httpd` and `sudo systemctl start httpd`. we enable the HTTP access in the security group, and we can access it from the browser. we can edit the NACL to deny HTTP traffic with a lower rule number (higher priority), and now we won't be able to connect to it. Security groups and NACL work together, and both must pass.
+we can remove outbound rules from the Security group, and then we can still connect to it, but it won't be able to initiate traffic from within. this is what being 'stateful' means for security groups.
+</details>
+
+
+### VPC Reachability Analyzer
+
+<details>
+<summary>
+Network Diagnostics Tool
+</summary>
+
+> A network diagnostics tool that troubleshoots network connectivity between two endpoints in your VPC(s).\
+> It builds a model of the network configuration, then checks the reachability based on these configurations (it doesn't send packets).\
+> When the destination is:
+> - Reachable – it produces hop-by-hop details of the virtual network path
+> - Not reachable – it identifies the blocking component(s) (e.g., configuration issues in SGs, NACLs, Route Tables)
+> - Use cases: troubleshoot connectivity issues, ensure network configuration is as intended
+
+in the "Reachability Analyzer" page, we choose the source and destination, choose ports and protocol, and analyze the path. if the path is not reachable, we can see the reason why, like missing inbound rules in a security group. it also shows the entire path for the requests.
+</details>
+
+
+### VPC Peering
+
+<details>
+<summary>
+Connect VPCs together
+</summary>
+
+> Privately connect two VPCs using AWS'
+network. Make them behave as if they were in the
+same network.
+> - Must not have overlapping CIDRs.
+> - VPC Peering connection is **NOT transitive** (must be established for each VPC that need to communicate with one another).
+> - You must update route tables in each VPC's subnets to ensure EC2 instances can communicate with each other.
+> - You can create VPC Peering connection between VPCs in different AWS accounts/regions
+> - You can reference a security group in a peered VPC (works cross accounts – same region)
+
+if VPC A is peered to VPC B and VPC is peered to VPC C, A and C are not peered.
+
+in our demo, we can peer the new VPC with the default VPC, we can do this by creating an <cloud>EC2</cloud> instance and trying to use the private ip address of the webserver we set up in a different VPC.\
+We <kbd>Create Peering Connection</kbd>, give the connection a name, choose the requester VPC (one of our VPCs), and which VPC to peer with. that VPC can be in our account or another account, in the same region and or another region. we can see the CIDR blocks and determine if they are overlapping. if not, great.\
+Before the peering is established, the target VPC must accept the request. next, we need to modify the route tables in both VPCs. under routes, we add a route with destination of the cidr range from the peered VPC, and the target is the peered connection. we do the same with the other VPC.
+
+</details>
+
+### VPC Endpoints
+
+<details>
+<summary>
+Use serverless resources from the VPC without going through the public internet
+</summary>
+
+> Every AWS service is publicly exposed (public URL).\
+> VPC Endpoints (powered by AWS PrivateLink) allows you to connect to AWS services using a private network instead of using the public Internet
+> 
+> - They're redundant and scale horizontally
+> - They remove the need of IGW, NAT-GW to access AWS Services
+> - In case of issues:
+>   - Check DNS Setting Resolution in your VPC
+>   - Check Route Tables
+
+A VPC endpoint is deployed in the VPC, and allows resources to communicate with AWS resources within the AWS network, rather than through the public internet.
+
+there are two types of endpoints, interface endpoints (most services, costs money), and gateway endpoints (<cloud>S3</cloud> and <cloud>DynamoDb</cloud> only, free).
+
+> Interface Endpoints (powered by PrivateLink)
+> - Provisions an ENI (private IP address) as an entry point 
+> - Must attach a Security Group
+> - Supports most AWS services
+> - cost: $ per hour + $ per GB of data processed
+> 
+> Gateway Endpoints
+> - Provisions a gateway and must be used as a target in a route table
+> - does not use security groups
+> - Supports both <cloud>S3</cloud> and <cloud>DynamoDB</cloud>
+> - Free
+
+we could use interface endpoint to connect to <cloud>S3</cloud> and <cloud>DynamoDB</cloud>, but gateway endpoints are free, easier to use, and scale better. interface endpoints are only preferable when used from on-premises site, or from a different VPC or region.
+
+demo:\
+from our private <cloud>EC2</cloud> instance, we first give it role to perform <cloud>S3</cloud> operations, we can run `aws s3 ls` to list our buckets, and this operation used the public internet. we can remove the destination of the internet gateway from the private route table, and now the same operation fails. we can also run `curl example.com` command to check against the public internet.\
+in the "Endpoints" section, we <kbd>Create Endpoint</kbd>, give it a name, choose the "AWS Services" category, and search for S3 as the service name, we will have either interface endpoint or gateway endpoint.\
+For interface endpoints, we choose the VPC, ensure DNS names are enabled, and we choose which subnets to deploy the endpoint (ENI device) in, and select the security group.
+For gateway endpoints, we select the VPC, and choose which routeTable to update. we can modify the endpoint access policy if we wish. now, in the route table, we will see an entry for the endpoint.
+
+back in our instance, we can try running `curl` again, which will still fail, and we need to run `aws s3` command with the correct region flag (`--region eu-central-1`), but the command will work properly.
+
+
+</details>
+
+### VPC Flow Logs
+
+<details>
+<summary>
+Monitor Traffic Data
+</summary>
+
+> Capture information about IP traffic going into your interfaces:
+> 
+> - VPC Flow Logs
+> - Subnet Flow Logs
+> - Elastic Network Interface (ENI) Flow Logs
+> 
+> Helps to monitor & troubleshoot connectivity issues.
+
+We can send the data to different locations
+
+- <cloud>S3</cloud>
+- <cloud>CloudWatch Logs</cloud>
+- <cloud>Kinesis Data Firehose</cloud>
+
+There is also network information from specific services:
+- <cloud>ELB</cloud> - Elastic Load Balance
+- <cloud>RDS</cloud> - Relational Databases
+- <cloud>ElastiCache</cloud> - Cache
+- <cloud>Redshift</cloud> - Data warehouse (BI)
+- <cloud>WorkSpaces</cloud> - VDI
+- <cloud>NAT Gateways</cloud>
+- <cloud>Transit Gateway</cloud>
+
+the flow logs format:
+- version
+- accountId
+- interfaceId
+- srcAddr (source address)
+- dstAddr (destination address)
+- srcPort (source port)
+- dstPort (destination port)
+- protocol
+- packets
+- byres
+- start timestamp
+- end timestamp
+- action (Accept or Reject)
+- log-status
+
+we can query VPC flow logs using <cloud>Athena</cloud> on <cloud>S3</cloud> or <cloud>CloudWatch</cloud> Logs Insight.
+
+> - srcAddr & dstAddr – help identify problematic IP
+> - srcPort & dstPort – help identity problematic ports
+> - Action – success or failure of the request due to Security Group / NACL
+> - Can be used for analytics on usage patterns, or malicious behavior
+
+in our demo VPC, in the Flow Logs tab, <kbd>Create Flow Log</kbd>, we give it a name, a filter (Accept, Reject, All), choose aggregation interval (usually we use the duration) and the destination (<cloud>CloudWatch</cloud> Logs or <cloud>S3</cloud> bucket, <cloud>Kinesis Firehose</cloud>), it will need a proper <cloud>IAM</cloud> role. we can also choose to use the custom format or modify it. in the demo, we send it both to a bucket and to a log group.\
+
+In <cloud>Athena</cloud>, we fist set up a query result location (a new bucket), and we create a database for VPC flow logs. we paste the proper `CREATE TABLE` and modify the locations, and then we can RUN SQL queries on the flow logs data.
+
+</details>
+
+### Acessing VPCs
+
+<details>
+<summary>
+Different Ways to Connect on-premises resources to AWS
+</summary>
+
+connecting on-premises data center to AWS.
+
+#### Site to Site VPN, Virtual Private Gateway & Customer Gateway
+
+VPN uses the public internet. we have a VPN Gateway in the VPC, and a customer gateway on-premises. the customer gateway can be virtual or a dedicated device.
+
+> Virtual Private Gateway (VGW)
+> - VPN concentrator on the AWS side of the VPN connection
+> - VGW is created and attached to the VPC from which you want to create the Site-to-Site VPN connection
+> - Possibility to customize the ASN (Autonomous System Number)
+> 
+> Customer Gateway (CGW)
+> - Software application or physical device on customer side of the VPN connection
+
+if our customer gateway device (on-premises) has a public (unchanging) IP address, we should use that. if it is behind a NAT device, then we use the NAT device public ip. in either case, we need to enable *route propagation* for the virtual private gateway in the route table. we also need to make sure the security group allow for the ICMP (ping) protocol.
+
+if we have multiple on-premises sites, we can use <cloud>AWS VPN CloudHub</cloud> and they can communicate with one another.
+
+> - Provide secure communication between multiple sites, if you have multiple VPN connections
+> - Low-cost hub-and-spoke model for primary or secondary network connectivity between different  locations (VPN only)
+> - It's a VPN connection so it goes over the public Internet
+> - To set it up, connect multiple VPN connections on the same VGW, setup dynamic routing and configure route tables
+
+#### Direct Connect & Direct Connect Gateway
+
+<cloud>Direct Connect</cloud> (DX)
+
+> - Provides a dedicated private connection from a remote network to your VPC
+> - Dedicated connection must be setup between your DC and AWS Direct Connect locations
+> - You need to setup a Virtual Private Gateway on your VPC
+> - Access public resources (<cloud>S3</cloud>) and private (<cloud>EC2</cloud>) on same connection
+> - Use Cases:
+>   - Increase bandwidth throughput - working with large data sets – lower cost
+>   - More consistent network experience - applications using real-time data feeds
+>   - Hybrid Environments (on prem + cloud)
+> - Supports both IPv4 and IPv6
+
+use private virtual interface for VPC resources, and public virtual interface for services outside it. uses Virtual private gateway, just like VPN connections..
+
+if we want to connect to multiple VPCs (in different regions), we use a <cloud>Direct Connect</cloud> gateway.
+
+> Dedicated Connections:
+> - 1Gbps, 10 Gbps and 100 Gbps capacity
+> - Physical ethernet port dedicated to a customer
+> - Request made to AWS first, then completed by AWS Direct Connect Partners
+> 
+> Hosted Connections
+> - 50Mbps, 500 Mbps, to 10 Gbps
+> - Connection requests are made via AWS Direct Connect Partners
+> - Capacity can be added or removed on demand
+> - 1, 2, 5, 10 Gbps available at select AWS Direct Connect Partners
+> 
+> - Lead times are often longer than 1 month to establish a new connection
+> - Data in transit is not encrypted but is private
+> - AWS Direct Connect + VPN provides an IPsec-encrypted private connection
+> - Good for an extra level of security, but slightly more complex to put in place
+> - In case Direct Connect fails, you can set up a backup Direct Connect connection (expensive), or a Site-to-Site VPN connection
+
+</details>
+
+### AWS PrivateLink - VPC Endpoint Services
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+
+</details>
+
+### AWS ClassicLink
+### Transit Gateway
+### VPC Traffic Mirroring
+### IPv6 for VPC
+
+### Egress Only Internet Gateway
+
+### VPC Section Cleanup
 ### VPC Section Summary
-### [SAA] Networking Costs in AWS
-### [SAA] Network Firewall
+### Networking Costs in AWS
+### Network Firewall
 
 </details>
 
 ## Other Services
+
+<details>
+<summary>
+Additional AWS Services
+</summary>
+
+### X-Ray
+
+<details>
+<summary>
+Trace requests across services
+</summary>
+
+visual analysis of performance and dependencies.
+
+> - Debugging in Production, the good old way:
+>   - Test locally
+>   - Add log statements everywhere
+>   - Re-deploy in production
+> - Log formats differ across applications and log analysis is hard.
+> - Debugging: one big monolith "easy", distributed services "hard".
+> - No common views of your entire architecture
+
+needs to be enabled.
+
+</details>
+
+### AWS Amplify
+
+<details>
+<summary>
+Web and Mobile Application Development
+</summary>
+
+create applications that use AWS as backend, and use frontend libraries to connect. then deploy directly to <cloud>CloudFront</cloud> or <cloud>Amplify Console</cloud>.
+
+like <cloud>Elastic BeanStalk</cloud> for mobile applications.
+
+> A set of tools and services that helps you develop and deploy scalable full stack web and mobile applications
+> - Authentication
+> - Storage
+> - API (REST, GraphQL)
+> - CI/CD
+> - PubSub
+> - Analytics
+> - AI/ML Predictions
+> - Monitoring
+> 
+> Connect your source code from GitHub, AWS CodeCommit, Bitbucket, GitLab, or upload directly.
+</details>
+
+</details>
 
 ## Misc
 
@@ -6332,6 +6828,8 @@ Additional terms and acronyms to keep.
 - SLD - Second Level Domain (DNS) - "amazon.com"
 - FQDN - Fully Qualified Domain Name (DNS)
 - ICANN - The Internet Corporation for Assigned Names and Numbers
+- NACL - network Access Control List (<cloud>VPC</cloud>)
+
 </details>
 
 <!-- misc end -->

@@ -1,6 +1,6 @@
 <!--
 ignore these words in spell check for this file
-// cSpell:ignore Okun kube fooa SVennam aaaabc kubelet kubernetes nginx openshift linux redhat Silberschatz Korth Sudarshan ntile cume_dist arity
+// cSpell:ignore Okun kube fooa SVennam aaaabc kubelet kubernetes nginx openshift linux redhat Silberschatz Korth Sudarshan ntile cume_dist arity ODBC JDBC OLAP
 -->
 
 # Books-Resources

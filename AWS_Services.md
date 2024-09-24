@@ -12,6 +12,7 @@
 - EKS - Elastic Kubernetes Service - Managed Kubernetes Cluster
 - ECS - Elastic Container Service - AWS propriety Containers
 - Lambda - Serverless Computer
+- WorkSpaces - VDI service
 
 ## Storage
 
@@ -95,6 +96,9 @@
 - HSM - Hardware Service Module - keys managed by hardware device, not software
 - Amazon Shield - DDos Protection
 - Inspector - Automated Security Assessments (CVEs, network access)
+- VPN CloudHub - hub-and-spoke model, connect multiple on-premises sites together with AWS between them
+- PrivateLink - VPC endPoint service
+- DirectConnect - physical connection to AWS
 
 ## Machine Learning
 
