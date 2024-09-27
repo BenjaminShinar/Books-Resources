@@ -1,12 +1,11 @@
 <!--
-// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS PITR HDFS MITM fileb certutil FIPS ADFS OIDC ICANN NAPTR nslookup IMDSV NACL Mbps
+// cSpell:ignore proto deregisteration_delay sysvinit Teradata xvda POSIX Apahce etag requesturi SERDE DSSE ONTAP NTFS PITR HDFS MITM fileb certutil FIPS ADFS OIDC ICANN NAPTR nslookup IMDSV NACL Mbps ECMP
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
 
 # Ultimate AWS Certified SysOps Administrator Associate 2024
 
-<!-- <details> -->
 <summary>
 Practice towards AWS Certified SysOps Administrator Associate exam.
 </summary>
@@ -5985,7 +5984,7 @@ Determining which Records are healthy and can be used.
 > 
 > - Health checks that monitor an endpoint (application, server, other AWS resource)
 > - Health checks that monitor other health checks (Calculated Health Checks)
-> - Health checks that monitor <cloud>CloudWatch</cloud> Alarms (full control !!) – e.g., throttles of <cloud>DynamoDB</cloud>, alarms on <cloud>RDS</cloud>, custom metrics,etc... (helpful for private resources)
+> - Health checks that monitor <cloud>CloudWatch</cloud> Alarms (full control !!) - e.g., throttles of <cloud>DynamoDB</cloud>, alarms on <cloud>RDS</cloud>, custom metrics,etc... (helpful for private resources)
 > 
 > Health Checks are integrated with <cloud>CloudWatch</cloud>
 metrics.
@@ -6085,8 +6084,8 @@ return records based on given location (not latency), multiple records with the 
 > Ability to shift more traffic to resources based on the defined bias.\
 > To change the size of the geographic region, specify bias values:
 > 
-> - To expand (1 to 99) – more traffic to the resource
-> - To shrink (-1 to -99) – less traffic to the resource
+> - To expand (1 to 99) - more traffic to the resource
+> - To shrink (-1 to -99) - less traffic to the resource
 > 
 > Resources can be:
 > - AWS resources (specify AWS region)
@@ -6166,7 +6165,7 @@ Use Hybrid DNS and Route53 Resolvers to resolve DNS queries across networks, suc
 > - Records in Private Hosted Zones
 > - Records in public Name Servers
 > 
-> Hybrid DNS – resolving DNS queries between VPC (Route53 Resolver) and
+> Hybrid DNS - resolving DNS queries between VPC (Route53 Resolver) and
 your networks (other DNS Resolvers).\
 > Networks can be:
 > - VPC itself / Peered VPC
@@ -6203,7 +6202,7 @@ if the on-premise server wants to connect to the EC2 instance, it issues a DNS q
 for outbound endpoints, the EC2 instance communicates with route53 resolver, which communicates with an outbound resolver endpoint (which maps the "onPremise.private" domain to the target ip of the local DNS resolver). the local DNS resolvers can respond with the ip address of the on-premises server, and the instance can connect with them.
 
 
-> Route 53 – Resolver Rules\
+> Route 53 - Resolver Rules\
 > Control which DNS queries are forwarded to DNS Resolvers on your network.
 > 
 > - Conditional Forwarding Rules (Forwarding Rules)
@@ -6226,9 +6225,9 @@ System Rules override Conditional Rowarding Rules, if multiple rules match, the 
 
 ## Networking - VPC
 
-<!-- <details> -->
+<details>
 <summary>
-Virtual Private Cloud
+Virtual Private Cloud and networking.
 </summary>
 
 VPC - Virtual Private Cloud.
@@ -6277,9 +6276,9 @@ $$
 
 >The Internet Assigned Numbers Authority (IANA) established certain blocks of IPv4 addresses for the use of private (LAN) and public (Internet) addresses.\
 > Private IP can only allow certain values:
-> - 10.0.0.0 – 10.255.255.255 (10.0.0.0/8) - in big networks
-> - 172.16.0.0 – 172.31.255.255 (172.16.0.0/12) - AWS default VPC in that range
-> - 192.168.0.0 – 192.168.255.255 (192.168.0.0/16) - e.g., home networks
+> - 10.0.0.0 - 10.255.255.255 (10.0.0.0/8) - in big networks
+> - 172.16.0.0 - 172.31.255.255 (172.16.0.0/12) - AWS default VPC in that range
+> - 192.168.0.0 - 192.168.255.255 (192.168.0.0/16) - e.g., home networks
 > 
 > All the rest of the IP addresses on the Internet are Public.
 
@@ -6321,11 +6320,11 @@ inside each subnet, AWS reserves 5 ip address: the first 4 address, and the last
 
 > These 5 IP addresses are not available for use and can't be assigned to an <cloud>EC2</cloud> instance. Example: if CIDR block 10.0.0.0/24, then reserved IP addresses are:
 > 
-> - 10.0.0.0 – Network Address
-> - 10.0.0.1 – reserved by AWS for the VPC router
-> - 10.0.0.2 – reserved by AWS for mapping to Amazon-provided DNS
-> - 10.0.0.3 – reserved by AWS for future use
-> - 10.0.0.255 – Network Broadcast Address.
+> - 10.0.0.0 - Network Address
+> - 10.0.0.1 - reserved by AWS for the VPC router
+> - 10.0.0.2 - reserved by AWS for mapping to Amazon-provided DNS
+> - 10.0.0.3 - reserved by AWS for future use
+> - 10.0.0.255 - Network Broadcast Address.
 
 in our vpc, we can go to the subnet section, click <kbd>Create Subnet</kbd>, choose our new VPC, and give the subnet a name, choose the Availability Zone, and the cidr range. for public subnets, we want to keep the range relatively small. we can add more subnets as needed.\
 we can define the default setting of auto-assinging public IP addresses to instances in the subnet.
@@ -6496,8 +6495,8 @@ Network Diagnostics Tool
 > A network diagnostics tool that troubleshoots network connectivity between two endpoints in your VPC(s).\
 > It builds a model of the network configuration, then checks the reachability based on these configurations (it doesn't send packets).\
 > When the destination is:
-> - Reachable – it produces hop-by-hop details of the virtual network path
-> - Not reachable – it identifies the blocking component(s) (e.g., configuration issues in SGs, NACLs, Route Tables)
+> - Reachable - it produces hop-by-hop details of the virtual network path
+> - Not reachable - it identifies the blocking component(s) (e.g., configuration issues in SGs, NACLs, Route Tables)
 > - Use cases: troubleshoot connectivity issues, ensure network configuration is as intended
 
 in the "Reachability Analyzer" page, we choose the source and destination, choose ports and protocol, and analyze the path. if the path is not reachable, we can see the reason why, like missing inbound rules in a security group. it also shows the entire path for the requests.
@@ -6518,7 +6517,7 @@ same network.
 > - VPC Peering connection is **NOT transitive** (must be established for each VPC that need to communicate with one another).
 > - You must update route tables in each VPC's subnets to ensure EC2 instances can communicate with each other.
 > - You can create VPC Peering connection between VPCs in different AWS accounts/regions
-> - You can reference a security group in a peered VPC (works cross accounts – same region)
+> - You can reference a security group in a peered VPC (works cross accounts - same region)
 
 if VPC A is peered to VPC B and VPC is peered to VPC C, A and C are not peered.
 
@@ -6621,9 +6620,9 @@ the flow logs format:
 
 we can query VPC flow logs using <cloud>Athena</cloud> on <cloud>S3</cloud> or <cloud>CloudWatch</cloud> Logs Insight.
 
-> - srcAddr & dstAddr – help identify problematic IP
-> - srcPort & dstPort – help identity problematic ports
-> - Action – success or failure of the request due to Security Group / NACL
+> - srcAddr & dstAddr - help identify problematic IP
+> - srcPort & dstPort - help identity problematic ports
+> - Action - success or failure of the request due to Security Group / NACL
 > - Can be used for analytics on usage patterns, or malicious behavior
 
 in our demo VPC, in the Flow Logs tab, <kbd>Create Flow Log</kbd>, we give it a name, a filter (Accept, Reject, All), choose aggregation interval (usually we use the duration) and the destination (<cloud>CloudWatch</cloud> Logs or <cloud>S3</cloud> bucket, <cloud>Kinesis Firehose</cloud>), it will need a proper <cloud>IAM</cloud> role. we can also choose to use the custom format or modify it. in the demo, we send it both to a bucket and to a log group.\
@@ -6671,7 +6670,7 @@ if we have multiple on-premises sites, we can use <cloud>AWS VPN CloudHub</cloud
 > - You need to setup a Virtual Private Gateway on your VPC
 > - Access public resources (<cloud>S3</cloud>) and private (<cloud>EC2</cloud>) on same connection
 > - Use Cases:
->   - Increase bandwidth throughput - working with large data sets – lower cost
+>   - Increase bandwidth throughput - working with large data sets - lower cost
 >   - More consistent network experience - applications using real-time data feeds
 >   - Hybrid Environments (on prem + cloud)
 > - Supports both IPv4 and IPv6
@@ -6699,28 +6698,243 @@ if we want to connect to multiple VPCs (in different regions), we use a <cloud>D
 
 </details>
 
-### AWS PrivateLink - VPC Endpoint Services
+### VPC Endpoints
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Exposing A single Service
 </summary>
+
+#### AWS PrivateLink - VPC Endpoint Services
+
+exposing VPCs to others VPCs. there are several options, first, they can be made public and accessed through the public internet. a second option is to use VPC peering - this requires multiple connections, and it opens up the entire VPC. but if we want just a single resource inside the network, we can use <cloud>PrivateLink</cloud>.
+
+PrivateLink is a vpc endPoint service, it can securely expose services across VPCs (in the same account or across different accounts) witout peering, internet gateways, NAT and route tables.
+
+the service VPC needs a Network Load Balancer (or gateway load balancer), and the customer VPC needs an ENI (elastic network interface) or a virtual private gateway (for on-premises), then we connect the two VPCs with privateLink.\
+For example, we can have ECS clusters that we wish to expose as as service. we connect them to an application load balancer, which is then connected to a network load balancer. on the customer side, we can either have an ENI or a Virtual private gateway.
+
+in the <cloud>VPC</cloud> service, under "Endpoint services", <kbd>Create EndPoint Service</kbd>, we choose the load balancer type. once we create this, we can go to "endPoints", <kbd>Create EndPoint</kbd>, and choose the service category as "other".
+
+#### AWS ClassicLink
+
+the older methods of connecting, either <cloud>EC2-classic</cloud> and <cloud>ClassicLink</cloud>. not relevant anymore.
+
+</details>
+
+### Transit Gateway
+
+<details>
+<summary>
+Hub and Spoke Model for transitive connections.
+</summary>
+
+Hub and Spoke, connect VPCs, <cloud>Customer Gateway</cloud>, <cloud>Direct Connect</cloud> networks together.
+
+> - For having transitive peering between thousands of VPC and on-premises, hub-and-spoke (star) connection
+> - Regional resource, can work cross-region
+> - Share cross-account using <cloud>Resource Access Manager</cloud> (RAM)
+> - You can peer Transit Gateways across regions
+> - Route Tables: limit which VPC can talk with other VPC
+> - Works with Direct Connect Gateway, VPN connections
+> - Supports IP Multicast (not supported by any other AWS service)
+
+also allows for ECMP (Equal Cost MultiPath Routing), multiple site-to-site VPN connection to increase the bandwidth. it gives us more tunnels as compared to connecting to a Virtual Private Gateway directly.
+
+we can also use transit gateway to share <cloud>Direct Connect</cloud> between multiple accounts, 
+</details>
+
+### VPC Traffic Mirroring
+
+<details>
+<summary>
+Capture and inspect network traffic in your VPC
+</summary>
+
+> Allows you to capture and inspect network traffic in your VPC.
+> Route the traffic to security appliances that you manage.\
+> Capture the traffic:
+> - From (Source) - ENIs
+> - To (Targets) - an ENI or a Network Load Balancer
+>
+> Capture all packets or capture the packets of your interest (optionally, truncate packets).
+> Source and Target can be in the same VPC or different VPCs (VPC Peering).\
+> Use cases: content inspection, threat
+monitoring, troubleshooting, etc...
+</details>
+
+### IPv6 for VPC
+
+<details>
+<summary>
+IPv6 in AWS
+</summary>
+
+> IPv4 designed to provide 4.3 Billion addresses (they'll be exhausted soon).
+> IPv6 is the successor of IPv4.
+> IPv6 is designed to provide $3.4 * 10^{38}$ unique IP addresses.\
+> Every IPv6 address in AWS is public and Internet-routable (no private range).\
+> Format x:x:x:x:x:x:x:x (x is hexadecimal, range can be from 0000 to ffff).
+> 
+> Examples:
+> - 2001:db8:3333:4444:5555:6666:7777:8888
+> - 2001:db8:3333:4444:cccc:dddd:eeee:ffff
+> - :: - all 8 segments are zero
+> - 2001:db8:: - the last 6 segments are zero
+> - ::1234:5678 - the first 6 segments are zero
+> - 2001:db8::1234:5678 - the middle 4 segments are zero
+
+we can't enable IPv4 for VPC subnets, but we can **enable IPv6** and operate in dual mode. then the <cloud>EC2</cloud> instances will have a private IPv4 address, and a public IPv6 address.
+
+inside the <cloud>VPC</cloud> settings, we <kbd>Edit Cidr</kbd> and choose to <kbd>Add IPv6 Cidr</kbd>. we can either get one provided by AWS or use a cidr owned by us. we can then assign the cidr to the subnets, and make them assign IPv6 address automatically. for each <cloud>EC2</cloud> that already exists, we can assign an address from the range we have. then we could fix the security group to also allow traffic from IPv6 addresses.
+
+we also see the IPv6 cidr in the route table.
+
+#### Egress Only Internet Gateway
+
+used only for IPv6. similar to NAT gateways. 
+
+> Allows instances in your VPC outbound connections over IPv6 while preventing the internet to initiate an IPv6 connection to your instances.
+> You must update the Route Tables.
+
+
+public subnet route table
+
+| Destination             | Target | Notes                       |
+| ----------------------- | ------ | --------------------------- |
+| 10.0.0.0/16             | local  | IPv4 address range          |
+| 2001:db8:1234:1a00::/56 | local  | IPv6 address range          |
+| 0.0.0.0/0               | intrent gateway-id | IPv4 access public internet |
+| ::/0                    | intrent gateway-id | IPv6 access public internet |
+
+private subnet route table
+
+| Destination             | Target         | Notes                       |
+| ----------------------- | -------------- | --------------------------- |
+| 10.0.0.0/16             | local          | IPv4 address range          |
+| 2001:db8:1234:1a00::/56 | local          | IPv6 address range          |
+| 0.0.0.0/0               | nat-gateway-id | IPv4 access public internet |
+| ::/0                    | egress-only intrent gateway-id  | IPv6 access public internet |
+
+demo:\
+inside the <cloud>VPC</cloud> section, we choose the "Egress Only Internet Gateway" section, <kbd>Create Egress Only Internet Gateway</kbd>, attach it to a VPC, and edit the route table in the private subnet.
+
+</details>
+
+
+### Networking Costs in AWS
+
+<details>
+<summary>
+Understanding costs of networking.
+</summary>
+
+We usually pay for GB of network traffic.\
+Inbound traffic is Free, traffic inside the same Availability Zone is free. it's cheaper to use private IPs to communicate between Availability Zones then using the public/elastic IP, (0.01$ per GB vs 0.02$ Per GB). traffic across regions is 0.02$ per GB.
+
+> - Use Private IP instead of Public IP for good savings and better network performance 
+> - Use same Availability Zone for maximum savings (at the cost of high availability)
+
+> Minimizing egress traffic network cost
+> - Egress traffic: outbound traffic (from AWS to outside)
+> - Ingress traffic: inbound traffic - from outside to AWS (typically free)
+> - Try to keep as much internet traffic within AWS to minimize costs
+> - <cloud>Direct Connect</cloud> location that are co-located in the same AWS Region result in lower cost for egress network
+
+pricing for <cloud>S3</cloud> traffic (USA costs)
+
+> - S3 ingress: free
+> - S3 to Internet: $0.09 per GB
+> - S3 Transfer Acceleration:
+>   - Faster transfer times (50% to 500% better)
+>   - Additional cost on top of Data Transfer Pricing: +$0.04 to $0.08 per GB
+> - S3 to <cloud>CloudFront</cloud>: $0.00 per GB (free!)
+> - <cloud>CloudFront</cloud> to Internet: $0.085 per GB (slightly cheaper than S3)
+>   - Caching capability (lower latency)
+>   - Reduce costs associated with S3 Requests Pricing (7x cheaper with CloudFront)
+> - S3 Cross Region Replication: $0.02 per GB
+
+
+NAT Gateway vs Gateway VPC Endpoint, example of accessing a S3 bucket. either through the public internet (NAT gateway to internet gateway) or thorugh a VPC endpoint (don't forget the route table). it's much cheaper and easier to use an VPC endpoint.
+
+> - $0.045 NAT Gateway / hour  (cost for existing)
+> - $0.045 NAT Gateway data processed / GB
+> - $0.09 Data transfer out to S3 (cross-region)
+> - $0.00 Data transfer out to S3 (same-region)
+> 
+> - No cost for using Gateway Endpoint.
+> - $0.01 Data transfer in/out (same-region)
 
 
 </details>
 
-### AWS ClassicLink
-### Transit Gateway
-### VPC Traffic Mirroring
-### IPv6 for VPC
-
-### Egress Only Internet Gateway
-
-### VPC Section Cleanup
-### VPC Section Summary
-### Networking Costs in AWS
 ### Network Firewall
 
+<details>
+<summary>
+Protect the entire VPC
+</summary>
+
+
+> To protect network on AWS, we’ve seen
+> - Network Access Control Lists (NACLs)
+> - Amazon VPC security groups
+> - <cloud>AWS WAF</cloud> (protect against malicious requests)
+> - <cloud>AWS Shield</cloud> & AWS Shield Advanced
+> - <cloud>AWS Firewall Manager</cloud> (to manage them across accounts)
+>
+> But what if we want to protect our entire VPC in a sophisticated way?
+>
+> AWS Network Firewall- Protect your entire Amazon VPC
+> - From Layer 3 to Layer 7 protection
+> - Any direction, you can inspect
+>   - VPC to VPC traffic (VPC peering)
+>   - Outbound to internet
+>   - Inbound from internet
+>   - To / from Direct Connect & Site-to-Site VPN
+> 
+> Internally, the AWS Network Firewall uses the AWS Gateway Load Balancer.
+> Rules can be centrally managed cross-account by AWS Firewall Manager to apply to many VPCs.\
+> - Supports 1000s of rules:
+>   - IP & port - example: 10,000s of IPs filtering
+>   - Protocol – example: block the SMB protocol for outbound communications
+>   - Stateful domain list rule groups: only allow outbound traffic to *.myCorp.com or third-party software repo
+>   - General pattern matching using regex
+> - Traffic filtering: Allow, drop, or alert for the traffic that matches the rules.
+> - Active flow inspection to protect against network threats with intrusion prevention capabilities (like <cloud>Gateway Load Balancer</cloud>, but all managed by AWS)
+> - Send logs of rule matches to Amazon <cloud>S3</cloud>, <cloud>CloudWatch Logs</cloud>, <cloud>Kinesis Data Firehose</cloud>
+
+</details>
+
+Summary:
+
+> - CIDR - IP Range
+> - VPC - Virtual Private Cloud - we define a list of IPv4 & IPv6 CIDR
+> - Subnets - tied to an AZ, we define a CIDR
+> - Internet Gateway - at the VPC level, provide IPv4 & IPv6 Internet Access
+> - Route Tables - must be edited to add routes from subnets to the IGW, VPC Peering Connections, VPC Endpoints, etc...
+> - Bastion Host - public EC2 instance to SSH into, that has SSH connectivity to EC2 instances in private subnets
+> - NAT Instances - gives Internet access to EC2 instances in private subnets. Old, must be setup in a public subnet, disable Source / Destination check flag
+> - NAT Gateway - managed by AWS, provides scalable Internet access to private EC2 instances, when the target is an IPv4 address
+> - Private DNS + Route 53 - enable DNS Resolution + DNS Hostnames (VPC)
+> - NACL - stateless, subnet rules for inbound and outbound, don't forget Ephemeral Ports
+> - Security Groups - stateful, operate at the EC2 instance level
+> - Reachability Analyzer - perform network connectivity testing between AWS resources
+> - VPC Peering - connect two VPCs with non overlapping CIDR, non-transitive
+> - VPC Endpoints - provide private access to AWS Services (<cloud>S3</cloud>, <cloud>DynamoDB</cloud>, <cloud>CloudFormation</cloud>, <cloud>SSM</cloud>) within a VPC
+> - VPC Flow Logs - can be setup at the VPC / Subnet / ENI Level, for `ACCEPT` and `REJECT` traffic, helps identifying attacks, analyze using <cloud>Athena</cloud> or <cloud>CloudWatch Logs Insights</cloud>
+> - Site-to-Site VPN - setup a Customer Gateway on DC, a Virtual Private ateway on VPC, and site-to-site VPN over public Internet
+> - AWS VPN CloudHub - hub-and-spoke VPN model to connect your sites
+> - Direct Connect - setup a Virtual Private Gateway on VPC, and establish a direct private connection to an AWS Direct Connect Location
+> - Direct Connect Gateway - setup a Direct Connect to many VPCs in different AWS regions
+> - AWS PrivateLink / VPC Endpoint Services:
+>   - Connect services privately from your service VPC to customers VPC
+>   - Doesn't need VPC Peering, public Internet, NAT Gateway, Route Tables
+>   - Must be used with Network Load Balancer & ENI
+> - ClassicLink - connect EC2-Classic EC2 instances privately to your VPC (deprecated)
+> - Transit Gateway - transitive peering connections for VPC, VPN & DX
+> - Traffic Mirroring - copy network traffic from ENIs for further analysis
+> - Egress-only Internet Gateway - like a NAT Gateway, but for IPv6
 </details>
 
 ## Other Services
@@ -6797,6 +7011,9 @@ The resource suffix can be one of the following, and can include a parent resour
 - `<resource-id>`
 - `<resource-type>/<resource-id>`
 - `<resource-type>:<resource-id>`
+
+- IPv4 format is x.x.x.x (x is 0x00 to 0xff)
+- IPv6 format is x:x:x:x:x:x:x:x, we can omit any part and have :: to indicate zeros. (x is 0x00 to 0xffff)
 ### Additional Terms
 
 <details>
@@ -6829,11 +7046,8 @@ Additional terms and acronyms to keep.
 - FQDN - Fully Qualified Domain Name (DNS)
 - ICANN - The Internet Corporation for Assigned Names and Numbers
 - NACL - network Access Control List (<cloud>VPC</cloud>)
-
+ECMP - Equal Cost MultiPath Routing (<cloud>Transit Gateway</cloud>)
 </details>
 
 <!-- misc end -->
-</details>
-
-<!-- document end  -->
 </details>

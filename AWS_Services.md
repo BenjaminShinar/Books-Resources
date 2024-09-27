@@ -99,6 +99,7 @@
 - VPN CloudHub - hub-and-spoke model, connect multiple on-premises sites together with AWS between them
 - PrivateLink - VPC endPoint service
 - DirectConnect - physical connection to AWS
+- AWS Network Firewall - Protect your entire Amazon VPC (from layer 3 to layer 7)
 
 ## Machine Learning
 
@@ -123,3 +124,12 @@
 - Glue - Transform Data
 - AWSConfig - Monitor and prevent resources configuration changes according to policy
 - Trusted Advisor - account assessment on how the account fits AWS best practices
+
+## Gateways
+
+- VPN CloudHub - hub and spoke model (VPN)
+- Transit Gateway - hub and spoke model, connect multiple VPCs in transit
+- Internet Gateway - Internet Access from VPC
+- Nat Gateway - IPv4 access to the public internet
+- Egress Only Internet Gateway - IPv6
+- Direct Connect Gateway - setup a Direct Connect to many VPCs in different AWS regions
