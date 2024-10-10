@@ -87,8 +87,8 @@ Controlling how the EC2 instances are placed in the data center.
 > - _Partition_ - spreads instances across many different partitions (which rely on different sets of racks) within an AZ. Scales to 100s of EC2 instances per group (Hadoop, Cassandra, Kafka)
 
 In the _cluster_ placement group, we stick all the instances in the same AZ, which gives us better networking, and we can use enhanced networking. the risk is that if the Availability Zone fails, all the instances fail. we use this strategy when we have big jobs that need to complete fast, or when our applications need extremely low latency and high network throughput.\
-For the _spread_ placement groups, we span across multiple Availability Zone and hardware, this reduces the risk of failure (better Availability). however, we ate limited to having 7 instances per Availability Zone per placement group.
-The _Partition_ group uses partitions to separate machines. instances in a partition don't share physical racks with instances from other partitions, so the partition represents a rack inside the data center. EC2 instances have the partiton information as part of the metadata. this is usually used in big-data application which are partition-aware
+For the _spread_ placement groups, we span across multiple Availability Zone and hardware, this reduces the risk of failure (better Availability). however, we are limited to having 7 instances per Availability Zone per placement group.
+The _Partition_ group uses partitions to separate machines. instances in a partition don't share physical racks with instances from other partitions, so the partition represents a rack inside the data center. EC2 instances have the partiton information as part of the metadata. this is usually used in big-data application which are partition-aware.
 
 under the <cloud>EC2</cloud> service, we can choose the<kbd>Placement Group</kbd> tab and <kbd>Create Placement Group</kbd>, we give it a name, tags, and select the placement strategy. there are some options for the "spread" strategy (racks and outhosts) and the "partition" (number of partitions).\
 If we launch an instance, we look under the "advanced details" configuration and select which placement group to use.
@@ -205,7 +205,7 @@ to start using a spot instance, we need a **spot request**.
 
 we can only cancel requests that are either in the 'open', 'active' or 'disabled' state. canceling a spot request won't terminate the instances that it's running. to terminate them we need to first cancel the request and then manually terminate them.
 
-A Spot Fleet is a way to have a set of Spot Instances with additional (optional) On-Demand Instances. ir will launch from possible launch pools (based on instance type, OS, Availability Zone), and the fleet will choose from the possible launch pools until reaching cpacity or maximum cost.
+A Spot Fleet is a way to have a set of Spot Instances with additional (optional) On-Demand Instances. it will launch from possible launch pools (based on instance type, OS, Availability Zone), and the fleet will choose from the possible launch pools until reaching cpacity or maximum cost.
 
 Allocation strategies
 
@@ -741,8 +741,7 @@ we can run commands in our machines, without having to keep SSH keys, and we can
 
 we need IAM permissions, and we create polices to define which instances we can shell into, and even restrict which commands can be run in a session.
 
-under the <kbd>Node Management</kbd> section, we navigate to the <kbd>Session Manager</kbd> page,
-we click <kbd>Start Session</kbd>, and we can connect to any EC2 instance that has the SSM agent installed, even if it didn't open the 22 port for SSH access. we can view the open sessions and control timeout and manage logging.
+under the <kbd>Node Management</kbd> section, we navigate to the <kbd>Session Manager</kbd> page, we click <kbd>Start Session</kbd>, and we can connect to any EC2 instance that has the SSM agent installed, even if it didn't open the 22 port for SSH access. we can view the open sessions and control timeout and manage logging.
 </details>
 
 </details>
@@ -892,9 +891,7 @@ target groups (which analyze the requests):
 
 #### Sticky Sessions
 
-It is possible to implement stickiness so that the
-same client is always redirected to the same
-instance behind a load balancer.
+It is possible to implement stickiness so that the same client is always redirected to the same instance behind a load balancer.
 
 > - This works for Classic Load Balancer, Application Load Balancer, and Network Load Balancer
 > - For both CLB & ALB, the "cookie" used for stickiness has an expiration date you control
@@ -1551,17 +1548,14 @@ Resources:
 
 #### CloudFormation Conditions
 
-> Conditions are used to control the creation of
-resources or outputs based on a condition
-> Conditions can be whatever you want them to
-be, but common ones are:
+> Conditions are used to control the creation of resources or outputs based on a condition
+> Conditions can be whatever you want them to be, but common ones are:
 >
 > - Environment (dev / test / prod)
 > - AWS Region
 > - Any parameter value
 >
-> Each condition can reference another condition,
-parameter value or mapping.
+> Each condition can reference another condition, parameter value or mapping.
 
 ```yaml
 Parameters:
@@ -2736,8 +2730,7 @@ Static Website hosting
 > - http://bucket-name.s3-website-aws-region.amazonaws.com
 > - http://bucket-name.s3-website.aws-region.amazonaws.com
 > 
-> If you get a 403 Forbidden error, make sure the bucket
-policy allows public reads!
+> If you get a 403 Forbidden error, make sure the bucket policy allows public reads!
 
 websites on S3 don't have a "backend" server, they are static and use static html documents. we can specify the index page and error page, and set some redirection rules. all files should be publicly accessible.
 </details>
@@ -3121,7 +3114,7 @@ SSE - server side encryption
 
 There is also client side encryption.
 
-SSE-S3 uses AES-256 encryption, so the header should be `"x-amz-server-side-encryption": "AES256"`. SSE-KMS gets the keys from <cloud>KMS</cloud>, so the keys can be audited with <cloud>CloudTrail</cloud>,  and the header is `"x-amz-server-side-encryption": "aws:kms"`, using SSE-KMS counts toward the keys quotas limit of the Decrypt KMS Api.\
+SSE-S3 uses AES-256 encryption, so the header should be `"x-amz-server-side-encryption": "AES256"`. SSE-KMS gets the keys from <cloud>KMS</cloud>, so the keys can be audited with <cloud>CloudTrail</cloud>, and the header is `"x-amz-server-side-encryption": "aws:kms"`, using SSE-KMS counts toward the keys quotas limit of the Decrypt KMS Api.\
 For customer provided keys (SSE-C), the https protocol must be used, the keys aren't stored in AWS, and must be part of the request. to read the file the same key ust be provided.\
 Client side encryption means that the client encrypt and decrypt the data before sending and after receiving it.
 
@@ -3572,7 +3565,6 @@ The Tape gateway is a a way to store Tape Data into the cloud.
 
 For all gateways, it needs to be installed locally, either on a virtual server (virtual machine), or by buying a hardware appliance and setting it as one of the gateway options.
 
-
 The file gateway is posix compliant (linux file system), there are some considerations for rebooting the storage gateways (especially for volume and tape gateways, stop the service, reboot, start the service).\
 The Storage Gateway needs to be activated with an activation key. activation can fail if port 80 isn't opened or if the time isn't synchronized.
 
@@ -3682,8 +3674,7 @@ under the settings tab, we can set the S3 bucket as the target.
 > CloudFront caches HTTP 4xx and 5xx status codes returned by S3 ( or the origin server)
 > - 4xx error code indicates that user doesn't have access to the underlying bucket (403) or the object user is requesting is not found (404)
 > - 5xx error codes indicates Gateway issues
->
-> 
+
 </details>
 
 ### CloudFront Caching - Deep Dive
@@ -3710,7 +3701,7 @@ We can also choose to only forward the default headers, or have no caching based
 
 #### CloudFront Headers
 when we use cloudFront, we can add constant headers to all requests which we send to the origin, they are constant values. a use case for this is to define custom behavior in the origin for requests coming from cloudFront.\
-We can also set behavior settings, which are used for caching
+We can also set behavior settings, which are used for caching.
 
 #### Caching TTL
 TTL - Time To live
@@ -3877,11 +3868,8 @@ failover from the primary to the standby instance will happen when one of the fo
 Having Lambda functions connect to RDS without creating too many connections.
 </summary>
 
-> By default, your <cloud>Lambda</cloud> function is
-launched outside your own <cloud>VPC</cloud> (in
-an AWS-owned VPC). Therefore, it cannot access resources in your VPC (<cloud>RDS</cloud>, <cloud>ElastiCache</cloud>,
-internal <cloud>ELB</cloud>...).\
-> to run a lambda in a VPC,  You must define the VPC ID, the Subnets and the Security Groups, so  Lambda will create an ENI (Elastic Network Interface) in your subnets.
+> By default, your <cloud>Lambda</cloud> function is launched outside your own <cloud>VPC</cloud> (in an AWS-owned VPC). Therefore, it cannot access resources in your VPC (<cloud>RDS</cloud>, <cloud>ElastiCache</cloud>, internal <cloud>ELB</cloud>...).\
+> to run a lambda in a VPC, You must define the VPC ID, the Subnets and the Security Groups, so Lambda will create an ENI (Elastic Network Interface) in your subnets.
 >
 > this requires the IAM AWSLambdaVPCAccessExecutionRole.
 
@@ -4012,7 +4000,7 @@ we can enable performance insights for our database, and then get a visualized v
 
 </details>
 
-###  Amazon Aurora
+### Amazon Aurora
 
 <details>
 <summary>
@@ -4112,7 +4100,7 @@ Security options for datbase
 Managed Cache Services: Redis and Memcached.
 </summary>
 
-> The same way RDS is to get managed Relational Databases - <cloud>ElastiCache</cloud> is to get managed Redis or Memcached.\
+> The same way RDS is to get managed Relational Databases - <cloud>ElastiCache</cloud> is to get managed Redis or Memcached.
 > 
 > - Caches are in-memory databases with really high performance and low latency
 > - Helps reduce load off of databases for read intensive workloads
@@ -4701,7 +4689,7 @@ If we want to deploy rules to multiple accounts, we should use <cloud>CloudForma
 
 ### CloudWatch vs CloudTrail vs Config
 
-<!-- <details> -->
+<details>
 <summary>
 Comparison between the services.
 </summary>
@@ -5591,12 +5579,11 @@ We use an identity provider (either corporate or public) to get temporary AWS ac
 >
 > Using federation, you don't need to create <cloud>IAM</cloud> users (user management is outside of AWS).
 
-SAML (Security Assertion Markup Language) for enterprises, this is what Active Directory and ADFS are. any SAML 2.0 compliant identity broker can 
-integrated with AWS. users are given temporary credentials to assume a role, without creating an <cloud>IAM User</cloud>. we can use this to get programattic access and web console access.
+SAML (Security Assertion Markup Language) for enterprises, this is what Active Directory and ADFS are. any SAML 2.0 compliant identity broker can integrated with AWS. users are given temporary credentials to assume a role, without creating an <cloud>IAM User</cloud>. we can use this to get programattic access and web console access.
 
 programatic access flow:
 1. User identifies itself against the identity provider.
-2.  Idp (identity provider) checks the user credentials against the LDAP identity store.
+2. Idp (identity provider) checks the user credentials against the LDAP identity store.
 3. If authenticated, IdP returns a SAML assertion to the user.
 4. The user calls `AssumeRoleWithSAML` on the <cloud>STS</cloud> service with the SAML.
 5. The service returns temporary security credentials.
@@ -6414,7 +6401,7 @@ we can remove the NAT instances (and the route table entry) and use a NAT gatewa
 | Public                        | IPv4                                              | Yes                                                   | Yes |
 | Private                       | IPv4                                              | Yes                                                   | Yes |
 | Security Groups               | Not required                                      | required                                              |
-| Can be used  as Bastion Host? | No                                                | Ye                                                    |
+| Can be used  as Bastion Host? | No                                                | Yes                                                   |
 
 we <kbd>Create NAT Gateway</kbd> in the public subnet, choose the connectivity type to be public, and allocate an elastic IP to it.\
 then we edit the route table to direct traffic from the private subnet to the gateway.
@@ -6759,8 +6746,7 @@ Capture and inspect network traffic in your VPC
 >
 > Capture all packets or capture the packets of your interest (optionally, truncate packets).
 > Source and Target can be in the same VPC or different VPCs (VPC Peering).\
-> Use cases: content inspection, threat
-monitoring, troubleshooting, etc...
+> Use cases: content inspection, threat monitoring, troubleshooting, etc...
 </details>
 
 ### IPv6 for VPC
@@ -6800,21 +6786,21 @@ used only for IPv6. similar to NAT gateways.
 
 public subnet route table
 
-| Destination             | Target | Notes                       |
-| ----------------------- | ------ | --------------------------- |
-| 10.0.0.0/16             | local  | IPv4 address range          |
-| 2001:db8:1234:1a00::/56 | local  | IPv6 address range          |
+| Destination             | Target             | Notes                       |
+| ----------------------- | ------------------ | --------------------------- |
+| 10.0.0.0/16             | local              | IPv4 address range          |
+| 2001:db8:1234:1a00::/56 | local              | IPv6 address range          |
 | 0.0.0.0/0               | intrent gateway-id | IPv4 access public internet |
 | ::/0                    | intrent gateway-id | IPv6 access public internet |
 
 private subnet route table
 
-| Destination             | Target         | Notes                       |
-| ----------------------- | -------------- | --------------------------- |
-| 10.0.0.0/16             | local          | IPv4 address range          |
-| 2001:db8:1234:1a00::/56 | local          | IPv6 address range          |
-| 0.0.0.0/0               | nat-gateway-id | IPv4 access public internet |
-| ::/0                    | egress-only intrent gateway-id  | IPv6 access public internet |
+| Destination             | Target                         | Notes                       |
+| ----------------------- | ------------------------------ | --------------------------- |
+| 10.0.0.0/16             | local                          | IPv4 address range          |
+| 2001:db8:1234:1a00::/56 | local                          | IPv6 address range          |
+| 0.0.0.0/0               | nat-gateway-id                 | IPv4 access public internet |
+| ::/0                    | egress-only intrent gateway-id | IPv6 access public internet |
 
 demo:\
 inside the <cloud>VPC</cloud> section, we choose the "Egress Only Internet Gateway" section, <kbd>Create Egress Only Internet Gateway</kbd>, attach it to a VPC, and edit the route table in the private subnet.
@@ -7046,8 +7032,9 @@ Additional terms and acronyms to keep.
 - FQDN - Fully Qualified Domain Name (DNS)
 - ICANN - The Internet Corporation for Assigned Names and Numbers
 - NACL - network Access Control List (<cloud>VPC</cloud>)
-ECMP - Equal Cost MultiPath Routing (<cloud>Transit Gateway</cloud>)
+- ECMP - Equal Cost MultiPath Routing (<cloud>Transit Gateway</cloud>)
+- BGP - Border Gateway Protocol
+- RTC - Replication Time Control (<cloud>S3</cloud>) - visibility for S3 replication. more metrics, notifications.
 </details>
 
-<!-- misc end -->
 </details>

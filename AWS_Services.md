@@ -115,15 +115,17 @@
 - Amazon Q Business/Developer - ai assistant
 - Textract - extract text from scanned documents and handwritten text
 - GuardDuty - detect anomalies from audit and event logs
+- Amazon Detective - Analyze and visualize security data to investigate potential security issues
 
 ## Other
 
 - API Amplify - Full-Stack Web and Mobile Apps
-- AppConfig - Configure, validate, and deploy dynamic configurations
 - Elastic Transcoder - transcode (convert) media files between different formats.
 - Glue - Transform Data
 - AWSConfig - Monitor and prevent resources configuration changes according to policy
 - Trusted Advisor - account assessment on how the account fits AWS best practices
+- AWS OpsWorks - a configuration management service that uses Chef, an automation platform that treats server configurations as code.
+- AWS artifacts - AWS portal for Reports and Compliance agreements (AWS-wide and account specific).
 
 ## Gateways
 
