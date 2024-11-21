@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat -Wnrvo nrvo fimplicit Decrypter Wpadded
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat -Wnrvo nrvo fimplicit Decrypter Wpadded gcem
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -1804,4 +1804,121 @@ int main()
 the use case is pretty rare, but it can allow for changing implementations, which might be good for return value optimizations, or when we are worried about lifetime issues.
 
 </details>
+
+
+## C++ Weekly - Ep 448 - C++23's `forward_like`
+
+<details>
+<summary>
+Forward a parameter with the same reference and const type as another value.
+</summary>
+
+[C++23's forward_like](https://youtu.be/AFcfRf5KWe0?si=SmCoUEzgtnxZ0geb)
+
+reference qualified members, in the previous video, we had different "getters" depending on if the object is lvalue (exists in memory) or temporary.
+
+```cpp
+#include <cstdio>
+#include <string>
+#include <utility>
+struct S {
+private:
+  std::string value;
+
+public:
+  std::string & get_value() & {
+    std::puts("get_value() &");
+    return value;
+  }
+
+  const std::string & get_value() & {
+    std::puts("get_value() &&");
+    return value;
+  }
+
+  std::string & get_value() const & {
+    std::puts("get_value() const &");
+    return value;
+  }
+
+  std::string & get_value() const && {
+    std::puts("get_value() const &&");
+    return value;
+  }
+};
+```
+
+we can use the new "deducing this" from c++23, so we call /<cpp>std::forward_like</cpp> function. the return type should be `auto &&` or `decltype(auto)`.
+```cpp
+struct S{
+  std::string value;
+public:
+  auto get_value(this auto&& self) -> decltype(auto) {
+    return std::forward_like<decltype(self)>(self.value);
+  }
+};
+
+void call(const S &obj) { obj.get_value(); }
+S get_obj() {return {}; }
+int main()
+{
+  const S obj;
+  std::cout << std::is_rvalue_reference_v<decltype(std::move(obj).get_value())> << '\n'; // 0
+  std::cout << std::is_rvalue_reference_v<decltype(obj.get_value())> << '\n'; // 1
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 449 - More constexpr Math!
+
+<details>
+<summary>
+getting compile time math with external library
+</summary>
+
+[More constexpr Math!](https://youtu.be/reWnel5uLS4?si=YrWP2QA-BWdOafkg)
+
+The cmath header has a lot of functions, such as fmax and the overloads from c, the template version, and some of them are constexpr (not all are).  there are also functions for linear interpolation which rely on the underlying functions in the header. however, the trigonometry function aren't constexpr.\
+There is an open source project called [gcem](https://github.com/kthohr/gcem) which provides compile time math expressions, which supports even C++11. back then, we couldn't have loops, only a single expression. the gcem math expressions are all implemented with ternary expressions, so they can work even back then. 
+
+```cpp
+constexpr int calculateToZeroCpp11(int input)
+{
+  return input == 0 ? 0 : input + calculateToZeroCpp11(input -1);
+}
+
+constexpr int calculateToZeroCpp14(int input)
+{
+  int res = 0;
+  while (input > 0)
+  {
+    res += input;
+    --input;
+  }
+  return res
+}
+
+int main()
+{
+  constexpr auto cpp11sum = calculateToZeroCpp11(10);
+  constexpr auto cpp14sum = calculateToZeroCpp14(10);
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 450 - C++ is a Functional Programming Language
+
+<details>
+<summary>
+C++ always had functional principles.
+</summary>
+
+[C++ is a Functional Programming Language](https://youtu.be/jf_OxE3j4AQ?si=OzCrqNaCsoNubbY1)
+
+C++ discourse has some focus on using C++ as a functional programming language, we have the <cpp>functional</cpp> header since about forever, including functors that are overloaded for math operator (<cpp>std::plus</cpp>), which since C++14 was also templated, we can pass them to algorithms like <cpp>std::accumulate</cpp> (which takes a binary operator). in C++11 we got lambdas to act as operators and `auto` return type and `decltype` to get the return type.
+
+</details>
+
 
