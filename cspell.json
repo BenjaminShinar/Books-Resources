@@ -4,7 +4,7 @@
     "dictionaryDefinitions": [],
     "dictionaries": ["softwareTerms", "latex"],
     "words": [],
-    "ignoreWords": ["Udemy"],
+    "ignoreWords": ["Udemy","youtube"],
     "import": [],
     "allowCompoundWords": false
 }

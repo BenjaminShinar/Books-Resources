@@ -6962,7 +6962,7 @@ create applications that use AWS as backend, and use frontend libraries to conne
 
 like <cloud>Elastic BeanStalk</cloud> for mobile applications.
 
-> A set of tools and services that helps you develop and deploy scalable full stack web and mobile applications
+> A set of tools and services that helps you develop and deploy scalable full stack web and mobile applications.
 > - Authentication
 > - Storage
 > - API (REST, GraphQL)
