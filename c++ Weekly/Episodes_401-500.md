@@ -1921,4 +1921,51 @@ C++ discourse has some focus on using C++ as a functional programming language, 
 
 </details>
 
+## C++ Weekly - Ep 451 - Debunking bad_alloc Memory Errors (They're actually useful!)
+
+<details>
+<summary>
+Getting the bad_alloc memory error.
+</summary>
+
+[Debunking bad_alloc Memory Errors (They're actually useful!)](https://youtu.be/-f5HmDR0GGY?si=umLgq-gF5IBHOhQZ)
+
+if we request memory blocks without writing to them, we can get a ridiculous number before getting the <cpp>std::bad_alloc</cpp> exception.
+but if we try writing to the memory, we don't get the error at all, the process is terminated.
+so running out of memory terminates the process, but running out of addresses leads to the exception, this can happen for memory fragmentation issues.
+there are all kinds of stuff related to memory space and how many addresses are available based on the machine we use and the operating system.
+
+it's also possible to try allocating on an external memory (GPU, shared memory), and then we get the exception and we would need to deal with it.
+</details>
+
+## C++ Weekly - Ep 452 - The Confusing Way Moves Can Be Broken in C++
+
+<details>
+<summary>
+//TODO: add Summary
+</summary>
+
+[The Confusing Way Moves Can Be Broken in C++](https://youtu.be/ZuTJAP4oMwg?si=mHZ-vdyrBLPo1NOT)
+
+if we define a destructor for a a type, we won't get the move operators defined for us.
+however, the type will still pass the check for `std::is_move_constructible_v`. becuase it actually checks whether we can create an object from the r-value reference, which is true, since it can call the copy constructor.
+
+```cpp
+struct S {
+  ~S(){}
+};
+
+static_assert(std::is_move_constructible_v<S>);
+static_assert(std::is_constructible_from<S, S &&>);
+
+int main()
+{
+  S obj1;
+  auto obj2 = std::move(obj1);
+}
+```
+
+there's a difference between removing the move constructor and deleting it.
+
+</details>
 
