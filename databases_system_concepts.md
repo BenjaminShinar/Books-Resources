@@ -5,7 +5,6 @@ ignore these words in spell check for this file
 
 # Database System Concepts
 
-<!-- <details> -->
 <summary>
 Database System Concepts book.
 </summary>
@@ -228,4 +227,9 @@ Aggregation is the process of treating a relationship set as a higher level enti
 
 ## Chapter 8 - Relational Database Design
 
-</details>
+We want to create databases which support storing information without unnecessary redundancy, and allows us to quickly retrieve information as needed. for that, we want to have normalized schemas with functional dependencies.
+
+functional dependencies are rules that apply to our data (like saying a value in schema A could have been a primary key in a different schema, even if that schema doesn't exist yet), and we can use them to split schemas apart (decompose them).
+
+normal forms: 1NF - "a domain is atomic if element of the domain are considered to indivisible. a relation schema is first normal form if all of its' attributes are atomic."\
+avoid composite attributes or multi-valued ones.

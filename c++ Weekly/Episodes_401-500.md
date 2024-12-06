@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat -Wnrvo nrvo fimplicit Decrypter Wpadded gcem
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat -Wnrvo nrvo fimplicit Decrypter Wpadded gcem vgdb cvref debian
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -1659,6 +1659,7 @@ int main()
   static_assert(result == 72);
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 444 - GCC's Implicit constexpr
@@ -1692,7 +1693,6 @@ a 'static' variable that is private to the current thread.
 </summary>
 
 [C++11's `thread_local`](https://youtu.be/q9_vljSaBDg?si=7RS9-rraccr1HByx)
-
 
 `thread_local` are kind of like `static` variables, but are different for each thread. rather than have one instance for all the program, it has an instance for each of the threads. if we combine `static thread_local` together, it's still the same as `thread_local`. it is only destroyed when thread execution ends, not when it's destroyed (joined)
 
@@ -1805,7 +1805,6 @@ the use case is pretty rare, but it can allow for changing implementations, whic
 
 </details>
 
-
 ## C++ Weekly - Ep 448 - C++23's `forward_like`
 
 <details>
@@ -1849,6 +1848,7 @@ public:
 ```
 
 we can use the new "deducing this" from c++23, so we call /<cpp>std::forward_like</cpp> function. the return type should be `auto &&` or `decltype(auto)`.
+
 ```cpp
 struct S{
   std::string value;
@@ -1880,7 +1880,7 @@ getting compile time math with external library
 [More constexpr Math!](https://youtu.be/reWnel5uLS4?si=YrWP2QA-BWdOafkg)
 
 The cmath header has a lot of functions, such as fmax and the overloads from c, the template version, and some of them are constexpr (not all are).  there are also functions for linear interpolation which rely on the underlying functions in the header. however, the trigonometry function aren't constexpr.\
-There is an open source project called [gcem](https://github.com/kthohr/gcem) which provides compile time math expressions, which supports even C++11. back then, we couldn't have loops, only a single expression. the gcem math expressions are all implemented with ternary expressions, so they can work even back then. 
+There is an open source project called [gcem](https://github.com/kthohr/gcem) which provides compile time math expressions, which supports even C++11. back then, we couldn't have loops, only a single expression. the gcem math expressions are all implemented with ternary expressions, so they can work even back then.
 
 ```cpp
 constexpr int calculateToZeroCpp11(int input)
@@ -1942,13 +1942,13 @@ it's also possible to try allocating on an external memory (GPU, shared memory),
 
 <details>
 <summary>
-//TODO: add Summary
+Weird things about moves and the move constructor.
 </summary>
 
 [The Confusing Way Moves Can Be Broken in C++](https://youtu.be/ZuTJAP4oMwg?si=mHZ-vdyrBLPo1NOT)
 
 if we define a destructor for a a type, we won't get the move operators defined for us.
-however, the type will still pass the check for `std::is_move_constructible_v`. becuase it actually checks whether we can create an object from the r-value reference, which is true, since it can call the copy constructor.
+however, the type will still pass the check for `std::is_move_constructible_v`. because it actually checks whether we can create an object from the r-value reference, which is true, since it can call the copy constructor.
 
 ```cpp
 struct S {
@@ -1969,3 +1969,152 @@ there's a difference between removing the move constructor and deleting it.
 
 </details>
 
+## C++ Weekly - Ep 453 - Valgrind + GDB Together!
+
+<details>
+<summary>
+Using Valgrind inside a debugging session.
+</summary>
+
+[Valgrind + GDB Together!](https://youtu.be/pvOYwxsDIJI?si=kmGPMo7l2GYmTRhq)
+
+here is an example of use-after-free.
+
+```cpp
+int main()
+{
+  int *p = new int();
+  delete p;
+  *p = 42;
+}
+```
+
+we can run it through Valgrind and see the issue, we could also run it with the address sanitizer.
+we can also use Valgrind as a remote server when debugging.
+
+```sh
+gdb ./a.out
+set remote exec-file ./a.out
+set sysroot /
+target extended-remote | vgdb --multi -vargs -q
+start
+```
+
+</details>
+
+## C++ Weekly - Ep 454 - std::apply vs std::invoke (and how they work!)
+
+<details>
+<summary>
+Trying to create our own implementations.
+</summary>
+
+[std::apply vs std::invoke (and how they work!)](https://youtu.be/DxFpQa1PyaA?si=oM2W5WH08k3e-IqT)
+
+the two functions <cpp>std::invoke</cpp> and <cpp>std::apply</cpp> have some similarities. we can use invoke to call function with an argument list, it can be normal function, a member function, or a lambda. for the apply function, we use it on "tuple-like" arguments. it's mostly two ways to do the same thing, based on convience and preference.
+
+```cpp
+#include <functional>
+#include <tuple>
+
+struct S {
+  int lhs;
+  int add(int rhs);
+};
+
+int add(int lhs, int rhs);
+int main()
+{
+  std::invoke(add, 1, 3);
+  S s{42};
+  std::invoke(&S::add, s, 1);
+
+  std::tuple params{&s, 2};
+  std::apply(&S::add, params);
+}
+```
+
+had we wanted to write it ourselves, it would look something like this. `decltype(auto)` tells the compiler to preserve the type. while re-creating "invoke" is fairly simple, re-creating "apply" requires some template magic.\<cpp>std::make_index_sequence</cpp> - returns a <cpp>std::index_sequence</cpp><0,1,2,...,N> for the number of elements in the tuple.\
+we also do pack unfolding to use the parameters as arguments for the function.
+
+```cpp
+template<typename ... Param>
+auto invoke(auto Func, Param && ... param) -> decltype(auto)
+{
+  // only free functions and lambda, not member functions
+  return Func(std::forward<Param>(param...));
+}
+
+template<typename TupleType>
+auto apply(auto Func, TupleType && tuple ) -> decltype(auto)
+{
+  // only free functions and lambda, not member functions
+  // require c++ explicit lambda template parameters
+  return [&]<std::size_t... Index>(std::index_sequence<Index...>)-> decltype(auto){
+    ::invoke(std::move(Func), std::get<Index>(std::forward<TupleType>(tuple))..);
+  }(std::make_index_sequence<std::tuple_size_v<std::remove_cvref_t<TupleType>>>()); // immediately invoke
+  
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 455 - Tool Spotlight: Mutation Testing with Mull
+
+<details>
+<summary>
+Using testing the mull tool for mutation testing.
+</summary>
+
+[Tool Spotlight: Mutation Testing with Mull](https://youtu.be/lhcXAnNgzlo?si=Qku9k6ERWByOX8TZ)
+
+an open-source plugin for clang and LLVM, for debian based distros there is an easy package to get, but running it requires passing some funky arguments.
+
+mutation test changes tests (replaces operators), and if the test still pass, there's a problem with the test and it doesn't really test what we think it does. we can use it to find corner cases.
+
+```cpp
+bool valid_age(int age) {
+  if (age >= 21) {
+    return true;
+  }
+  return false;
+}
+
+TEST_CASE("Test Valid Age")
+{
+  CHECK(valid_age(22));
+  CHECK(valid_age(21));
+  CHECK(!valid_age(10));
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 456 - RVO + Trivial Types = Faster Code
+
+<details>
+<summary>
+Benchmarking RVO.
+</summary>
+
+[RVO + Trivial Types = Faster Code](https://youtu.be/DzUAqXMUjtc?si=WpW-T86TKAVSmt-C)
+
+RVO - return value optimization.
+
+RVO usually means constructing an object on the call site directly, rather than first creating it in the function and then copying it using copy constructor. we see this a lot on branches, and we can get better RVO when we use compositions and small functions and lambdas.
+
+for gcc, we have the `-Wnrvo` flag to detect cases where we are missing out on optimizations.
+</details>
+
+## C++ Weekly - Ep 457 - I Read C++ Magazines (So you don't have to!)
+
+<details>
+<summary>
+Reading some books!
+</summary>
+
+[I Read C++ Magazines (So you don't have to!)](https://youtu.be/TnsPaEmUSL0?si=wCH2h7g61Z_wYQ0P)
+
+looking at some C++ book from and reviewing the advice given in them. **they aren't amazing**. and the also seem to be copies of one another.
+
+</details>

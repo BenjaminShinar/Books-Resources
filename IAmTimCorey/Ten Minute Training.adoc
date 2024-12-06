@@ -1376,6 +1376,25 @@ instead of clicking the "show all files" for each project, and instead of moving
 we can see both the solution view and the folder view at the same time.
 ====
 
+=== Saving Money by Deleting Azure Resource the Right Way
+
+.Ensuring that all related resources are also deleted from Azure
+[%collapsible]
+====
+using resource groups as a logical partition (container) that holds all related resources. when we delete a resource group, all the resources in the group and all dependent resources will also be deleted.
+====
+
+=== Updating to .NET 9, C# 13, and Visual Studio 17.12
+
+.Updating tools
+[%collapsible]
+====
+we don't have to open a solution/project to update, we can check the notifications to see if there are updates, or under the "help" menu and check for new versions.
+
+Alternatively, we can look at the visual studio installer and see if there are updates or use the preview version instead of the public release version. this will give us the option for .Net 8.0 (long term support) and .Net 9.0 (standard support) frameworks side by side.
+
+if we aren't using visual studio, we can download SDKs manually from dotnet website. we can also get just the runtime if we just need to run stuff.
+====
 
 == Misc
 

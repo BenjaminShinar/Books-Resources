@@ -21,6 +21,8 @@
 - [ ] Back to Basics: R-values and Move Semantics - Amir Kirsh
 - [ ] Back to Basics: Unit Testing - Dave Steffen
 
+---
+
 ### Back to Basics: Almost Always Vector - Kevin Carpenter
 
 <details>

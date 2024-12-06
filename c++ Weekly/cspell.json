@@ -3,7 +3,7 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": ["cpp"],
-  "words": ["Wconversion"],
+  "words": ["Wconversion", "Valgrind"],
   "ignoreWords": [
     "smallpt",
     "IIFE",
@@ -18,8 +18,9 @@
     "cppreference",
     "jthread",
     "fsanitize",
-    "NTTP", "CTAD","CNTTP"
-
+    "NTTP",
+    "CTAD",
+    "CNTTP"
   ],
   "import": []
 }
