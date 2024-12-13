@@ -6,7 +6,7 @@
 
 # CppCon 2024
 
-[Playlist](https://www.youtube.com/playlist?list=PLHTh1InhhwT6U7t1yP2K8AtTEKmcM3XU_), [Schedule](https://cppcon2024.sched.com/#2024-09-15), [Github](https://github.com/CppCon/CppCon2024).
+[Playlist](https://www.youtube.com/playlist?list=PLHTh1InhhwT6U7t1yP2K8AtTEKmcM3XU_), [Schedule](https://cppcon2024.sched.com), [Github](https://github.com/CppCon/CppCon2024).
 
 ## Topics and Sessions
 
@@ -29,7 +29,7 @@
 ---
 
 - [ ] "Pick a random number... no, not that one!" - Tales of Real-World Exploits Based on Bad Randomness - Max Hoffmann
-- [ ] 10 Problems Large Companies Have with Managing C++ Dependencies and How to Solve Them - Augustin Popa
+- [x] 10 Problems Large Companies Have with Managing C++ Dependencies and How to Solve Them - Augustin Popa
 - [ ] A new dragon in the den: fast conversion from floating-point numbers - Cassio Neri
 - [ ] A Simple Rollback System in C++: The Secret Behind Online Multiplayer Games - Elias Farhan
 - [ ] Advanced and Modern C++ Programming: The Tricky Parts - Nicolai Josuttis
@@ -155,7 +155,7 @@
 - [ ] What's eating my RAM? - Jianfei Pan
 - [ ] What's new for Visual Studio Code: Performance, GitHub Copilot, and CMake Enhancements - Alexandra Kemper, Sinem Akinci
 - [ ] What's New in Visual Studio for C++ Developers - Michael Price, Mryam Girmay
-- [ ] When Lock-Free Still Isn't Enough: An Introduction to Wait-Free Programming and Concurrency Techniques - Daniel Anderson
+- [x] When Lock-Free Still Isn't Enough: An Introduction to Wait-Free Programming and Concurrency Techniques - Daniel Anderson
 - [x] When Nanoseconds Matter: UltraFast Trading Systems in C++ - David Gross - Performance
 - [ ] Why is my build so slow? Compilation Profiling and Visualization - Samuel Privett
 - [ ] Work Contracts – Rethinking Task Based Concurrency and Parallelism for Low Latency C++ - Michael Maniscalco
