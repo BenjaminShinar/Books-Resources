@@ -2118,3 +2118,64 @@ Reading some books!
 looking at some C++ book from and reviewing the advice given in them. **they aren't amazing**. and the also seem to be copies of one another.
 
 </details>
+
+## C++ Weekly - Ep 458 - array of bool? No! constexpr `std::bitset`!
+
+<details>
+<summary>
+<cpp>std::bitset</cpp> will become constant expression.
+</summary>
+
+[array of bool? No! constexpr std::bitset!](https://youtu.be/E3sfXAaR1E4?si=PCB4tlF80-HQZo18)
+
+there is no optimization of <cpp>std::Array</cpp> for the boolean type.
+This is related to how <cpp>std::vector</cpp> of bool was developed...
+
+instead of having an optimization of an array, we already have a dedicated data structure, the <cpp>std::bitset</cpp>. it provides some extra methods (flipping, seting and reseting all the bits, counting bits).\
+in the upcoming C++26 release it will also have constexpr support. which will make it even easier to use. 
+</details>
+
+## C++ Weekly - Ep 459 - C++26's Saturating Math Operations
+
+<details>
+<summary>
+Math Operations which protect against unwanted conversions and overflow
+</summary>
+
+[C++26's Saturating Math Operations](https://youtu.be/XNMnQOFrEIY?si=UdnHZioKWxDwe-Eb)
+
+a feature already approved by the committee for C++26.
+
+Saturating math protects against type changes and integer promotions, it uses some special registry tricks.
+
+```cpp
+#include <numeric>
+#include <cstdint>
+
+int main()
+{
+  constexpr std::uint8_t val = 140;
+  static_assert(std::add_sat(val, val) == 255); // protect against overflow
+  
+  constexpr std::uint8_16t val2 = 33`000;
+  static_assert(std::saturate_cast<std::int8_t>(val2) == 127);
+  static_assert(std::saturate_cast<std::uint8_t>(val2) == 255);
+  static_assert(std::saturate_cast<std::int16_t>(val2) == 32767);
+}
+```
+</details>
+
+## C++ Weekly - Ep 460 - Why is GCC Better Than Clang?
+
+<details>
+<summary>
+Understanding differences in performance between compilers.
+</summary>
+
+[Why is GCC Better Than Clang?](https://youtu.be/4P32EFClwuo?si=l_SlSXXkm99Q-5lt)
+
+in episode 435, we saw a 68 times performance increase by using the GPU, we also saw the GCC had consistently better output than Clang. the code is for conway's game of life, it's a single file with less than 300 LOC. and for nearly all cases, GCC was faster. there are some other findings about which configuration is faster.
+
+the odd case is function which checks the minimal size that we need to hold the index, rather than always using <cpp>std::size_t</cpp>. when clang uses different sized indexes, it produces very different code.
+</details>
+
