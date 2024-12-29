@@ -119,7 +119,7 @@
 - [ ] Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements - Katherine Rocha
 - [ ] Official ISO C++ WG21 SG meeting of low latency/embedded/games/finance and Machine Learning - Michael Wong
 - [ ] Optimizing with Modern C++ - Patrice Roy
-- [ ] Peering forward — C++'s next decade - Herb Sutter
+- [x] Peering forward — C++'s next decade - Herb Sutter
 - [ ] Performance and Efficiency in C++ for Experts, Future Experts, and Everyone Else - Fedor Pikus
 - [ ] Performance engineering - being friendly to your hardware - Ignas Bagdonas
 - [ ] Perspectives on Contracts - Lisa Lippincott
@@ -127,7 +127,7 @@
 - [ ] Reflection based libraries to look forward to - Saksham Sharma
 - [ ] Reflection Is Not Contemplation - Andrei Alexandrescu
 - [ ] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
-- [ ] Reusable code, reusable data structures - Sebastian Theophil
+- [x] Reusable code, reusable data structures - Sebastian Theophil
 - [ ] Safety and Security Panel - Michael Wong, Andreas Weis, Gabriel Dos Reis,Herb Sutter,Lisa Lippincott, Timur Doumler
 - [ ] Secrets of C++ Scripting Bindings: Bridging Compile Time and Run Time - Jason Turner
 - [ ] Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design - Max Hoffmann
@@ -151,10 +151,10 @@
 - [ ] Unraveling string_view: Basics, Benefits, and Best Practices - Jasmine Lopez, Prithvi Okade
 - [ ] Using Modern C++ to Build XOffsetDataStructure: A Zero-Encoding and Zero-Decoding High-Performance Serialization Library in the Game Industry - Fanchen Su
 - [ ] Vectorizing a CFD Code With `std::simd` Supplemented by (Almost) Transparent Loading and Storing - Olaf Krzikalla
-- [ ] What Volatile Means (and Doesn't Mean) - Ben Saks
+- [x] What Volatile Means (and Doesn't Mean) - Ben Saks
 - [ ] What's eating my RAM? - Jianfei Pan
 - [ ] What's new for Visual Studio Code: Performance, GitHub Copilot, and CMake Enhancements - Alexandra Kemper, Sinem Akinci
-- [ ] What's New in Visual Studio for C++ Developers - Michael Price, Mryam Girmay
+- [x] What's New in Visual Studio for C++ Developers - Michael Price, Mryam Girmay
 - [x] When Lock-Free Still Isn't Enough: An Introduction to Wait-Free Programming and Concurrency Techniques - Daniel Anderson
 - [x] When Nanoseconds Matter: UltraFast Trading Systems in C++ - David Gross - Performance
 - [ ] Why is my build so slow? Compilation Profiling and Visualization - Samuel Privett

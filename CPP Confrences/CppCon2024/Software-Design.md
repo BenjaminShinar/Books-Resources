@@ -25,7 +25,7 @@
 - [ ] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
 - [ ] Reflection Is Not Contemplation - Andrei Alexandrescu
 - [ ] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
-- [ ] Reusable code, reusable data structures - Sebastian Theophil
+- [x] Reusable code, reusable data structures - Sebastian Theophil
 - [ ] The Most Important Design Guideline is Testability - Jody Hagins
 
 ### 10 Problems Large Companies Have Managing C++ Dependencies and How to Solve Them - Augustin Popa
@@ -122,5 +122,49 @@ we can set milestones - small changes that represent a gain in value, even if th
 > 8. Organize dependencies into coherent packages and start producing SBOMs
 > 9. Establish a global toolchain policy and build in containers if possible
 > 10. Break large migrations down into smaller milestones with a win at each step.
+
+</details>
+
+### Reusable Code, Reusable Data Structures - Sebastian Theophil
+
+<details>
+<summary>
+(not really sure about this talk)
+</summary>
+
+[Reusable Code, Reusable Data Structures](https://youtu.be/5zkDeiyF5Rc?si=tmsS-hGBMTMCey1r), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Reusable_Code_Reusable_Data_Structures.pdf)
+
+> DRY -- don't repeat yourself -- is an important software engineering principle.\
+> Repetitive code is error-prone code. Inevitably, and sooner rather than later, we will forget to change one of these repetitive code locations. C++ offers many different tools to share code and data and I often see novice and intermediate programmers struggle with choosing the best one in each situation.\
+> We have template functions, template classes, std::variant, virtual classes and std::any. We have some common associated programming patterns like CRTP, templated base classes, template functions taking function arguments.\
+> All of these have their uses and in my talk, I want to develop some intuitions on when to use which.
+
+what should we use and what should we not use.\
+starting with an example of centering elements in html.
+
+for code to be reused in an efficient manner, we need to generalize the problem, understand which algorithm can help us, etc...
+
+when we have a shared algorithm and different data, we use generic functions and concepts.
+
+looking at some patterns: output iterators, predicate, and at the command design pattern.
+
+> GENERIC FUNCTIONS
+>
+> - Need clear requirements
+> - Expressed in well-known concepts
+> - Reduce dependencies
+> - Flexible and customizable through customization points
+
+Generic classes, data is being templated, either in the base class or with the curiously recurring template pattern (CRTP).
+
+mixin classes, adding functionality to un-related classes.
+
+other options are inheritance (virtual functions) and <cpp>std::variant</cpp>, but should they really be used for code sharing? runtime polymorphism ties things together, it creates coupling and has lasting implication.
+
+- heap allocation
+- lifetime issues
+- ownership
+
+external polymorphism, global overloads, <cpp>std::variant</cpp> and <cpp>std::visit</cpp>.
 
 </details>

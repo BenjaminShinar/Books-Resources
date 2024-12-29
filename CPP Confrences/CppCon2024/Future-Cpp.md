@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore nsdm
+// cSpell:ignore nsdm Unruh ftrivial
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -11,7 +11,7 @@
 </summary>
 
 - [ ] Contracts for C++ - Timur Doumler
-- [ ] Peering forward — C++'s next decade - Herb Sutter
+- [x] Peering forward — C++'s next decade - Herb Sutter
 - [ ] Perspectives on Contracts - Lisa Lippincott
 - [ ] Safety and Security Panel - Michael Wong, Andreas Weis, Gabriel Dos Reis, Herb Sutter, Lisa Lippincott, Timur Doumler
 - [ ] Template-less Meta-programming - Kris Jusiak
@@ -339,5 +339,182 @@ int main(int argc, char** argv)
 ```
 
 (more code I won't copy), using C++23 explicit `this` for the parse function.
+
+</details>
+
+### Peering Forward - C++'s Next Decade - Herb Sutter - CppCon 2024
+
+<details>
+<summary>
+Compile time expressions and reflection and how they can help us.
+</summary>
+
+[Peering Forward - C++'s Next Decade](https://youtu.be/FNi1-x4pojs?si=cVbQUucdV9T3-Aw5), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Peering_Forward_Cpps_Next_Decade.pdf)
+
+will C++26 be the most influential release since C++11? there are four major things that are planned.
+
+- <cpp>std::execution</cpp> (concurrency and parallelism) (voted in)
+- Type and memory safety improvements(voted in)
+- Reflection + code generation ('injection') (not voted in yet)
+- Contracts (not voted in yet)
+
+#### Reflection
+
+> the program can **see** itself and **generate** itself... hence, **metaprograms**.\
+> static -> zero runtime overhead (not runtime reflection)
+
+this is part of the arc towards bringing more C++ code into compile time.
+
+there is a famous 1994 code by _Erwin Unruh_ that doesn't compile. the errors it raises show the prime numbers.
+
+```cpp
+template <int i> struct D
+{
+  D(void*);
+  operator int();
+};
+
+template <int p, int i>
+struct is_prime
+{
+  enum { prim = (p%i) && is_prime<(i>2 ? p : 0), i-1>::prim };
+};
+
+template <int i>
+struct Prime_print
+{
+  Prime_print<i-1> a;
+  enum { prim = is_prime<i, i-1>::prim };
+  void f() { D<i> d = prim; }
+};
+
+struct is_prime<0,0>
+{
+  enum {prim=1};
+};
+
+struct is_prime<0,1>
+{
+  enum {prim=1};
+};
+
+struct Prime_print<2>
+{
+  enum {prim=1};
+  void f() { D<2> d = prim; }
+};
+
+main ()
+{
+  Prime_print<10> a;
+}
+```
+
+C++11 introduced the <cpp>constexpr</cpp> keyword. and since then, more and more code become supported in compile time.
+
+> - C++11 - single return statement
+> - C++14 - more statements, local variable, conditions, member function
+> - C++17 - lambdas, compile time destructors, <cpp>if constexpr</cpp>, <cpp>std::static_assert</cpp>
+> - C++20 - memory allocation, virtual function, try catch, some data structures.
+> - C++23 - more math, allocators, non-literal parameters
+
+and also similar movement to have code run in the GPU. we started with Shaders, but as time evolved, we could do more things there.
+
+and just like compile time code and running code on GPUs, reflection will start small and evolve over time.
+
+an example of parsing command line parameters using reflection.
+
+#### Safety
+
+improving memory safety, both in terms of security (defending against malicious attackers) and safety (defending against unintended harm).
+
+we want to achieve parity with other languages in terms of program safety, this comes down to four categories.
+
+- type
+- bounds
+- initialization
+- lifetime safety
+
+progress is being made, and there will be an effort to enforce protection through profiles and move the protection from external tools to the compilers.\
+we will move from "watch out" to "opt out" model. keeping all the abilities of the language, but making them only available by explicit choice. there is a suggested concept for **safety profiles** - a set of safety rules that are enforced in compile time and grantee that weaknesses are absent.
+
+C++26 introduces "erroneous" behavior => "Well-defined as being just wrong". the first application of the tool is to categorize reading uninitialized local variables as erroneous behavior (rather than undefined behavior). A C++26 compiler will be required to overwrite the value with a known, defined value. no manual code-changes, just re-compiling and the code becomes safer.
+
+example of leaking secrets by reading un-initialzed local variables. in most programs today, we will read the existing data, but moving forward, the program will read and return some pre-defined value, this will prevent some data leakages.
+
+```cpp
+auto f1() {
+  char a[] = {'s', 'e', 'c', 'r', 'e', 't' };
+}
+
+
+auto f2() {
+  char a[6]; // or std::array<char,6>
+  print(a); // today this likely prints "secret"
+}
+
+int main() {
+  f1();
+  f2();
+}
+```
+
+we can even experiment with it today by passing some flags to the compiler `-ftrivial-auto-var-init=<pattern>` (GCC, Clang) or `/RTR1` (MSVC). the value won't be zero, for reasons (see slide). we could use the <cpp>[[indeterminate]]</cpp> attribute to opt-out of using this feature.
+
+code in compile time (<cpp>constexpr</cpp>, <cpp>consteval</cpp>) already rejects undefined behavior, so we can already write safe code. if we can do it in compile time, then we can do it everywhere
+
+#### Simplicity
+
+we can combine reflection and safety to write simpler code. most features add complexity, but some good features actually make other code simpler, and reduce overall complexity. ranges and futures are examples of this, adding them to the standard reduced the page count. we take code patterns and elevate them to language defintions. the code doesn't only express the "how", but also the "what". we have intent built-in into the code.
+
+an example of using reflection to define interfaces and the syntactic sugar.
+
+```cpp
+consteval void interface(std::meta::info proto)
+{
+  std::string_view name = identifier_of(proto);
+  queue_injection(^^{
+    class \id(name) {
+    public:
+      \tokens(make_interface_functions(proto))
+      virtual ~\id(name)() = default;
+      \id(name)() = default;
+      \id(name)(\id(name) const&) = delete;
+      void operator=(\id(name) const&) = delete;
+    };
+  });
+}
+
+consteval auto make_interface_functions(info proto) -> info
+{
+  info ret = ^^{};
+  for (info mem : members_of(proto)) {
+    if (is_nonspecial_member_function(mem)) {
+      ret = ^^{
+        \tokens(ret)
+        virtual [:\(return_type_of(mem)):]
+          \id(identifier_of(mem)) (\tokens(parameter_list_of(mem))) = 0;
+      };
+    }
+    else if (is_variable(mem)) {
+    // --- reporting compile time errors not yet implemented ---
+    // print_error( "interfaces may not contain data members" );
+    }
+    // etc. for other kinds of interface constraint checks
+  }
+  return ret;
+}
+
+class(interface) Widget {
+  int f();
+  void f(std::string);
+};
+```
+
+this will also allow for compile time regular expressions with performance comparable to the best regex engine. we might even get better compile performance and speed, despite the additional build steps.\
+with reflection and generation, we could improve engines and language extensions like QT and microsofts' COM-IDL, reducing the amount of external tools and separate sets of knowledge.
+
+small talk with _Andrei Alexandrescu_ discussing reflection to instrument types (wrapping around them with counts for each method) and using reflection to define domain specific languages like mathematical expressions, SQL statements and even C++ code.\
+Things that are hard today will become easier, things which are impossible will become possible. for this future to come, all information in the source code must be reflect-able (e.g. the default accessability of structs and classes), and all code must generate-able, and all generated code must be visible (for debugging and visualization).
 
 </details>
