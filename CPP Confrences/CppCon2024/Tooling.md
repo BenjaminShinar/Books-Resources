@@ -35,7 +35,7 @@
 What's new and what's coming up in Visual Studio IDE.
 </summary>
 
-[What's New in Visual Studio for C++ Developers](https://youtu.be/Ulq3yUANeCA?si=voZfhAjwwzOx_544), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/What's_New_in_Visual_Studio_For_Cpp_Developers.pdf)
+[What's New in Visual Studio for C++ Developers](https://youtu.be/Ulq3yUANeCA?si=voZfhAjwwzOx_544), [event](https://cppcon2024.sched.com/event/1gZgR/whats-new-in-visual-studio-for-c-developers), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/What's_New_in_Visual_Studio_For_Cpp_Developers.pdf)
 
 The yearly talk by the Visual Studio team in Microsoft
 
@@ -71,5 +71,26 @@ better integration with the vcpkg package manager.
 
 Better source control integration with popular repository hosting platforms. more copilot stuff to create commit messages.\
 Better experience for connecting to remote server systems. also running tests on remote machines and modify files over there.
+
+</details>
+
+### What's New for Visual Studio Code: Performance, GitHub Copilot, and CMake Enhancements - Alexandra Kemper, Sinem Akinci
+
+<details>
+<summary>
+What's new and what's coming up in Visual Studio Code and the C++ extention.
+</summary>
+
+[What's New for Visual Studio Code: Performance, GitHub Copilot, and CMake Enhancements](https://youtu.be/pjarNT2YgSQ?si=Q5n85mH93Q3Ppxzu), [event](https://cppcon2024.sched.com/event/1gZgQ/whats-new-for-visual-studio-code-performance-github-copilot-and-cmake-enhancements), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/What's_New_For_Visual_Studio_Code.pdf).
+
+github copilot integration, cmake, etc...
+
+adding fuzzy search support, making intelliSense faster, faster project start up.
+
+chat copilot context using participants in the chat, commands with the `/` prefix like "/fix", "/explain" and "/tests".
+
+better cmake presets, workflows. multi window support.
+
+support for LLMs for vsCode extensions - language model API. chat participants and API changes.
 
 </details>

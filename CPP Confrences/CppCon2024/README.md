@@ -89,7 +89,7 @@
 - [ ] Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
 - [ ] Fast and small C++ - When efficiency matters - Andreas Fertig
 - [x] Gazing Beyond Reflection for C++26 - Daveed Vandevoorde
-- [ ] Hidden Overhead of a Function API - Oleksandr Bacherikov
+- [x] Hidden Overhead of a Function API - Oleksandr Bacherikov
 - [ ] Hiding your Implementation Details is Not So Simple - Amir Kirsh
 - [ ] High-performance Concurrency in C++ - Fedor Pikus
 - [ ] High-performance Cross-platform Architecture: C++ 20 Innovations - Noah Stein
@@ -109,8 +109,8 @@
 - [ ] Linear Algebra with The Eigen C++ Library - Daniel Hanson
 - [ ] LLVM's Realtime Safety Revolution: Tools for Modern Mission Critical Systems - Christopher Apple, David Trevelyan
 - [ ] Making Hard Tests Easy: A Case Study From the Motion Planning Domain - Chip Hogg
-- [ ] Many ways to kill an Orc (or a Hero) -Patrice Roy
-- [ ] Message Handling with Boolean Algebra -Ben Deane
+- [ ] Many ways to kill an Orc (or a Hero) - Patrice Roy
+- [x] Message Handling with Boolean Algebra -Ben Deane
 - [ ] Mix Assertion, Logging, Unit Testing and Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
 - [ ] Modern C++ Error Handling - Phil Nash
 - [ ] Modern C++: When Efficiency Matters - Andreas Fertig
@@ -124,7 +124,7 @@
 - [ ] Performance engineering - being friendly to your hardware - Ignas Bagdonas
 - [ ] Perspectives on Contracts - Lisa Lippincott
 - [ ] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
-- [ ] Reflection based libraries to look forward to - Saksham Sharma
+- [x] Reflection based libraries to look forward to - Saksham Sharma
 - [ ] Reflection Is Not Contemplation - Andrei Alexandrescu
 - [ ] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
 - [x] Reusable code, reusable data structures - Sebastian Theophil
@@ -153,7 +153,7 @@
 - [ ] Vectorizing a CFD Code With `std::simd` Supplemented by (Almost) Transparent Loading and Storing - Olaf Krzikalla
 - [x] What Volatile Means (and Doesn't Mean) - Ben Saks
 - [ ] What's eating my RAM? - Jianfei Pan
-- [ ] What's new for Visual Studio Code: Performance, GitHub Copilot, and CMake Enhancements - Alexandra Kemper, Sinem Akinci
+- [x] What's new for Visual Studio Code: Performance, GitHub Copilot, and CMake Enhancements - Alexandra Kemper, Sinem Akinci
 - [x] What's New in Visual Studio for C++ Developers - Michael Price, Mryam Girmay
 - [x] When Lock-Free Still Isn't Enough: An Introduction to Wait-Free Programming and Concurrency Techniques - Daniel Anderson
 - [x] When Nanoseconds Matter: UltraFast Trading Systems in C++ - David Gross - Performance
