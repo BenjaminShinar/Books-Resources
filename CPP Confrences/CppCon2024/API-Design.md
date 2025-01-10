@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore
+// cSpell:ignore beman
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -10,7 +10,7 @@
 6 lectures about API design.
 </summary>
 
-- [ ] Creating a Sender/Receiver HTTP Server - Dietmar Kühl
+- [x] Creating a Sender/Receiver HTTP Server - Dietmar Kühl
 - [ ] Deciphering C++ Coroutines - Mastering Asynchronous Control Flow - Andreas Weis
 - [ ] Irksome C++ - Walter E Brown
 - [ ] Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design - Max Hoffmann
@@ -330,5 +330,147 @@ prefer functions with a smaller number of arguments.
 > - Follow the Rule of 0 (or at least support trivial copy)
 > - Make APIs consistent
 > - Understand abstractions cost on your target platform
+
+</details>
+
+### How to Use the Sender/Receiver Framework in C++ to Create a Simple HTTP Server - Dietmar Kühl
+
+<details>
+<summary>
+live coding session of creating an HTTP server.
+</summary>
+
+[How to Use the Sender/Receiver Framework in C++ to Create a Simple HTTP Server](https://youtu.be/Nnwanj5Ocrw?si=cERC9Qcd_wPab3Zx), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Creating_a_Sender_Receiver_HTTP_Server.pdf), [event](https://cppcon2024.sched.com/event/1gZeX/creating-a-senderreceiver-http-server), [additional github repository](https://github.com/bemanproject/net29).
+
+> Objectives:
+>
+> - Create a basic HTTP server.
+> - Allow a single-threaded server handling multiple clients.
+> - Use the sender/receiver asynchronous framework.
+> - Use a minimalistic sender/receiver networking interface
+>
+> Basic Design:
+>
+> - `main()` runs an event loop for network and timer events.
+> - It uses an <cpp>async_scope</cpp> for outstanding work.
+> - Initial work consist of accepting incoming client connections.
+> - Each client processes requests until an error is received
+
+Using an implementation from the *Beman Project* which follows the standard specification.
+
+starting from the empty example. it contains the header files and some name space aliases. we will build up from it.
+
+```cpp
+#include <beman/net29/net.hpp>
+#include <beman/execution26/execution.hpp>
+#include "demo_algorithm.hpp"
+#include "demo_error.hpp"
+#include "demo_scope.hpp"
+#include "demo_task.hpp"
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <string_view>
+#include <unordered_map>
+
+namespace ex  = beman::execution26;
+namespace net = beman::net29;
+using namespace std::chrono_literals;
+
+// ----------------------------------------------------------------------------
+
+std::unordered_map<std::string, std::string> files{
+  {"/", "examples/data/index.html"},
+  {"/favicon.ico", "examples/data/favicon.ico"},
+  {"/logo.png", "examples/data/logo.png"},
+};
+```
+
+we start by accepting connections, we work backwards, we need a stream, so we need an acceptor, for the acceptor we need an endpoint and context, and to run the server we need an asynchronous execution via a coroutine with a scope.
+
+(live coding session).
+
+```cpp
+auto process(auto& stream, auto const& request) -> demo::task<>
+{
+  std::string method, url, version;
+  std::string body;
+  std::ostringstream out;
+  if (std::istringstream(request) >> method >> url >> version && files.contains(url))
+  {
+    out << std::ifstream(files[url]).rdbuf();
+    body = out.str();
+    out.str({});
+  }
+
+  out << "HTTP/1.1 "<< (body.empty() ? "404 not found" : "200 found")  << "\r\n"
+  << "Content-Length: " << body.size() << "\r\n"
+  << "\r\n"
+  << body;
+  auto response {out.str()};
+  co_await net::async_send(stream, net::buffer(response));
+}
+
+auto timeout(auto scheduler, auto duration, auto& sender)
+{
+  return demon::when_any(
+    std::move(sender()),
+    net::resume_after(scheduler, duration) 
+    | demo::into_error([]() { return std::error_code(demo::timeout, demo::category());})
+    ) | demo::into_expected();
+}
+
+auto make_client_handler(auto scheduler, auto stream) -> demo::task<>
+{
+  char buffer[16];
+  std::string request;
+  while (true)
+  {
+    try {
+      if (auto n = co_await timeout(scheduler, 2s, net::async_receive(stream, net::buffer(buffer))))
+      {
+        std::string_view data(buffer, n.value());
+        std::cout << "received data=" << data << '\n';
+        request += data;
+        if (request.find("\r\n\r\n") != request.npos) // end of data
+        {
+          co_await process(stream, request);
+        }
+      }
+      else 
+      {
+        std::cout << "ERROR (VIA expected): " << std::get<0>(n.error()).message() << '\n';
+        break; // break while look
+      }
+    }
+    catch (std::variant<std::error_code> const& ex) {
+      std::cout << "ERROR: " << std::get<0>(ex).message() << '\n';
+      break; // exit  while loop;
+    }
+  }
+  co_retrun;
+}
+
+auto main() -> int
+{
+  net::io_context context;
+  net::ip::tcp:endpoint endpoint(net::ip::address_v4::any(), 12345);
+  net::ip::tcp:acceptor acceptor(context, endpoint);
+  demo::scope scope;
+  scope.spawn(std::invoke([](auto scheduler, auto& scope, auto& acceptor)-> demo::task<> {
+    while (true)
+    {
+      auto[stream, address] = co_await net::async_accept(acceptor);
+      std::cout << "received client:" << address << '\n';
+      scope.spawn(make_client_handler(scheduler, std::move(stream)));
+    }
+  }, context.get_scheduler(), scope, acceptor)); // execute inside a scope
+
+  context.run();
+}
+```
+
+from another terminal, we can curl to our server with `curl http://localhost::12345` or keep an open connection with `telnet localhost 12345` to see timeouts.
 
 </details>

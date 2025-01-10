@@ -76,7 +76,7 @@
 - [ ] Contracts for C++ - Timur Doumler
 - [ ] Coroutines and Structured Concurrency in Practice - Dmitry Prokoptsev
 - [ ] Cpp2/cppFront BoF informal meetup - Neil Henderson
-- [ ] Creating a Sender/Receiver HTTP Server - Dietmar Kühl
+- [x] Creating a Sender/Receiver HTTP Server - Dietmar Kühl
 - [ ] Cross-Platform Determinism Out of the Box - Sherry Ignatchenko
 - [ ] Data Is All You Need for Fusion - Manya Bansal
 - [ ] Data Structures That Make Video Games Go Round - Al-Afiq Yeong
@@ -87,7 +87,7 @@
 - [ ] Designing a Slimmer Vector of Variants - Christopher Fretz
 - [ ] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
 - [ ] Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
-- [ ] Fast and small C++ - When efficiency matters - Andreas Fertig
+- [x] Fast and small C++ - When efficiency matters - Andreas Fertig
 - [x] Gazing Beyond Reflection for C++26 - Daveed Vandevoorde
 - [x] Hidden Overhead of a Function API - Oleksandr Bacherikov
 - [ ] Hiding your Implementation Details is Not So Simple - Amir Kirsh
@@ -126,7 +126,7 @@
 - [ ] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
 - [x] Reflection based libraries to look forward to - Saksham Sharma
 - [ ] Reflection Is Not Contemplation - Andrei Alexandrescu
-- [ ] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
+- [x] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
 - [x] Reusable code, reusable data structures - Sebastian Theophil
 - [ ] Safety and Security Panel - Michael Wong, Andreas Weis, Gabriel Dos Reis,Herb Sutter,Lisa Lippincott, Timur Doumler
 - [ ] Secrets of C++ Scripting Bindings: Bridging Compile Time and Run Time - Jason Turner
@@ -139,7 +139,7 @@
 - [ ] Structured Concurrency in C++ - Mateusz Pusz
 - [ ] SuperCharge Your IPC Programs With C++20 and CCI Pattern - Arian Ajdari
 - [ ] Talk Tech and Keep Your Audience Awake - Andrei Alexandrescu, Sherry Sontag
-- [ ] Taming the C++ Filter View - Nicolai Josuttis
+- [x] Taming the C++ Filter View - Nicolai Josuttis
 - [ ] Techniques to Optimize Multithreaded Data Building During Game Development - Dominik Grabiec
 - [ ] Template-less Meta-programming - Kris Jusiak
 - [ ] The Beman Project: Bringing Standard Libraries to the Next Level - David Sankel
