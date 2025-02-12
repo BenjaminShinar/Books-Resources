@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat -Wnrvo nrvo fimplicit Decrypter Wpadded gcem vgdb cvref debian
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat  nrvo fimplicit Decrypter gcem vgdb cvref debian chrono -Wpadded -Wsystem -Wnrvo
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -2179,3 +2179,217 @@ in episode 435, we saw a 68 times performance increase by using the GPU, we also
 the odd case is function which checks the minimal size that we need to hold the index, rather than always using <cpp>std::size_t</cpp>. when clang uses different sized indexes, it produces very different code.
 </details>
 
+## C++ Weekly - Ep 461 - C++26's `std::views::concat`
+
+<details>
+<summary>
+View on combined ranges.
+</summary>
+
+[C++26's `std::views::concat`](https://youtu.be/QeWdhHyBBv0?si=DWB3xGTHVCpfCQ-c), [cpp-reference](https://en.cppreference.com/w/cpp/ranges/concat_view).
+
+a view over multiple ranges, chained together in the desired order.
+
+```cpp
+int main()
+{
+  std::array a1 {1,2,3,4};
+  std::array a2 {5,6,7,8,9};
+  std::vector v3 {10,11,12};
+
+  for (const auto &val : std::views::concat(a2,v3,a1))
+  {
+    std::cout<< val << '\n';
+  }
+}
+```
+
+the iterators maintain the properties of the underlying container iterators, so if we have random access iterators for the vectors, we could modify them through the combined view.
+
+```cpp
+void update(std::vector<int> &v1, std::vector<int> &v2)
+{
+  std::views::concat(v1,v2)[10] = 10;
+}
+```
+
+we can still concatenate views over ranges of things which don't support random access, but then we'll get compiler errors.
+</details>
+
+## C++ Weekly - Ep 462 - C++23's Amazing New Range Formatters
+
+<details>
+<summary>
+Standard format specializations.
+</summary>
+
+[C++23's Amazing New Range Formatters](https://youtu.be/G6hhZGUE9S4?si=ReGrpeVkdSqd6C6p)
+
+standard format specializations were added to the C++23 specifications, and there finally is support for them! we can also use formatting specifiers for better control (remove parentheses, print as key-pair), even at the internal level of nested containers.
+
+```cpp
+int main()
+{
+  std::println("pair: {}", std::pair{42, 4.2}); // (42, 4.2)
+  std::println("pair: {:n}", std::pair{42, 4.2}); // 42, 4.2
+  std::println("pair: {:m}", std::pair{42, 4.2}); // 42: 4.2
+  std::println("tuple: {}", std::tuple{1,2,3, "hello world"}); // (1, 2, 3, "hello world")
+  std::println("vector: {}", std::vector{1,2,3}); // [1, 2, 3])
+  std::println("array: {}", std::array{1,2,3,4} ); // [1, 2, 3, 4])
+  std::println("range of array: {}", std::array{1,2,3,4} | std::views::drop(2)); // [3, 4])
+  std::vector<std::pair<char, int>> vp{{'1',1},{'2',2}};
+  std::println("vector of pairs: {}", vp); // [('1', 1), ('2', 2)]
+  std::println("vector of pairs: {::m}", vp); // ['1': 1, '2': 2]
+  
+  std::map<std::string,
+    std::pair<int, 
+      std::map<std::chrono::time_point<std::chrono::system_clock>, 
+        std::vector<int>>>> data; // very nested container
+  data["Hello"] = {1, {{std::chrono::system_clock::now(), {1,2,3,4}}}};
+  std::println("very nested: {}", data); // {"Hello": (1, {2024-11-04 19:47:33:641445: [1, 2, 3, 4]})}
+}
+```
+
+in the future, we might be able to pair this with c++26 reflection and get something that looks like json serialization.
+</details>
+
+## C++ Weekly - Ep 463 - C++26's Safer Returns
+
+<details>
+<summary>
+Making C++ Safer to use.
+</summary>
+
+[C++26's Safer Returns](https://youtu.be/T4g92jtGkXM?si=G2JCBcF3Xsh4WcQf)
+
+this example is undefined behavior, we try to return a reference to a temporay value.
+
+```cpp
+int get_value();
+const int & call_get_value()
+{
+  return get_value();
+}
+```
+
+in C++23, this is a compiler warning, and we need a flag to make it into an error. In C++26, this will be an error. no matter what flags we pass.
+
+</details>
+
+## C++ Weekly - Ep 464 - Easily Printing `std::variant`
+
+<details>
+<summary>
+Printing variant using a lambda
+</summary>
+
+[Easily Printing `std::variant`](https://youtu.be/-oSuITjrzgU?si=7-i-9uP7BNZE-RHa)
+
+
+we can't print something with a runtime only known type (variant) through a compile known print function. we need to use a visitor somehow, but it becomes a bit silly looking.
+
+```cpp
+std::variant<int, double, std::string> get_value();
+
+int main()
+{
+  std::println("{}", get_value()); // fails
+
+  std::visit([](const auto &value){
+    std::print("{}", value);
+  }, get_value()); // this does work
+}
+```
+
+this works because under the hood, the visitor creates different versions of the callable generic thing with the different types of the variant
+</details>
+
+## C++ Weekly Ep 465 - C++26's `std::span Over` initializer_list
+
+<details>
+<summary>
+New option in C++26.
+</summary>
+
+[C++26's `std::span` Over initializer_list](https://youtu.be/hWw_P6FUN_E?si=KHn4BN21tSAUZc8L)
+
+passing <cpp>std::initializer_list</cpp> to something which expects a <cpp>std::span</cpp> fails in C++23, but should work in C++26.
+
+```cpp
+void use_data(std::span<const int> data);
+
+int main()
+{
+  use_data(std::array{1,2,3,4}); // works
+  use_data({1,2,3,4}); // fails in C++23, works in C++26.
+}
+```
+
+however, the generated code isn't the same, which is weird.
+
+</details>
+
+
+## C++ Weekly Ep 466 - invoke_r Should Not Exist
+
+<details>
+<summary>
+Weird function that maybe shouldn't exist.
+</summary>
+
+[invoke_r Should Not Exist](https://youtu.be/GyAZg1LfPZo?si=3w_NJxwON_-ApKHN), [cppreference](https://en.cppreference.com/w/cpp/utility/functional/invoke)
+
+calling (invoking) something callable with parameters, like a lambda, function object, a free function or even a member function.
+
+```cpp
+int get_value(int input)
+{
+  return input + 23;
+}
+std::string_view get_sv()
+{
+  return "Hello World";
+}
+
+int main()
+{
+  std::cout << std::invoke(get_value, 10) << '\n';
+  std::cout << std::invoke_r<float>(get_value, 10) << '\n'; // implicit conversion
+  std::cout << std::invoke_r<std::string>(get_sv) << '\n'; // doesn't work
+  std::cout << std::string(std::invoke(get_sv)) << '\n'; // explicit conversion
+}
+```
+
+<cpp>std::invoke_r</cpp> exists to modify the return type, it is implicitly converted, if that conversion exists (must be explicit), this is weird, since we want to avoid implicit conversions in our code! it even messes with our compiler warning, since the compilers will never show us warnings from the standard library, unless we specify the `-Wsystem-headers` flag to see those warning. this depends on the compiler (gcc and clang exclude, msvc doesn't).
+
+</details>
+
+## C++ Weekly Ep 467 - enum struct vs enum class
+
+<details>
+<summary>
+two ways to do the same thing
+</summary>
+
+[enum struct vs enum class](https://youtu.be/1CjVTCiY4fc?si=b-3V9TR3lCD1nCQm)
+
+strongly typed scoped enumerations. they are functionally the same, but one can argue that since all the members of the enum are public, then it's a struct.
+
+```cpp
+enum struct Settings {
+  True = 1,
+  False = 0
+};
+
+enum class OtherSettings {
+  True = 1,
+  False = 0
+};
+
+int main()
+{
+  return static_cast<int>(Settings::True);
+}
+```
+
+</details>
