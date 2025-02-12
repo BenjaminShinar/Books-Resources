@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Regehr
+// cSpell:ignore Regehr dscp
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -14,7 +14,7 @@
 - [ ] Boosting Software Efficiency: A Case Study of 100% Performance Improvement in an Embedded C++ System - Gili Kamma
 - [ ] C++ Exceptions for Smaller Firmware - Khalil Estell
 - [ ] Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
-- [ ] Message Handling with Boolean Algebra - Ben Deane
+- [x] Message Handling with Boolean Algebra - Ben Deane
 - [ ] Multi Producer, Multi Consumer, Lock Free, Atomic Queue - User API and Implementation - Erez Strauss
 - [ ] Sender Patterns to Wrangle Concurrency in Embedded Devices - Michael Caisse
 - [ ] SuperCharge Your IPC Programs With C++20 and CCI Pattern - Arian Ajdari
@@ -88,7 +88,7 @@ in this case, a compiler might decide to first set the volatile variable before 
 - semaphores
 - condition variables
 
-volatile also doesn't mean atomic.  we aren't protected from a data race.
+volatile also doesn't mean atomic. we aren't protected from a data race.
 
 ```cpp
 double volatile v = 0.0;
@@ -133,6 +133,7 @@ there are other workarounds, such as marking functions to not be inlined.
 > - Use synchronization tools (e.g., mutexes and semaphores) rather than volatile objects to manage inter-thread communication.
 > - Accesses to volatile objects are not guaranteed to be atomic
 > - If you find that your compiler is mishandling volatile, try these remedies:
+>
 >   - Disable optimizations for that code.
 >   - Use a different version of the compiler.
 >   - Use Eide and Regehr's workaround.
@@ -141,4 +142,194 @@ there are other workarounds, such as marking functions to not be inlined.
 
 actually, in C++20, many operations around volatile variables got deprecated (and some were un-deprecated later).
 
+</details>
+
+### Message Handling with Boolean Algebra - Ben Deane
+
+<details>
+<summary>
+boolean algebra and how to compose expressions.
+</summary>
+
+[Message Handling with Boolean Algebra](https://youtu.be/-q9Omkhl62I?si=xyYrPRUi02glqTDA), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Message_Handling_with_Boolean_Algebra.pdf), [additional code](https://github.com/intel/compile-time-init-build).
+
+> "The Unreasonable Effectiveness of Boolean Algebra in Software Design,
+> Showing the Particular Application of a Message Handling Library,
+> with an Excursion into the Roots of Programming"
+>
+> The workings of a message-handling library:
+>
+> - How messages and the fields in them are specified.
+> - Efficiently identifying (with matchers) a message coming off the wire.
+> - The role of Boolean algebra in composing matchers.
+> - Understanding Boolean implication and using it to simplify matchers.
+
+starting with a single request:
+
+> Factor arbitrary matcher expressions into "sum-of-products" expressions
+
+#### Fields and messages: how they are structured and specified
+
+a field has a name (human readable), a type, and one or more locators that define the layout:
+
+- word index (in 32-bit words)
+- most significant bit (inclusive)
+- least significant bit
+
+using the IPv4 header as example, we can either extract from a field on insert, (get and set), the field is both the spec (name and type) and the locator, the same spec can be located at different messages in different locations.\
+we can either indicate the location as offset from the current word index, or use absolute terms (offset from start of the message). fields can be split across locations, like having an eight bit field spread across two 4-bit locations.
+
+```cpp
+using version = field<"version", std::uint8_t>::located<at{0_dw, 3_msb, 0_lsb}>;
+using ihl = field<"ihl", std::uint8_t>::located<at{0_dw, 7_msb, 4_lsb}>;  // internet header length
+using dscp = field<"dscp", std::uint8_t>::located<at{0_dw, 13_msb, 8_lsb}>;  // differentiated services code point
+using ecn = field<"ecn", std::uint8_t>::located<at{0_dw, 15_msb, 14_lsb}>; // explicit congestion notification
+
+template <range R>
+constexpr static auto extract(R &&r) -> value_type;
+
+template <range R>
+constexpr static auto insert(R &&r, value_type const &value) -> void;
+
+using ipv4_header_layout = message<"ipv4", version, ihl, dscp, ecn, /*... more stuff*/>;
+owning<ipv4_header_layout> ipv4_header; // layout + right-sized array
+auto version = ipv4_header.get("version"_field);
+ipv4_header.set("ihl"_field = 5);
+```
+
+#### Matching on fields in a message
+
+> To determine the correct message type for data arrived off the wire, we use a matcher.\
+> A matcher is a predicate on a message.
+
+```cpp
+template <typename T>
+concept matcher = requires(T const &t, message const &msg)
+{ // a prototypical message
+  { t(msg) } -> std::convertible_to<bool>;
+};
+
+// simple matcher
+template <typename Field, auto Value> struct equal_to_t
+{
+  constexpr auto operator()(auto const &msg) const -> bool
+  {
+    return Value == msg.template.get<Field>();
+  }
+};
+
+// generic
+template <typename Op, typename Field, auto Value>
+struct relational_matcher_t
+{
+  constexpr auto operator()(auto const &msg) const -> bool
+  {
+    return Op{}(Value, msg.template.get<Field>());
+  }
+};
+
+// convenient aliases
+template <typename Field, auto Value>
+using equal_to_t = relational_matcher_t<std::equal_to<>, Field, Value>;
+
+template <typename Field, auto Value>
+using less_than_t = relational_matcher_t<std::less<>, Field, Value>;
+```
+
+since matchers return a boolean, we can treat them like boolean values themselves, and start composing them together, so we can create matchers out matchers (and, or, not).
+
+and now we can start using this library. we define fields, messages, callbacks, etc...\
+we have an expression tree, but we want to make sure the library doesn't perform extra work. it should be able to simplify expressions to reduce evaluations.
+
+the following composite matchers could be reduced
+
+> - less_than<5> or greater_equal<5>
+> - less_than<5> and less_than<7>
+> - lot less_than<5> and greater_equal<5>
+
+#### Simplifying matchers
+
+there are some mathematical rules, but how can we let the library know about them?
+
+we start by defining matchers for true and false: always and never. we can do some compile time stuff to replace matchers and collapse part of the tree. we define a compile time simplification function and make it customization point. we define matchers for conjunction ("and"), disjunction ("or") and negation ("not"), and define some identities and teach our library to simplify them.\
+
+#### Programming as boolean algebra
+
+when we define a function prototype (with a return type), we actually define the boolean implication (A=>B). this is called **Curry-Howard Isomorphism**. something about proposition.
+
+we can take this knowledge and bring it into our library. implication is an operator, so it has a truth table, it's actually the same as "not A or B" (`!A or B`)
+
+|  A  |  B  | A and B | A or B | A implies B |
+| :-: | :-: | :-----: | :----: | :---------: |
+|  0  |  0  |    0    |   0    |      1      |
+|  0  |  1  |    0    |   1    |      1      |
+|  1  |  0  |    0    |   1    |      0      |
+|  1  |  1  |    1    |   1    |      1      |
+
+this table hides simplifications, A=>B is always true when B is true, and A=>B is the value of B when A is false.
+knowing the state of implication also tells us about the other columns. if A=>B is true, then "A and B" is the value of A, and "A or B" is the value of B.
+
+#### Using implication to simplify
+
+we have the expression tree of "less_than<5> and less_than<7>", which we as humans know is $X < 5 ⇒ X < 7$ (if x is smaller than 5, it's also smaller than 7), if "A=>B" is true, then "A and B" is A. so we need to bring this into the code.
+
+```cpp
+template <matcher X, matcher Y>
+constexpr auto implies(X const &, Y const &) -> bool 
+{
+  return std::same_as<X, Y>;
+}
+
+constexpr auto implies(matcher auto &&, always_t) -> bool 
+{
+  return true;
+}
+
+constexpr auto implies(never_t, matcher auto &&) -> bool 
+{
+  return true;
+}
+
+constexpr auto implies(never_t, always_t) -> bool 
+{ // ambiguity breaker!
+  return true;
+}
+
+// some overloads
+template <matcher M, matcher L, matcher R>
+constexpr auto implies(and_t<L, R> const &a, M const &m) -> bool
+{
+  return implies(a.lhs, m) or implies(a.rhs, m);
+}
+
+template <matcher M, matcher L, matcher R>
+constexpr auto implies(M const &m, or_t<L, R> const &o) -> bool
+{
+  return implies(m, o.lhs) or implies(m, o.rhs);
+}
+
+// generic matchs to simplify the same operations
+template <typename Op, typename Field, auto X, auto Y>
+constexpr auto implies(relational_matcher_t<Op, Field, X>, relational_matcher_t<Op, Field, Y>) 
+{
+  return X == Y or Op{}(X, Y);
+}
+
+// explicitly stating implication,
+template <typename Field, auto X, auto Y>
+constexpr auto implies(less_equal<Field, X> const &,
+less_than<Field, Y> const &) -> bool 
+{
+  return X < Y;
+}
+```
+
+we take this "implies" function and bring it into the simplification functions.
+
+#### Epilogue
+
+disjunctive normal forms: an expression with only "or", "and" and single terms. negation only applies to single terms, and the conjunctions and disjunctions don't contain additional expressions inside them.\
+we can transform any expression into a disjunctive normal form using DeMorgans' laws and distributive laws.
+
+going back to the "sum_of_products" topic.
 </details>

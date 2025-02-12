@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore
+// cSpell:ignore relocatability Björn Fahller
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -10,7 +10,7 @@
 17 Talks about Software Design.
 </summary>
 
-- [ ] 10 Problems Large Companies Have with Managing C++ Dependencies and How to Solve Them - Augustin Popa
+- [x] 10 Problems Large Companies Have with Managing C++ Dependencies and How to Solve Them - Augustin Popa
 - [ ] Adventures with Legacy Codebases: Tales of Incremental Improvement - Roth Michaels
 - [ ] C++ Under the Hood: Internal Class Mechanisms - Chris Ryan
 - [ ] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
@@ -24,7 +24,7 @@
 - [ ] Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements - Katherine Rocha
 - [ ] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
 - [ ] Reflection Is Not Contemplation - Andrei Alexandrescu
-- [ ] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
+- [x] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
 - [x] Reusable code, reusable data structures - Sebastian Theophil
 - [ ] The Most Important Design Guideline is Testability - Jody Hagins
 
@@ -166,5 +166,101 @@ other options are inheritance (virtual functions) and <cpp>std::variant</cpp>, b
 - ownership
 
 external polymorphism, global overloads, <cpp>std::variant</cpp> and <cpp>std::visit</cpp>.
+
+</details>
+
+### C++ Relocation - How to Achieve Blazing Fast Save and Restore and More! - Eduardo Madrid
+
+<details>
+<summary>
+Moving and Storing Data for better performance.
+</summary>
+
+[C++ Relocation - How to Achieve Blazing Fast Save and Restore and More!](https://youtu.be/LnGrrfBMotA?si=RQ6R3iWcMSCTZzTK), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Relocation.pdf), [event](https://cppcon2024.sched.com/event/1gZeM/relocation-blazing-fast-save-and-restore-then-more). [Data Orientation For The Win! - Eduardo Madrid - CppCon 2021](https://www.youtube.com/watch?v=QbffGSgsCcQ)
+
+The opposite of pointe chasing.
+
+> What's what we mean to improve?
+>
+> - Our systems need objects to refer to each other, and we need runtime polymorphism
+> - Nothing bad per se, just that it craters performance
+> - What if we are willing to do a lot of effort to improve performance lot?
+> - One option is to apply **Data Orientation** techniques in general.
+> - Today, we give extra attention to "relocatability"
+
+Relocatability is how we apply data orientation techniques to make our data easy to be moved around, so it will reside in memory when it has the best performance.\
+(relocatability is not about position independent code for dynamically linked libraries).
+
+Writing code the "normal" way means we don't focus on mapping data in memory.
+
+- storing data in classes or structs with heterogenous members.
+- using pointers for objects to refer to one another.
+- using virtual inheritance and overrides for runtime polymorphism
+- indirections, allocations, lifetime, sharing ownership (<cpp>std::unique_ptr</cpp>, <cpp>std::shared_ptr</cpp>)
+
+#### Data Orientation
+
+The non-trivial way to write code takes data to memory mapping into account.
+
+> Columnar Representation (Scattering):\
+> Transforming collections of structs of members of heterogeneous typesinto one structure with arrays of homogeneous data types (going from what in databases is called a row-representation to a columnar representation) also called "scattering" or achieving structures of arrays.
+
+That's a long way for saying "struct of arrays" over "array of structs", or moving from row-wise representations to column-wise.\
+With *row-wise* representations, we have structs containing different kinds of members, pointers (which can be null), data that is differentiating the state of the object and we have containers with multiple elements of the class.\
+with *column-wise*, we combine the data and the container together, we move to homogenous collection of data, all fields of the same type are stored continuously. to access a single 'item', we use a handle (Facade/Proxy design pattern).\
+After scattering, we are using "entity-component systems", we no longer have objects, instead we have entities, and members are replaced with compnotents. entities and components are bound through an index in a global structure.
+
+```cpp
+// row-wise
+struct Item {
+  int id;
+  double price;
+  Specials *specials; // pointer, can be null
+  Category *category;
+  bool is_homemade; // messes with the data alignment
+};
+std::array<Item, N> items;
+
+// column-wise
+template <std::size_t N>
+struct State {
+  std::array<int, N> ids;
+  std::array<double, N> prices;
+  EfficientMap<std::size_t, Specials> specials;
+  std::array<CategoryHandle, N> categories;
+  EfficientSet<std::size_t> homemade;
+};
+
+auto state = State<N>;
+class ItemHandle {
+  std::size index;
+public:
+  int id() { return state.ids[index]; }
+  double price() { return state.prices[index]; }
+  Specials *specials() { return state.specials[id()]; }
+  CategoryHandle category() { return state.categories[id()]; }
+  bool &is_homemade() { return state.homemade.contains(id()); }
+};
+```
+
+Allocating data homogeneously allows for better performance (SIMD, CUDA), reduces allocations, it dis-incentives communication between state change. also, moving away from using pointers allows more efficient memory dump. data is given different addresses by the allocator, so we can't restore the application correctly (the pointers are no longer valid). if we have this kind of a layout, the relations between entities are preserved through the index.
+
+#### Allocators And Relocatability
+
+Allocators don't care about the efficient allocation of the data, so we must be able to control and move the data, and we need the ability to maintain the allocation across the lifetime of the program, as objects are created and destroyed.
+
+we start by re-introducing some indirection - using stable indices.
+
+> Recapping Björn Fahller ["Cache Friendly Data + Functional + Ranges = &heartsuit;"](https://www.youtube.com/watch?v=XJzs4kC9d-Y) @C++ On Sea 2024:
+>
+> - He calls stable indices "stable ids", and the technique is to use an extra indirection that pays for itself in terms of performance.
+> - Furthermore, you can have both the forward mapping and the backward mapping, depending on your needs.
+> - This indirection is what provides the freedom to relocate!
+> - Björn Fahller presented benchmarks that dove into details of wall-clock performance, cache misses, IMO his results are representative of what would be real world use.
+
+Relocatability makes saving the state of the application trivial - just dump the data as is. and restoring it is just as easy. if the data is ever "shaken" and becomes not efficient, we can re-allocate them to make them efficient again. "shaken" data can be fragmentation (empty holes in the array), or having old and new entities stored together (if we re-used the old memory to store new data).\
+Memory performance relies on time and space locality, we want to have objects that are accessed together stored together, relocating objects allows us to maintain and improve this.
+
+One issue is using *Value Mangers*, using <cpp>std::optional</cpp>, which currently doesn't take allocators, but can take a <cpp>std::vector</cpp> type with an custom allocator. this has something to do with type erasure (<cpp>std::any</cpp>, <cpp>std::function</cpp>). the language doesn't currently have support to access internals (???).
 
 </details>

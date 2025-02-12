@@ -15,7 +15,7 @@
 - [ ] Designing a Slimmer Vector of Variants - Christopher Fretz
 - [ ] Interesting Upcoming Features from Low latency, Parallelism and Concurrency from Kona 2023, Tokyo 2024, and St. Louis 2024 - Paul E. McKenney, Maged Michael, Michael Wong
 - [x] So You Think You Can Hash - Victor Ciura
-- [ ] Taming the C++ Filter View - Nicolai Josuttis
+- [x] Taming the C++ Filter View - Nicolai Josuttis
 - [ ] The Beman Project: Bringing Standard Libraries to the Next Level - David Sankel
 - [x] When Lock-Free Still Isn't Enough: An Introduction to Wait-Free Programming and Concurrency Techniques - Daniel Anderson
 - [ ] Work Contracts – Rethinking Task Based Concurrency and Parallelism for Low Latency C++ - Michael Maniscalco
@@ -726,5 +726,249 @@ moving away <cpp>std::vformat</cpp> and using <cpp>std::runtime_format</cpp> wit
 range support for <cpp>std::optional</cpp>, used for pipelines. support for optional on reference types, use monadic function <cpp>and_then</cpp>, <cpp>or_else</cpp>.\
 adding the <cpp>std::inplace_vector</cpp>, a vector with a known size, doesn't allocate. has some operations which won't throw.\
 <cpp>std::span</cpp> and initializer lists, better conversion from types, adding the <cpp>std::span::at()</cpp> interface.
+
+</details>
+
+### Taming the Filter View in C++ Programming - Nicolai Josuttis
+
+<details>
+<summary>
+Understanding how views work and how they can break our expectations.
+</summary>
+
+[Taming the Filter View in C++ Programming](https://youtu.be/c1gfbbE2zts?si=W-CVqtm8G94Bpvk6), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Taming_the_Cpp_Filter_View.pdf), [event](https://cppcon2024.sched.com/event/1gZh0/taming-the-c-filter-view).
+
+C++20 introduced <cpp>std::ranges</cpp> and <cpp>std::views</cpp>.
+
+we start with a generic print function, it takes an object by reference and iterates over the elements in it.
+
+```cpp
+template <typename T>
+void print(const T& coll)
+{
+  for (const auto& elem : coll) {
+    std::cout << elem << ' ';
+  }
+  std::cout << '\n';
+}
+
+std::vector<int> coll1{0, 8, 15, 47, 11, 42, 1};
+std::set<int> coll2{0, 8, 15, 47, 11, 42, 1};
+print(coll1);
+print(coll2);
+```
+
+since we don't really use the template, lets modify it to use the `auto` keyword,
+
+```cpp
+void print(const auto& coll)
+{
+  for (const auto& elem : coll) {
+    std::cout << elem << ' ';
+  }
+  std::cout << '\n';
+}
+```
+
+and lets start using views, so we could pass pipelines ranges into the function call.
+
+```cpp
+void print(const std::ranges::input_range auto& coll)
+{
+  for (const auto& elem : coll) {
+    std::cout << elem << ' ';
+  }
+  std::cout << '\n';
+}
+std::vector<int> coll1{0, 8, 15, 47, 11, 42, 1};
+std::set<int> coll2{0, 8, 15, 47, 11, 42, 1};
+print(coll1);
+print(coll2);
+print(std::views::take(coll1, 3)); // print first three elements
+print(std::views::take(coll2, 3)); // print first three elements
+print(coll1 | std::views::take(3)); // print first three elements
+print(coll2 | std::views::take(3)); // print first three elements
+print(coll2 | std::views::take(3) | std::views::transform([](auto v){
+  return std::to_string(v) + 's';
+  }));
+```
+
+we could also use range adaptors, such as <cpp>std::views::filter</cpp> /<cpp>std::views::drop</cpp>, or create ranges with <cpp>std::views::iota</cpp>, and compose them all together. the result of all the composing is actually a type, which we don't care about since we're using <cpp>auto</cpp>.
+
+views operate through iterators, the usual `begin` and `end`, an on-the-fly data wrapper that only starts processing the data when we request, not upon creation. pull-model - processing on demand, lazy evaluation. we don't pass values, we pass elements (positions).
+
+there is a possible case that filtering after a transformation causes the filter to occur twice.
+
+```cpp
+std::vector<int> coll{ 8, 15, 7, 0, 9 };
+// define a view on coll:
+auto vColl = coll
+  | std::views::transform([] (int i) {
+    std::cout << " transform " << i << '\n';
+    return -i;
+    })
+  | std::views::filter([] (int i) {
+    std::cout << " filter " << i << '\n';
+    return i % 3 == 0;
+  });
+// and use it:
+std::cout << "coll | tx | filter:\n";
+for (int val : vColl) {
+  std::cout << "val: " << val << '\n';
+}
+```
+
+this teaches us that we should use the filters as early as possible, compilers can optimize some stuff, but not everything.
+
+#### Filtering
+
+this is linked to the overall performance of using containers.
+
+> - Declaration / default initialization is cheap
+> - <cpp>begin()</cpp> (go to the first element) is cheap
+> - <cpp>end()</cpp> (go to the position behind the last element) is cheap
+> - <cpp>empty()</cpp> (check for no elements) is cheap
+> - <cpp>size()</cpp> (ask for the number of elements) is cheap or not provided: <cpp>forward_list</cpp>
+> - <cpp>operator[]</cpp> (jump to a specific elements) is cheap or not provided: only for random-access containers (<cpp>std::vector</cpp>, <cpp>std::array</cpp>, <cpp>std::deque</cpp>).
+
+if we want to understand the cost of using a filter view, we need to consider that the first time we call <cpp>std::begin</cpp> on it, it needs to call the operator on the underlying data, and iterate until the first matching element, which is a linear time operation. so now the operation isn't as cheap as we thought it was, and this is also true for the other operators. this is the reason that filters don't provide the <cpp>std::size</cpp> and <cpp>std::operator[]</cpp> methods, and we say that filter iterators don't provide random access operators.
+
+```cpp
+std::vector<int> coll{1, 2, 3, 4, 5, 6, 7, 8, 9};
+auto isEven = [] (const auto& val) { return val % 2 == 0; };
+auto collEven = coll | std::views::filter(isEven);
+
+if (collEven.size() == 0) return; // ERROR
+if (collEven.empty()) return; // OK
+std::ranges::sort(coll); // OK
+std::ranges::sort(collEven); // ERROR: no random_access_range
+```
+
+Range based for loops vs manual for loop: the range based loop translates into a loop which takes the begin and end positions once, but the manual loop usually checks against the end position inside the loop. this means multiple calls to the `.end()` member function, which we now know is expensive for filtered views. instead, we can use the internal `.end()` element as the sentinel value, which helps a bit. we also have some issue with reversing ranges. a naive implementation might call the operations again and again.
+
+however, unlike our naive implementation, the standard library filter view (and some other views) cache the first element (begin), we also have support for modifying the underlying data, but it's not always like that.
+
+> Guarantees for Containers
+>
+> - Declaration / default initialization has constant complexity
+> - <cpp>begin()</cpp> has constant complexity
+> - <cpp>end()</cpp> has constant complexity
+>
+> Guarantees for Views
+>
+> - Initialization has constant complexity
+> - <cpp>begin()</cpp> has amortized constant complexity
+> - <cpp>end()</cpp> has amortized constant complexity
+
+#### Read and Write Iteration
+
+we start with an example. here is code that doesn't compile.
+
+```cpp
+std::vector<int> vec{0, 8, 1, 47, 11, 42, 2};
+print(vec);
+print(vec | std::views::take(3)); // OK
+print(vec | std::views::transform(std::negate{})); // OK
+
+auto gt9 = [] (auto val) { return val > 9; };
+print(vec | std::views::filter(gt9)); // compile time error
+for (int v : vec | std::views::filter(gt9)) { // OK
+  std::cout << v << ' ';
+}
+```
+
+since we invalidate the cache, our print function can't work, since it expects a const reference. instead, we use universal (forwarding) reference.
+
+```cpp
+void print(auto&& coll) {
+  for (const auto& elem : coll) {
+    std::cout << elem << ' ';
+  }
+  std::cout << '\n';
+}
+```
+
+this can lead us to undefined behavior if we use multiple behavior, since if both call the `.begin()` at the same time we might have a runtime error. this is worse than compile time errors. there is an ugly workaround by calling `.empty()` before starting the threads, which means that calling the method is no longer "pure" and it has side effects (caching).
+
+if we modify elements using a filters, we can run into other issues, we aren't allowed to modify elements in a way that makes them not satisfy the filter predicate.
+
+```cpp
+std::vector<int> coll{1, 4, 7, 10};
+print(coll);
+auto isEven = [] (auto&& i) { return i % 2 == 0; };
+auto collEven = coll | std::views::filter(isEven);
+// add 2 to even elements:
+for (int& i : collEven) {
+  i += 2;
+}
+print(coll);
+// add 2 to even elements:
+for (int& i : collEven) {
+  i += 2;
+}
+print(coll);
+
+// increment even elements:
+for (int& i : collEven) {
+  i += 1; // Runtime Error: UB: predicate broken 
+}
+print(coll);
+// increment even elements:
+for (int& i : collEven) {
+  i += 1; // Runtime Error: UB: predicate broken 
+}
+print(coll);
+```
+
+this is really weird, since one of the use cases for views is to find "broken elements" and fix them. so since we know the first iteration works, we need to reuse the filter each time. we also have some weird cases where we need to pass the pipeline/view separately from the underlying range. and there is different behavior when inserting elements between vectors and lists, and we get different behavior when copying the views (depending on how the caching was done).
+
+#### Dealing With Ranges Summary
+
+we saw that things we thought were stable about containers are no longer true when using ranges.
+
+> Basic Container Idioms Broken by Filter Views
+>
+> - You can iterate if the range is const - **Broken for filters**
+> - A read iteration does not change state - **Broken for filters**
+> - `empty()` doesn't have side effects - **Broken for filters**
+> - Concurrent read iterations are safe - **Broken for filters**
+> - A copy of a range has the same state - **Broken for filters**
+> - Modifications between iterations are safe - **Broken for filters**
+> - Modifications via iterations are safe - **Broken for filters**
+>
+> How to Use the Filter View:
+>
+> - Put filters early in a pipeline
+> - Apply filter views ad-hoc
+>   - Pass views/pipelines without the underlying range
+> - Do not modify elements via a filter
+>   - or if you modify
+>     - do not break the predicate
+>     - or iterate only once from begin to end (like an input iterator) - works but formally undefined behavior
+>   - You cannot use filter view to "heal" broken elements
+> - Do not modify underlying ranges after applying a filter
+>   - or if you modify
+>     - No `empty()`, `front()`, or read iteration before the modification
+> - Do not use filters in concurrent code
+>   - or no concurrent iteration, `empty()`, `begin()`, `front()`, `if`
+> - Prefer `empty()` over `size()==0`
+>
+> Design Alternatives for Filter Views:
+>
+> - `begin()` is cached
+>   - Compile-time errors: not usable if `const`
+>   - Runtime errors: reading is not stateless, healing broken elements is UB,
+trivial modifications cause UB, concurrent reads cause UB
+> - `begin()` is initialized during construction
+>   - Performance issue: Initialization should have constant complexity
+> - `begin()` is thread safe (using mutable)
+>   - Performance issue: Makes `begin()` very expensive
+> - No caching at all
+>   - Performance issue: Some use cases have quadratic complexity
+>     - Reverse view should cache instead
+>     - Programmers can and have to use workaround (subrange or cacheBeg | filter)
+> - No caching and filter iterators become input iterators
+>   - Disables algorithms with multiple or reverse iterations
+>   - Some non-trivial use cases like with reverse no longer compile
 
 </details>

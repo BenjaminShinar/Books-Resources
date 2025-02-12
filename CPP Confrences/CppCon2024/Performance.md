@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore
+// cSpell:ignore uffer
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -12,7 +12,7 @@
 
 - [ ] Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ Codebases - Michelle Fae D'Souza
 - [ ] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
-- [ ] Fast and small C++ - When efficiency matters - Andreas Fertig
+- [x] Fast and small C++ - When efficiency matters - Andreas Fertig
 - [ ] Limitations and Problems in std::function and Similar Constructs: Mitigations and Alternatives - Amandeep Chawla
 - [ ] Session Types in C++: A Programmer's Journey - Miodrag Misha Djukic
 - [x] When Nanoseconds Matter: Ultrafast Trading Systems in C++ - David Gross
@@ -270,5 +270,233 @@ measurements are intrusive, and add overhead to performance. we don't know in ad
 7. Choose the right tool for the right task.
 8. Being fast is good - staying fast is better.
 9. Thinking about the system as a whole.
+
+</details>
+
+### Fast and Small C++ - When Efficiency Matters - Andreas Fertig
+
+<details>
+<summary>
+Some ways that code can be made smaller and more performant.
+</summary>
+
+[Fast and Small C++ - When Efficiency Matters](https://youtu.be/rNl591__9zY?si=9nmg1MK_9S9pwtvU), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Fast_and_small_cpp.pdf), [event](https://cppcon2024.sched.com/event/1gZfc/fast-and-small-c-when-efficiency-matters)
+
+#### Unique Pointer optimization
+
+starting with a <cpp>std::unique_ptr</cpp> that defines a custom deleter, and checking that it's size is the same as two pointers.
+
+```cpp
+auto f = std::unique_ptr<FILE, decltype(&fclose)>{fopen("SomeFile.txt", "r"), &fclose};
+static_assert(sizeof(f) == (2 * sizeof(void*)));
+```
+
+can we get this behavior with less memory? why do we need to pay for the extra pointer? there is an optimization for empty base classes, if the class is empty, it has the size of zero, but since it must have an address, the size becomes 1. however, if we derive from such an empty base class, the size of the base class becomes zero again, and we only pay for the data in the derived class.
+
+```cpp
+class Base {
+public:
+  void Fun() { puts("Hello, EBO!"); }
+};
+
+class Derived : public Base {
+  int32_t mData{};
+public:
+};
+
+void Use()
+{
+  Derived d{};
+  static_assert(sizeof(d) == sizeof(int32_t));
+  d.Fun();
+}
+```
+
+we can use this optimization for our custom case. this already happens in the standard library for the default deleter. here is a simplified implementation.
+
+```cpp
+template<class T>
+struct default_delete {
+  default_delete() = default;
+  constexpr void operator()(T* ptr) const noexcept
+  {
+    static_assert(0 < sizeof(T), "can't delete an incomplete type");
+    delete ptr;
+  }
+};
+
+template<typename T, typename U>
+struct CompressedPair {
+  [[no_unique_address]] T first; // special flag for C++20
+  [[no_unique_address]] U second; // special flag for C++20
+  CompressedPair(U s) : second{s} {}
+  CompressedPair(T f, U s) : first{f}, second{s} {}
+};
+
+template<class T, class Del = default_delete<T>>
+class unique_ptr {
+  CompressedPair <Del, T*> mPair; // internal data, pointer and deleter
+public:
+  unique_ptr(T* ptr) : mPair{ptr} {}
+  unique_ptr(T* ptr, Del deleter) : mPair{deleter, ptr} {}
+  unique_ptr(const unique_ptr&) = delete;
+  unique_ptr operator=(const unique_ptr&) = delete;
+  unique_ptr(unique_ptr&& src) : mPair{std::exchange(src.mPair.second, nullptr)} {}
+  unique_ptr& operator=(unique_ptr&& src)
+  {
+    mPair.second = std::exchange(src.mPair.second, mPair.second);
+    mPair.first = std::exchange(src.mPair.first, mPair.first);
+    return *this;
+  }
+
+  ~unique_ptr()
+  {
+    if(mPair.second) { mPair.first(mPair.second); } // if the pointer isn't nullptr, call the deleter on the pointer
+  }
+
+  T* operator->() {return mPair.second;}
+};
+```
+
+so if we modify the original example, we pass a captureless lambda using <cpp>decltype</cpp> with the function pointer.
+
+```cpp
+template<typename T, auto DeleteFn>
+using unique_ptr_deleter = 
+  std::unique_ptr<T, decltype([](T*obj) { DeleteFn(obj); })>;
+
+auto f = unique_ptr_deleter <FILE, fclose>{fopen("SomeFile.txt", "r")};
+static_assert(sizeof(f) == sizeof(void*));
+```
+
+we still want something better, so we need to move to C++23. we define a static call operator on the lambda, which removes the implicit "this" parameters, and this should save us some assembly operations.
+
+```cpp
+template<typename T, auto DeleteFn>
+using unique_ptr_deleter = 
+  std::unique_ptr<T, decltype([](T*obj) static { DeleteFn(obj); })>;
+auto f = unique_ptr_deleter <FILE, fclose>{fopen("SomeFile.txt", "r")};
+static_assert(sizeof(f) == sizeof(void*));
+```
+
+#### Implementing the small string optimization
+
+we can also look at a naive implementation small string optimization, which allows us to store a bit of data (up to 15 characters plus the null characters) without going to the heap. however, the single boolean value that denotes if the string is optimized ends up costing us additional 7 bytes for padding along the alignment.
+
+```cpp
+struct string {
+  size_t mSize{};
+  size_t mCapacity{};
+  char* mData{};
+  char mSSOBuffer[16]{};
+  bool mIsSSO{true};
+};
+static_assert(sizeof(string) == 48);
+```
+
+can we do the same thing without exceeding 24 bytes of data? the standard library manages it.\
+for libstd++ it combines the capcity and the buffer data, since if we are optimizing the string, the capacity is known. we only get 7 bytes for small string (rather than 15), but we require only half the memory. Ms-STL does it a bit different, and libc++ has another approach and employ bit fiddeling which gives us the same 15 bytes to store data without using the heap.\
+each implementation does things in a different way, which focuses on different things, which means we have branches in different operations, and the implementation optimizes for different use cases.
+
+```cpp
+// libstdc++
+struct string {
+  char* mPtr;
+  size_t mSize{};
+  union {
+    size_t mCapacity;
+    char mBuf[8];
+  };
+  /* more code */
+};
+
+// MS STL
+struct string {
+  union {
+    char* mPtr;
+    char mBuf[8];
+  };
+  size_t mSize{};
+  size_t mCapacity{};
+  /* more code */
+};
+
+// libc++
+struct string {
+  static constexpr unsigned BIT_FOR_CAP{sizeof(size_t) * 8 − 1};
+  struct normal {
+    size_t large : 1;
+    size_t capacity : BIT_FOR_CAP; // MSB for large bit
+    size_t size;
+    char* data;
+  };
+
+  struct sso {
+    uint8_t large : 1;
+    uint8_t size : (sizeof(uint8_t) *8) − 1; // large+size == sizeof(uint8_t)
+    uint8_t padding[sizeof(size_t) − sizeof(uint8_t)]; // Padding large + size + padding == sizeof(size_t)
+    char data[sizeof(normal) − sizeof(size_t)];
+  };
+
+  union {
+    sso small;
+    normal large;
+  } packed;
+/* more code */
+};
+```
+
+we could inspect another optimization by facebook, this one is designed for long text, so the optimization is for cases when the heap is used and tries to allow as much space before going to the heap (23 bytes). there is some playing with the most significant bit as well.
+
+```cpp
+// fb-string
+struct string {
+  struct normal {
+  char* data;
+  size_t size;
+  size_t capacity; // virtually reduced by one byte
+  };
+
+  struct sso {
+    char data[sizeof(normal)]; // MSB for long string mode indicator
+  };
+
+  union {
+    sso small;
+    normal large;
+  } packed;
+  /* more code */
+};
+```
+
+#### The power of `constexpr` and initializer list
+
+changing a `const static` function to `constexpr` can improve performance, both in debug mode and with optimization flags. we can see it both from the number of assembly instructions and the instructions themselves, in the example it even fixes the layout in memory.
+
+<cpp>std::initializer_list</cpp> is transformed into a backing vector, which means we can avoid paying for reading the data during runtime. something about recursions and backing arrays.
+
+```cpp
+
+void Receiver(const int list[4]) noexcept; // forward declaration
+void Fun1() noexcept
+{
+  const int list[4]{3, 4, 5, 6};
+  Receiver(list);
+}
+
+void Fun2() noexcept
+{
+  static const int list[4]{3, 4, 5, 6}; // better optimization
+  Receiver(list);
+}
+
+void Receiver(std::initializer_list<int> list) noexcept; // forward declaration
+
+void Fun3()
+{
+  std::initializer_list <int> list{3, 4, 5, 6}; // behaves differently in c++26 compliant compilers
+  Receiver(list);
+}
+```
 
 </details>
