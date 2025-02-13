@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Vectorizing spanny
+// cSpell:ignore Vectorizing spanny URDF
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -43,7 +43,7 @@
 - [ ] Back to Basics: Debugging and Testing - Greg Law, Mike Shah
 - [ ] Back to Basics: Function Call Resolution -Ben Saks
 - [ ] Back to Basics: Functional Programming in C++ - Jonathan Müller
-- [ ] Back to Basics: Generic Programming - David Olsen
+- [x]  Back to Basics: Generic Programming - David Olsen
 - [ ] Back to Basics: Lifetime Management - Phil Nash
 - [ ] Back to Basics: Object-Oriented Programming - Andreas Fertig
 - [ ] Back to Basics: R-values and Move Semantics - Amir Kirsh
