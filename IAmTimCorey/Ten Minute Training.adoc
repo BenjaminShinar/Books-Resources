@@ -1396,6 +1396,82 @@ Alternatively, we can look at the visual studio installer and see if there are u
 if we aren't using visual studio, we can download SDKs manually from dotnet website. we can also get just the runtime if we just need to run stuff.
 ====
 
+=== TimeSpan Improvements in .NET 9 (maybe even a bug fix)
+
+.Floating Point bug fix
+[%collapsible]
+====
+
+The TimeSpan object is a period (time between time values), and it got an update in .Net 9. the existing overload uses the double type, and it has some precision issues. there is a new overload that takes the arguments as different parameters of type long, which avoids the floating point problem.
+
+[source, csharp]
+----
+TimeSpan demoWrong = TimeSpan.FromSeconds(101.832); // double
+
+Console.WriteLine(demoWrong); // not expected value
+
+TimeSpan demoRight = TimeSpan.FromSeconds(101, 832); // long, long
+
+Console.WriteLine(demoRight); // as expected
+----
+
+====
+
+=== The Options Pattern in C# in 10 Minutes or Less
+
+.Getting Data from a configuration file in Blazor
+[%collapsible]
+====
+
+Getting information from configuration files into dependency injection.
+We have an "appSettings.Json" file, and a `CloudInfoOptions` class. we want to inject the class to our blazor page. we need to bind it into the blazor services.
+
+[source, csharp]
+----
+public class CloudInfoOptions
+{
+  public string? Storage {get; set;}
+  public string? Website {get; set;}
+  public string? API {get; set;}
+}
+
+builder.Service.AddOptions<CloudInfoOptions>()
+  .BindConfiguration("CloudInfo")
+  .Validate(opts =>
+    !string.IsNullOrWhiteSpace(opts.Storage) &&
+    !string.IsNullOrWhiteSpace(opts.Website) &&
+    !string.IsNullOrWhiteSpace(opts.API),
+    "Cloud Info Options Failed Validation");
+----
+
+we can have the options exposed as a singleton, a separate object per request (snapshot), or a monitored options that we can listen to changes in the file. we can also have custom code to validate the file, like requiring all fields to exist.
+====
+
+=== Import A SQL Database In Visual Studio and Refactor It
+
+.Import and manage databases
+[%collapsible]
+====
+
+using a "SQL Server Database Project" template. we can import an existing database with the schema. this doesn't import data, just the structure.
+we can now rename fields, target different platforms such as Azure (which will generate a change script).
+
+====
+
+=== 4 New Visual Studio Features That Will Speed Up Your Development (v17.12)
+
+.new helpful features
+[%collapsible]
+====
+
+.New features
+* adding breakpoint on the closing braces of the method to see the return value.
+* getting github permanent link to code from context (right click).
+* copy files between visual studio instances.
+* better copy of errors from error list, the old behavior is "copy row", and the "copy" action copies the description.
+
+====
+
 == Misc
 
 .Stuff Worth Keeping
