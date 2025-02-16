@@ -2,8 +2,19 @@
   "version": "0.2",
   "ignorePaths": [],
   "dictionaryDefinitions": [],
-  "dictionaries": ["softwareTerms", "go"],
-  "words": ["Goroutines"],
-  "ignoreWords": ["appsettings", "highlightjs","nullable"],
-  "import": []
+  "dictionaries": [
+    "go"
+  ],
+  "words": [
+    "Goroutines"
+  ],
+  "ignoreWords": [
+    "nullable",
+    "Scanln",
+    "Errorf",
+    "Intn"
+  ],
+  "import": [
+    "../cspell.json"
+  ]
 }

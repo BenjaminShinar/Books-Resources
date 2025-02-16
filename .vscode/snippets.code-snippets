@@ -37,6 +37,12 @@
     "body": "<cpp>$0</cpp>",
     "description": "wrap text with c++ code style - doesn't work with angular brackets(don't use for now)"
   },
+  "Golang Style": {
+    "scope": "markdown,md,",
+    "prefix": "/gl",
+    "body": ["<golang>$1</golang>"],
+    "description": "special style for golang terms"
+  },
   "High Availability": {
     "scope": "markdown,md,",
     "prefix": "ha",

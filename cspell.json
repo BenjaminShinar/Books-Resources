@@ -2,9 +2,15 @@
     "version": "0.2",
     "ignorePaths": [],
     "dictionaryDefinitions": [],
-    "dictionaries": ["softwareTerms", "latex"],
+    "dictionaries": [
+        "softwareTerms",
+        "latex"
+    ],
     "words": [],
-    "ignoreWords": ["Udemy","youtube"],
+    "ignoreWords": [
+        "Udemy",
+        "youtube"
+    ],
     "import": [],
     "allowCompoundWords": false
 }
