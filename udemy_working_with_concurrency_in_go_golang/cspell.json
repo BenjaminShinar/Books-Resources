@@ -6,13 +6,25 @@
     "go"
   ],
   "words": [
-    "Goroutines"
+    "Goroutines", "syscall"
   ],
   "ignoreWords": [
     "nullable",
     "Scanln",
     "Errorf",
-    "Intn"
+    "Intn",
+    "jackc",
+    "pgconn",
+    "alexedwards",
+    "redisstore",
+    "mailhog",
+    "stdlib",
+    "Getenv", 
+    "pkill",
+    "sslmode",
+    "dbname",
+    "ldflags",
+    "gohtml"
   ],
   "import": [
     "../cspell.json"

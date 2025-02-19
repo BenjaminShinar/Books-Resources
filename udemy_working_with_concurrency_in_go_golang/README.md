@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Sawler gotemplate fatih randomMillseconds
+// cSpell:ignore Sawler gotemplate fatih randomMillseconds taskkill Ldate Lshortfile Ltime
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -1493,7 +1493,910 @@ we can run the program and see the output, the color really help us. we can chan
 </details>
 
 ## Section 6: Final Project - Building a Subscription Service
+
+<details>
+<summary>
+Starting the final Project.
+</summary>
+
+A fake application that sells subscriptions, with an API and backend.
+
+### Setting Up A Simple Web Application
+
+<details>
+<summary>
+The Project Outline and getting imports
+</summary>
+
+we start with setting the project as a web application. we set it up in a new folder "final-project" and create the structure.
+
+```sh
+mkdir final-project
+cd final-project
+go mod init final-project
+mkdir cmd
+mkdir cmd/web
+touch cmd/web/main.go
+```
+
+we start with the main file of the package - "main.go", we define constants with <golang>const</golang> and write the outline of the program.
+
+
+- database connection
+- <golang>channels</golang>
+- <golang>waitGroups</golang>
+- application config
+- listen to web connections
+- manage sessions (user logins)
+- set up mail
+
+```go
+package main
+
+const webPort = "80"
+
+func main() {
+	// connect to the database
+
+	// create sessions
+
+	// create channels
+
+	// create waitGroup
+
+	// set up the application config
+
+	// set up mail
+
+	// listen for web connections
+}
+```
+
+for the database, we will use PostgresSQL. for session management we will use the package by Alex Edwards with redis store and the go-chi routing package. we can download the packages with `go get`.
+
+
+```sh
+go get github.com/jackc/pgconn
+go get github.com/jackc/pgx/v4
+go get github.com/alexedwards/scs/v2
+go get github.com/alexedwards/scs/redisstore
+go get github.com/go-chi/chi/v5
+go get github.com/go-chi/chi/v5/middleware
+```
+
+</details>
+
+### Setting Up Our Docker Development Environment
+
+<details>
+<summary>
+Adding containers using docker compose
+</summary>
+
+since we're using packages for Postgres and Redis, we can run them as docker containers. we add a docker compose file to our project. mailhog is a dummy mail server.
+
+```yaml
+version: '3'
+
+services:
+  # start Postgres, and ensure that data is stored to a mounted volume
+  postgres:
+    image: 'postgres:14.2'
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: concurrency
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data/
+
+  #  start Redis, and ensure that data is stored to a mounted volume
+  redis:
+    image: 'redis:alpine'
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - ./db-data/redis/:/data
+
+  #  start mailhog
+  mailhog:
+    image: 'mailhog/mailhog:latest'
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: always
+```
+
+we also create some folder to store the data.
+
+```sh
+mkdir db-data
+mkdir db-data/postgres
+mkdir db-data/redis
+```
+
+now we can run the `docker-compose up -d` to spin up the containers. this will also populate the folders with data. we can also use a database client like BeeKeeper to view the data.
+</details>
+
+### Adding Postgres
+
+<details>
+<summary>
+Connecting to the database.
+</summary>
+
+now we connect to the database from our go application. we first make sure we can connect via our client. once we make sure our database is up, we start adding functions to connect to the database, we set 10 retries to connect to the database.
+
+```go
+func initDB() *sql.DB {
+	conn := connectToDB()
+	if conn == nil {
+		log.Panic("can't connect to database")
+	}
+	return conn
+}
+
+func connectToDB() *sql.DB {
+	counts := 0
+
+	dsn := os.Getenv("DSN")
+
+	for {
+		connection, err := openDB(dsn)
+		if err != nil {
+			log.Println("postgres not yet ready...")
+		} else {
+			log.Print("connected to database!")
+			return connection
+		}
+
+		if counts > 10 {
+			return nil
+		}
+
+		log.Print("Backing off for 1 second")
+		time.Sleep(1 * time.Second)
+		counts++
+		continue
+	}
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+```
+
+we also need to import the packages, we use `_` to import without using in the code.
+
+</details>
+
+### Setting Up A Makefile
+
+<details>
+<summary>
+Making our life easier using makefile.
+</summary>
+
+we can use a makefile (different ones for linux and windows). we store them in the project root folder.
+
+> - `@` suppresses the normal 'echo' of the command that is executed.
+> - `-` means ignore the exit status of the command that is executed (normally, a non-zero exit status would stop that part of the build).
+> - `+` means 'execute this command under make -n' (or `make -t` or `make -q`) when commands are not normally executed.
+
+```makefile
+BINARY_NAME=my_app
+PG_PASS=
+DSN="host=localhost port=5432 user=postgres password=${PG_PASS}  dbname=concurrency sslmode=disable timezone=UTC connect_timeout=5"
+REDIS="127.0.0.1:6379"
+
+## build: Build binary
+build:
+	@echo "Building..."
+	env CGO_ENABLED=0  go build -ldflags="-s -w" -o ${BINARY_NAME} ./cmd/web
+	@echo "Built!"
+
+## run: builds and runs the application
+run: build
+	@echo "Starting..."
+	@env DSN=${DSN} REDIS=${REDIS} ./${BINARY_NAME} &
+	@echo "Started!"
+
+## clean: runs go clean and deletes binaries
+clean:
+	@echo "Cleaning..."
+	@go clean
+	@rm ${BINARY_NAME}
+	@echo "Cleaned!"
+
+## start: an alias to run
+start: run
+
+## stop: stops the running application
+stop:
+	@echo "Stopping..."
+	@-pkill -SIGTERM -f "./${BINARY_NAME}"
+	@echo "Stopped!"
+
+## restart: stops and starts the application
+restart: stop start
+
+## test: runs all tests
+test:
+	go test -v ./...
+```
+
+and for windows
+```makefile
+PG_PASS=
+DSN=host=localhost port=5432 user=postgres password=${PG_PASS} dbname=concurrency sslmode=disable timezone=UTC connect_timeout=5
+BINARY_NAME=my_app.exe
+REDIS="127.0.0.1:6379"
+
+## build: builds all binaries
+build:
+	@go build -o ${BINARY_NAME} ./cmd/web
+	@echo back end built!
+
+run: build
+	@echo Starting...
+	set "DSN=${DSN}"
+	set "REDIS=${REDIS}"
+	start /min cmd /c ${BINARY_NAME} &
+	@echo back end started!
+
+clean:
+	@echo Cleaning...
+	@DEL ${BINARY_NAME}
+	@go clean
+	@echo Cleaned!
+
+start: run
+
+stop:
+	@echo "Stopping..."
+	@taskkill /IM ${BINARY_NAME} /F
+	@echo Stopped back end
+
+restart: stop start
+
+test:
+	@echo "Testing..."
+	go test -v ./...
+```
+
+we can run `make start` to run the application and see that we connect to the postgres application.
+
+</details>
+
+### Adding Sessions & Redis
+
+<details>
+<summary>
+Connecting To Redis for session management.
+</summary>
+
+we next want to connect to Redis and set up the user sessions. we create function to create a session manager, and one to connect to Redis. we also set up an inline function using environment variables, which we can define in the makefile.\
+when we create sessions, we set the storage to redis and define some nice defaults.
+
+```go
+
+func initSession() *scs.SessionManager {
+	// set up session
+	session := scs.New()
+	session.Store = redisstore.New(initRedis())
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = true
+
+	return session
+}
+
+func initRedis() *redis.Pool {
+	redisPool := &redis.Pool{
+		MaxIdle: 10,
+		Dial: func() (redis.Conn, error) {
+			return redis.Dial("tcp", os.Getenv("REDIS"))
+		},
+	}
+
+	return redisPool
+}
+```
+</details>
+
+### Setting Up The Application Config
+
+<details>
+<summary>
+adding a configuration type.
+</summary>
+
+we create a new file "config.go" in the main package. this file contains the application configuration, starting with the session manager, database manager, loggers and a waitGroup pointer.\
+we will add more to it as we go.
+
+```go
+package main
+
+import (
+	"database/sql"
+	"log"
+	"sync"
+
+	"github.com/alexedwards/scs/v2"
+)
+
+type Config struct {
+	Session  *scs.SessionManager
+	DB       *sql.DB
+	InfoLog  *log.Logger
+	ErrorLog *log.Logger
+	Wait     *sync.WaitGroup
+}
+```
+
+and we update our main file to populate the configuration file with the data we already have. we also setup the loggers, pointing them to the standard out with a prefix and additional data (time and source code location).
+
+```go
+func main() {
+	// connect to the database
+	db := initDB()
+
+	// create sessions
+	session := initSession()
+
+	// create loggers
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// create channels
+
+	// create waitGroup
+	wg := sync.WaitGroup{}
+
+	// set up the application config
+	app := Config{
+		Session:  session,
+		DB:       db,
+		InfoLog:  infoLog,
+		ErrorLog: errorLog,
+		Wait:     &wg,
+	}
+
+	// set up mail
+
+	// listen for web connections
+}
+```
+</details>
+
+### Setting Up A Route & Handler For The Home Page, And Starting The Web Server
+
+<details>
+<summary>
+Setting up the server and handlers.
+</summary>
+
+our application still doesn't work. we have unused variables and we are missing handlers and we aren't listen to wee connections.
+
+in the "cmd/web" folder, we add a "handlers.go" file, and a "routes" file
+
+```sh
+touch cmd/web/handlers.go
+touch cmd/web/routes.go
+```
+
+in the handlers file, we set up a receiver function on the config type, it will take a response writer and a request.
+
+```go
+package main
+
+import "net/http"
+
+func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
+	
+}
+```
+
+in the routes file, we set up a <golang>mux</golang> router from the <golang>go-chi</golang> package, which will work the middleware and set routes for the paths. the root path will return the homepage.
+
+```go
+package main
+
+import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+)
+
+func (app *Config) routes() http.Handler {
+	// create router
+	mux := chi.NewRouter()
+
+	// set up middleware
+	mux.Use(middleware.Recoverer)
+
+	// define application routes
+	mux.Get("/", app.HomePage)
+
+	return mux
+}
+```
+
+finally, we add a function to "main.go"  to listen and serve web pages. it will listen on the port 80, and we use the routes function as the server handler.
+
+```go
+func (app *Config) serve() {
+	// start http server
+	srv := &http.Server{
+		Addr: fmt.Sprintf(":%s", webPort),
+		Handler: app.routes(),
+	}
+
+	app.InfoLog.Println("Starting web server...")
+	err := srv.ListenAndServe()
+	if err != nil {
+		log.Panic(err)
+	}
+}
+```
+
+at this point, we should be able to run the application, but we don't render a response.
+</details>
+
+### Setting Up Templates And Building A Render Function
+
+<details>
+<summary>
+render a template http response.
+</summary>
+
+now we want to have our application serve web pages for us. we have some templates in the source code, which we add to a new folder.
+
+```sh
+mkdir cmd/web/templates
+```
+
+they are gohtml files which use go-syntax to evaluate into html pages. the "base.layout.html" defines the html structure, with other files handling more stuff like header, footer, navigation, alerts. and allowing for different content
+
+- `template` - call a sub-template
+  - `include` - is helm extension
+  - `block` - like template, but with defaults
+- `define` - sub-template (acts like a function)
+
+we add a new file "render.go" which will handle general rendering of template files.\
+inside this file we have the templates path as a variable (so we could change it for testing), and a general struct for passing data into templates. this includes general data and user specific data.\
+We start with the render function, taking a response writer, the requests, the name of the template, and the template data struct. we always need to have some templates, no matter which page we're rendering. this files we be parsed and render using the <golang>http/template</golang> package.
+
+```go
+package main
+
+import (
+	"fmt"
+	"html/template"
+	"net/http"
+	"time"
+)
+
+var pathToTemplates = "./cmd/web/templates"
+
+type TemplateData struct {
+	StringMap     map[string]string
+	IntMap        map[string]int
+	FloatMap      map[string]float64
+	Data          map[string]any
+	Flash         string
+	Warning       string
+	Error         string
+	Authenticated bool
+	Now           time.Time
+	// User *data.User
+}
+
+func (app *Config) render(w http.ResponseWriter, r *http.Request, t string, td *TemplateData) {
+	partials := []string{
+		fmt.Sprintf("%s/base.layout.gohtml", pathToTemplates),
+		fmt.Sprintf("%s/header.partial.gohtml", pathToTemplates),
+		fmt.Sprintf("%s/navbar.partial.gohtml", pathToTemplates),
+		fmt.Sprintf("%s/footer.partial.gohtml", pathToTemplates),
+		fmt.Sprintf("%s/alerts.partial.gohtml", pathToTemplates),
+	}
+
+	var templateSlice []string
+	templateSlice = append(templateSlice, fmt.Sprintf("%s/%s", pathToTemplates, t))
+
+	// put the defaults and the specific template in one range.
+	for _, x := range partials {
+		templateSlice = append(templateSlice, x)
+	}
+
+	// create it empty
+	if td == nil {
+		td = &TemplateData{}
+	}
+
+	// parse the templates into a single object.
+	tmpl, err := template.ParseFiles(templateSlice...)
+	if err != nil {
+		app.ErrorLog.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// execute (populate) with data.
+	if err := tmpl.Execute(w, app.AddDefaultData(td, r)); err != nil {
+		app.ErrorLog.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+/*
+fill up notifications and user specific data.
+*/
+func (app *Config) AddDefaultData(td *TemplateData, r *http.Request) *TemplateData {
+	td.Flash = app.Session.PopString(r.Context(), "flash")
+	td.Warning = app.Session.PopString(r.Context(), "warning")
+	td.Error = app.Session.PopString(r.Context(), "error")
+	if app.IsAuthenticated(r) {
+		td.Authenticated = true
+		// TODO - get more user information
+	}
+	td.Now = time.Now()
+
+	return td
+}
+
+/*
+check if session contains user id
+*/
+func (app *Config) IsAuthenticated(r *http.Request) bool {
+	return app.Session.Exists(r.Context(), "userID")
+}
+
+```
+
+and finally, at the "handlers.go" file, we can serve the homepage template.
+
+```go
+func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "home.page.gohtml", nil)
+}
+```
+
+we still don't have session information, so that's the next step.
+</details>
+
+### Adding Session Middleware
+
+<details>
+<summary>
+Adding the session middleware to the router.
+</summary>
+
+we add a new file "middleware.go", like all middleware,it takes an http handler, modifies it and returns.
+
+```go
+package main
+
+import "net/http"
+
+func (app *Config) SessionLoad(next http.Handler) http.Handler {
+	return app.Session.LoadAndSave(next)
+}
+```
+
+we add it to the router we created in "routes.go", simply by telling the router object to use it.
+
+```go
+
+func (app *Config) routes() http.Handler {
+	// create router
+	mux := chi.NewRouter()
+
+	// set up middleware
+	mux.Use(middleware.Recoverer)
+	mux.Use(app.SessionLoad)
+
+	// define application routes
+	mux.Get("/", app.HomePage)
+
+	return mux
+}
+```
+
+at this point, we should see an actual web page when we navigate to the web application.
+</details>
+
+### Setting Up Additional Stub Handlers And Routes
+
+<details>
+<summary>
+Add empty methods for handlers and routes
+</summary>
+
+we add some stub handlers to handle other pages. this is done in the "handlers.go" and the "routes.go" files.
+
+stubs:
+
+```go
+func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "home.page.gohtml", nil)
+}
+
+func (app *Config) LoginPage(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "login.page.gohtml", nil)
+}
+
+func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (app *Config) RegisterPage(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "register.page.gohtml", nil)
+}
+
+func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
+
+}
+```
+
+registering handlers on the routes:
+
+```go
+func (app *Config) routes() http.Handler {
+	// create router
+	mux := chi.NewRouter()
+
+	// set up middleware
+	mux.Use(middleware.Recoverer)
+	mux.Use(app.SessionLoad)
+
+	// define application routes
+	mux.Get("/", app.HomePage)
+
+	mux.Get("/login", app.LoginPage)
+	mux.Post("/login", app.PostLoginPage)
+	mux.Get("/logout", app.Logout)
+	mux.Get("/register", app.RegisterPage)
+	mux.Post("/register", app.PostRegisterPage)
+	mux.Get("/activate-account", app.ActivateAccount)
+
+	return mux
+}
+```
+
+</details>
+
+### Implementing Graceful Shutdown
+
+<details>
+<summary>
+Listen to Os.Events and wait for operations to finish.
+</summary>
+
+when our application stops, we want to wait for actions to complete, such as sending emails, creating invoices, etc..\
+we run goroutine that listens on the interrupt system calls <golang>Os.Signal</golang> as a channel, and blocks while waiting for the signals on the channel. when it receive the signals we defined, it will wake up, perform some actions and the quit the program. in our case, we will delay shutdown until the waitGroup is empty.
+
+```go
+func (app *Config) listenForShutdown() {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	app.shutdown()
+	os.Exit(0)
+}
+
+func (app *Config) shutdown() {
+	// perform any cleanup tasks
+	app.InfoLog.Println("would run cleanup tasks...")
+
+	// block until waitGroup is empty
+	app.Wait.Wait()
+
+	app.InfoLog.Println("closing channels and shutting down application...")
+}
+```
+</details>
+
+### Populating The Database
+
+<details>
+<summary>
+Filling in some dummy data.
+</summary>
+
+from the course resource files, we can take the "db.sql" file. it contains sql commands to create our postgres database tables and insert a dummy user. 
+
+- `CREATE TABLE`
+- `ALTER TABLE`
+- `CREATE SEQUENCE`
+- `INSERT INTO`
+
+</details>
+
+### Adding A Data Package And Database Models
+
+<details>
+<summary>
+Interfacing with the data in the database.
+</summary>
+
+we add some source files to a new folder "data", this is a package that is consumed by the application.
+
+- "user.go" - defines the user data object as a go struct with CRUD operations
+- "plan.go" - plan go struct, sql commands, utilities
+- "models.go" - exposes the tables from the database connection
+
+we update the Config struct with the new models type in "config.go.
+
+```go
+type Config struct {
+	Session  *scs.SessionManager
+	DB       *sql.DB
+	InfoLog  *log.Logger
+	ErrorLog *log.Logger
+	Wait     *sync.WaitGroup
+	Models   data.Models
+}
+```
+
+in the "main.go" file, we instantiate the struct with the call 
+```go
+func main() {
+	// code before
+	// set up the application config
+	app := Config{
+		Session:  session,
+		DB:       db,
+		InfoLog:  infoLog,
+		ErrorLog: errorLog,
+		Wait:     &wg,
+		Models:   data.New(db),
+	}
+	// code after
+}
+```
+</details>
+
+
+### Implementing The Login/Logout Functions
+
+<details>
+<summary>
+implement logic about log-in.
+</summary>
+
+back in the "handlers.go" file, we want to implement to logic of user log-in and log-out.\
+at the start of each operation, we renew the session token (using the context), we don't care about the result.\
+For log-in, our request is the http form with email and password. we search for the user in the database based on the email, and then check the user object if the password matches. if we get errors, we can put them into the session object. if our login data matches, we push the user data into the session.\
+before we store the data, we need to register this type with the session by calling `gob.Register(data.User{})`
+
+```go
+func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
+	_ = app.Session.RenewToken(r.Context())
+
+	// parse form post
+	err := r.ParseForm()
+	if err != nil {
+		app.ErrorLog.Println(err)
+	}
+
+	// get email and password from form post
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+
+	user, err := app.Models.User.GetByEmail(email)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Invalid credentials.")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// check password
+	validPassword, err := user.PasswordMatches(password)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Invalid credentials.")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if !validPassword{
+		app.Session.Put(r.Context(), "error", "Invalid credentials.")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// okay, so log user in
+	app.Session.Put(r.Context(), "userID", user.ID)
+	app.Session.Put(r.Context(), "user", user)
+
+	app.Session.Put(r.Context(), "flash", "Successful login!")
+
+	// redirect the user
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+```
+
+the logout is simpler, we destroy the user session to remove all stored data from the context, renew the session and redirect the user.
+
+```go
+func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
+	// clean up session
+	_ = app.Session.Destroy(r.Context())
+	_ = app.Session.RenewToken(r.Context())
+
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
+```
+</details>
+
+
+</details>
+
 ## Section 7: Sending Email Concurrently
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+when a user registers, we want to do some stuff, and this will run in the background, so here our concurrency comes into place.
+
+```go
+func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
+	// create a user
+
+	// send an activation email
+
+	// subscribe the user to an account
+}
+
+func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
+	// validate url 
+
+	// generate an invoice
+
+	// send an email with attachments
+
+	// send an email with the invoice attached
+}
+```
+
+### What We'll Cover In This Section
+### Getting Started With The Mailer Code
+### Building Html And Plain Text Messages
+### Sending A Message (Synchronously)
+### Getting Started Sending A Message (Asynchronously)
+### Writing A Helper Function To Send Email Easily
+### Sending An Email On Incorrect Login
+### Adding Cleanup Tasks To The `shutdown()` Function
+
+
+</details>
+
 ## Section 8: Registering a User and Displaying Plans
 ## Section 9: Adding Concurrency to Choosing a Plan
 ## Section 10: Testing
@@ -1514,26 +2417,40 @@ Stuff worth remembering.
 - `go get`
 - `go test`
   - `-race` - check for race condition
-- `go mod`
+- `go mod` - modules(dependencies) 
+  - go.mod and go.sum files
   - `init` - start a new mod file
   - `tidy`
   - `vendor`
+- `go work` - workspace setup
+  - go.work file
 
 ### The Sync Package
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Synchronization Primitives: mutexes, waitGroups and channels.
 </summary>
 
 [documentation](https://pkg.go.dev/sync)
 
-<golang>synchronization stuff</golang>
+<golang>Synchronization stuff</golang>
 
-- pass waitGroup variables by reference (pointer), not by copy.
+- pass <golang>waitGroup</golang> variables by reference (pointer), not by copy.
 - if the waitGroup value goes below 0, we get an error.
+- directional channels (as function parameters):
+  - `func foo(ping <-chan string, pong chan<- string)`
+  - parameter-name, chan, type
+  - ping is a receiving/input channel - we "read" from it. can't close the channel from here.
+  - pong is a sending/output channel - we "write" to it.
+
 </details>
 
+Other Packages
+
+- [go-chi/chi](https://github.com/go-chi/chi) - routing
+- [alexedwards/scs](https://github.com/alexedwards/scs) - session management
+- [jackc/pgconn](https://github.com/jackc/pgconn) - postgres connection
 
 </details>
 
