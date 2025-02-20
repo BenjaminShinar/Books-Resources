@@ -24,7 +24,11 @@
     "premailer",
     "xhit",
     "EncryptionSTARTTLS",
-    "EncryptionSSLTLS"
+    "EncryptionSSLTLS",
+    "goalone",
+    "Unsign",
+    "bwmarrin",
+    "Swal"
   ],
   "import": [
     "../cspell.json"

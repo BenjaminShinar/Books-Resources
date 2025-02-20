@@ -34,7 +34,8 @@
 # PDF files
 *.pdf
 
-#
+#exclude some go files
+!go.mod
 #workspace.code-workspace
 The Complete Google Go Programming Course For Beginners/app/main
 

@@ -2732,15 +2732,6 @@ func (app *Config) sendEmail(msg Message) {
 ```
 </details>
 
-
-<!-- <details> -->
-<summary>
-//TODO: add Summary
-</summary>
-
-
-</details>
-
 ### Sending An Email On Incorrect Login
 
 <details>
@@ -2813,18 +2804,381 @@ func (app *Config) shutdown() {
 
 ## Section 8: Registering a User and Displaying Plans
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Moving forward with the application.
 </summary>
 
+we continue with the application, focusing on the users and plans. the application will send activation emails, which will be signed.
+
 ### Adding Mail Templates And Url Signer Code
+
+<details>
+<summary>
+Mail templates
+</summary>
+
+when a user creates an account in our application, we will create the account in the backend and send him an activation link in the mail.
+for this, we will create go templates for the emails (plaintext and html).
+
+the next thing to do is to protect the url, we will go the <golang>bwmarrin/go-alone</golang> package for that, which we get with `go get`. we will go back to this later.
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/bwmarrin/go-alone"
+	"strings"
+	"time"
+)
+
+var secret // take from env somehow
+
+var secretKey []byte
+
+// NewURLSigner creates a new signer
+func NewURLSigner() {
+	secretKey = []byte(secret)
+}
+
+// GenerateTokenFromString generates a signed token
+func GenerateTokenFromString(data string) string {
+	var urlToSign string
+
+	s := goalone.New(secretKey, goalone.Timestamp)
+	if strings.Contains(data, "?") {
+		urlToSign = fmt.Sprintf("%s&hash=", data)
+	} else {
+		urlToSign = fmt.Sprintf("%s?hash=", data)
+	}
+
+	tokenBytes := s.Sign([]byte(urlToSign))
+	token := string(tokenBytes)
+
+	return token
+}
+
+// VerifyToken verifies a signed token
+func VerifyToken(token string) bool {
+	s := goalone.New(secretKey, goalone.Timestamp)
+	_, err := s.Unsign([]byte(token))
+
+	if err != nil {
+		// signature is not valid. Token was tampered with, forged, or maybe it's
+		// not even a token at all! Either way, it's not safe to use it.
+		return false
+	}
+	// valid hash
+	return true
+
+}
+
+// Expired checks to see if a token has expired
+func Expired(token string, minutesUntilExpire int) bool {
+	s := goalone.New(secretKey, goalone.Timestamp)
+	ts := s.Parse([]byte(token))
+
+	// time.Duration(seconds)*time.Second
+	return time.Since(ts.Timestamp) > time.Duration(minutesUntilExpire)*time.Minute
+}
+```
+
+</details>
+
 ### Starting On The Handler To Create A User
+
+<details>
+<summary>
+Sending the activation email.
+</summary>
+
+in the "handlers.go" file, we have a function that's called when someone tries to register and send the form. we take the form and parse it, if this was a really application, we would also validate the data. we create a User object from the data and try to insert it into the database, if we succeed in that, we can send an activation email. the activation email will have the generated token as the activation link.\
+we will also update the notification in the session info and redirect the user to the log-in page.
+
+```go
+unc (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.ErrorLog.Println(err)
+	}
+
+	// TODO - validate data
+
+	// create a user
+	u := data.User{
+		Email: r.Form.Get("email"),
+		FirstName: r.Form.Get("first-name"),
+		LastName: r.Form.Get("last-name"),
+		Password: r.Form.Get("password"),
+		Active: 0,
+		IsAdmin: 0,
+	}
+
+	_, err = u.Insert(u)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Unable to create user.")
+		http.Redirect(w, r, "/register", http.StatusSeeOther)
+		return
+	}
+
+	// send an activation email
+	url := fmt.Sprintf("http://localhost/activate?email=%s", u.Email)
+	signedURL := GenerateTokenFromString(url)
+	app.InfoLog.Println(signedURL)
+
+	msg := Message{
+		To: u.Email,
+		Subject: "Activate your account",
+		Template: "confirmation-email",
+		Data: template.HTML(signedURL),
+	}
+
+	app.sendEmail(msg)
+
+	app.Session.Put(r.Context(), "flash", "Confirmation email sent. Check your email.")
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
+```
+</details>
+
 ### Activating A User
+
+<details>
+<summary>
+Using the activation link.
+</summary>
+
+after we sent the email, the user will click on it and come to a new route in the application.
+
+```go
+func (app *Config) routes() http.Handler {
+	// create router
+	mux := chi.NewRouter()
+
+	// set up middleware
+	mux.Use(middleware.Recoverer)
+	mux.Use(app.SessionLoad)
+
+	// define application routes
+	mux.Get("/", app.HomePage)
+
+	mux.Get("/login", app.LoginPage)
+	mux.Post("/login", app.PostLoginPage)
+	mux.Get("/logout", app.Logout)
+	mux.Get("/register", app.RegisterPage)
+	mux.Post("/register", app.PostRegisterPage)
+	mux.Get("/activate", app.ActivateAccount) // new page
+
+	return mux
+}
+```
+
+so we can modify the handler to handle the request. we first verify the url that it was created from a url and was not tempered with. then we get the user from the database, and update it to be active. we can end things by creating a notification and redirecting the user to log-in.
+
+```go
+
+func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
+	// validate url 
+	url := r.RequestURI
+	testURL := fmt.Sprintf("http://localhost%s", url)
+	okay := VerifyToken(testURL)
+
+	if !okay {
+		app.Session.Put(r.Context(), "error", "Invalid token.")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// activate account
+	u, err := app.Models.User.GetByEmail(r.URL.Query().Get("email"))
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "No user found.")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	u.Active = 1
+	err = u.Update()
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Unable to update user.")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	app.Session.Put(r.Context(), "flash", "Account activated. You can now log in.")
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+
+	// generate an invoice
+
+	// send an email with attachments
+
+	// send an email with the invoice attached
+
+	// subscribe the user to an account
+}
+```
+</details>
+
 ### Giving User Data To Our Templates
+
+<details>
+<summary>
+Adding the user to templates
+</summary>
+
+if our user is authenticated, we want to pass the user data to our templateData, so we could use it in our templates when we serve web pages. so back in the "render.go" file, we can update the method to add the user to the template.
+
+```go
+func (app *Config) AddDefaultData(td *TemplateData, r *http.Request) *TemplateData {
+	td.Flash = app.Session.PopString(r.Context(), "flash")
+	td.Warning = app.Session.PopString(r.Context(), "warning")
+	td.Error = app.Session.PopString(r.Context(), "error")
+	if app.IsAuthenticated(r) {
+		td.Authenticated = true
+		user, ok := app.Session.Get(r.Context(), "user").(data.User)
+		if !ok {
+			app.ErrorLog.Println("can't get user from session")
+		} else {
+			td.User = &user
+		}
+	}
+	td.Now = time.Now()
+
+	return td
+}
+```
+
+</details>
+
 ### Displaying The Subscription Plans Page
-### Adding A Route And Trying Things Out For The "Plans" Page
-### Writing A Stub Handler For Choosing A Plan
+
+<details>
+<summary>
+Showing a webpage with the available plans.
+</summary>
+
+we have three plans in the database: bronze, silver and gold. we want the user to choose a plan to subscribe to. so we need a new handler. this page is only available for logged-in users, so we protect against that - if a user that isn't logged in tries to access us, we flash a warning and redirect them. then we take all the plans from the database and render a template with the plans in the templateData.
+
+```go
+func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
+	if !app.Session.Exists(r.Context(), "userID") {
+		app.Session.Put(r.Context(), "warning", "You must log in to see this page!")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	plans, err := app.Models.Plan.GetAll()
+	if err != nil {
+		app.ErrorLog.Println(err)
+		return
+	}
+
+	dataMap := make(map[string]any)
+	dataMap["plans"] = plans
+
+	app.render(w, r, "plans.page.gohtml", &TemplateData{
+		Data: dataMap,
+	})
+}
+```
+
+the template has a table, and it loops over the plans property in the template data to populate it. we also have a button for each plan, which will select the plan. our button will trigger a js script, using the sweetAlert npm package as inlined source.\
+we will fire up a dialog for the user to click, if the user confirms, we will re-direct the user to a new route.
+
+```go
+{{template "base" .}}
+
+{{define "content" }}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <h1 class="mt-5">Plans</h1>
+                <hr>
+                <table class="table table-compact table-striped">
+                    <thead>
+                        <tr>
+                            <th>Plan</th>
+                            <th class="text-center">Price</th>
+                            <th class="text-center">Select</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range index .Data "plans"}}
+                            <tr>
+                                <td>{{.PlanName}}</td>
+                                <td class="text-center">{{.PlanAmountFormatted}}/month</td>
+                                <td class="text-center">
+									<a class="btn btn-primary btn-sm" href="#!" onclick="selectPlan({{.ID}}, '{{.PlanName}}')">Select</a>
+                                </td>
+                            </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+{{end}}
+
+{{define "js"}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.14/dist/sweetalert2.all.min.js"></script>
+    <script>
+        function selectPlan(x, plan) {
+            Swal.fire({
+                title: 'Subscribe',
+                html: 'Are you sure you want to subscribe to the ' + plan + '?',
+                showCancelButton: true,
+                confirmButtonText: 'Subscribe',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    {{/* window.location.href = '/subscribe?id=' + x; */}}
+                }
+            })
+        }
+    </script>
+{{end}}
+```
+
+</details>
+
+### Adding A Route And Trying Things Out For The Plans Page
+
+<details>
+<summary>
+choosing a plan.
+</summary>
+
+we add the "plans" route in the navigation bar template, and make it only visible for logged in users. we will also modify the plans template to display which plan the user is subscribed to.\
+we can modify our database manually to add a plan to a user, so we could see the change in the ui.
+
+#### Writing A Stub Handler For Choosing A Plan
+
+we add the "subscribe" route and a new handler. for now, it won't do anything, but we can write down the outline of what we would like to do in the next section.
+
+```go
+func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
+	// get the id of the plan that is chosen
+
+	// get the plan from the database
+
+	// get the user from the session
+
+	// generate an invoice
+
+	// send an email with the invoice attached
+
+	// generate a manual
+
+	// send an email with the manual attached
+
+	// subscribe the user to an account
+
+	// redirect
+}
+```
+
+</details>
 
 </details>
 
@@ -2885,6 +3239,7 @@ Synchronization Primitives: mutexes, waitGroups and channels.
 <golang>Synchronization stuff</golang>
 
 - pass <golang>waitGroup</golang> variables by reference (pointer), not by copy.
+- decrement wait groups with deferred `wait.Done()`.
 - if the waitGroup value goes below 0, we get an error.
 - directional channels (as function parameters):
   - `func foo(ping <-chan string, pong chan<- string)`
@@ -2901,7 +3256,7 @@ Other Packages
 - [jackc/pgconn](https://github.com/jackc/pgconn) - postgres connection
 - [vanng822/go-premailer](https://github.com/vanng822/go-premailer) - Inline styling for HTML mail in golang
 - [xhit/go-simple-mail](https://github.com/xhit/go-simple-mail) - mailing service
+- [bwmarrin/go-alone](https://github.com/bwmarrin/go-alone) - MAC signatures
 
 
 </details>
-
