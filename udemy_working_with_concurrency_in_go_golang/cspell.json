@@ -3,28 +3,28 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": [
-    "go"
+    "golang"
   ],
   "words": [
-    "Goroutines", "syscall"
+    "Goroutines",
+    "syscall",
+    "gohtml",
   ],
   "ignoreWords": [
-    "nullable",
-    "Scanln",
-    "Errorf",
-    "Intn",
     "jackc",
     "pgconn",
     "alexedwards",
     "redisstore",
     "mailhog",
-    "stdlib",
-    "Getenv", 
     "pkill",
     "sslmode",
     "dbname",
     "ldflags",
-    "gohtml"
+    "vanng",
+    "premailer",
+    "xhit",
+    "EncryptionSTARTTLS",
+    "EncryptionSSLTLS"
   ],
   "import": [
     "../cspell.json"

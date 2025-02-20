@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Sawler gotemplate fatih randomMillseconds taskkill Ldate Lshortfile Ltime
+// cSpell:ignore Sawler gotemplate fatih randomMillseconds taskkill
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -2351,6 +2351,7 @@ func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 ```
+
 </details>
 
 
@@ -2358,12 +2359,13 @@ func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
 
 ## Section 7: Sending Email Concurrently
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Sending emails from our application.
 </summary>
 
-when a user registers, we want to do some stuff, and this will run in the background, so here our concurrency comes into place.
+when a user registers, we want to do some stuff, and this will run in the background, so here our concurrency comes into place. this will be done through sending emails and using channels.\
+we will also add logic to wait for emails to finish sending before shutting down the app.
 
 ```go
 func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
@@ -2385,21 +2387,467 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### What We'll Cover In This Section
 ### Getting Started With The Mailer Code
-### Building Html And Plain Text Messages
+
+<details>
+<summary>
+Sending emails from go.
+</summary>
+
+we will implement the mail sending logic by using <golang>goroutines</golang>, in a new file called "mailer.go" inside "cmd/web" folder.
+
+we will add some packages using `go get`
+- mailing package
+- mail styling package
+
+```sh
+go get github.com/vanng822/go-premailer/premailer
+go get github.com/xhit/go-simple-mail/v2
+```
+
+we start with synchronous mailing. first thing are the types, the mail sender object and the message object. the mail object has a <golang>waitGroup</golang> and some <golang>channels</golang> - messages, errors and "done".\
+The message struct doesn't use concurrency, but will have data of type <golang>any</golang>.
+
+```go
+type Mail struct {
+	Domain      string
+	Host        string
+	Port        int
+	Username    string
+	Password    string
+	Encryption  string
+	FromAddress string
+	FromName    string
+	Wait        *sync.WaitGroup
+	MailerChan  chan Message
+	ErrorChan   chan error
+	DoneChan    chan bool
+}
+
+type Message struct {
+	From        string
+	FromName    string
+	To          string
+	Subject     string
+	Attachments []string
+	Data        any
+	DataMap     map[string]any
+	Template    string
+}
+```
+
+we next want a function to send the messages themselves. we can have a template for special kinds of mails, if the message doesn't specify one of the fields, we will use the values from the mail object.\
+our function can handle both simple plain text messages or html messages, each using one of the <golang>gohtml</golang> files from the templates folder (they will not use the chain of templates parsing like the web pages). *this will be covered in the next lecture*.
+
+Sending the mails will be done with the *server* object from the <golang>go-simple-mail</golang> package. An email message can have different kinds of encryptions, depending on what the external server supports. there are some other parameters to define on the mail server object and on our email message object. the email has the body in plaintext and alternative body which it the html formatted email. we can also add attachments.
+
+If we fail in one of our utility functions, we will send the error into the error channel.
+
+```go
+func (m *Mail) sendMail(msg Message, errorChan chan error) {
+	if msg.Template == "" {
+		msg.Template = "mail"
+	}
+
+	if msg.From == "" {
+		msg.From = m.FromAddress
+	}
+
+	if msg.FromName == "" {
+		msg.FromName = m.FromName
+	}
+
+	data := map[string]any{
+		"message": msg.Data,
+	}
+
+	msg.DataMap = data
+
+	// build html mail
+	formattedMessage, err := m.buildHTMLMessage(msg)
+	if err != nil {
+		errorChan <- err
+	}
+
+	// build plain text mail
+	plainMessage, err := m.buildPlainTextMessage(msg)
+	if err != nil {
+		errorChan <- err
+	}
+
+	server := mail.NewSMTPClient()
+	server.Host = m.Host
+	server.Port = m.Port
+	server.Username = m.Username
+	server.Password = m.Password
+	server.Encryption = m.getEncryption(m.Encryption)
+	server.KeepAlive = false
+	server.ConnectTimeout = 10 * time.Second
+	server.SendTimeout = 10 * time.Second
+
+	smtpClient, err := server.Connect()
+	if err != nil {
+		errorChan <- err
+	}
+
+	email := mail.NewMSG()
+	email.SetFrom(msg.From).AddTo(msg.To).SetSubject(msg.Subject)
+
+	email.SetBody(mail.TextPlain, plainMessage)
+	email.AddAlternative(mail.TextHTML, formattedMessage)
+
+	if len(msg.Attachments) > 0 {
+		for _, x := range msg.Attachments {
+			email.AddAttachment(x)
+		}
+	}
+
+	err = email.Send(smtpClient)
+	if err != nil {
+		errorChan <- err
+	}
+}
+
+func (m *Mail) getEncryption(e string) mail.Encryption {
+	switch e {
+	case "tls":
+		return mail.EncryptionSTARTTLS
+	case "ssl":
+		return mail.EncryptionSSLTLS
+	case "none":
+		return mail.EncryptionNone
+	default:
+		return mail.EncryptionSTARTTLS
+	}
+}
+```
+#### Building Html And Plain Text Messages
+
+we finish the message body input and formatting, and add some css. we use the same template behavior as we did with the web pages. for the html message we also inline the css style using the premailer package.
+
+```go
+func (m *Mail) buildHTMLMessage(msg Message) (string, error) {
+	templateToRender := fmt.Sprintf("./cmd/web/templates/%s.html.gohtml", msg.Template)
+
+	t, err := template.New("email-html").ParseFiles(templateToRender)
+	if err != nil {
+		return "", err
+	}
+
+	var tpl bytes.Buffer
+	if err = t.ExecuteTemplate(&tpl, "body", msg.DataMap); err != nil {
+		return "", err
+	}
+
+	formattedMessage := tpl.String()
+	formattedMessage, err = m.inlineCSS(formattedMessage)
+	if err != nil {
+		return "", err
+	}
+
+	return formattedMessage, nil
+}
+
+func (m *Mail) buildPlainTextMessage(msg Message) (string, error) {
+	templateToRender := fmt.Sprintf("./cmd/web/templates/%s.plain.gohtml", msg.Template)
+
+	t, err := template.New("email-plain").ParseFiles(templateToRender)
+	if err != nil {
+		return "", err
+	}
+
+	var tpl bytes.Buffer
+	if err = t.ExecuteTemplate(&tpl, "body", msg.DataMap); err != nil {
+		return "", err
+	}
+
+	plainMessage := tpl.String()
+
+	return plainMessage, nil
+}
+
+func (m *Mail) inlineCSS(s string) (string, error) {
+	options := premailer.Options{
+		RemoveClasses: false,
+		CssToAttributes: false,
+		KeepBangImportant: true,
+	}
+
+	prem, err := premailer.NewPremailerFromString(s, &options)
+	if err != nil {
+		return "", err
+	}
+
+	html, err := prem.Transform()
+	if err != nil {
+		return "", err
+	}
+
+	return html, nil
+}
+```
+</details>
+
 ### Sending A Message (Synchronously)
+
+<details>
+<summary>
+Testing that mails are sent.
+</summary>
+
+we add a test route that will send an email synchronously. this is just temporary for testing and will be removed shortly. we define an inline function with the mail server and the message, and having it send the mail.
+
+```go
+func (app *Config) routes() http.Handler {
+	// create router
+	mux := chi.NewRouter()
+
+	// set up middleware
+	mux.Use(middleware.Recoverer)
+	mux.Use(app.SessionLoad)
+
+	// define application routes
+	mux.Get("/", app.HomePage)
+
+	mux.Get("/login", app.LoginPage)
+	mux.Post("/login", app.PostLoginPage)
+	mux.Get("/logout", app.Logout)
+	mux.Get("/register", app.RegisterPage)
+	mux.Post("/register", app.PostRegisterPage)
+	mux.Get("/activate-account", app.ActivateAccount)
+
+	mux.Get("/test-email", func(w http.ResponseWriter, r *http.Request) {
+		m := Mail{
+			Domain: "localhost",
+			Host: "localhost",
+			Port: 1025,
+			Encryption: "none",
+			FromAddress: "info@mycompany.com",
+			FromName: "info",
+			ErrorChan: make(chan error),
+
+		}
+
+		msg := Message{
+			To: "me@here.com",
+			Subject: "Test email",
+			Data: "Hello, world.",
+		}
+
+		m.sendMail(msg, make(chan error))
+	})
+
+	return mux
+}
+```
+we can test the functionality by navigating to the new route and checking the mailhog web interface to see the send message.
+
+</details>
+
 ### Getting Started Sending A Message (Asynchronously)
-### Writing A Helper Function To Send Email Easily
-### Sending An Email On Incorrect Login
-### Adding Cleanup Tasks To The `shutdown()` Function
+
+<details>
+<summary>
+sending mails in the background.
+</summary>
+
+now that we know our application can send mails, it's time to have them send in the background.\
+we define a function on the application config object and use the <golang>select</golang> statement to listen on channels. we add the mailer to this object so we could listen on the three channels:
+
+- mails to send
+- errors from sending mails
+- mailing is finished
+
+```go
+func (app *Config) listenForMail() {
+	for {
+		select {
+		case msg := <- app.Mailer.MailerChan:
+			go app.Mailer.sendMail(msg, app.Mailer.ErrorChan)
+		case err := <- app.Mailer.ErrorChan:
+			app.ErrorLog.Println(err)
+		case <-app.Mailer.DoneChan:
+			return
+		}
+	}
+}
+```
+
+back in our main function, we create the mailer and listen for the mailing in a <golang>goroutine</golang>. we need to create the mailer object and the channels in it. we will allow the channel to hold up to 100 messages before blocking. we will re-use the same <golang>waitGroup</golang>.
+
+```go
+func main() {
+	// code
+	// set up the application config
+	app := Config{
+		Session:  session,
+		DB:       db,
+		InfoLog:  infoLog,
+		ErrorLog: errorLog,
+		Wait:     &wg,
+		Models:   data.New(db),
+	}
+
+	// set up mail
+	app.Mailer = app.createMail()
+	go app.listenForMail()
+
+	// code
+}
+
+func (app *Config) createMail() Mail {
+	// create channels
+	errorChan := make(chan error)
+	mailerChan := make(chan Message, 100)
+	mailerDoneChan := make(chan bool)
+
+	m := Mail{
+		Domain: "localhost",
+		Host: "localhost",
+		Port: 1025,
+		Encryption: "none",
+		FromName: "Info",
+		FromAddress: "info@mycompany.com",
+		Wait: app.Wait,
+		ErrorChan: errorChan,
+		MailerChan: mailerChan,
+		DoneChan: mailerDoneChan,
+	}
+
+	return m
+}
+```
+
+now we also need to decrement the wait group in the send mail function, using `defer m.Wait.Done()` so our application could finish.
+
+#### Writing A Helper Function To Send Email Easily
+
+we want the <golang>waitGroup</golang> to control how many tasks are in process, so we add a helper file with some utility wrappers. like incrementing the wait group as needed and pushing the message into the channel.
+
+```go
+func (app *Config) sendEmail(msg Message) {
+	app.Wait.Add(1)
+	app.Mailer.MailerChan <-msg
+}
+```
+</details>
+
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
 
 
 </details>
 
+### Sending An Email On Incorrect Login
+
+<details>
+<summary>
+sending a mail when login fails
+</summary>
+
+now that we have the capability to send emails, we can use it as part of our application flow.
+
+in the "handlers.go" file, we can send an email if the password is not correct. we create the message with the user email and use the helper function to send the email.
+
+```go
+func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
+	// more code
+
+	// check password
+	validPassword, err := user.PasswordMatches(password)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Invalid credentials.")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if !validPassword{
+		msg := Message{
+			To: email,
+			Subject: "Failed log in attempt",
+			Data: "Invalid login attempt!",
+		}
+
+		app.sendEmail(msg)
+		app.Session.Put(r.Context(), "error", "Invalid credentials.")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	// more code
+}
+```
+</details>
+
+### Adding Cleanup Tasks To The `shutdown()` Function
+
+<details>
+<summary>
+Adding to the cleanup task.
+</summary>
+
+back in the main.go file, we had a function that captured the system interrupts and performed cleanup functions. we need to send a message to the "doneChan" to stop listening for emails, and we need to close all of the channels.
+
+```go
+func (app *Config) shutdown() {
+	// perform any cleanup tasks
+	app.InfoLog.Println("would run cleanup tasks...")
+
+	// block until waitGroup is empty
+	app.Wait.Wait()
+
+	app.Mailer.DoneChan <- true
+
+	app.InfoLog.Println("closing channels and shutting down application...")
+	close(app.Mailer.MailerChan)
+	close(app.Mailer.ErrorChan)
+	close(app.Mailer.DoneChan)
+}
+```
+
+</details>
+
+</details>
+
 ## Section 8: Registering a User and Displaying Plans
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+### Adding Mail Templates And Url Signer Code
+### Starting On The Handler To Create A User
+### Activating A User
+### Giving User Data To Our Templates
+### Displaying The Subscription Plans Page
+### Adding A Route And Trying Things Out For The "Plans" Page
+### Writing A Stub Handler For Choosing A Plan
+
+</details>
+
 ## Section 9: Adding Concurrency to Choosing a Plan
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+
+</details>
+
 ## Section 10: Testing
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+
+</details>
+
 
 ## Takeaways
 
@@ -2451,6 +2899,9 @@ Other Packages
 - [go-chi/chi](https://github.com/go-chi/chi) - routing
 - [alexedwards/scs](https://github.com/alexedwards/scs) - session management
 - [jackc/pgconn](https://github.com/jackc/pgconn) - postgres connection
+- [vanng822/go-premailer](https://github.com/vanng822/go-premailer) - Inline styling for HTML mail in golang
+- [xhit/go-simple-mail](https://github.com/xhit/go-simple-mail) - mailing service
+
 
 </details>
 

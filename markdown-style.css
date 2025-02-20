@@ -10,5 +10,7 @@ cloud {
 }
 
 golang {
-  color: lightgreen;
+  /* color: #00ADD8; /* gopher-blue blue */
+  /* color: lightgreen; */
+  color: #5dc9e2; /* gopher light-blue */
 }
