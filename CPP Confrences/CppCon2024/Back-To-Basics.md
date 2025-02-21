@@ -149,6 +149,7 @@ guidelines
 > - Keep it simple
 
 #### Templateing basics
+
 the basic example of computing a sum from container elements.
 
 ```cpp
@@ -167,7 +168,7 @@ this is static polymorphism, the template is resolved at compiled time, and the 
 defining a template:
 
 > template \<template-parameters\> declaration;
-> 
+>
 > declaration can be:
 >
 > - class / struct
@@ -175,13 +176,14 @@ defining a template:
 > - type alias
 > - variable
 > - <cpp>concept</cpp>
-> 
+>
 > template-parameter is\
 > `class | typename identifier [= default-value]`
-> 
+>
 > Template definition should be in a header file.
 
 example of templates
+
 ```cpp
 
 // class
@@ -231,11 +233,13 @@ when we use a template, sometimes the compiler can deduce the the types based on
 first substituion happens, and the instantiations, the first checks the template parameters and how the types fit it, while the second checks the template body.
 
 > Substitution:
+>
 > - Substitute template arguments for template parameters
 > - Results in class declaration or function declaration
 > - Checks the correctness of the template arguments
 >
 > Instantiation
+>
 > - Full definition of the class or function or type alias or variable
 > - Happens after substitution, only when full definition is needed
 > - Checks the correctness of the definition
@@ -276,7 +280,7 @@ SFINAE - Substitution Failure Is Not An Error:
 > - A failure during substitution does not fail compilation
 >   - Instead, the candidate is discarded
 > - A function overload that fails substitution is not a viable candidate
-> - This feature is necessary for function templates and class 
+> - This feature is necessary for function templates and class
 > - template partial specializations to be useful
 
 if there is no matching substitute, then we get an error, but as long as one match exists, we can move forward.
@@ -316,7 +320,6 @@ Matching the type to the way the template was declared (class, typename, auto). 
 > - Let the compiler deduce the arguments
 >   - Unless the function's API requires explicit template arguments
 
-
 #### Constraints
 
 listing the requirements of the template, like requiring them to be copyable, default constructable, etc... they can be checked in the substituion phase, so we can use the to remove methods from the overload set.
@@ -343,7 +346,7 @@ document the requirements
 
 > - Document expectations for the template parameters
 >   - In code if possible
->     - via constraints 
+>     - via constraints
 >   - In documentation otherwise
 > - Member functions can have additional requirements
 
@@ -370,7 +373,7 @@ struct safe_sizeof<void> {
 
 it's also possible to have partial specializations
 
-> Sometimes you want to specialize for one template parameter, 
+> Sometimes you want to specialize for one template parameter,
 but not for all of them, Or specialize when one template parameter fits a pattern.\
 > Similar to full specialization, but template parameter list is not empty.
 
@@ -409,6 +412,7 @@ constexpr std::size_t safe_sizeof<T> = sizeof(T);
 ```
 
 > Specialization Allowed?
+>
 > - Class template: Yes
 > - Variable template: Yes
 > - Type alias template: No
@@ -435,7 +439,7 @@ using remove_pointer_t = typename remove_pointer<T>::type;
 sometimes we need to help the compiler so the `typename` keyword is added.
 
 > Compiler needs help parsing template definition.
-> Keyword typename must precede any qualified type name that 
+> Keyword typename must precede any qualified type name that
 depends on a template parameter.
 
 as an example, the outcome of the code below depends on the types.
@@ -443,11 +447,12 @@ as an example, the outcome of the code below depends on the types.
 ```cpp
 A * B(C(D)); // what is this?
 ```
+
 - if A not a typename (is a value), this is Expression statement: multiply A and `B(C(D))`.
 - if A is a type name, but either B or D are not, then this is variable definition: B is a variable of type pointer-to-A with the initial value of `C(D)`.
 - if A, C and D are all type names, then this is a Function declaration: B is a function with parameter pointer-to-(function with parameter D returning C) returning pointer-to-A
 
-> Keyword typename must precede any qualified type name that 
+> Keyword typename must precede any qualified type name that
 **depends on a template parameter**
 
 if the keyword doesn't exists, then the compiler won't consider this a type.
@@ -482,6 +487,7 @@ side example, two overload of <cpp>std::vector</cpp> constructor which use eithe
 we should avoid functions that accept anything and have a simple common name, otherwise we might get something like namespace pollution.
 
 > Function Template Specialization
+>
 > - What is allowed:
 >   - Full specialization of non-member function templates
 > - What is not allowed:

@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore hashers Adler32 inplace
+// cSpell:ignore hashers Adler32 inplace SWAR Superscalar
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -11,12 +11,12 @@
 </summary>
 
 - [x] C++26 Preview - Jeff Garland
-- [ ] Composing Ancient Mathematical Knowledge Into Powerful Bit-fiddling Techniques - Jamie Pond
-- [ ] Designing a Slimmer Vector of Variants - Christopher Fretz
+- [x] Composing Ancient Mathematical Knowledge Into Powerful Bit-fiddling Techniques - Jamie Pond
+- [x] Designing a Slimmer Vector of Variants - Christopher Fretz
 - [ ] Interesting Upcoming Features from Low latency, Parallelism and Concurrency from Kona 2023, Tokyo 2024, and St. Louis 2024 - Paul E. McKenney, Maged Michael, Michael Wong
 - [x] So You Think You Can Hash - Victor Ciura
 - [x] Taming the C++ Filter View - Nicolai Josuttis
-- [ ] The Beman Project: Bringing Standard Libraries to the Next Level - David Sankel
+- [x] The Beman Project: Bringing Standard Libraries to the Next Level - David Sankel
 - [x] When Lock-Free Still Isn't Enough: An Introduction to Wait-Free Programming and Concurrency Techniques - Daniel Anderson
 - [ ] Work Contracts – Rethinking Task Based Concurrency and Parallelism for Low Latency C++ - Michael Maniscalco
 
@@ -971,4 +971,304 @@ trivial modifications cause UB, concurrent reads cause UB
 >   - Disables algorithms with multiple or reverse iterations
 >   - Some non-trivial use cases like with reverse no longer compile
 
+</details>
+
+### How to Design a Slimmer Vector of Variants in C++ - Christopher Fretz
+
+<details>
+<summary>
+Trying to get memory improvements for a heterogenous container
+</summary>
+
+[How to Design a Slimmer Vector of Variants in C++](https://youtu.be/VDoyQyMXdDU?si=y0NF8OjzjPBx-j0Y), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Designing_a_Slimmer_Vector_of_Variants.pdf), [event](https://cppcon2024.sched.com/event/1gZfD/designing-a-slimmer-vector-of-variants)
+
+> Overview for this Talk
+>
+> - This talk details my experience in creating a novel solution to an observed problem with memory usage of <cpp>std::vector<std::variant></cpp>
+> - The talk starts with the motivating use case, considers several candidate designs, refining as we go, and then presents interesting implications of the approach, benchmarks, and lessons learned
+> - I implemented the data structure mostly for the fun of it, as well as to get more familiar with C++20 features
+> -T he final presented design in this presentation is a simplified version of the actual data structure, but it should illustrate the point
+
+we want to use containers for variants, but the memory footprint of the default usage is bad.\
+for example, the following example shows a vector of three elements, each element is an <cpp>std::variant</cpp>, and has the size of 5008 bytes (the size of the largest type and additional data).
+
+```cpp
+struct big_data {
+  char data[5000];
+};
+using combo_type = std::variant<bool, int, double, std::string, big_data>;
+int main() {
+  std::vector<combo_type> vec {false, 1, 2.0, "three"};
+}
+```
+
+both <cpp>std::vector</cpp> and <cpp>std::variant</cpp> are generically composable, without special interactions with one-another. <cpp>std::variant</cpp> isn't allowed to allocate data, so it must pessimistically assume the size of the largest type.
+
+our first design candidate is removing the limitation on memory allocation. what would happen if the variant was able to allocate data on the heap? each object would hold the original type tag and a pointer to the data.\
+in our example, this would decrease the memory usage, but would result in more heap allocations (even for the small types), indirection calls, and heap fragmentation. this also means that every call to <cpp>std::vector::push_back()</cpp> would now allocate memory on the heap, even if we have already enough capacity in the vector.\
+Our next design could use a <cpp>std::pmr</cpp> memory pool, so rather than allocate memory from the heap each time using the global allocator, we can allocate a large chunk once, and then use that chunk for future allocations. this still keeps us using pointers and has the problems of pool bloat and fragmentation.
+
+we could try and make a type-aware vector type, which is designed to store multiple types. we start with having a single chunk of data that we write to and cast back to the user as the correct type. this requires us to know which type is stored in each index.\
+We will need some "metadata" for types and offsets. so we store the types and the offsets for each element in the container. this increases the size of the container and requires additional heap memory, but we aren't scaling with types, so it's fine for now.\
+**however**, we have a real issue with memory alignments. the compiler has it's own way of handling addresses, which is undefined behavior and platform specific. we can't just manually calculate offsets for addresses. some types can't start on any memory address, they must be aligned. that's how we end up with padding inside our structs.
+
+```cpp
+struct example {
+  bool flag;
+  short state;
+  long counter;
+}
+
+static_assert(sizeof(example)== 16);
+```
+
+we could try writing our container to correctly align the data for each element. we have some built-in stuff from C++.
+
+- <cpp>alignof(T)</cpp> - return the alignment of type T
+- <cpp>alignas(T)</cpp> - force a specific alignment like a different type (as long as it's a legal alignment for the type we use)
+- <cpp>std::align_val_t(N)</cpp> - combine with the <cpp>new</cpp> operator for aligned allocation.
+
+in our current implementation, about half of the heap memory goes towards the metadata (bytes and offsets), so maybe we can get around this?
+since a container will only a handful of types, maybe we don't need that many bytes to distinguish between them, and we can use bitmap instead. also, if we know an upper bound of the number of elements, we can use a smaller integer type to calculate the maximum offset. this could also be re-done in runtime when the container has more elements.
+
+there are some other ideas to do here, which depend on the use case.
+
+#### Implications of the Design
+
+> We now have a candidate design for a data structure that radically reduces the memory footprint from our original example, while retaining the same functionality.\
+> This works nicely to solve the original problem, but do these changes have any implications for the data structure's wider API?
+
+in other words, can this still be used the same way as a normal vector of variants?
+
+what do `capacity`, `reserve` and `resize` mean for this data structure? there is a significant complexity for adding and removing elements, there is a challenge of cascading alignments for every element.\
+there is also an effect on the `[]` operator. with the standard implementation, the operator returns an l-value reference to the variant, and we call the assignment operator inside the variant.
+
+```cpp
+#include <vector>
+#include <string>
+#include <variant>
+#include <iostream>
+
+using combo_type = std::variant<bool, int, double, std::string>;
+
+int main() {
+  std::vector<combo_type> vec {false, 1, 2.0, "three"};
+  vec[3] = "one plus two";
+  std::cout << std::get<std::string>(vec[3]) << std::endl;
+}
+```
+
+for out modified vector, the operator can't return a reference to a variant, since we don't store something like. we could use a proxy type, but it would leak into the program and cause problems and it's an-anti pattern at this point.
+
+#### Benchmarking the New Vector
+
+we can compare the <cpp>std::vector</cpp> with the new static vector and the dynamic vector, for trivial types, the normal vector and the static version are pretty much the same, but we lose out with objects. the dynamic vector version always has worse performance. adding elements at the end of the container is mostly the same (except for the dynamic vector), getting elements follows the same trend.
+</details>
+
+### The Beman Project: Bringing C++ Standard Libraries to the Next Level - David Sankel
+
+<details>
+<summary>
+A Project to Make Library Development Better.
+</summary>
+
+[The Beman Project: Bringing C++ Standard Libraries to the Next Level](https://youtu.be/f4JinCpcQOg?si=PKZzeBMmja864VSI), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/The_Beman_Project.pdf), [event](https://cppcon2024.sched.com/event/1gZgO/the-beman-project-bringing-standard-libraries-to-the-next-level). [beman.exemplar](https://github.com/bemanproject/exemplar)
+
+> "Support the efficient design and adoption of the highest quality C++ standard libraries through implementation experience, user feedback, and technical expertise"\
+> ~ the Beman Project statement
+
+The life cycle of a standard library proposal starts with a study group, which is usually domain specific, next is the library evolution incubator group, which determines if the proposal has enough interest and if it's worth pushing forward.\
+The library evolution committee does design review, and then the library committee who do the "wording review" and go deep into the text of the proposals. the next step is the Plenary group, and now we start on a working draft.\
+A paper (proposal) has a number, and each committee requests revisions.
+
+in most companies, there is a process of how a feature is implemented, with different stages from POC, Beta, user studies and reviews, all that before moving the feature into general availability, when it officially becomes part of the API.\
+The C++ standardization doesn't have all those stages, it focuses on the proposal and experts review, but it doesn't have the same end-to-end development cycle.
+
+The Beman project wants to bring that development process into the C++ standard. it is named after boost co-founder _Beman Dawes_ (1939-2020).
+
+> Beman core principles
+>
+> 1. **Highest quality** - Standards track libraries impact countless engineers and, consequently, should be of the highest quality.
+> 2. **Production-ready** - Production feedback necessitates reliable, well-documented software.
+> 3. **Industry standard technology** - Where there's industry consensus on best practices, we should take advantage. Innovation in tooling and style is not our purpose.
+> 4. **Welcoming and inclusive community** - Broad, useful feedback requires an unobstructed path for using, reviewing, and contributing to Beman libraries. This principle encompasses ergonomics, cross-industry participation, and cultural accommodation.
+
+there are some other stuff, like licenses, naming conventions and cmake stuff.
+
+the proposed lifecycle starts after the proposal gets created, it's not a general library repository, libraries get removed two cycles after being integrated into the standard, and if the proposal is rejected, the library gets removed from the project.
+
+example of using a beman project library. in this case, optionals are treated as ranges.
+
+```cpp
+#include <beman/optional26/optional.hpp>
+namespace opt = beman::optional26;
+int main() {
+  opt::optional<int> x = /*…*/;
+  for (auto i : x) {
+    std::cout << i << ‘\n’;
+  }
+}
+
+// A person's attributes (e.g., eye color). All attributes are optional.
+class Person {
+/* ... */
+public:
+  opt::optional<string> eye_color() const;
+};
+void foo() {
+  vector<Person> people = /* ... */;
+  // Compute eye colors of 'people’.
+  vector<string> eye_colors = people
+    | views::transform(&Person::eye_color)
+    | views::join
+    | ranges::to<set>()
+    | ranges::to<vector>()
+}
+```
+
+beman.example is a example for creating a beman library, with all the best practices of unit testing, examples, documentations, build, sanitizers and ci/cd.
+
+(how to help and participate and Questions From The Audience)
+
+</details>
+
+### Composing Ancient Mathematical Knowledge Into Powerful Bit-fiddling Techniques - Jamie Pond
+
+<details>
+<summary>
+Using associative iteration to implement primitives that don't exists on hardware.
+</summary>
+
+[Composing Ancient Mathematical Knowledge Into Powerful Bit-fiddling Techniques](https://youtu.be/7n1CVURp0DY?si=eS3hJcGeQMpPjRBn), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Composing_Ancient_Mathematical_Knowledge_Into_Powerful_Bit-fiddling.pdf), [event](https://cppcon2024.sched.com/event/1gZgy/composing-ancient-mathematical-knowledge-into-powerful-bit-fiddling-techniques)
+
+> New insights from Ancient Egyptian Multiplication gives us the freedom of synthesizing operations that may not be present in the hardware, and doing so with the best performance.\
+> So long as your operation can be expressed by the repeated application of associativity.
+>
+> In particular we have element-wise parallel multiplication of arbitrary widths.
+
+example of using associativity operators:
+
+> Finite Field Exponentiation (Modular Exponentiation)
+>
+> - Core operation in public-key cryptography (RSA, Diffie-Hellman)
+> - Can be implemented by repeated application of _modular multiplication_.
+> - Enables efficient computation with very large numbers
+> - Essential for the functioning of modern digital life
+
+#### Maths Briefing
+
+- commutativity - the order doesn't matter
+- associativity - grouping element together doesn't affect the result (the order still matter)
+
+the Egyptian Multiplication is an algorithm to calculate multiplications, instead of simply adding numbers together, we can cut down the number of iterations needed.
+
+```txt
+Algorithm Egyptian(a, b):
+  result ← 0
+  while true do
+    if b is odd then
+      result ← result + a
+      if b = 0 then
+        return result
+      end if
+    end if
+    a ← a + a
+    b ← b ÷ 2
+  end while
+end Algorithm
+```
+
+what's actually happening is that the algorithm checks the least significant bit.
+
+```cpp
+template <typename T>
+constexpr T progressive_egyptian_multiply(T a, T multiplier) {
+  T result = 0; // neutral of addition!
+  for (;;) {
+    if (lsb_is_on(multiplier)) { // equal to is_odd (is the lsb set?)
+      result += a;
+    } else if (multiplier == 0) { 
+      break; // we consumed all the multiplier! 
+    }
+    a <<= 1; // double
+    multiplier ==> 1; // half (consume the LSB)
+  }
+  return result;
+}
+```
+
+we can also do this ther way around, and start with the most significant bit. they call this **Associative Iteration**. this saves us a bit of memory, since we don't need to preserve the square. we always double
+
+```txt
+Algorithm RegressiveEgyptian(multiplicand, multiplier):
+  iterationCount ← number of bits in type T
+  result ← 0
+  while true do
+    if most significant bit of multiplier is 1 then
+      result ← result + multiplicand
+    end if
+    iterationCount ← iterationCount - 1
+    if iterationCount = 0 then
+      return result
+    end if
+    result ← result × 2
+    multiplier ← multiplier × 2
+  end while
+end Algorithm
+```
+
+or in C++ code.
+
+```cpp
+template <typename T>
+constexpr T regressive_egyptian_multiply(T a, T multiplier) {
+  T iterationCount = sizeof(T) * 8; // the number of bits in the type
+  T result = 0; // neutral element for addition
+  for (;;) {
+    if (msb_is_on(multiplier)) {
+      result += a;
+    }
+    if (!(--iterationCount)) { 
+      break; // finished iterating
+    }
+    result <<= 1; // always double the result
+    multiplier =>> 1; // consume the MSB
+  }
+  return result;
+}
+```
+
+we can generalize this further, making the algorithm work for all monads operations. it requires knowing the identity function for the operation, and some primitive operation.
+
+#### SWAR Briefing
+
+software SIMD library
+
+> What does Software SIMD via SWAR cost?
+>
+> - Execution time cost is low: we just use normal general purpose operations.
+> - Software SIMD has no lane protection, the cost comes at software implementation time.
+> - Ensuring correctness requires lots of bit manipulation, but these operations are very cheap!
+> - Superscalar CPUs do speculative, out of order, parallel instruction execution via multiple execution units.
+> - Adding 8 8-bit ints takes 1 add + 1 store and some bitwise ops: wildly faster than the normal 8 adds + 8 stores (16 vs 2 operations!)
+
+using the [zoo library](https://github.com/thecppzoo/zoo)
+
+```cpp
+template<int NumBitsPerLane, typename UnderlyingType>
+struct SWAR { /* impl */ };
+
+static_assert([] {
+  using S = swar=:SWAR<8, uint64_t>; // 8 bit lanes, 64 bit underlying type
+  S a{0x01'02'03'04'05'06'07'08}; // results in 8 lanes of 8 bits each
+  S b{0x01'02'03'04'05'06'07'08};
+  S c{0x02'04'06'08'0A'0C'0E'10};
+  S sum = a + b;
+  return horizontalEquality(sum, c);
+}());
+```
+
+and we can write our algorithm for the lane wise operation, both for multiplication and exponentiation.
+
+there is some place for optimizations, the number of minimal addition operation changes based the multiplier. the compiler is actually pretty good in understanding that itself. but using the lanes approach can sometime get better compiled code (less instructions).
 </details>

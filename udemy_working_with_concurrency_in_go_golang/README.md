@@ -35,7 +35,6 @@ the course will show the basic types in the sync package: <golang>mutexes</golan
 - [Dining Philosophers](https://en.wikipedia.org/wiki/Dining_philosophers_problem)
 - [Sleeping Barber](https://en.wikipedia.org/wiki/Sleeping_barber_problem)
 
-
 then we'll also build a project for ourself, a subscription service that sends emails, generates PDF files and we'll have testing for it.
 
 we install go, visual studio code,the go extension for vsCode (we install all the suggested tools), the gotemplate-syntax extension and make.
@@ -65,35 +64,34 @@ we add a new function "printSomething" that prints whatever is passed to it. to 
 
 we can fix this in several ways, and we'll start with the **worst one** - this is by delaying the main thread execution using `time.sleep(1 * time.Second)` to waste time.
 
-
 ```go
 package main
 
 import (
-	"fmt"
+ "fmt"
 )
 
 func printSomething(s string) {
-	fmt.Println(s)
+ fmt.Println(s)
 }
 
 func main() {
-	// if you run the program with this line uncommented, and the lines 20 commented,
-	// everything works as expected
-	printSomething("This is the first thing to be printed!")
+ // if you run the program with this line uncommented, and the lines 20 commented,
+ // everything works as expected
+ printSomething("This is the first thing to be printed!")
 
-	// but if you comment out line 15 and uncomment the one below this comment,
-	// running the program will (probably) just print out the final message,
-	// since the program terminates before the goroutine started by this
-	// command does not have time to finish.
-	//go printSomething("This is the first thing to be printed!")
+ // but if you comment out line 15 and uncomment the one below this comment,
+ // running the program will (probably) just print out the final message,
+ // since the program terminates before the goroutine started by this
+ // command does not have time to finish.
+ //go printSomething("This is the first thing to be printed!")
 
-	// in order to give the goroutine from line 20 time to finish, we could
-	// wait for second by uncommenting the line below, but this is hardly
-	// a good solution.
-	//time.Sleep(1 * time.Second)
+ // in order to give the goroutine from line 20 time to finish, we could
+ // wait for second by uncommenting the line below, but this is hardly
+ // a good solution.
+ //time.Sleep(1 * time.Second)
 
-	printSomething("This is the second thing to be printed!")
+ printSomething("This is the second thing to be printed!")
 }
 ```
 
@@ -116,41 +114,41 @@ if the waitGroup is at zero, then we get an error. they can't be decreased below
 package main
 
 import (
-	"fmt"
-	"sync"
+ "fmt"
+ "sync"
 )
 
 func printSomething(s string, wg *sync.WaitGroup) {
-	defer wg.Done()
+ defer wg.Done()
 
-	fmt.Println(s)
+ fmt.Println(s)
 }
 
 func main() {
-	var wg sync.WaitGroup
+ var wg sync.WaitGroup
 
-	words := []string{
-		"alpha",
-		"beta",
-		"delta",
-		"gamma",
-		"pi",
-		"zeta",
-		"eta",
-		"theta",
-		"epsilon",
-	}
+ words := []string{
+  "alpha",
+  "beta",
+  "delta",
+  "gamma",
+  "pi",
+  "zeta",
+  "eta",
+  "theta",
+  "epsilon",
+ }
 
-	wg.Add(len(words))
+ wg.Add(len(words))
 
-	for i, x := range words {
-		go printSomething(fmt.Sprintf("%d: %s", i, x), &wg)
-	}
+ for i, x := range words {
+  go printSomething(fmt.Sprintf("%d: %s", i, x), &wg)
+ }
 
-	wg.Wait()
+ wg.Wait()
 
-	wg.Add(1)
-	printSomething("This is the second thing to be printed!", &wg)
+ wg.Add(1)
+ printSomething("This is the second thing to be printed!", &wg)
 }
 ```
 
@@ -172,36 +170,36 @@ we capture the standard output stream from the operating system with <golang>os.
 package main
 
 import (
-	"io"
-	"os"
-	"strings"
-	"sync"
-	"testing"
+ "io"
+ "os"
+ "strings"
+ "sync"
+ "testing"
 )
 
 func Test_printSomething(t *testing.T) {
-	stdOut := os.Stdout
+ stdOut := os.Stdout
 
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+ r, w, _ := os.Pipe()
+ os.Stdout = w
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+ var wg sync.WaitGroup
+ wg.Add(1)
 
-	go printSomething("epsilon", &wg)
+ go printSomething("epsilon", &wg)
 
-	wg.Wait()
+ wg.Wait()
 
-	_ = w.Close()
+ _ = w.Close()
 
-	result, _ := io.ReadAll(r)
-	output := string(result)
+ result, _ := io.ReadAll(r)
+ output := string(result)
 
-	os.Stdout = stdOut
+ os.Stdout = stdOut
 
-	if !strings.Contains(output, "epsilon"){
-		t.Errorf("Expected to find epsilon, but it is not there")
-	}
+ if !strings.Contains(output, "epsilon"){
+  t.Errorf("Expected to find epsilon, but it is not there")
+ }
 }
 ```
 
@@ -222,38 +220,38 @@ this it the original code!
 package main
 
 import (
-	"fmt"
+ "fmt"
 )
 
 var msg string
 
 func updateMessage(s string) {
-	msg = s
+ msg = s
 }
 
 func printMessage() {
-	fmt.Println(msg)
+ fmt.Println(msg)
 }
 
 func main() {
 
-	// challenge: modify this code so that the calls to updateMessage() on lines
-	// 28, 30, and 33 run as goroutines, and implement wait groups so that
-	// the program runs properly, and prints out three different messages.
-	// Then, write a test for all three functions in this program: updateMessage(),
-	// printMessage(), and main().
+ // challenge: modify this code so that the calls to updateMessage() on lines
+ // 28, 30, and 33 run as goroutines, and implement wait groups so that
+ // the program runs properly, and prints out three different messages.
+ // Then, write a test for all three functions in this program: updateMessage(),
+ // printMessage(), and main().
 
-	msg = "Hello, world!"
+ msg = "Hello, world!"
 
-	updateMessage("Hello, universe!")
-	printMessage()
+ updateMessage("Hello, universe!")
+ printMessage()
 
-	updateMessage("Hello, cosmos!")
-	printMessage()
+ updateMessage("Hello, cosmos!")
+ printMessage()
 
-	updateMessage("Hello, world!")
+ updateMessage("Hello, world!")
 
-	printMessage()
+ printMessage()
 }
 ```
 
@@ -297,27 +295,27 @@ we start by creating a go program with a race condition. we still use <golang>wa
 package main
 
 import (
-	"fmt"
-	"sync"
+ "fmt"
+ "sync"
 )
 
 var msg string
 var wg sync.WaitGroup
 
 func updateMessage(s string) {
-	defer wg.Done()
-	msg = s
+ defer wg.Done()
+ msg = s
 }
 
 func main() {
-	msg = "Hello, world!"
+ msg = "Hello, world!"
 
-	wg.Add(2)
-	go updateMessage("Hello, universe!")
-	go updateMessage("Hello, cosmos!")
-	wg.Wait()
+ wg.Add(2)
+ go updateMessage("Hello, universe!")
+ go updateMessage("Hello, cosmos!")
+ wg.Wait()
 
-	fmt.Println(msg)
+ fmt.Println(msg)
 
 }
 ```
@@ -332,32 +330,32 @@ the fixed code adds a <golang>sync.Mutex</golang>, a lock that only one thread c
 package main
 
 import (
-	"fmt"
-	"sync"
+ "fmt"
+ "sync"
 )
 
 var msg string
 var wg sync.WaitGroup
 
 func updateMessage(s string, m *sync.Mutex) {
-	defer wg.Done()
+ defer wg.Done()
 
-	m.Lock() // take mutex
-	msg = s
-	m.Unlock() // release mutex
+ m.Lock() // take mutex
+ msg = s
+ m.Unlock() // release mutex
 }
 
 func main() {
-	msg = "Hello, world!"
+ msg = "Hello, world!"
 
-	var mutex sync.Mutex
+ var mutex sync.Mutex
 
-	wg.Add(2)
-	go updateMessage("Hello, universe!", &mutex)
-	go updateMessage("Hello, cosmos!", &mutex)
-	wg.Wait()
+ wg.Add(2)
+ go updateMessage("Hello, universe!", &mutex)
+ go updateMessage("Hello, cosmos!", &mutex)
+ wg.Wait()
 
-	fmt.Println(msg)
+ fmt.Println(msg)
 }
 ```
 
@@ -373,16 +371,16 @@ package main
 import "testing"
 
 func Test_updateMessage(t *testing.T) {
-	msg = "Hello, world!"
+ msg = "Hello, world!"
 
-	wg.Add(2)
-	go updateMessage("x")
-	go updateMessage("Goodbye, cruel world!")
-	wg.Wait()
+ wg.Add(2)
+ go updateMessage("x")
+ go updateMessage("Goodbye, cruel world!")
+ wg.Wait()
 
-	if msg != "Goodbye, cruel world!" {
-		t.Error("incorrect value in msg")
-	}
+ if msg != "Goodbye, cruel world!" {
+  t.Error("incorrect value in msg")
+ }
 }
 ```
 
@@ -402,60 +400,60 @@ if we only use waitGroups, each goroutine will read the value and modify it, wit
 package main
 
 import (
-	"fmt"
-	"sync"
+ "fmt"
+ "sync"
 )
 
 
 var wg sync.WaitGroup
 
 type Income struct {
-	Source string
-	Amount int
+ Source string
+ Amount int
 }
 
 func main() {
-	// variable for bank balance
-	var bankBalance int
-	var balance sync.Mutex
+ // variable for bank balance
+ var bankBalance int
+ var balance sync.Mutex
 
-	// print out starting values
-	fmt.Printf("Initial account balance: $%d.00", bankBalance)
-	fmt.Println()
+ // print out starting values
+ fmt.Printf("Initial account balance: $%d.00", bankBalance)
+ fmt.Println()
 
-	// define weekly revenue
-	incomes := []Income{
-		{Source: "Main job", Amount: 500},
-		{Source: "Gifts", Amount: 10},
-		{Source: "Part time job", Amount: 50},
-		{Source: "Investments", Amount: 100},
-	}
+ // define weekly revenue
+ incomes := []Income{
+  {Source: "Main job", Amount: 500},
+  {Source: "Gifts", Amount: 10},
+  {Source: "Part time job", Amount: 50},
+  {Source: "Investments", Amount: 100},
+ }
 
-	wg.Add(len(incomes))
+ wg.Add(len(incomes))
 
-	// loop through 52 weeks and print out how much is made; keep a running total
-	for i, income := range incomes {
+ // loop through 52 weeks and print out how much is made; keep a running total
+ for i, income := range incomes {
 
-		go func(i int, income Income) {
-			defer wg.Done()
+  go func(i int, income Income) {
+   defer wg.Done()
 
-			for week := 1; week <= 52; week++ {
-				balance.Lock()
-				temp := bankBalance
-				temp += income.Amount
-				bankBalance = temp
-				balance.Unlock()
-				
-				fmt.Printf("On week %d, you earned $%d.00 from %s\n", week, income.Amount, income.Source)
-			}
-		}(i, income)
-	}
+   for week := 1; week <= 52; week++ {
+    balance.Lock()
+    temp := bankBalance
+    temp += income.Amount
+    bankBalance = temp
+    balance.Unlock()
+    
+    fmt.Printf("On week %d, you earned $%d.00 from %s\n", week, income.Amount, income.Source)
+   }
+  }(i, income)
+ }
 
-	wg.Wait()
+ wg.Wait()
 
-	// print out final balance
-	fmt.Printf("Final bank balance: $%d.00", bankBalance)
-	fmt.Println()
+ // print out final balance
+ fmt.Printf("Final bank balance: $%d.00", bankBalance)
+ fmt.Println()
 }
 ```
 
@@ -467,24 +465,24 @@ we can a test to see the correct amount is being tallied. we know that $(500 + 1
 package main
 
 import (
-	"io"
-	"os"
-	"strings"
-	"testing"
+ "io"
+ "os"
+ "strings"
+ "testing"
 )
 
 func Test_main(t *testing.T) {
-	stdOut := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-	main()
-	_ = w.Close()
-	result, _ := io.ReadAll(r)
-	output := string(result)
-	os.Stdout = stdOut
-	if ! strings.Contains(output, "$34320.00") {
-		t.Error("wrong balance returned")
-	}
+ stdOut := os.Stdout
+ r, w, _ := os.Pipe()
+ os.Stdout = w
+ main()
+ _ = w.Close()
+ result, _ := io.ReadAll(r)
+ output := string(result)
+ os.Stdout = stdOut
+ if ! strings.Contains(output, "$34320.00") {
+  t.Error("wrong balance returned")
+ }
 }
 ```
 
@@ -510,28 +508,28 @@ const NumberOfPizzas = 10
 var pizzasMade, pizzasFailed, total int
 
 type Producer struct {
-	data chan PizzaOrder
-	quit chan chan error
+ data chan PizzaOrder
+ quit chan chan error
 }
 
 type PizzaOrder struct {
-	pizzaNumber int
-	message     string
-	success     bool
+ pizzaNumber int
+ message     string
+ success     bool
 }
 
 func main() {
-	// seed the random number generator
+ // seed the random number generator
 
-	// print out a message
+ // print out a message
 
-	// create a producer
+ // create a producer
 
-	// run the producer in the background
+ // run the producer in the background
 
-	// create and run consumer
+ // create and run consumer
 
-	// print out the ending message
+ // print out the ending message
 }
 ```
 
@@ -546,10 +544,10 @@ the producer has two fields, a channel of pizza order and a channel of channels 
 package main
 
 import (
-	"math/rand"
-	"time"
+ "math/rand"
+ "time"
 
-	"github.com/fatih/color"
+ "github.com/fatih/color"
 )
 
 const NumberOfPizzas = 10
@@ -557,53 +555,53 @@ const NumberOfPizzas = 10
 var pizzasMade, pizzasFailed, total int
 
 type Producer struct {
-	data chan PizzaOrder
-	quit chan chan error
+ data chan PizzaOrder
+ quit chan chan error
 }
 
 type PizzaOrder struct {
-	pizzaNumber int
-	message     string
-	success     bool
+ pizzaNumber int
+ message     string
+ success     bool
 }
 
 func (p *Producer) Close() error {
-	ch := make(chan error)
-	p.quit <- ch
-	return <-ch
+ ch := make(chan error)
+ p.quit <- ch
+ return <-ch
 }
 
 func pizzeria(pizzaMaker *Producer) {
-	// keep track of which pizza we are making
+ // keep track of which pizza we are making
 
-	// run forever or until we receive a quit notification
-	// try to make pizzas
-	for {
-		// try to make a pizza
-		// decision
-	}
+ // run forever or until we receive a quit notification
+ // try to make pizzas
+ for {
+  // try to make a pizza
+  // decision
+ }
 }
 
 func main() {
-	// seed the random number generator
-	rand.Seed(time.Now().UnixNano())
+ // seed the random number generator
+ rand.Seed(time.Now().UnixNano())
 
-	// print out a message
-	color.Cyan("The Pizzeria is open for business!")
-	color.Cyan("----------------------------------")
+ // print out a message
+ color.Cyan("The Pizzeria is open for business!")
+ color.Cyan("----------------------------------")
 
-	// create a producer
-	pizzaJob := &Producer{
-		data: make(chan PizzaOrder),
-		quit: make(chan chan error),
-	}
+ // create a producer
+ pizzaJob := &Producer{
+  data: make(chan PizzaOrder),
+  quit: make(chan chan error),
+ }
 
-	// run the producer in the background
-	go pizzeria(pizzaJob)
+ // run the producer in the background
+ go pizzeria(pizzaJob)
 
-	// create and run consumer
+ // create and run consumer
 
-	// print out the ending message
+ // print out the ending message
 }
 
 ```
@@ -615,67 +613,67 @@ if we don't need to create a new pizza, we return a pizza order object without i
 
 ```go
 func (p *Producer) Close() error {
-	ch := make(chan error)
-	p.quit <- ch
-	return <-ch
+ ch := make(chan error)
+ p.quit <- ch
+ return <-ch
 }
 
 func makePizza(pizzaNumber int) *PizzaOrder {
-	pizzaNumber++
-	if pizzaNumber <= NumberOfPizzas {
-		delay := rand.Intn(5) + 1
-		fmt.Printf("Received order #%d!\n", pizzaNumber)
+ pizzaNumber++
+ if pizzaNumber <= NumberOfPizzas {
+  delay := rand.Intn(5) + 1
+  fmt.Printf("Received order #%d!\n", pizzaNumber)
 
-		rnd := rand.Intn(12) + 1
-		msg := ""
-		success := false
+  rnd := rand.Intn(12) + 1
+  msg := ""
+  success := false
 
-		if rnd < 5 {
-			pizzasFailed++
-		} else {
-			pizzasMade++
-		}
-		total++
+  if rnd < 5 {
+   pizzasFailed++
+  } else {
+   pizzasMade++
+  }
+  total++
 
-		fmt.Printf("Making pizza #%d. It will take %d seconds....\n", pizzaNumber, delay)
-		// delay for a bit
-		time.Sleep(time.Duration(delay) * time.Second)
+  fmt.Printf("Making pizza #%d. It will take %d seconds....\n", pizzaNumber, delay)
+  // delay for a bit
+  time.Sleep(time.Duration(delay) * time.Second)
 
-		if rnd <=2 {
-			msg = fmt.Sprintf("*** We ran out of ingredients for pizza #%d!", pizzaNumber)
-		} else if rnd <= 4 {
-			msg = fmt.Sprintf("*** The cook quit while making pizza #%d!", pizzaNumber)
-		} else {
-			success = true
-			msg = fmt.Sprintf("Pizza order #%d is ready!", pizzaNumber)
-		}
+  if rnd <=2 {
+   msg = fmt.Sprintf("*** We ran out of ingredients for pizza #%d!", pizzaNumber)
+  } else if rnd <= 4 {
+   msg = fmt.Sprintf("*** The cook quit while making pizza #%d!", pizzaNumber)
+  } else {
+   success = true
+   msg = fmt.Sprintf("Pizza order #%d is ready!", pizzaNumber)
+  }
 
-		p := PizzaOrder{
-			pizzaNumber: pizzaNumber,
-			message: msg,
-			success: success,
-		}
+  p := PizzaOrder{
+   pizzaNumber: pizzaNumber,
+   message: msg,
+   success: success,
+  }
 
-		return &p
+  return &p
 
-	}
+ }
 
-	return &PizzaOrder{
-		pizzaNumber: pizzaNumber,
-	}
+ return &PizzaOrder{
+  pizzaNumber: pizzaNumber,
+ }
 }
 
 func pizzeria(pizzaMaker *Producer) {
-	// keep track of which pizza we are making
-	var i = 0
+ // keep track of which pizza we are making
+ var i = 0
 
-	// run forever or until we receive a quit notification
-	// try to make pizzas
-	for {
-		currentPizza := makePizza(i)
-		// try to make a pizza
-		// decision
-	}
+ // run forever or until we receive a quit notification
+ // try to make pizzas
+ for {
+  currentPizza := makePizza(i)
+  // try to make a pizza
+  // decision
+ }
 }
 ```
 
@@ -685,26 +683,26 @@ now we want to listen to the channels we created.
 
 ```go
 func pizzeria(pizzaMaker *Producer) {
-	// keep track of which pizza we are making
-	var i = 0
+ // keep track of which pizza we are making
+ var i = 0
 
-	// run forever or until we receive a quit notification
-	// try to make pizzas
-	for {
-		currentPizza := makePizza(i)
-		if currentPizza != nil {
-			i = currentPizza.pizzaNumber
-			select {
-				// we tried to make a pizza (something was sent to the data channel)
-				case pizzaMaker.data <- *currentPizza:
-				case quitChan:= <- pizzaMaker.quit:
-					// close channels
-					close(pizzaMaker.data)
-					close(quitChan)
-					return // exit goroutine
-			}
-		}
-	}
+ // run forever or until we receive a quit notification
+ // try to make pizzas
+ for {
+  currentPizza := makePizza(i)
+  if currentPizza != nil {
+   i = currentPizza.pizzaNumber
+   select {
+    // we tried to make a pizza (something was sent to the data channel)
+    case pizzaMaker.data <- *currentPizza:
+    case quitChan:= <- pizzaMaker.quit:
+     // close channels
+     close(pizzaMaker.data)
+     close(quitChan)
+     return // exit goroutine
+   }
+  }
+ }
 }
 ```
 
@@ -717,69 +715,70 @@ we loop over the channel of pizza orders, and if we're done with the orders, we 
 
 ```go
 func main() {
-	// seed the random number generator
-	rand.Seed(time.Now().UnixNano())
+ // seed the random number generator
+ rand.Seed(time.Now().UnixNano())
 
-	// print out a message
-	color.Cyan("The Pizzeria is open for business!")
-	color.Cyan("----------------------------------")
+ // print out a message
+ color.Cyan("The Pizzeria is open for business!")
+ color.Cyan("----------------------------------")
 
-	// create a producer
-	pizzaJob := &Producer{
-		data: make(chan PizzaOrder),
-		quit: make(chan chan error),
-	}
+ // create a producer
+ pizzaJob := &Producer{
+  data: make(chan PizzaOrder),
+  quit: make(chan chan error),
+ }
 
-	// run the producer in the background
-	go pizzeria(pizzaJob)
+ // run the producer in the background
+ go pizzeria(pizzaJob)
 
-	// create and run consumer
-	for i := range pizzaJob.data {
-		if i.pizzaNumber <= NumberOfPizzas {
-			if i.success {
-				color.Green(i.message)
-				color.Green("Order #%d is out for delivery!", i.pizzaNumber)
-			} else {
-				color.Red(i.message)
-				color.Red("The customer is really mad!")
-			}
-		} else {
-			color.Cyan("Done making pizzas...")
-			err := pizzaJob.Close()
-			if err != nil {
-				color.Red("*** Error closing channel!", err)
-			}
-		}
-	}
+ // create and run consumer
+ for i := range pizzaJob.data {
+  if i.pizzaNumber <= NumberOfPizzas {
+   if i.success {
+    color.Green(i.message)
+    color.Green("Order #%d is out for delivery!", i.pizzaNumber)
+   } else {
+    color.Red(i.message)
+    color.Red("The customer is really mad!")
+   }
+  } else {
+   color.Cyan("Done making pizzas...")
+   err := pizzaJob.Close()
+   if err != nil {
+    color.Red("*** Error closing channel!", err)
+   }
+  }
+ }
 
-	// print out the ending message
+ // print out the ending message
 }
 
 ```
+
 #### Finishing up Our Producer/Consumer Project
 
 we can also add a finishing message to make sure all our producers finished. we use the `switch` statement.
 
 ```go
-	// ... the code from above
-	// print out the ending message
-	color.Cyan("-----------------")
-	color.Cyan("Done for the day.")
+ // ... the code from above
+ // print out the ending message
+ color.Cyan("-----------------")
+ color.Cyan("Done for the day.")
 
-	color.Cyan("We made %d pizzas, but failed to make %d, with %d attempts in total.", pizzasMade, pizzasFailed, total)
+ color.Cyan("We made %d pizzas, but failed to make %d, with %d attempts in total.", pizzasMade, pizzasFailed, total)
 
-	switch {
-	case pizzasFailed > 9:
-		color.Red("It was an awful day...")
-	case pizzasFailed >= 6:
-		color.Red("It was not a very good day...")
-	case pizzasFailed >= 4:
-		color.Yellow("It was an okay day....")
-	case pizzasFailed >= 2:
-		color.Yellow("It was a pretty good day!")
-	default:
-		color.Green("It was a great day!")
-	}
+ switch {
+ case pizzasFailed > 9:
+  color.Red("It was an awful day...")
+ case pizzasFailed >= 6:
+  color.Red("It was not a very good day...")
+ case pizzasFailed >= 4:
+  color.Yellow("It was an okay day....")
+ case pizzasFailed >= 2:
+  color.Yellow("It was a pretty good day!")
+ default:
+  color.Green("It was a great day!")
+ }
 ```
 
 </details>
@@ -813,30 +812,29 @@ we start with the problem statement, and create an outline for the program. we c
 - the time it takes for the philosopher to eat
 - some delay
 
-
 ```go
 package main
 
 import (
-	"fmt"
-	"sync"
-	"time"
+ "fmt"
+ "sync"
+ "time"
 )
 
 // Philosopher is a struct which stores information about a philosopher.
 type Philosopher struct {
-	name      string
-	rightFork int
-	leftFork  int
+ name      string
+ rightFork int
+ leftFork  int
 }
 
 // philosophers is list of all philosophers.
 var philosophers = []Philosopher{
-	{name: "Plato", leftFork: 4, rightFork: 0},
-	{name: "Socrates", leftFork: 0, rightFork: 1},
-	{name: "Aristotle", leftFork: 1, rightFork: 2},
-	{name: "Pascal", leftFork: 2, rightFork: 3},
-	{name: "Locke", leftFork: 3, rightFork: 4},
+ {name: "Plato", leftFork: 4, rightFork: 0},
+ {name: "Socrates", leftFork: 0, rightFork: 1},
+ {name: "Aristotle", leftFork: 1, rightFork: 2},
+ {name: "Pascal", leftFork: 2, rightFork: 3},
+ {name: "Locke", leftFork: 3, rightFork: 4},
 }
 
 // Define a few variables.
@@ -846,55 +844,55 @@ var thinkTime = 3 * time.Second // how long a philosopher thinks
 var sleepTime = 1 * time.Second // how long to wait when printing things out
 
 func main() {
-	// print out a welcome message
-	fmt.Println("Dining Philosophers Problem")
-	fmt.Println("---------------------------")
-	fmt.Println("The table is empty.")
+ // print out a welcome message
+ fmt.Println("Dining Philosophers Problem")
+ fmt.Println("---------------------------")
+ fmt.Println("The table is empty.")
 
-	// start the meal
-	dine()
+ // start the meal
+ dine()
 
-	// print out finished message
-	fmt.Println("The table is empty.")
+ // print out finished message
+ fmt.Println("The table is empty.")
 
 }
 ```
 
 the important functions are `dine()` (the driver function) and `diningProblem()` goroutine. we have a waitGroup to count the number of hungry philosophers (when it's down to zero, we're done), a waitGroup to wait until all philosophers are seated at the table, and a map of mutexes for each fork.\
 
-
 ```go
 func dine() {
-	// wg is the WaitGroup that keeps track of how many philosophers are still at the table. When it reaches zero, everyone is finished eating and has left. We add 5 (the number of philosophers) to this wait group.
-	wg := &sync.WaitGroup{}
-	wg.Add(len(philosophers))
+ // wg is the WaitGroup that keeps track of how many philosophers are still at the table. When it reaches zero, everyone is finished eating and has left. We add 5 (the number of philosophers) to this wait group.
+ wg := &sync.WaitGroup{}
+ wg.Add(len(philosophers))
 
-	// We want everyone to be seated before they start eating, so create a WaitGroup for that, and set it to 5.
-	seated := &sync.WaitGroup{}
-	seated.Add(len(philosophers))
+ // We want everyone to be seated before they start eating, so create a WaitGroup for that, and set it to 5.
+ seated := &sync.WaitGroup{}
+ seated.Add(len(philosophers))
 
-	// forks is a map of all 5 forks. Forks are assigned using the fields leftFork and rightFork in the Philosopher type. Each fork, then, can be found using the index (an integer), and each fork has a unique mutex.
-	var forks = make(map[int]*sync.Mutex)
-	for i := 0; i < len(philosophers); i++ {
-		forks[i] = &sync.Mutex{}
-	}
+ // forks is a map of all 5 forks. Forks are assigned using the fields leftFork and rightFork in the Philosopher type. Each fork, then, can be found using the index (an integer), and each fork has a unique mutex.
+ var forks = make(map[int]*sync.Mutex)
+ for i := 0; i < len(philosophers); i++ {
+  forks[i] = &sync.Mutex{}
+ }
 
-	// Start the meal by iterating through our slice of Philosophers.
-	for i := 0; i < len(philosophers); i++ {
-		// fire off a goroutine for the current philosopher
-		go diningProblem(philosophers[i], wg, forks, seated)
-	}
+ // Start the meal by iterating through our slice of Philosophers.
+ for i := 0; i < len(philosophers); i++ {
+  // fire off a goroutine for the current philosopher
+  go diningProblem(philosophers[i], wg, forks, seated)
+ }
 
-	// Wait for the philosophers to finish. This blocks until the wait group is 0.
-	wg.Wait()
+ // Wait for the philosophers to finish. This blocks until the wait group is 0.
+ wg.Wait()
 }
 ```
+
 each philosophers is represented by a goroutine, which when completed, means the philosopher finished eating.
 
 ```go
 // diningProblem is the function fired off as a goroutine for each of our philosophers. It takes one philosopher, our WaitGroup to determine when everyone is done, a map containing the mutexes for every fork on the table, and a WaitGroup used to pause execution of every instance of this goroutine until everyone is seated at the table.
 func diningProblem(philosopher Philosopher, wg *sync.WaitGroup, forks map[int]*sync.Mutex, seated *sync.WaitGroup) {
-	defer wg.Done()
+ defer wg.Done()
 }
 ```
 
@@ -909,55 +907,54 @@ Doing the actual work
 
 now we want the philosophers to actually eat. we first have them seated (which means all goroutines have started). and now each philosopher can try grabbing the forks (there is a specific order for this to happen to avoid a logical deadlock).
 
-
 ```go
 func diningProblem(philosopher Philosopher, wg *sync.WaitGroup, forks map[int]*sync.Mutex, seated *sync.WaitGroup) {
-	defer wg.Done()
+ defer wg.Done()
 
-	// seat the philosopher at the table
-	fmt.Printf("%s is seated at the table.\n", philosopher.name)
-	
-	// Decrement the seated WaitGroup by one.
-	seated.Done()
+ // seat the philosopher at the table
+ fmt.Printf("%s is seated at the table.\n", philosopher.name)
+ 
+ // Decrement the seated WaitGroup by one.
+ seated.Done()
 
-	// Wait until everyone is seated.
-	seated.Wait()
+ // Wait until everyone is seated.
+ seated.Wait()
 
-	// Have this philosopher eatTime and thinkTime "hunger" times (3).
-	for i := hunger; i > 0; i-- {
-		// Get a lock on the left and right forks. We have to choose the lower numbered fork first in order to avoid a logical race condition, which is not detected by the -race flag in tests; 
-		// if we don't do this, we have the potential for a deadlock, since two philosophers will wait endlessly for the same fork.
-		// Note that the goroutine will block (pause) until it gets a lock on both the right and left forks.
-		if philosopher.leftFork > philosopher.rightFork {
-			forks[philosopher.rightFork].Lock()
-			fmt.Printf("\t%s takes the right fork.\n", philosopher.name)
-			forks[philosopher.leftFork].Lock()
-			fmt.Printf("\t%s takes the left fork.\n", philosopher.name)
-		} else {
-			forks[philosopher.leftFork].Lock()
-			fmt.Printf("\t%s takes the left fork.\n", philosopher.name)
-			forks[philosopher.rightFork].Lock()
-			fmt.Printf("\t%s takes the right fork.\n", philosopher.name)
-		}
-		
-		// By the time we get to this line, the philosopher has a lock (mutex) on both forks.
-		fmt.Printf("\t%s has both forks and is eating.\n", philosopher.name)
-		time.Sleep(eatTime)
+ // Have this philosopher eatTime and thinkTime "hunger" times (3).
+ for i := hunger; i > 0; i-- {
+  // Get a lock on the left and right forks. We have to choose the lower numbered fork first in order to avoid a logical race condition, which is not detected by the -race flag in tests; 
+  // if we don't do this, we have the potential for a deadlock, since two philosophers will wait endlessly for the same fork.
+  // Note that the goroutine will block (pause) until it gets a lock on both the right and left forks.
+  if philosopher.leftFork > philosopher.rightFork {
+   forks[philosopher.rightFork].Lock()
+   fmt.Printf("\t%s takes the right fork.\n", philosopher.name)
+   forks[philosopher.leftFork].Lock()
+   fmt.Printf("\t%s takes the left fork.\n", philosopher.name)
+  } else {
+   forks[philosopher.leftFork].Lock()
+   fmt.Printf("\t%s takes the left fork.\n", philosopher.name)
+   forks[philosopher.rightFork].Lock()
+   fmt.Printf("\t%s takes the right fork.\n", philosopher.name)
+  }
+  
+  // By the time we get to this line, the philosopher has a lock (mutex) on both forks.
+  fmt.Printf("\t%s has both forks and is eating.\n", philosopher.name)
+  time.Sleep(eatTime)
 
-		// The philosopher starts to think, but does not drop the forks yet.
-		fmt.Printf("\t%s is thinking.\n", philosopher.name)
-		time.Sleep(thinkTime)
+  // The philosopher starts to think, but does not drop the forks yet.
+  fmt.Printf("\t%s is thinking.\n", philosopher.name)
+  time.Sleep(thinkTime)
 
-		// Unlock the mutexes for both forks.
-		forks[philosopher.leftFork].Unlock()
-		forks[philosopher.rightFork].Unlock()
+  // Unlock the mutexes for both forks.
+  forks[philosopher.leftFork].Unlock()
+  forks[philosopher.rightFork].Unlock()
 
-		fmt.Printf("\t%s put down the forks.\n", philosopher.name)
-	}
+  fmt.Printf("\t%s put down the forks.\n", philosopher.name)
+ }
 
-	// The philosopher has finished eating, so print out a message.
-	fmt.Println(philosopher.name, "is satisfied.")
-	fmt.Println(philosopher.name, "left the table.")
+ // The philosopher has finished eating, so print out a message.
+ fmt.Println(philosopher.name, "is satisfied.")
+ fmt.Println(philosopher.name, "left the table.")
 }
 ```
 
@@ -1017,61 +1014,61 @@ The user writes a string, and the program writes it back in upper-case.
 package main
 
 import (
-	"fmt"
-	"strings"
+ "fmt"
+ "strings"
 )
 
 // shout has two parameters: a receive only chan ping, and a send only chan pong.
 // Note the use of <- in function signature. It simply takes whatever string it gets from the ping channel, 
 // converts it to uppercase and appends a few exclamation marks, and then sends the transformed text to the pong channel.
 func shout(ping <-chan string, pong chan<- string) {
-	for {
-		// read from the ping channel. Note that the GoRoutine waits here -- it blocks until something is received on this channel.
-		s := <-ping
+ for {
+  // read from the ping channel. Note that the GoRoutine waits here -- it blocks until something is received on this channel.
+  s := <-ping
 
-		pong <- fmt.Sprintf("%s!!!", strings.ToUpper(s))
-	}
+  pong <- fmt.Sprintf("%s!!!", strings.ToUpper(s))
+ }
 }
 
 func main() {
-	// create two channels. Ping is what we send to, and pong is what comes back.
-	ping := make(chan string)
-	pong := make(chan string)
+ // create two channels. Ping is what we send to, and pong is what comes back.
+ ping := make(chan string)
+ pong := make(chan string)
 
-	// start a goroutine
-	go shout(ping, pong)
+ // start a goroutine
+ go shout(ping, pong)
 
-	fmt.Println("Type something and press ENTER (enter Q to quit)")
+ fmt.Println("Type something and press ENTER (enter Q to quit)")
 
-	for {
-		// print a prompt
-		fmt.Print("-> ")
+ for {
+  // print a prompt
+  fmt.Print("-> ")
 
-		// get user input
-		var userInput string
-		_, _ = fmt.Scanln(&userInput)
+  // get user input
+  var userInput string
+  _, _ = fmt.Scanln(&userInput)
 
-		if userInput == strings.ToLower("q") {
-			// jump out of for loop
-			break
-		}
+  if userInput == strings.ToLower("q") {
+   // jump out of for loop
+   break
+  }
 
-		// send userInput to "ping" channel
-		ping <- userInput
+  // send userInput to "ping" channel
+  ping <- userInput
 
-		// wait for a response from the pong channel. 
-		// Again, program blocks (pauses) until it receives something from that channel.
-		response := <-pong
+  // wait for a response from the pong channel. 
+  // Again, program blocks (pauses) until it receives something from that channel.
+  response := <-pong
 
-		// print the response to the console.
-		fmt.Println("Response:", response)
-	}
+  // print the response to the console.
+  fmt.Println("Response:", response)
+ }
 
-	fmt.Println("All done. Closing channels.")
+ fmt.Println("All done. Closing channels.")
 
-	// close the channels
-	close(ping)
-	close(pong)
+ // close the channels
+ close(ping)
+ close(pong)
 }
 ```
 
@@ -1081,7 +1078,7 @@ we can define our channels as being "receive only" or "send only". we simply put
 
 ```go
 func shout(ping <-chan string, pong chan<- string) {
-	// ....
+ // ....
 }
 ```
 
@@ -1102,49 +1099,49 @@ we have two function (which we will use a goroutines) that will write to a chann
 package main
 
 import (
-	"fmt"
-	"time"
+ "fmt"
+ "time"
 )
 
 func server1(ch chan string) {
-	for {
-		time.Sleep(6 * time.Second)
-		ch <- "This is from server 1"
-	}
+ for {
+  time.Sleep(6 * time.Second)
+  ch <- "This is from server 1"
+ }
 }
 
 func server2(ch chan string) {
-	for {
-		time.Sleep(3 * time.Second)
-		ch <- "This is from server 2"
-	}
+ for {
+  time.Sleep(3 * time.Second)
+  ch <- "This is from server 2"
+ }
 }
 
 func main() {
-	fmt.Println("Select with channels")
-	fmt.Println("--------------------")
+ fmt.Println("Select with channels")
+ fmt.Println("--------------------")
 
-	channel1 := make(chan string)
-	channel2 := make(chan string)
+ channel1 := make(chan string)
+ channel2 := make(chan string)
 
-	go server1(channel1)
-	go server2(channel2)
+ go server1(channel1)
+ go server2(channel2)
 
-	for {
-		select {
-		// because we have multiple cases listening to the same channels, random ones are selected
-		case s1 := <-channel1:
-			fmt.Println("Case one:", s1)
-		case s2 := <-channel1:
-			fmt.Println("Case two:", s2)
-		case s3 := <-channel2:
-			fmt.Println("Case three:", s3)
-		case s4 := <-channel2:
-			fmt.Println("Case four:", s4)
-		// default:
-			// avoiding deadlock
-		}
-	}
+ for {
+  select {
+  // because we have multiple cases listening to the same channels, random ones are selected
+  case s1 := <-channel1:
+   fmt.Println("Case one:", s1)
+  case s2 := <-channel1:
+   fmt.Println("Case two:", s2)
+  case s3 := <-channel2:
+   fmt.Println("Case three:", s3)
+  case s4 := <-channel2:
+   fmt.Println("Case four:", s4)
+  // default:
+   // avoiding deadlock
+  }
+ }
 }
 ```
 
@@ -1163,37 +1160,38 @@ a channel can contain more than one value. this makes the channel able to hold m
 package main
 
 import (
-	"fmt"
-	"time"
+ "fmt"
+ "time"
 )
 
 func listenToChan(ch chan int) {
-	for {
-		// print a got data message
-		i := <-ch
-		fmt.Println("Got", i, "from channel")
+ for {
+  // print a got data message
+  i := <-ch
+  fmt.Println("Got", i, "from channel")
 
-		// simulate doing a lot of work
-		time.Sleep(1 * time.Second)
-	}
+  // simulate doing a lot of work
+  time.Sleep(1 * time.Second)
+ }
 }
 
 func main() {
-	ch := make(chan int, 10)
+ ch := make(chan int, 10)
 
-	go listenToChan(ch)
+ go listenToChan(ch)
 
-	for i := 0; i <= 100; i++ {
-		// the first 10 times through this loop, things go quickly; after that, things slow down.
-		fmt.Println("sending", i, "to channel...")
-		ch <- i
-		fmt.Println("sent", i, "to channel!")
-	}
+ for i := 0; i <= 100; i++ {
+  // the first 10 times through this loop, things go quickly; after that, things slow down.
+  fmt.Println("sending", i, "to channel...")
+  ch <- i
+  fmt.Println("sent", i, "to channel!")
+ }
 
-	fmt.Println("Done!")
-	close(ch)
+ fmt.Println("Done!")
+ close(ch)
 }
 ```
+
 </details>
 
 ### The Sleeping Barber Project
@@ -1202,7 +1200,6 @@ func main() {
 Another problem by Dijkstra.
 </summary>
 <details>
-
 
 > - A barber goes to work in a barbershop with a waiting room with a fixed number of seats.
 > - If no one is in the waiting room, the barber goes to sleep.
@@ -1225,21 +1222,21 @@ package main
 // variables
 
 func main() {
-	// seed our random number generator
+ // seed our random number generator
 
-	// print welcome message
+ // print welcome message
 
-	// create channels if we need any
+ // create channels if we need any
 
-	// create the barbershop
+ // create the barbershop
 
-	// add barbers
+ // add barbers
 
-	// start the barbershop as a goroutine
+ // start the barbershop as a goroutine
 
-	// add clients
+ // add clients
 
-	// block until the barbershop is closed
+ // block until the barbershop is closed
 }
 ```
 
@@ -1256,20 +1253,20 @@ we want some channels, one for clients - buffered to allow more than one. and a 
 
 ```go
 import (
-	"math/rand"
-	"time"
+ "math/rand"
+ "time"
 
-	"github.com/fatih/color"
+ "github.com/fatih/color"
 )
 
 // different file
 type BarberShop struct {
-	ShopCapacity    int
-	HairCutDuration time.Duration
-	NumberOfBarbers int
-	BarbersDoneChan chan bool
-	ClientsChan     chan string
-	Open            bool
+ ShopCapacity    int
+ HairCutDuration time.Duration
+ NumberOfBarbers int
+ BarbersDoneChan chan bool
+ ClientsChan     chan string
+ Open            bool
 }
 
 // variables
@@ -1279,36 +1276,36 @@ var cutDuration = 1000 * time.Millisecond
 var timeOpen = 10 * time.Second
 
 func main() {
-	// seed our random number generator
-	rand.Seed(time.Now().UnixNano())
+ // seed our random number generator
+ rand.Seed(time.Now().UnixNano())
 
-	// print welcome message
-	color.Yellow("The Sleeping Barber Problem")
-	color.Yellow("---------------------------")
+ // print welcome message
+ color.Yellow("The Sleeping Barber Problem")
+ color.Yellow("---------------------------")
 
-	// create channels if we need any
-	clientChan := make(chan string, seatingCapacity)
-	doneChan := make(chan bool)
+ // create channels if we need any
+ clientChan := make(chan string, seatingCapacity)
+ doneChan := make(chan bool)
 
-	// create the barbershop
-	shop := BarberShop{
-		ShopCapacity: seatingCapacity,
-		HairCutDuration: cutDuration,
-		NumberOfBarbers: 0,
-		ClientsChan: clientChan,
-		BarbersDoneChan: doneChan,
-		Open: true,
-	}
+ // create the barbershop
+ shop := BarberShop{
+  ShopCapacity: seatingCapacity,
+  HairCutDuration: cutDuration,
+  NumberOfBarbers: 0,
+  ClientsChan: clientChan,
+  BarbersDoneChan: doneChan,
+  Open: true,
+ }
 
-	color.Green("The shop is open for the day!")
+ color.Green("The shop is open for the day!")
 
-	// add barbers
+ // add barbers
 
-	// start the barbershop as a goroutine
+ // start the barbershop as a goroutine
 
-	// add clients
+ // add clients
 
-	// block until the barbershop is closed
+ // block until the barbershop is closed
 }
 ```
 
@@ -1321,96 +1318,97 @@ there is a loop with a break condition, and we listen on a channel with the seco
 
 ```go
 func (shop *BarberShop) addBarber(barber string) {
-	shop.NumberOfBarbers++
+ shop.NumberOfBarbers++
 
-	go func() {
-		isSleeping := false
-		color.Yellow("%s goes to the waiting room to check for clients.", barber)
+ go func() {
+  isSleeping := false
+  color.Yellow("%s goes to the waiting room to check for clients.", barber)
 
-		for {
-			// if there are no clients, the barber goes to sleep
-			if len(shop.ClientsChan) == 0 {
-				color.Yellow("There is nothing to do, so %s takes a nap.", barber)
-				isSleeping = true
-			}
+  for {
+   // if there are no clients, the barber goes to sleep
+   if len(shop.ClientsChan) == 0 {
+    color.Yellow("There is nothing to do, so %s takes a nap.", barber)
+    isSleeping = true
+   }
 
-			client, shopOpen := <-shop.ClientsChan
+   client, shopOpen := <-shop.ClientsChan
 
-			if shopOpen {
-				if isSleeping {
-					color.Yellow("%s wakes %s up.", client, barber)
-					isSleeping = false
-				}
-				// cut hair
-				shop.cutHair(barber, client)
-			} else {
-				// shop is closed, so send the barber home and close this goroutine
-				shop.sendBarberHome(barber)
-				return
-			}
-		}
-	}()
+   if shopOpen {
+    if isSleeping {
+     color.Yellow("%s wakes %s up.", client, barber)
+     isSleeping = false
+    }
+    // cut hair
+    shop.cutHair(barber, client)
+   } else {
+    // shop is closed, so send the barber home and close this goroutine
+    shop.sendBarberHome(barber)
+    return
+   }
+  }
+ }()
 }
 
 func (shop *BarberShop) cutHair(barber, client string) {
-	color.Green("%s is cutting %s's hair.", barber, client)
-	time.Sleep(shop.HairCutDuration)
-	color.Green("%s is finished cutting %s's hair.", barber, client)
+ color.Green("%s is cutting %s's hair.", barber, client)
+ time.Sleep(shop.HairCutDuration)
+ color.Green("%s is finished cutting %s's hair.", barber, client)
 }
 
 func (shop *BarberShop) sendBarberHome(barber string) {
-	color.Cyan("%s is going home.", barber)
-	shop.BarbersDoneChan <- true
+ color.Cyan("%s is going home.", barber)
+ shop.BarbersDoneChan <- true
 }
 ```
+
 #### Starting the Barbershop as a Goroutine
 
 In the main function, we add a goroutine that will wake up a after a specified time and close the shop. we use the <golang>time.After()</golang> function for this. we have a channel saying the shop is in the process of closing, and a channel saying the shop is closed.
 
 ```go
 func main() {
-	// seed our random number generator
-	rand.Seed(time.Now().UnixNano())
+ // seed our random number generator
+ rand.Seed(time.Now().UnixNano())
 
-	// print welcome message
-	color.Yellow("The Sleeping Barber Problem")
-	color.Yellow("---------------------------")
+ // print welcome message
+ color.Yellow("The Sleeping Barber Problem")
+ color.Yellow("---------------------------")
 
-	// create channels if we need any
-	clientChan := make(chan string, seatingCapacity)
-	doneChan := make(chan bool)
+ // create channels if we need any
+ clientChan := make(chan string, seatingCapacity)
+ doneChan := make(chan bool)
 
-	// create the barbershop
-	shop := BarberShop{
-		ShopCapacity:    seatingCapacity,
-		HairCutDuration: cutDuration,
-		NumberOfBarbers: 0,
-		ClientsChan:     clientChan,
-		BarbersDoneChan: doneChan,
-		Open:            true,
-	}
+ // create the barbershop
+ shop := BarberShop{
+  ShopCapacity:    seatingCapacity,
+  HairCutDuration: cutDuration,
+  NumberOfBarbers: 0,
+  ClientsChan:     clientChan,
+  BarbersDoneChan: doneChan,
+  Open:            true,
+ }
 
-	color.Green("The shop is open for the day!")
+ color.Green("The shop is open for the day!")
 
-	// add barbers
-	shop.addBarber("Frank")
+ // add barbers
+ shop.addBarber("Frank")
 
-	// start the barbershop as a goroutine
-	shopClosing := make(chan bool)
-	closed := make(chan bool)
+ // start the barbershop as a goroutine
+ shopClosing := make(chan bool)
+ closed := make(chan bool)
 
-	go func() {
-		<-time.After(timeOpen)
-		shopClosing <- true
-		shop.closeShopForDay()
-		closed <- true
-	}()
+ go func() {
+  <-time.After(timeOpen)
+  shopClosing <- true
+  shop.closeShopForDay()
+  closed <- true
+ }()
 
-	// add clients
+ // add clients
 
-	// block until the barbershop is closed
+ // block until the barbershop is closed
 
-	time.Sleep(5 * time.Second)
+ time.Sleep(5 * time.Second)
 }
 ```
 
@@ -1418,19 +1416,19 @@ more interesting, we add a function on the barbershop to close the shop and wait
 
 ```go
 func (shop *BarberShop) closeShopForDay() {
-	color.Cyan("Closing shop for the day.")
+ color.Cyan("Closing shop for the day.")
 
-	close(shop.ClientsChan)
-	shop.Open = false
+ close(shop.ClientsChan)
+ shop.Open = false
 
-	for a := 1; a <= shop.NumberOfBarbers; a++ {
-		<-shop.BarbersDoneChan
-	}
+ for a := 1; a <= shop.NumberOfBarbers; a++ {
+  <-shop.BarbersDoneChan
+ }
 
-	close(shop.BarbersDoneChan)
+ close(shop.BarbersDoneChan)
 
-	color.Green("---------------------------------------------------------------------")
-	color.Green("The barbershop is now closed for the day, and everyone has gone home.")
+ color.Green("---------------------------------------------------------------------")
+ color.Green("The barbershop is now closed for the day, and everyone has gone home.")
 }
 ```
 
@@ -1440,53 +1438,53 @@ time to add clients, people who would go to the shop and get a haircut. in the m
 
 ```go
 func main() {
-	//..
+ //..
 
-	// add clients
-	i := 1
+ // add clients
+ i := 1
 
-	go func() {
-		for {
-			// get a random number with average arrival rate
-			randomMillseconds := rand.Int() % (2 * arrivalRate)
-			select {
-			case <-shopClosing:
-				return
-			case <-time.After(time.Millisecond * time.Duration(randomMillseconds)):
-				shop.addClient(fmt.Sprintf("Client #%d", i))
-				i++
-			}
-		}
-	}()
+ go func() {
+  for {
+   // get a random number with average arrival rate
+   randomMillseconds := rand.Int() % (2 * arrivalRate)
+   select {
+   case <-shopClosing:
+    return
+   case <-time.After(time.Millisecond * time.Duration(randomMillseconds)):
+    shop.addClient(fmt.Sprintf("Client #%d", i))
+    i++
+   }
+  }
+ }()
 
-	// block until the barbershop is closed
-	<-closed
+ // block until the barbershop is closed
+ <-closed
 }
 ```
 
-if there is a client, we also need to check the waiting room capacity. if the selector matches the channel, the client is added to waiting queue, if the channel is full, then we match the default case is matched and we don't add the client. 
+if there is a client, we also need to check the waiting room capacity. if the selector matches the channel, the client is added to waiting queue, if the channel is full, then we match the default case is matched and we don't add the client.
 
 ```go
 func (shop *BarberShop) addClient(client string) {
-	// print out a message
-	color.Green("*** %s arrives!", client)
+ // print out a message
+ color.Green("*** %s arrives!", client)
 
-	if shop.Open {
-		select {
-		case shop.ClientsChan <- client:
-			color.Yellow("%s takes a seat in the waiting room.", client)
-		default:
-			color.Red("The waiting room is full, so %s leaves.", client)
-		}
-	} else {
-		color.Red("The shop is already closed, so %s leaves!", client)
-	}
+ if shop.Open {
+  select {
+  case shop.ClientsChan <- client:
+   color.Yellow("%s takes a seat in the waiting room.", client)
+  default:
+   color.Red("The waiting room is full, so %s leaves.", client)
+  }
+ } else {
+  color.Red("The shop is already closed, so %s leaves!", client)
+ }
 }
 ```
 
 #### Trying Things out
 
-we can run the program and see the output, the color really help us. we can change the seating capacity or add more barbers to work in the shop. 
+we can run the program and see the output, the color really help us. we can change the seating capacity or add more barbers to work in the shop.
 
 </details>
 
@@ -1521,7 +1519,6 @@ touch cmd/web/main.go
 
 we start with the main file of the package - "main.go", we define constants with <golang>const</golang> and write the outline of the program.
 
-
 - database connection
 - <golang>channels</golang>
 - <golang>waitGroups</golang>
@@ -1536,24 +1533,23 @@ package main
 const webPort = "80"
 
 func main() {
-	// connect to the database
+ // connect to the database
 
-	// create sessions
+ // create sessions
 
-	// create channels
+ // create channels
 
-	// create waitGroup
+ // create waitGroup
 
-	// set up the application config
+ // set up the application config
 
-	// set up mail
+ // set up mail
 
-	// listen for web connections
+ // listen for web connections
 }
 ```
 
 for the database, we will use PostgresSQL. for session management we will use the package by Alex Edwards with redis store and the go-chi routing package. we can download the packages with `go get`.
-
 
 ```sh
 go get github.com/jackc/pgconn
@@ -1632,50 +1628,50 @@ now we connect to the database from our go application. we first make sure we ca
 
 ```go
 func initDB() *sql.DB {
-	conn := connectToDB()
-	if conn == nil {
-		log.Panic("can't connect to database")
-	}
-	return conn
+ conn := connectToDB()
+ if conn == nil {
+  log.Panic("can't connect to database")
+ }
+ return conn
 }
 
 func connectToDB() *sql.DB {
-	counts := 0
+ counts := 0
 
-	dsn := os.Getenv("DSN")
+ dsn := os.Getenv("DSN")
 
-	for {
-		connection, err := openDB(dsn)
-		if err != nil {
-			log.Println("postgres not yet ready...")
-		} else {
-			log.Print("connected to database!")
-			return connection
-		}
+ for {
+  connection, err := openDB(dsn)
+  if err != nil {
+   log.Println("postgres not yet ready...")
+  } else {
+   log.Print("connected to database!")
+   return connection
+  }
 
-		if counts > 10 {
-			return nil
-		}
+  if counts > 10 {
+   return nil
+  }
 
-		log.Print("Backing off for 1 second")
-		time.Sleep(1 * time.Second)
-		counts++
-		continue
-	}
+  log.Print("Backing off for 1 second")
+  time.Sleep(1 * time.Second)
+  counts++
+  continue
+ }
 }
 
 func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("pgx", dsn)
-	if err != nil {
-		return nil, err
-	}
+ db, err := sql.Open("pgx", dsn)
+ if err != nil {
+  return nil, err
+ }
 
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
+ err = db.Ping()
+ if err != nil {
+  return nil, err
+ }
 
-	return db, nil
+ return db, nil
 }
 ```
 
@@ -1704,41 +1700,42 @@ REDIS="127.0.0.1:6379"
 
 ## build: Build binary
 build:
-	@echo "Building..."
-	env CGO_ENABLED=0  go build -ldflags="-s -w" -o ${BINARY_NAME} ./cmd/web
-	@echo "Built!"
+ @echo "Building..."
+ env CGO_ENABLED=0  go build -ldflags="-s -w" -o ${BINARY_NAME} ./cmd/web
+ @echo "Built!"
 
 ## run: builds and runs the application
 run: build
-	@echo "Starting..."
-	@env DSN=${DSN} REDIS=${REDIS} ./${BINARY_NAME} &
-	@echo "Started!"
+ @echo "Starting..."
+ @env DSN=${DSN} REDIS=${REDIS} ./${BINARY_NAME} &
+ @echo "Started!"
 
 ## clean: runs go clean and deletes binaries
 clean:
-	@echo "Cleaning..."
-	@go clean
-	@rm ${BINARY_NAME}
-	@echo "Cleaned!"
+ @echo "Cleaning..."
+ @go clean
+ @rm ${BINARY_NAME}
+ @echo "Cleaned!"
 
 ## start: an alias to run
 start: run
 
 ## stop: stops the running application
 stop:
-	@echo "Stopping..."
-	@-pkill -SIGTERM -f "./${BINARY_NAME}"
-	@echo "Stopped!"
+ @echo "Stopping..."
+ @-pkill -SIGTERM -f "./${BINARY_NAME}"
+ @echo "Stopped!"
 
 ## restart: stops and starts the application
 restart: stop start
 
 ## test: runs all tests
 test:
-	go test -v ./...
+ go test -v ./...
 ```
 
 and for windows
+
 ```makefile
 PG_PASS=
 DSN=host=localhost port=5432 user=postgres password=${PG_PASS} dbname=concurrency sslmode=disable timezone=UTC connect_timeout=5
@@ -1747,34 +1744,34 @@ REDIS="127.0.0.1:6379"
 
 ## build: builds all binaries
 build:
-	@go build -o ${BINARY_NAME} ./cmd/web
-	@echo back end built!
+ @go build -o ${BINARY_NAME} ./cmd/web
+ @echo back end built!
 
 run: build
-	@echo Starting...
-	set "DSN=${DSN}"
-	set "REDIS=${REDIS}"
-	start /min cmd /c ${BINARY_NAME} &
-	@echo back end started!
+ @echo Starting...
+ set "DSN=${DSN}"
+ set "REDIS=${REDIS}"
+ start /min cmd /c ${BINARY_NAME} &
+ @echo back end started!
 
 clean:
-	@echo Cleaning...
-	@DEL ${BINARY_NAME}
-	@go clean
-	@echo Cleaned!
+ @echo Cleaning...
+ @DEL ${BINARY_NAME}
+ @go clean
+ @echo Cleaned!
 
 start: run
 
 stop:
-	@echo "Stopping..."
-	@taskkill /IM ${BINARY_NAME} /F
-	@echo Stopped back end
+ @echo "Stopping..."
+ @taskkill /IM ${BINARY_NAME} /F
+ @echo Stopped back end
 
 restart: stop start
 
 test:
-	@echo "Testing..."
-	go test -v ./...
+ @echo "Testing..."
+ go test -v ./...
 ```
 
 we can run `make start` to run the application and see that we connect to the postgres application.
@@ -1794,28 +1791,29 @@ when we create sessions, we set the storage to redis and define some nice defaul
 ```go
 
 func initSession() *scs.SessionManager {
-	// set up session
-	session := scs.New()
-	session.Store = redisstore.New(initRedis())
-	session.Lifetime = 24 * time.Hour
-	session.Cookie.Persist = true
-	session.Cookie.SameSite = http.SameSiteLaxMode
-	session.Cookie.Secure = true
+ // set up session
+ session := scs.New()
+ session.Store = redisstore.New(initRedis())
+ session.Lifetime = 24 * time.Hour
+ session.Cookie.Persist = true
+ session.Cookie.SameSite = http.SameSiteLaxMode
+ session.Cookie.Secure = true
 
-	return session
+ return session
 }
 
 func initRedis() *redis.Pool {
-	redisPool := &redis.Pool{
-		MaxIdle: 10,
-		Dial: func() (redis.Conn, error) {
-			return redis.Dial("tcp", os.Getenv("REDIS"))
-		},
-	}
+ redisPool := &redis.Pool{
+  MaxIdle: 10,
+  Dial: func() (redis.Conn, error) {
+   return redis.Dial("tcp", os.Getenv("REDIS"))
+  },
+ }
 
-	return redisPool
+ return redisPool
 }
 ```
+
 </details>
 
 ### Setting Up The Application Config
@@ -1832,19 +1830,19 @@ we will add more to it as we go.
 package main
 
 import (
-	"database/sql"
-	"log"
-	"sync"
+ "database/sql"
+ "log"
+ "sync"
 
-	"github.com/alexedwards/scs/v2"
+ "github.com/alexedwards/scs/v2"
 )
 
 type Config struct {
-	Session  *scs.SessionManager
-	DB       *sql.DB
-	InfoLog  *log.Logger
-	ErrorLog *log.Logger
-	Wait     *sync.WaitGroup
+ Session  *scs.SessionManager
+ DB       *sql.DB
+ InfoLog  *log.Logger
+ ErrorLog *log.Logger
+ Wait     *sync.WaitGroup
 }
 ```
 
@@ -1852,35 +1850,36 @@ and we update our main file to populate the configuration file with the data we 
 
 ```go
 func main() {
-	// connect to the database
-	db := initDB()
+ // connect to the database
+ db := initDB()
 
-	// create sessions
-	session := initSession()
+ // create sessions
+ session := initSession()
 
-	// create loggers
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+ // create loggers
+ infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+ errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// create channels
+ // create channels
 
-	// create waitGroup
-	wg := sync.WaitGroup{}
+ // create waitGroup
+ wg := sync.WaitGroup{}
 
-	// set up the application config
-	app := Config{
-		Session:  session,
-		DB:       db,
-		InfoLog:  infoLog,
-		ErrorLog: errorLog,
-		Wait:     &wg,
-	}
+ // set up the application config
+ app := Config{
+  Session:  session,
+  DB:       db,
+  InfoLog:  infoLog,
+  ErrorLog: errorLog,
+  Wait:     &wg,
+ }
 
-	// set up mail
+ // set up mail
 
-	// listen for web connections
+ // listen for web connections
 }
 ```
+
 </details>
 
 ### Setting Up A Route & Handler For The Home Page, And Starting The Web Server
@@ -1907,7 +1906,7 @@ package main
 import "net/http"
 
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
-	
+ 
 }
 ```
 
@@ -1917,23 +1916,23 @@ in the routes file, we set up a <golang>mux</golang> router from the <golang>go-
 package main
 
 import (
-	"net/http"
+ "net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+ "github.com/go-chi/chi/v5"
+ "github.com/go-chi/chi/v5/middleware"
 )
 
 func (app *Config) routes() http.Handler {
-	// create router
-	mux := chi.NewRouter()
+ // create router
+ mux := chi.NewRouter()
 
-	// set up middleware
-	mux.Use(middleware.Recoverer)
+ // set up middleware
+ mux.Use(middleware.Recoverer)
 
-	// define application routes
-	mux.Get("/", app.HomePage)
+ // define application routes
+ mux.Get("/", app.HomePage)
 
-	return mux
+ return mux
 }
 ```
 
@@ -1941,17 +1940,17 @@ finally, we add a function to "main.go"  to listen and serve web pages. it will 
 
 ```go
 func (app *Config) serve() {
-	// start http server
-	srv := &http.Server{
-		Addr: fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(),
-	}
+ // start http server
+ srv := &http.Server{
+  Addr: fmt.Sprintf(":%s", webPort),
+  Handler: app.routes(),
+ }
 
-	app.InfoLog.Println("Starting web server...")
-	err := srv.ListenAndServe()
-	if err != nil {
-		log.Panic(err)
-	}
+ app.InfoLog.Println("Starting web server...")
+ err := srv.ListenAndServe()
+ if err != nil {
+  log.Panic(err)
+ }
 }
 ```
 
@@ -1986,86 +1985,86 @@ We start with the render function, taking a response writer, the requests, the n
 package main
 
 import (
-	"fmt"
-	"html/template"
-	"net/http"
-	"time"
+ "fmt"
+ "html/template"
+ "net/http"
+ "time"
 )
 
 var pathToTemplates = "./cmd/web/templates"
 
 type TemplateData struct {
-	StringMap     map[string]string
-	IntMap        map[string]int
-	FloatMap      map[string]float64
-	Data          map[string]any
-	Flash         string
-	Warning       string
-	Error         string
-	Authenticated bool
-	Now           time.Time
-	// User *data.User
+ StringMap     map[string]string
+ IntMap        map[string]int
+ FloatMap      map[string]float64
+ Data          map[string]any
+ Flash         string
+ Warning       string
+ Error         string
+ Authenticated bool
+ Now           time.Time
+ // User *data.User
 }
 
 func (app *Config) render(w http.ResponseWriter, r *http.Request, t string, td *TemplateData) {
-	partials := []string{
-		fmt.Sprintf("%s/base.layout.gohtml", pathToTemplates),
-		fmt.Sprintf("%s/header.partial.gohtml", pathToTemplates),
-		fmt.Sprintf("%s/navbar.partial.gohtml", pathToTemplates),
-		fmt.Sprintf("%s/footer.partial.gohtml", pathToTemplates),
-		fmt.Sprintf("%s/alerts.partial.gohtml", pathToTemplates),
-	}
+ partials := []string{
+  fmt.Sprintf("%s/base.layout.gohtml", pathToTemplates),
+  fmt.Sprintf("%s/header.partial.gohtml", pathToTemplates),
+  fmt.Sprintf("%s/navbar.partial.gohtml", pathToTemplates),
+  fmt.Sprintf("%s/footer.partial.gohtml", pathToTemplates),
+  fmt.Sprintf("%s/alerts.partial.gohtml", pathToTemplates),
+ }
 
-	var templateSlice []string
-	templateSlice = append(templateSlice, fmt.Sprintf("%s/%s", pathToTemplates, t))
+ var templateSlice []string
+ templateSlice = append(templateSlice, fmt.Sprintf("%s/%s", pathToTemplates, t))
 
-	// put the defaults and the specific template in one range.
-	for _, x := range partials {
-		templateSlice = append(templateSlice, x)
-	}
+ // put the defaults and the specific template in one range.
+ for _, x := range partials {
+  templateSlice = append(templateSlice, x)
+ }
 
-	// create it empty
-	if td == nil {
-		td = &TemplateData{}
-	}
+ // create it empty
+ if td == nil {
+  td = &TemplateData{}
+ }
 
-	// parse the templates into a single object.
-	tmpl, err := template.ParseFiles(templateSlice...)
-	if err != nil {
-		app.ErrorLog.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+ // parse the templates into a single object.
+ tmpl, err := template.ParseFiles(templateSlice...)
+ if err != nil {
+  app.ErrorLog.Println(err)
+  http.Error(w, err.Error(), http.StatusInternalServerError)
+  return
+ }
 
-	// execute (populate) with data.
-	if err := tmpl.Execute(w, app.AddDefaultData(td, r)); err != nil {
-		app.ErrorLog.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+ // execute (populate) with data.
+ if err := tmpl.Execute(w, app.AddDefaultData(td, r)); err != nil {
+  app.ErrorLog.Println(err)
+  http.Error(w, err.Error(), http.StatusInternalServerError)
+  return
+ }
 }
 
 /*
 fill up notifications and user specific data.
 */
 func (app *Config) AddDefaultData(td *TemplateData, r *http.Request) *TemplateData {
-	td.Flash = app.Session.PopString(r.Context(), "flash")
-	td.Warning = app.Session.PopString(r.Context(), "warning")
-	td.Error = app.Session.PopString(r.Context(), "error")
-	if app.IsAuthenticated(r) {
-		td.Authenticated = true
-		// TODO - get more user information
-	}
-	td.Now = time.Now()
+ td.Flash = app.Session.PopString(r.Context(), "flash")
+ td.Warning = app.Session.PopString(r.Context(), "warning")
+ td.Error = app.Session.PopString(r.Context(), "error")
+ if app.IsAuthenticated(r) {
+  td.Authenticated = true
+  // TODO - get more user information
+ }
+ td.Now = time.Now()
 
-	return td
+ return td
 }
 
 /*
 check if session contains user id
 */
 func (app *Config) IsAuthenticated(r *http.Request) bool {
-	return app.Session.Exists(r.Context(), "userID")
+ return app.Session.Exists(r.Context(), "userID")
 }
 
 ```
@@ -2074,7 +2073,7 @@ and finally, at the "handlers.go" file, we can serve the homepage template.
 
 ```go
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "home.page.gohtml", nil)
+ app.render(w, r, "home.page.gohtml", nil)
 }
 ```
 
@@ -2096,7 +2095,7 @@ package main
 import "net/http"
 
 func (app *Config) SessionLoad(next http.Handler) http.Handler {
-	return app.Session.LoadAndSave(next)
+ return app.Session.LoadAndSave(next)
 }
 ```
 
@@ -2105,17 +2104,17 @@ we add it to the router we created in "routes.go", simply by telling the router 
 ```go
 
 func (app *Config) routes() http.Handler {
-	// create router
-	mux := chi.NewRouter()
+ // create router
+ mux := chi.NewRouter()
 
-	// set up middleware
-	mux.Use(middleware.Recoverer)
-	mux.Use(app.SessionLoad)
+ // set up middleware
+ mux.Use(middleware.Recoverer)
+ mux.Use(app.SessionLoad)
 
-	// define application routes
-	mux.Get("/", app.HomePage)
+ // define application routes
+ mux.Get("/", app.HomePage)
 
-	return mux
+ return mux
 }
 ```
 
@@ -2135,11 +2134,11 @@ stubs:
 
 ```go
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "home.page.gohtml", nil)
+ app.render(w, r, "home.page.gohtml", nil)
 }
 
 func (app *Config) LoginPage(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "login.page.gohtml", nil)
+ app.render(w, r, "login.page.gohtml", nil)
 }
 
 func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
@@ -2151,7 +2150,7 @@ func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) RegisterPage(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "register.page.gohtml", nil)
+ app.render(w, r, "register.page.gohtml", nil)
 }
 
 func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
@@ -2167,24 +2166,24 @@ registering handlers on the routes:
 
 ```go
 func (app *Config) routes() http.Handler {
-	// create router
-	mux := chi.NewRouter()
+ // create router
+ mux := chi.NewRouter()
 
-	// set up middleware
-	mux.Use(middleware.Recoverer)
-	mux.Use(app.SessionLoad)
+ // set up middleware
+ mux.Use(middleware.Recoverer)
+ mux.Use(app.SessionLoad)
 
-	// define application routes
-	mux.Get("/", app.HomePage)
+ // define application routes
+ mux.Get("/", app.HomePage)
 
-	mux.Get("/login", app.LoginPage)
-	mux.Post("/login", app.PostLoginPage)
-	mux.Get("/logout", app.Logout)
-	mux.Get("/register", app.RegisterPage)
-	mux.Post("/register", app.PostRegisterPage)
-	mux.Get("/activate-account", app.ActivateAccount)
+ mux.Get("/login", app.LoginPage)
+ mux.Post("/login", app.PostLoginPage)
+ mux.Get("/logout", app.Logout)
+ mux.Get("/register", app.RegisterPage)
+ mux.Post("/register", app.PostRegisterPage)
+ mux.Get("/activate-account", app.ActivateAccount)
 
-	return mux
+ return mux
 }
 ```
 
@@ -2202,23 +2201,24 @@ we run goroutine that listens on the interrupt system calls <golang>Os.Signal</g
 
 ```go
 func (app *Config) listenForShutdown() {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	app.shutdown()
-	os.Exit(0)
+ quit := make(chan os.Signal, 1)
+ signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+ <-quit
+ app.shutdown()
+ os.Exit(0)
 }
 
 func (app *Config) shutdown() {
-	// perform any cleanup tasks
-	app.InfoLog.Println("would run cleanup tasks...")
+ // perform any cleanup tasks
+ app.InfoLog.Println("would run cleanup tasks...")
 
-	// block until waitGroup is empty
-	app.Wait.Wait()
+ // block until waitGroup is empty
+ app.Wait.Wait()
 
-	app.InfoLog.Println("closing channels and shutting down application...")
+ app.InfoLog.Println("closing channels and shutting down application...")
 }
 ```
+
 </details>
 
 ### Populating The Database
@@ -2228,7 +2228,7 @@ func (app *Config) shutdown() {
 Filling in some dummy data.
 </summary>
 
-from the course resource files, we can take the "db.sql" file. it contains sql commands to create our postgres database tables and insert a dummy user. 
+from the course resource files, we can take the "db.sql" file. it contains sql commands to create our postgres database tables and insert a dummy user.
 
 - `CREATE TABLE`
 - `ALTER TABLE`
@@ -2254,33 +2254,34 @@ we update the Config struct with the new models type in "config.go.
 
 ```go
 type Config struct {
-	Session  *scs.SessionManager
-	DB       *sql.DB
-	InfoLog  *log.Logger
-	ErrorLog *log.Logger
-	Wait     *sync.WaitGroup
-	Models   data.Models
+ Session  *scs.SessionManager
+ DB       *sql.DB
+ InfoLog  *log.Logger
+ ErrorLog *log.Logger
+ Wait     *sync.WaitGroup
+ Models   data.Models
 }
 ```
 
-in the "main.go" file, we instantiate the struct with the call 
+in the "main.go" file, we instantiate the struct with the call
+
 ```go
 func main() {
-	// code before
-	// set up the application config
-	app := Config{
-		Session:  session,
-		DB:       db,
-		InfoLog:  infoLog,
-		ErrorLog: errorLog,
-		Wait:     &wg,
-		Models:   data.New(db),
-	}
-	// code after
+ // code before
+ // set up the application config
+ app := Config{
+  Session:  session,
+  DB:       db,
+  InfoLog:  infoLog,
+  ErrorLog: errorLog,
+  Wait:     &wg,
+  Models:   data.New(db),
+ }
+ // code after
 }
 ```
-</details>
 
+</details>
 
 ### Implementing The Login/Logout Functions
 
@@ -2296,47 +2297,47 @@ before we store the data, we need to register this type with the session by call
 
 ```go
 func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
-	_ = app.Session.RenewToken(r.Context())
+ _ = app.Session.RenewToken(r.Context())
 
-	// parse form post
-	err := r.ParseForm()
-	if err != nil {
-		app.ErrorLog.Println(err)
-	}
+ // parse form post
+ err := r.ParseForm()
+ if err != nil {
+  app.ErrorLog.Println(err)
+ }
 
-	// get email and password from form post
-	email := r.Form.Get("email")
-	password := r.Form.Get("password")
+ // get email and password from form post
+ email := r.Form.Get("email")
+ password := r.Form.Get("password")
 
-	user, err := app.Models.User.GetByEmail(email)
-	if err != nil {
-		app.Session.Put(r.Context(), "error", "Invalid credentials.")
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
+ user, err := app.Models.User.GetByEmail(email)
+ if err != nil {
+  app.Session.Put(r.Context(), "error", "Invalid credentials.")
+  http.Redirect(w, r, "/login", http.StatusSeeOther)
+  return
+ }
 
-	// check password
-	validPassword, err := user.PasswordMatches(password)
-	if err != nil {
-		app.Session.Put(r.Context(), "error", "Invalid credentials.")
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
+ // check password
+ validPassword, err := user.PasswordMatches(password)
+ if err != nil {
+  app.Session.Put(r.Context(), "error", "Invalid credentials.")
+  http.Redirect(w, r, "/login", http.StatusSeeOther)
+  return
+ }
 
-	if !validPassword{
-		app.Session.Put(r.Context(), "error", "Invalid credentials.")
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
+ if !validPassword{
+  app.Session.Put(r.Context(), "error", "Invalid credentials.")
+  http.Redirect(w, r, "/login", http.StatusSeeOther)
+  return
+ }
 
-	// okay, so log user in
-	app.Session.Put(r.Context(), "userID", user.ID)
-	app.Session.Put(r.Context(), "user", user)
+ // okay, so log user in
+ app.Session.Put(r.Context(), "userID", user.ID)
+ app.Session.Put(r.Context(), "user", user)
 
-	app.Session.Put(r.Context(), "flash", "Successful login!")
+ app.Session.Put(r.Context(), "flash", "Successful login!")
 
-	// redirect the user
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+ // redirect the user
+ http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 ```
 
@@ -2344,16 +2345,15 @@ the logout is simpler, we destroy the user session to remove all stored data fro
 
 ```go
 func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
-	// clean up session
-	_ = app.Session.Destroy(r.Context())
-	_ = app.Session.RenewToken(r.Context())
+ // clean up session
+ _ = app.Session.Destroy(r.Context())
+ _ = app.Session.RenewToken(r.Context())
 
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+ http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 ```
 
 </details>
-
 
 </details>
 
@@ -2369,21 +2369,21 @@ we will also add logic to wait for emails to finish sending before shutting down
 
 ```go
 func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
-	// create a user
+ // create a user
 
-	// send an activation email
+ // send an activation email
 
-	// subscribe the user to an account
+ // subscribe the user to an account
 }
 
 func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
-	// validate url 
+ // validate url 
 
-	// generate an invoice
+ // generate an invoice
 
-	// send an email with attachments
+ // send an email with attachments
 
-	// send an email with the invoice attached
+ // send an email with the invoice attached
 }
 ```
 
@@ -2397,6 +2397,7 @@ Sending emails from go.
 we will implement the mail sending logic by using <golang>goroutines</golang>, in a new file called "mailer.go" inside "cmd/web" folder.
 
 we will add some packages using `go get`
+
 - mailing package
 - mail styling package
 
@@ -2410,29 +2411,29 @@ The message struct doesn't use concurrency, but will have data of type <golang>a
 
 ```go
 type Mail struct {
-	Domain      string
-	Host        string
-	Port        int
-	Username    string
-	Password    string
-	Encryption  string
-	FromAddress string
-	FromName    string
-	Wait        *sync.WaitGroup
-	MailerChan  chan Message
-	ErrorChan   chan error
-	DoneChan    chan bool
+ Domain      string
+ Host        string
+ Port        int
+ Username    string
+ Password    string
+ Encryption  string
+ FromAddress string
+ FromName    string
+ Wait        *sync.WaitGroup
+ MailerChan  chan Message
+ ErrorChan   chan error
+ DoneChan    chan bool
 }
 
 type Message struct {
-	From        string
-	FromName    string
-	To          string
-	Subject     string
-	Attachments []string
-	Data        any
-	DataMap     map[string]any
-	Template    string
+ From        string
+ FromName    string
+ To          string
+ Subject     string
+ Attachments []string
+ Data        any
+ DataMap     map[string]any
+ Template    string
 }
 ```
 
@@ -2445,147 +2446,149 @@ If we fail in one of our utility functions, we will send the error into the erro
 
 ```go
 func (m *Mail) sendMail(msg Message, errorChan chan error) {
-	if msg.Template == "" {
-		msg.Template = "mail"
-	}
+ if msg.Template == "" {
+  msg.Template = "mail"
+ }
 
-	if msg.From == "" {
-		msg.From = m.FromAddress
-	}
+ if msg.From == "" {
+  msg.From = m.FromAddress
+ }
 
-	if msg.FromName == "" {
-		msg.FromName = m.FromName
-	}
+ if msg.FromName == "" {
+  msg.FromName = m.FromName
+ }
 
-	data := map[string]any{
-		"message": msg.Data,
-	}
+ data := map[string]any{
+  "message": msg.Data,
+ }
 
-	msg.DataMap = data
+ msg.DataMap = data
 
-	// build html mail
-	formattedMessage, err := m.buildHTMLMessage(msg)
-	if err != nil {
-		errorChan <- err
-	}
+ // build html mail
+ formattedMessage, err := m.buildHTMLMessage(msg)
+ if err != nil {
+  errorChan <- err
+ }
 
-	// build plain text mail
-	plainMessage, err := m.buildPlainTextMessage(msg)
-	if err != nil {
-		errorChan <- err
-	}
+ // build plain text mail
+ plainMessage, err := m.buildPlainTextMessage(msg)
+ if err != nil {
+  errorChan <- err
+ }
 
-	server := mail.NewSMTPClient()
-	server.Host = m.Host
-	server.Port = m.Port
-	server.Username = m.Username
-	server.Password = m.Password
-	server.Encryption = m.getEncryption(m.Encryption)
-	server.KeepAlive = false
-	server.ConnectTimeout = 10 * time.Second
-	server.SendTimeout = 10 * time.Second
+ server := mail.NewSMTPClient()
+ server.Host = m.Host
+ server.Port = m.Port
+ server.Username = m.Username
+ server.Password = m.Password
+ server.Encryption = m.getEncryption(m.Encryption)
+ server.KeepAlive = false
+ server.ConnectTimeout = 10 * time.Second
+ server.SendTimeout = 10 * time.Second
 
-	smtpClient, err := server.Connect()
-	if err != nil {
-		errorChan <- err
-	}
+ smtpClient, err := server.Connect()
+ if err != nil {
+  errorChan <- err
+ }
 
-	email := mail.NewMSG()
-	email.SetFrom(msg.From).AddTo(msg.To).SetSubject(msg.Subject)
+ email := mail.NewMSG()
+ email.SetFrom(msg.From).AddTo(msg.To).SetSubject(msg.Subject)
 
-	email.SetBody(mail.TextPlain, plainMessage)
-	email.AddAlternative(mail.TextHTML, formattedMessage)
+ email.SetBody(mail.TextPlain, plainMessage)
+ email.AddAlternative(mail.TextHTML, formattedMessage)
 
-	if len(msg.Attachments) > 0 {
-		for _, x := range msg.Attachments {
-			email.AddAttachment(x)
-		}
-	}
+ if len(msg.Attachments) > 0 {
+  for _, x := range msg.Attachments {
+   email.AddAttachment(x)
+  }
+ }
 
-	err = email.Send(smtpClient)
-	if err != nil {
-		errorChan <- err
-	}
+ err = email.Send(smtpClient)
+ if err != nil {
+  errorChan <- err
+ }
 }
 
 func (m *Mail) getEncryption(e string) mail.Encryption {
-	switch e {
-	case "tls":
-		return mail.EncryptionSTARTTLS
-	case "ssl":
-		return mail.EncryptionSSLTLS
-	case "none":
-		return mail.EncryptionNone
-	default:
-		return mail.EncryptionSTARTTLS
-	}
+ switch e {
+ case "tls":
+  return mail.EncryptionSTARTTLS
+ case "ssl":
+  return mail.EncryptionSSLTLS
+ case "none":
+  return mail.EncryptionNone
+ default:
+  return mail.EncryptionSTARTTLS
+ }
 }
 ```
+
 #### Building Html And Plain Text Messages
 
 we finish the message body input and formatting, and add some css. we use the same template behavior as we did with the web pages. for the html message we also inline the css style using the premailer package.
 
 ```go
 func (m *Mail) buildHTMLMessage(msg Message) (string, error) {
-	templateToRender := fmt.Sprintf("./cmd/web/templates/%s.html.gohtml", msg.Template)
+ templateToRender := fmt.Sprintf("./cmd/web/templates/%s.html.gohtml", msg.Template)
 
-	t, err := template.New("email-html").ParseFiles(templateToRender)
-	if err != nil {
-		return "", err
-	}
+ t, err := template.New("email-html").ParseFiles(templateToRender)
+ if err != nil {
+  return "", err
+ }
 
-	var tpl bytes.Buffer
-	if err = t.ExecuteTemplate(&tpl, "body", msg.DataMap); err != nil {
-		return "", err
-	}
+ var tpl bytes.Buffer
+ if err = t.ExecuteTemplate(&tpl, "body", msg.DataMap); err != nil {
+  return "", err
+ }
 
-	formattedMessage := tpl.String()
-	formattedMessage, err = m.inlineCSS(formattedMessage)
-	if err != nil {
-		return "", err
-	}
+ formattedMessage := tpl.String()
+ formattedMessage, err = m.inlineCSS(formattedMessage)
+ if err != nil {
+  return "", err
+ }
 
-	return formattedMessage, nil
+ return formattedMessage, nil
 }
 
 func (m *Mail) buildPlainTextMessage(msg Message) (string, error) {
-	templateToRender := fmt.Sprintf("./cmd/web/templates/%s.plain.gohtml", msg.Template)
+ templateToRender := fmt.Sprintf("./cmd/web/templates/%s.plain.gohtml", msg.Template)
 
-	t, err := template.New("email-plain").ParseFiles(templateToRender)
-	if err != nil {
-		return "", err
-	}
+ t, err := template.New("email-plain").ParseFiles(templateToRender)
+ if err != nil {
+  return "", err
+ }
 
-	var tpl bytes.Buffer
-	if err = t.ExecuteTemplate(&tpl, "body", msg.DataMap); err != nil {
-		return "", err
-	}
+ var tpl bytes.Buffer
+ if err = t.ExecuteTemplate(&tpl, "body", msg.DataMap); err != nil {
+  return "", err
+ }
 
-	plainMessage := tpl.String()
+ plainMessage := tpl.String()
 
-	return plainMessage, nil
+ return plainMessage, nil
 }
 
 func (m *Mail) inlineCSS(s string) (string, error) {
-	options := premailer.Options{
-		RemoveClasses: false,
-		CssToAttributes: false,
-		KeepBangImportant: true,
-	}
+ options := premailer.Options{
+  RemoveClasses: false,
+  CssToAttributes: false,
+  KeepBangImportant: true,
+ }
 
-	prem, err := premailer.NewPremailerFromString(s, &options)
-	if err != nil {
-		return "", err
-	}
+ prem, err := premailer.NewPremailerFromString(s, &options)
+ if err != nil {
+  return "", err
+ }
 
-	html, err := prem.Transform()
-	if err != nil {
-		return "", err
-	}
+ html, err := prem.Transform()
+ if err != nil {
+  return "", err
+ }
 
-	return html, nil
+ return html, nil
 }
 ```
+
 </details>
 
 ### Sending A Message (Synchronously)
@@ -2599,47 +2602,48 @@ we add a test route that will send an email synchronously. this is just temporar
 
 ```go
 func (app *Config) routes() http.Handler {
-	// create router
-	mux := chi.NewRouter()
+ // create router
+ mux := chi.NewRouter()
 
-	// set up middleware
-	mux.Use(middleware.Recoverer)
-	mux.Use(app.SessionLoad)
+ // set up middleware
+ mux.Use(middleware.Recoverer)
+ mux.Use(app.SessionLoad)
 
-	// define application routes
-	mux.Get("/", app.HomePage)
+ // define application routes
+ mux.Get("/", app.HomePage)
 
-	mux.Get("/login", app.LoginPage)
-	mux.Post("/login", app.PostLoginPage)
-	mux.Get("/logout", app.Logout)
-	mux.Get("/register", app.RegisterPage)
-	mux.Post("/register", app.PostRegisterPage)
-	mux.Get("/activate-account", app.ActivateAccount)
+ mux.Get("/login", app.LoginPage)
+ mux.Post("/login", app.PostLoginPage)
+ mux.Get("/logout", app.Logout)
+ mux.Get("/register", app.RegisterPage)
+ mux.Post("/register", app.PostRegisterPage)
+ mux.Get("/activate-account", app.ActivateAccount)
 
-	mux.Get("/test-email", func(w http.ResponseWriter, r *http.Request) {
-		m := Mail{
-			Domain: "localhost",
-			Host: "localhost",
-			Port: 1025,
-			Encryption: "none",
-			FromAddress: "info@mycompany.com",
-			FromName: "info",
-			ErrorChan: make(chan error),
+ mux.Get("/test-email", func(w http.ResponseWriter, r *http.Request) {
+  m := Mail{
+   Domain: "localhost",
+   Host: "localhost",
+   Port: 1025,
+   Encryption: "none",
+   FromAddress: "info@mycompany.com",
+   FromName: "info",
+   ErrorChan: make(chan error),
 
-		}
+  }
 
-		msg := Message{
-			To: "me@here.com",
-			Subject: "Test email",
-			Data: "Hello, world.",
-		}
+  msg := Message{
+   To: "me@here.com",
+   Subject: "Test email",
+   Data: "Hello, world.",
+  }
 
-		m.sendMail(msg, make(chan error))
-	})
+  m.sendMail(msg, make(chan error))
+ })
 
-	return mux
+ return mux
 }
 ```
+
 we can test the functionality by navigating to the new route and checking the mailhog web interface to see the send message.
 
 </details>
@@ -2660,16 +2664,16 @@ we define a function on the application config object and use the <golang>select
 
 ```go
 func (app *Config) listenForMail() {
-	for {
-		select {
-		case msg := <- app.Mailer.MailerChan:
-			go app.Mailer.sendMail(msg, app.Mailer.ErrorChan)
-		case err := <- app.Mailer.ErrorChan:
-			app.ErrorLog.Println(err)
-		case <-app.Mailer.DoneChan:
-			return
-		}
-	}
+ for {
+  select {
+  case msg := <- app.Mailer.MailerChan:
+   go app.Mailer.sendMail(msg, app.Mailer.ErrorChan)
+  case err := <- app.Mailer.ErrorChan:
+   app.ErrorLog.Println(err)
+  case <-app.Mailer.DoneChan:
+   return
+  }
+ }
 }
 ```
 
@@ -2677,44 +2681,44 @@ back in our main function, we create the mailer and listen for the mailing in a 
 
 ```go
 func main() {
-	// code
-	// set up the application config
-	app := Config{
-		Session:  session,
-		DB:       db,
-		InfoLog:  infoLog,
-		ErrorLog: errorLog,
-		Wait:     &wg,
-		Models:   data.New(db),
-	}
+ // code
+ // set up the application config
+ app := Config{
+  Session:  session,
+  DB:       db,
+  InfoLog:  infoLog,
+  ErrorLog: errorLog,
+  Wait:     &wg,
+  Models:   data.New(db),
+ }
 
-	// set up mail
-	app.Mailer = app.createMail()
-	go app.listenForMail()
+ // set up mail
+ app.Mailer = app.createMail()
+ go app.listenForMail()
 
-	// code
+ // code
 }
 
 func (app *Config) createMail() Mail {
-	// create channels
-	errorChan := make(chan error)
-	mailerChan := make(chan Message, 100)
-	mailerDoneChan := make(chan bool)
+ // create channels
+ errorChan := make(chan error)
+ mailerChan := make(chan Message, 100)
+ mailerDoneChan := make(chan bool)
 
-	m := Mail{
-		Domain: "localhost",
-		Host: "localhost",
-		Port: 1025,
-		Encryption: "none",
-		FromName: "Info",
-		FromAddress: "info@mycompany.com",
-		Wait: app.Wait,
-		ErrorChan: errorChan,
-		MailerChan: mailerChan,
-		DoneChan: mailerDoneChan,
-	}
+ m := Mail{
+  Domain: "localhost",
+  Host: "localhost",
+  Port: 1025,
+  Encryption: "none",
+  FromName: "Info",
+  FromAddress: "info@mycompany.com",
+  Wait: app.Wait,
+  ErrorChan: errorChan,
+  MailerChan: mailerChan,
+  DoneChan: mailerDoneChan,
+ }
 
-	return m
+ return m
 }
 ```
 
@@ -2726,10 +2730,11 @@ we want the <golang>waitGroup</golang> to control how many tasks are in process,
 
 ```go
 func (app *Config) sendEmail(msg Message) {
-	app.Wait.Add(1)
-	app.Mailer.MailerChan <-msg
+ app.Wait.Add(1)
+ app.Mailer.MailerChan <-msg
 }
 ```
+
 </details>
 
 ### Sending An Email On Incorrect Login
@@ -2745,31 +2750,32 @@ in the "handlers.go" file, we can send an email if the password is not correct. 
 
 ```go
 func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
-	// more code
+ // more code
 
-	// check password
-	validPassword, err := user.PasswordMatches(password)
-	if err != nil {
-		app.Session.Put(r.Context(), "error", "Invalid credentials.")
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
+ // check password
+ validPassword, err := user.PasswordMatches(password)
+ if err != nil {
+  app.Session.Put(r.Context(), "error", "Invalid credentials.")
+  http.Redirect(w, r, "/login", http.StatusSeeOther)
+  return
+ }
 
-	if !validPassword{
-		msg := Message{
-			To: email,
-			Subject: "Failed log in attempt",
-			Data: "Invalid login attempt!",
-		}
+ if !validPassword{
+  msg := Message{
+   To: email,
+   Subject: "Failed log in attempt",
+   Data: "Invalid login attempt!",
+  }
 
-		app.sendEmail(msg)
-		app.Session.Put(r.Context(), "error", "Invalid credentials.")
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
-	// more code
+  app.sendEmail(msg)
+  app.Session.Put(r.Context(), "error", "Invalid credentials.")
+  http.Redirect(w, r, "/login", http.StatusSeeOther)
+  return
+ }
+ // more code
 }
 ```
+
 </details>
 
 ### Adding Cleanup Tasks To The `shutdown()` Function
@@ -2783,18 +2789,18 @@ back in the main.go file, we had a function that captured the system interrupts 
 
 ```go
 func (app *Config) shutdown() {
-	// perform any cleanup tasks
-	app.InfoLog.Println("would run cleanup tasks...")
+ // perform any cleanup tasks
+ app.InfoLog.Println("would run cleanup tasks...")
 
-	// block until waitGroup is empty
-	app.Wait.Wait()
+ // block until waitGroup is empty
+ app.Wait.Wait()
 
-	app.Mailer.DoneChan <- true
+ app.Mailer.DoneChan <- true
 
-	app.InfoLog.Println("closing channels and shutting down application...")
-	close(app.Mailer.MailerChan)
-	close(app.Mailer.ErrorChan)
-	close(app.Mailer.DoneChan)
+ app.InfoLog.Println("closing channels and shutting down application...")
+ close(app.Mailer.MailerChan)
+ close(app.Mailer.ErrorChan)
+ close(app.Mailer.DoneChan)
 }
 ```
 
@@ -2827,10 +2833,10 @@ the next thing to do is to protect the url, we will go the <golang>bwmarrin/go-a
 package main
 
 import (
-	"fmt"
-	"github.com/bwmarrin/go-alone"
-	"strings"
-	"time"
+ "fmt"
+ "github.com/bwmarrin/go-alone"
+ "strings"
+ "time"
 )
 
 var secret // take from env somehow
@@ -2839,48 +2845,48 @@ var secretKey []byte
 
 // NewURLSigner creates a new signer
 func NewURLSigner() {
-	secretKey = []byte(secret)
+ secretKey = []byte(secret)
 }
 
 // GenerateTokenFromString generates a signed token
 func GenerateTokenFromString(data string) string {
-	var urlToSign string
+ var urlToSign string
 
-	s := goalone.New(secretKey, goalone.Timestamp)
-	if strings.Contains(data, "?") {
-		urlToSign = fmt.Sprintf("%s&hash=", data)
-	} else {
-		urlToSign = fmt.Sprintf("%s?hash=", data)
-	}
+ s := goalone.New(secretKey, goalone.Timestamp)
+ if strings.Contains(data, "?") {
+  urlToSign = fmt.Sprintf("%s&hash=", data)
+ } else {
+  urlToSign = fmt.Sprintf("%s?hash=", data)
+ }
 
-	tokenBytes := s.Sign([]byte(urlToSign))
-	token := string(tokenBytes)
+ tokenBytes := s.Sign([]byte(urlToSign))
+ token := string(tokenBytes)
 
-	return token
+ return token
 }
 
 // VerifyToken verifies a signed token
 func VerifyToken(token string) bool {
-	s := goalone.New(secretKey, goalone.Timestamp)
-	_, err := s.Unsign([]byte(token))
+ s := goalone.New(secretKey, goalone.Timestamp)
+ _, err := s.Unsign([]byte(token))
 
-	if err != nil {
-		// signature is not valid. Token was tampered with, forged, or maybe it's
-		// not even a token at all! Either way, it's not safe to use it.
-		return false
-	}
-	// valid hash
-	return true
+ if err != nil {
+  // signature is not valid. Token was tampered with, forged, or maybe it's
+  // not even a token at all! Either way, it's not safe to use it.
+  return false
+ }
+ // valid hash
+ return true
 
 }
 
 // Expired checks to see if a token has expired
 func Expired(token string, minutesUntilExpire int) bool {
-	s := goalone.New(secretKey, goalone.Timestamp)
-	ts := s.Parse([]byte(token))
+ s := goalone.New(secretKey, goalone.Timestamp)
+ ts := s.Parse([]byte(token))
 
-	// time.Duration(seconds)*time.Second
-	return time.Since(ts.Timestamp) > time.Duration(minutesUntilExpire)*time.Minute
+ // time.Duration(seconds)*time.Second
+ return time.Since(ts.Timestamp) > time.Duration(minutesUntilExpire)*time.Minute
 }
 ```
 
@@ -2898,48 +2904,49 @@ we will also update the notification in the session info and redirect the user t
 
 ```go
 unc (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		app.ErrorLog.Println(err)
-	}
+ err := r.ParseForm()
+ if err != nil {
+  app.ErrorLog.Println(err)
+ }
 
-	// TODO - validate data
+ // TODO - validate data
 
-	// create a user
-	u := data.User{
-		Email: r.Form.Get("email"),
-		FirstName: r.Form.Get("first-name"),
-		LastName: r.Form.Get("last-name"),
-		Password: r.Form.Get("password"),
-		Active: 0,
-		IsAdmin: 0,
-	}
+ // create a user
+ u := data.User{
+  Email: r.Form.Get("email"),
+  FirstName: r.Form.Get("first-name"),
+  LastName: r.Form.Get("last-name"),
+  Password: r.Form.Get("password"),
+  Active: 0,
+  IsAdmin: 0,
+ }
 
-	_, err = u.Insert(u)
-	if err != nil {
-		app.Session.Put(r.Context(), "error", "Unable to create user.")
-		http.Redirect(w, r, "/register", http.StatusSeeOther)
-		return
-	}
+ _, err = u.Insert(u)
+ if err != nil {
+  app.Session.Put(r.Context(), "error", "Unable to create user.")
+  http.Redirect(w, r, "/register", http.StatusSeeOther)
+  return
+ }
 
-	// send an activation email
-	url := fmt.Sprintf("http://localhost/activate?email=%s", u.Email)
-	signedURL := GenerateTokenFromString(url)
-	app.InfoLog.Println(signedURL)
+ // send an activation email
+ url := fmt.Sprintf("http://localhost/activate?email=%s", u.Email)
+ signedURL := GenerateTokenFromString(url)
+ app.InfoLog.Println(signedURL)
 
-	msg := Message{
-		To: u.Email,
-		Subject: "Activate your account",
-		Template: "confirmation-email",
-		Data: template.HTML(signedURL),
-	}
+ msg := Message{
+  To: u.Email,
+  Subject: "Activate your account",
+  Template: "confirmation-email",
+  Data: template.HTML(signedURL),
+ }
 
-	app.sendEmail(msg)
+ app.sendEmail(msg)
 
-	app.Session.Put(r.Context(), "flash", "Confirmation email sent. Check your email.")
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+ app.Session.Put(r.Context(), "flash", "Confirmation email sent. Check your email.")
+ http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 ```
+
 </details>
 
 ### Activating A User
@@ -2953,24 +2960,24 @@ after we sent the email, the user will click on it and come to a new route in th
 
 ```go
 func (app *Config) routes() http.Handler {
-	// create router
-	mux := chi.NewRouter()
+ // create router
+ mux := chi.NewRouter()
 
-	// set up middleware
-	mux.Use(middleware.Recoverer)
-	mux.Use(app.SessionLoad)
+ // set up middleware
+ mux.Use(middleware.Recoverer)
+ mux.Use(app.SessionLoad)
 
-	// define application routes
-	mux.Get("/", app.HomePage)
+ // define application routes
+ mux.Get("/", app.HomePage)
 
-	mux.Get("/login", app.LoginPage)
-	mux.Post("/login", app.PostLoginPage)
-	mux.Get("/logout", app.Logout)
-	mux.Get("/register", app.RegisterPage)
-	mux.Post("/register", app.PostRegisterPage)
-	mux.Get("/activate", app.ActivateAccount) // new page
+ mux.Get("/login", app.LoginPage)
+ mux.Post("/login", app.PostLoginPage)
+ mux.Get("/logout", app.Logout)
+ mux.Get("/register", app.RegisterPage)
+ mux.Post("/register", app.PostRegisterPage)
+ mux.Get("/activate", app.ActivateAccount) // new page
 
-	return mux
+ return mux
 }
 ```
 
@@ -2979,45 +2986,46 @@ so we can modify the handler to handle the request. we first verify the url that
 ```go
 
 func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
-	// validate url 
-	url := r.RequestURI
-	testURL := fmt.Sprintf("http://localhost%s", url)
-	okay := VerifyToken(testURL)
+ // validate url 
+ url := r.RequestURI
+ testURL := fmt.Sprintf("http://localhost%s", url)
+ okay := VerifyToken(testURL)
 
-	if !okay {
-		app.Session.Put(r.Context(), "error", "Invalid token.")
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
+ if !okay {
+  app.Session.Put(r.Context(), "error", "Invalid token.")
+  http.Redirect(w, r, "/", http.StatusSeeOther)
+  return
+ }
 
-	// activate account
-	u, err := app.Models.User.GetByEmail(r.URL.Query().Get("email"))
-	if err != nil {
-		app.Session.Put(r.Context(), "error", "No user found.")
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
+ // activate account
+ u, err := app.Models.User.GetByEmail(r.URL.Query().Get("email"))
+ if err != nil {
+  app.Session.Put(r.Context(), "error", "No user found.")
+  http.Redirect(w, r, "/", http.StatusSeeOther)
+  return
+ }
 
-	u.Active = 1
-	err = u.Update()
-	if err != nil {
-		app.Session.Put(r.Context(), "error", "Unable to update user.")
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
+ u.Active = 1
+ err = u.Update()
+ if err != nil {
+  app.Session.Put(r.Context(), "error", "Unable to update user.")
+  http.Redirect(w, r, "/", http.StatusSeeOther)
+  return
+ }
 
-	app.Session.Put(r.Context(), "flash", "Account activated. You can now log in.")
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+ app.Session.Put(r.Context(), "flash", "Account activated. You can now log in.")
+ http.Redirect(w, r, "/login", http.StatusSeeOther)
 
-	// generate an invoice
+ // generate an invoice
 
-	// send an email with attachments
+ // send an email with attachments
 
-	// send an email with the invoice attached
+ // send an email with the invoice attached
 
-	// subscribe the user to an account
+ // subscribe the user to an account
 }
 ```
+
 </details>
 
 ### Giving User Data To Our Templates
@@ -3031,21 +3039,21 @@ if our user is authenticated, we want to pass the user data to our templateData,
 
 ```go
 func (app *Config) AddDefaultData(td *TemplateData, r *http.Request) *TemplateData {
-	td.Flash = app.Session.PopString(r.Context(), "flash")
-	td.Warning = app.Session.PopString(r.Context(), "warning")
-	td.Error = app.Session.PopString(r.Context(), "error")
-	if app.IsAuthenticated(r) {
-		td.Authenticated = true
-		user, ok := app.Session.Get(r.Context(), "user").(data.User)
-		if !ok {
-			app.ErrorLog.Println("can't get user from session")
-		} else {
-			td.User = &user
-		}
-	}
-	td.Now = time.Now()
+ td.Flash = app.Session.PopString(r.Context(), "flash")
+ td.Warning = app.Session.PopString(r.Context(), "warning")
+ td.Error = app.Session.PopString(r.Context(), "error")
+ if app.IsAuthenticated(r) {
+  td.Authenticated = true
+  user, ok := app.Session.Get(r.Context(), "user").(data.User)
+  if !ok {
+   app.ErrorLog.Println("can't get user from session")
+  } else {
+   td.User = &user
+  }
+ }
+ td.Now = time.Now()
 
-	return td
+ return td
 }
 ```
 
@@ -3062,24 +3070,24 @@ we have three plans in the database: bronze, silver and gold. we want the user t
 
 ```go
 func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
-	if !app.Session.Exists(r.Context(), "userID") {
-		app.Session.Put(r.Context(), "warning", "You must log in to see this page!")
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
+ if !app.Session.Exists(r.Context(), "userID") {
+  app.Session.Put(r.Context(), "warning", "You must log in to see this page!")
+  http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+  return
+ }
 
-	plans, err := app.Models.Plan.GetAll()
-	if err != nil {
-		app.ErrorLog.Println(err)
-		return
-	}
+ plans, err := app.Models.Plan.GetAll()
+ if err != nil {
+  app.ErrorLog.Println(err)
+  return
+ }
 
-	dataMap := make(map[string]any)
-	dataMap["plans"] = plans
+ dataMap := make(map[string]any)
+ dataMap["plans"] = plans
 
-	app.render(w, r, "plans.page.gohtml", &TemplateData{
-		Data: dataMap,
-	})
+ app.render(w, r, "plans.page.gohtml", &TemplateData{
+  Data: dataMap,
+ })
 }
 ```
 
@@ -3109,7 +3117,7 @@ we will fire up a dialog for the user to click, if the user confirms, we will re
                                 <td>{{.PlanName}}</td>
                                 <td class="text-center">{{.PlanAmountFormatted}}/month</td>
                                 <td class="text-center">
-									<a class="btn btn-primary btn-sm" href="#!" onclick="selectPlan({{.ID}}, '{{.PlanName}}')">Select</a>
+         <a class="btn btn-primary btn-sm" href="#!" onclick="selectPlan({{.ID}}, '{{.PlanName}}')">Select</a>
                                 </td>
                             </tr>
                         {{end}}
@@ -3158,23 +3166,23 @@ we add the "subscribe" route and a new handler. for now, it won't do anything, b
 
 ```go
 func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
-	// get the id of the plan that is chosen
+ // get the id of the plan that is chosen
 
-	// get the plan from the database
+ // get the plan from the database
 
-	// get the user from the session
+ // get the user from the session
 
-	// generate an invoice
+ // generate an invoice
 
-	// send an email with the invoice attached
+ // send an email with the invoice attached
 
-	// generate a manual
+ // generate a manual
 
-	// send an email with the manual attached
+ // send an email with the manual attached
 
-	// subscribe the user to an account
+ // subscribe the user to an account
 
-	// redirect
+ // redirect
 }
 ```
 
@@ -3189,7 +3197,6 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 //TODO: add Summary
 </summary>
 
-
 </details>
 
 ## Section 10: Testing
@@ -3199,9 +3206,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 //TODO: add Summary
 </summary>
 
-
 </details>
-
 
 ## Takeaways
 
@@ -3219,7 +3224,7 @@ Stuff worth remembering.
 - `go get`
 - `go test`
   - `-race` - check for race condition
-- `go mod` - modules(dependencies) 
+- `go mod` - modules(dependencies)
   - go.mod and go.sum files
   - `init` - start a new mod file
   - `tidy`
@@ -3257,6 +3262,5 @@ Other Packages
 - [vanng822/go-premailer](https://github.com/vanng822/go-premailer) - Inline styling for HTML mail in golang
 - [xhit/go-simple-mail](https://github.com/xhit/go-simple-mail) - mailing service
 - [bwmarrin/go-alone](https://github.com/bwmarrin/go-alone) - MAC signatures
-
 
 </details>

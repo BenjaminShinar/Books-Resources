@@ -315,5 +315,7 @@
     "Babitsky",
     "Alon"
   ],
-  "import": []
+  "import": [
+    "../cspell.json"
+  ]
 }

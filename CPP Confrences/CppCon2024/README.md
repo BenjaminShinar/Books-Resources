@@ -71,8 +71,8 @@
 - [ ] Case For Non-Moveable Types - Jason Turner
 - [ ] Code Generation from Unified Robot Description Format (URDF) for Accelerated Robotics - Paul Gesel
 - [ ] Common Package Specification (CPS) in practice: A full round trip implementation in Conan C++ package manager -Diego Rodriguez-Losada Gonzalez
-- [ ] Compile-time Validation - Alon Wolf
-- [ ] Composing Ancient Mathematical Knowledge Into Powerful Bit-fiddling Techniques - Jamie Pond
+- [x] Compile-time Validation - Alon Wolf
+- [x] Composing Ancient Mathematical Knowledge Into Powerful Bit-fiddling Techniques - Jamie Pond
 - [ ] Contracts for C++ - Timur Doumler
 - [ ] Coroutines and Structured Concurrency in Practice - Dmitry Prokoptsev
 - [ ] Cpp2/cppFront BoF informal meetup - Neil Henderson
@@ -142,7 +142,7 @@
 - [x] Taming the C++ Filter View - Nicolai Josuttis
 - [ ] Techniques to Optimize Multithreaded Data Building During Game Development - Dominik Grabiec
 - [ ] Template-less Meta-programming - Kris Jusiak
-- [ ] The Beman Project: Bringing Standard Libraries to the Next Level - David Sankel
+- [x] The Beman Project: Bringing Standard Libraries to the Next Level - David Sankel
 - [ ] The Most Important Design Guideline is Testability - Jody Hagins
 - [ ] The Power of Reducing Variable Scope - Jason Turner
 - [ ] This is C++ - Jon Kalb
