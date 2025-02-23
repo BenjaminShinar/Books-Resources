@@ -28,7 +28,10 @@
     "goalone",
     "Unsign",
     "bwmarrin",
-    "Swal"
+    "Swal",
+    "phpdave",
+    "gofpdf",
+    "gofpdi"
   ],
   "import": [
     "../cspell.json"

@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Sawler gotemplate fatih randomMillseconds taskkill
+// cSpell:ignore Sawler gotemplate fatih randomMillseconds taskkill Fpdf coverprofile
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -3192,19 +3192,1012 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 ## Section 9: Adding Concurrency to Choosing a Plan
 
+<details>
+<summary>
+Adding more concurrency and goroutines.
+</summary>
+
+adding more sophisticated concurrency, writing goroutines that generates invoices and modify a pdf file.
+
+### Getting The Plan Id, The Plan, And The User
+
+<details>
+<summary>
+Simplifying the code with a mounted router.
+</summary>
+
+we add a middleware function to handle the cases when an action/route is only available for authenticated users. this will allow us to duplicated code from the existing "plans" page and the new "subscriptions" page.
+
+```go
+func (app *Config) Auth(next http.Handler) http.Handler{
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !app.Session.Exists(r.Context(), "userID") {
+			app.Session.Put(r.Context(), "error", "Log in first!")
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+```
+
+we need to make adjustment to the "routes.go" file, and have the routes that require authentication behind a special router. this will be achieved by mounting the new routes under the "/members" prefix. we will also change the routes in the navigation template.
+
+```go
+func (app *Config) routes() http.Handler {
+	// create router
+	mux := chi.NewRouter()
+
+	// set up middleware
+	mux.Use(middleware.Recoverer)
+	mux.Use(app.SessionLoad)
+
+	// define application routes
+	mux.Get("/", app.HomePage)
+
+	mux.Get("/login", app.LoginPage)
+	mux.Post("/login", app.PostLoginPage)
+	mux.Get("/logout", app.Logout)
+	mux.Get("/register", app.RegisterPage)
+	mux.Post("/register", app.PostRegisterPage)
+	mux.Get("/activate", app.ActivateAccount)
+
+	mux.Mount("/members", app.authRouter())
+
+	return mux
+}
+
+func (app *Config) authRouter() http.Handler {
+	mux := chi.NewRouter()
+	mux.Use(app.Auth)
+
+	mux.Get("/plans", app.ChooseSubscription)
+	mux.Get("/subscribe", app.SubscribeToPlan)
+
+	return mux
+}
+```
+
+now that it's fixed, under the "handlers.go" file, we have the "SubscribeToPlan" function. we first grab the id of the chosen plan from the http request query parameter, we transform it into an integer and grab the plan from the database. we grab the user data from the session context.
+
+```go
+func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
+	// get the id of the plan that is chosen
+	id := r.URL.Query().Get("id")
+
+	planID, _ := strconv.Atoi(id)
+
+	// get the plan from the database
+	plan, err := app.Models.Plan.GetOne(planID)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Unable to find plan.")
+		http.Redirect(w, r, "/members/plans", http.StatusSeeOther)
+		return
+	}
+
+	// get the user from the session
+	user, ok := app.Session.Get(r.Context(), "user").(data.User)
+	if !ok {
+		app.Session.Put(r.Context(), "error", "Log in first!")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// generate an invoice
+
+	// send an email with the invoice attached
+
+	// generate a manual
+
+	// send an email with the manual attached
+
+	// subscribe the user to an account
+
+	// redirect
+}
+```
+</details>
+
+### Generating An Invoice
+
+<details>
+<summary>
+Generating invoice data and handling errors.
+</summary>
+
+we want to generate an email with the invoice to the user, in the real world, this would be done via some external service. but for our case, we will just have a goroutine.\
+we have a waitGroup, so we add to it (and decrement with a deferred statement), so our application won't close before completing the process. our invoice is created by a new function, which will work with new templates "invoice.html.gohtml" and "invoice.plain.gohtml", and we can send the email with our existing function.
+
+```go
+func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
+	// get the id of the plan that is chosen
+	id := r.URL.Query().Get("id")
+
+	planID, _ := strconv.Atoi(id)
+
+	// get the plan from the database
+	plan, err := app.Models.Plan.GetOne(planID)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Unable to find plan.")
+		http.Redirect(w, r, "/members/plans", http.StatusSeeOther)
+		return
+	}
+
+	// get the user from the session
+	user, ok := app.Session.Get(r.Context(), "user").(data.User)
+	if !ok {
+		app.Session.Put(r.Context(), "error", "Log in first!")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// generate an invoice and email it
+	app.Wait.Add(1)
+
+	go func() {
+		defer app.Wait.Done()
+
+		invoice, err := app.getInvoice(user, plan)
+		if err != nil {
+			app.ErrorChan <- err
+		}
+
+		msg := Message{
+			To: user.Email,
+			Subject: "Your invoice",
+			Data: invoice,
+			Template: "invoice",
+		}
+
+		app.sendEmail(msg)
+	}()
+
+	// generate a manual
+
+	// send an email with the manual attached
+
+	// subscribe the user to an account
+
+	// redirect
+}
+
+func (app *Config) getInvoice(u data.User, plan *data.Plan) (string, error) {
+	return plan.PlanAmountFormatted, nil
+}
+```
+
+If we have an error in the function, we can send into an error channel. so we create two channels in the Config struct. one channel for the error, and one channel to indicate we have finished with channels.\
+we listen to the new channels in the same way we listened for the email and shutdown. under "main.go" with <golang>select</golang> statement. we would usually send the error to a notification channel, but for our case, we simply log it in error output stream.\
+we also need to close the channels when we shutdown the function. this is similar to what we did with the mailer channel.
+
+```go
+func main() {
+	// connect to the database
+	db := initDB()
+
+	// create sessions
+	session := initSession()
+
+	// create loggers
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// create channels
+
+	// create waitGroup
+	wg := sync.WaitGroup{}
+
+	// set up the application config
+	app := Config{
+		Session:  session,
+		DB:       db,
+		InfoLog:  infoLog,
+		ErrorLog: errorLog,
+		Wait:     &wg,
+		Models:   data.New(db),
+		ErrorChan: make(chan error),
+		ErrorChanDone: make(chan bool),
+	}
+
+	// set up mail
+	app.Mailer = app.createMail()
+	go app.listenForMail()
+
+	// listen for signals
+	go app.listenForShutdown()
+
+	// listen for errors
+	go app.listenForErrors()
+
+	// listen for web connections
+	app.serve()
+}
+
+func (app *Config) listenForErrors() {
+	for {
+		select {
+		case err := <-app.ErrorChan:
+			app.ErrorLog.Println(err)
+		case <-app.ErrorChanDone:
+			return
+		}
+	}
+}
+```
+
+</details>
+
+### Generating A Manual
+
+<details>
+<summary>
+Working with pdf object.
+</summary>
+
+For the user-manual generation, we will work with an existing PDF, write some information to it, and send it as an attachment.\
+to work with PDF files, we need to get new packages - "phpdave11/gofpdf".
+
+```sh
+go get github.com/phpdave11/gofpdf
+go get github.com/phpdave11/gofpdf/contrib/gofpdi
+```
+
+we can grab the pdf file from the course resources, and we put in a new folder called "pdf".
+
+```sh
+mkdir pdf
+mv manual.pdf pdf/manual.pdf
+```
+
+with all that done, we can add te function to generate the manual in the "handlers.go" file. we start a goroutine in the existing method of subscribing to the plan, and generate the manual in a goroutine as a pdf object, which we can write to a temporary folder and then send it as an attachment to the email.
+
+```go
+func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
+	// code before
+
+	// generate a manual
+	app.Wait.Add(1)
+	go func() {
+		defer app.Wait.Done()
+
+		pdf := app.generateManual(user, plan)
+		err := pdf.OutputFileAndClose(fmt.Sprintf("./tmp/%d_manual.pdf", user.ID))
+		if err != nil {
+			app.ErrorChan <- err
+			return
+		}
+
+		msg := Message{
+			To:      user.Email,
+			Subject: "Your manual",
+			Data:    "Your user manual is attached",
+			AttachmentMap: map[string]string{
+				"Manual.pdf": fmt.Sprintf("./tmp/%d_manual.pdf", user.ID),
+			},
+		}
+
+		app.sendEmail(msg)
+	}()
+
+	// code after
+}
+```
+Our manual generation function create a new pdf file at portrait mode, using millimeter as the sizing unit, and will be letter-sized. we set the margins (in millimeters) and we import the existing pdf file into an object.\
+we take the first page, and from it we take the mediaBox. we add a new page on our pdf object and use the imported template at the correct location. we set the location of the pdf on the file, the file, and write a centered pdf multiCell with the user name into, and write a title. we take the pdf we created and output it into a file in the temporary folder.
+
+```go
+func (app *Config) generateManual(u data.User, plan *data.Plan) *gofpdf.Fpdf {
+	pdf := gofpdf.New("P", "mm", "Letter", "")
+	pdf.SetMargins(10, 13, 10)
+
+	importer := gofpdi.NewImporter()
+
+	time.Sleep(5 * time.Second)
+
+	t := importer.ImportPage(pdf, "./pdf/manual.pdf", 1, "/MediaBox")
+	pdf.AddPage()
+
+	importer.UseImportedTemplate(pdf, t, 0, 0, 215.9, 0)
+
+	pdf.SetX(75)
+	pdf.SetY(150)
+
+	pdf.SetFont("Arial", "", 12)
+	pdf.MultiCell(0, 4, fmt.Sprintf("%s %s", u.FirstName, u.LastName), "", "C", false)
+	pdf.Ln(5)
+	pdf.MultiCell(0, 4, fmt.Sprintf("%s User Guide", plan.PlanName), "", "C", false)
+
+	return pdf
+}
+```
+
+to send the file as an attachment, we go back to the "mailer.go" file. we first add a new field on the message struct - a dictionary (map) with string key and string values. this will allow us to override attachments by name, so the file in the message will have a consistent name, rather than what we generate internally.
+
+```go
+type Message struct {
+	From          string
+	FromName      string
+	To            string
+	Subject       string
+	Attachments   []string
+	AttachmentMap map[string]string
+	Data          any
+	DataMap       map[string]any
+	Template      string
+}
+```
+
+we can loop over the attachment map with the key and value, and add the attachments. we need to make sure tha attachment map field exists before looping over it. we also make sure to fix the way we pass the data map to the message.
+
+```go
+func (m *Mail) sendMail(msg Message, errorChan chan error) {
+	defer m.Wait.Done()
+
+	// more code
+	
+	if msg.AttachmentMap == nil {
+		msg.AttachmentMap = make(map[string]string)
+	}
+
+	// data := map[string]any{
+	// 	"message": msg.Data,
+	// }
+
+	if len(msg.DataMap) == 0 {
+		msg.DataMap = make(map[string]any)
+	}
+
+	msg.DataMap["message"] = msg.Data
+	// more code
+
+	if len(msg.Attachments) > 0 {
+		for _, x := range msg.Attachments {
+			email.AddAttachment(x)
+		}
+	}
+
+	if len(msg.AttachmentMap) > 0 {
+		for key, value := range msg.AttachmentMap {
+			email.AddAttachment(value, key)
+		}
+	}
+
+	err = email.Send(smtpClient)
+	if err != nil {
+		errorChan <- err
+	}
+}
+```
+
+we still didn't subscribe the user to an account, but for now, we can redirect the user to a different page and flash a notification.
+
+</details>
+
+### Trying Things Out, Subscribing A User, Updating The Session, And Redirecting
+
 <!-- <details> -->
 <summary>
 //TODO: add Summary
 </summary>
+
+we can try running the application, doing a log-in, and trying to switch the plan, if things worked correctly we could see the emails with the invoice data and the generated manual.\
+in the course code, we have some problems that we aren't getting the data from the database correctly, so we do some debugging.
+
+now we want to make sure are changes get into the database, so we update the user Model object and get it again from the database to refresh the user in the session.
+
+```go
+func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
+	// code before
+	// subscribe the user to a plan
+	err = app.Models.Plan.SubscribeUserToPlan(user, *plan)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Error subscribing to plan!")
+		http.Redirect(w, r, "/members/plans", http.StatusSeeOther)
+		return
+	}
+
+	u, err := app.Models.User.GetOne(user.ID)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Error getting user from database!")
+		http.Redirect(w, r, "/members/plan", http.StatusSeeOther)
+		return
+	}
+
+	app.Session.Put(r.Context(), "user", u)
+	// code after
+}
+```
+</details>
+
 
 </details>
 
 ## Section 10: Testing
 
+<details>
+<summary>
+Testing the code we wrote.
+</summary>
+
+we want tests for the code we wrote, the routes, rendering pages and handlers. this will require us to modify some of our files to make them more testable.
+
+### Setting Up Our Tests
+
+<details>
+<summary>
+Setting a test environment.
+</summary>
+
+when we test a web application, we need to duplicate the environment. for this, we must have a file called <golang>setup_test.go</golang> in our folder. it's part of the main package and has a special name <golang>TestMain</golang> which will run test for us.\
+we register our data.User object, and we start a new session, but without using redis. we also create the config object, but without the database connection and with a dummy mailer object (creating the three channels). our dummy mailer will ignore the messages and errors channels, but will finish when getting a message on the completion channel. we simply run a <golang>goroutine</golang> with a <golang>select</golang> statement.\
+we do a similar thing for the channels of the application, if we get an error, we print it out, and we return once we get a notification that completed.\
+after setting the environment, we run the tests from the testing module and exit with the result.
+
+
+```go
+package main
+
+import (
+	"encoding/gob"
+	"final-project/data"
+	"log"
+	"net/http"
+	"os"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/alexedwards/scs/v2"
+)
+
+
+var testApp Config
+
+func TestMain(m *testing.M) {
+	gob.Register(data.User{})
+
+	// set up session
+	session := scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = true
+
+	testApp = Config{
+		Session: session,
+		DB: nil,
+		InfoLog: log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime),
+		ErrorLog: log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile),
+		Wait: &sync.WaitGroup{},
+		ErrorChan: make(chan error),
+		ErrorChanDone: make(chan bool),
+	}
+
+	// create a dummy mailer
+	errorChan := make(chan error)
+	mailerChan := make(chan Message, 100)
+	mailerDoneChan := make(chan bool)
+
+	testApp.Mailer = Mail {
+		Wait: testApp.Wait,
+		ErrorChan: errorChan,
+		MailerChan: mailerChan,
+		DoneChan: mailerDoneChan,
+	}
+
+	go func() {
+		select{
+		case <-testApp.Mailer.MailerChan:
+		case <-testApp.Mailer.ErrorChan:
+		case <-testApp.Mailer.DoneChan:
+			return
+		}
+	}()
+
+	go func() {
+		for {
+			select{
+			case err := <-testApp.ErrorChan:
+				testApp.ErrorLog.Println(err)
+			case <-testApp.ErrorChanDone:
+				return
+			}
+		}
+	}()
+
+	os.Exit(m.Run())
+}
+```
+
+</details>
+
+### Testing Routes
+
+<details>
+<summary>
+Testing that we registered paths correctly.
+</summary>
+
+the "routes.go" file has two methods: `routes()` and `authRoutes()`. we don't care about the routing itself, but we care that all the required routes are registered correctly.\
+we create a new file "routes_test.go", we have a slice of strings with the routes we want to test exist. we check that the routes exist. the `routes()` method returns an http handler interface with the concrete type of <golang>chi.Router</golang>, so we can cast it back into it. for each expected route, we will go through all the routes in the router using the `chi.Walk()` method. this is a visitor that we define with a lambda function that will modify a local variable in the closure function.
+
+```go
+package main
+
+import (
+	"net/http"
+	"testing"
+
+	"github.com/go-chi/chi/v5"
+)
+
+var routes = []string{
+	"/",
+	"/login",
+	"/logout",
+	"/register",
+	"/activate",
+	"/members/plans",
+	"/members/subscribe",
+}
+
+func Test_Routes_Exist(t *testing.T) {
+	testRoutes := testApp.routes()
+
+	chiRoutes := testRoutes.(chi.Router)
+
+	for _, route := range routes{
+		routeExists(t, chiRoutes, route)
+	}
+}
+
+func routeExists(t *testing.T, routes chi.Router, route string) {
+	found := false
+
+	_ = chi.Walk(routes, func(method string, foundRoute string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		if route == foundRoute {
+			found = true
+		}
+		return nil
+	})
+
+	if !found {
+		t.Errorf("did not find %s in registered routes", route)
+	}
+}
+```
+
+we can run the test with `go test -v` and see that tests pass (and if we add a non-existent route, it fails).
+</details>
+
+### Testing The Renderer
+
+<details>
+<summary>
+Adding test session data and testing http requests.
+</summary>
+
+Our render function uses the session information, so before testing it, we should add a test session data into our test configuration. so in the "setup_test.go" file, we add a function to return a context.
+
+```go
+func getCtx(req *http.Request) context.Context {
+	ctx, err := testApp.Session.Load(req.Context(), req.Header.Get("X-Session"))
+	if err != nil {
+		log.Println(err)
+	}
+
+	return ctx
+}
+```
+
+now we can create the "render_test.go" file. we test that we can add default data. we build a request from the <golang>http</golang> package, and add the custom context we created to it. we first test that we can add the notifications into the default data that we pass around.
+
+```go
+package main
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
+
+func TestConfig_AddDefaultData(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+
+	testApp.Session.Put(ctx, "flash", "flash")
+	testApp.Session.Put(ctx, "warning", "warning")
+	testApp.Session.Put(ctx, "error", "error")
+
+	td := testApp.AddDefaultData(&TemplateData{}, req)
+
+	if td.Flash != "flash" {
+		t.Error("failed to get flash data")
+	}
+
+	if td.Warning != "warning" {
+		t.Error("failed to get warning data")
+	}
+
+	if td.Error != "error" {
+		t.Error("failed to get error data")
+	}
+}
+```
+
+We next test that we are able to detect authenticated users correctly. we first test when there isn't user data in the session, and then test that a we authenticate correctly when the user data exists.
+
+```go
+func TestConfig_IsAuthenticated(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+
+	auth := testApp.IsAuthenticated(req)
+
+	if auth {
+		t.Error("returns true for authenticated, when it should be false")
+	}
+
+	testApp.Session.Put(ctx, "userID", 1)
+
+	auth = testApp.IsAuthenticated(req)
+
+	if !auth {
+		t.Error("returns false for authenticated, when it should be true")
+	}
+}
+```
+
+the last thing to test is the render function, we first need to change the pathToTemplates value to reflect the current location. we will use a special recorder response object, and try to render a template with some data.\
+we can check the special response object and verify the return code to be 200.
+
+```go
+func TestConfig_render(t *testing.T) {
+	pathToTemplates = "./templates"
+
+	rr := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("GET", "/", nil)
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+
+	testApp.render(rr, req, "home.page.gohtml", &TemplateData{})
+
+	if rr.Code != 200 {
+		t.Error("failed to render page")
+	}
+}
+```
+
+</details>
+
+### Modifying The Data Package To Make It Testable
+
+<details>
+<summary>
+Using interfaces and not concrete types.
+</summary>
+
+currently, we must have a database running to run our application. but for testing, we can't use the production database, and we'd want to use something local and reproducible.\
+in the data folder, we create a new file called "interfaces.go" which will have the method declarations for our database models (User and Plan). any object that satisfies the interface can substitute for it, without needing to declare it explicitly.
+
+```go
+package data
+
+type UserInterface interface {
+	GetAll() ([]*User, error)
+	GetByEmail(email string) (*User, error)
+	GetOne(id int) (*User, error)
+	Update() error
+	Delete() error
+	DeleteByID(id int) error
+	Insert(user User) (int, error)
+	ResetPassword(password string) error
+	PasswordMatches(plainText string) (bool, error)
+}
+
+type PlanInterface interface {
+	GetAll() ([]*Plan, error)
+	GetOne(id int) (*Plan, error)
+	SubscribeUserToPlan(user User, plan Plan) error
+	AmountForDisplay() string
+}
+```
+
+in the "models.go" file, we can change the models struct to hold and return the interface, rather the concrete type. we can add the dummy types in a new file "test-models.go". we implement the required methods with dummy data, 
+
+```go
+package data
+
+type UserTest struct {
+	ID        int
+	Email     string
+	FirstName string
+	LastName  string
+	Password  string
+	Active    int
+	IsAdmin   int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Plan      *Plan
+}
+
+// GetAll returns a slice of all users, sorted by last name
+func (u *UserTest) GetAll() ([]*User, error) {
+	var users []*User
+
+	user := User{
+		ID:        1,
+		Email:     "admin@example.com",
+		FirstName: "Admin",
+		LastName:  "Admin",
+		Password:  "abc",
+		Active:    1,
+		IsAdmin:   1,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	users = append(users, &user)
+
+	return users, nil
+}
+
+// GetByEmail returns one user by email
+func (u *UserTest) GetByEmail(email string) (*User, error) {
+	user := User{
+		ID:        1,
+		Email:     "admin@example.com",
+		FirstName: "Admin",
+		LastName:  "Admin",
+		Password:  "abc",
+		Active:    1,
+		IsAdmin:   1,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return &user, nil
+}
+```
+
+#### Implementing The PlanTest Type
+
+we do the same thing with the Plan model, we create a TestPlan type and define stub methods on it.
+
+```go
+func TestNew(dbPool *sql.DB) Models {
+	db = dbPool
+
+	return Models{
+		User: &UserTest{},
+		Plan: &PlanTest{},
+	}
+}
+```
+
+back in the "setup_test" file, we change the way we create the config object, and tell it to use the test models.
+
+```go
+func TestMain(m *testing.M) {
+  // code before
+
+	testApp = Config{
+		Session: session,
+		DB: nil,
+		InfoLog: log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime),
+		ErrorLog: log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile),
+		Wait: &sync.WaitGroup{},
+		Models: data.TestNew(nil),
+		ErrorChan: make(chan error),
+		ErrorChanDone: make(chan bool),
+	}
+  // code after
+}
+```
+
+</details>
+
+### Getting Started Testing Handlers
+
+<details>
+<summary>
+Testing the Simple Handlers
+</summary>
+
+as usual, we create the "handlers_test.go" file. we will first test the home page. we need to override the path to the templates variable, but we already know how to do this, and we already have experience getting the html response (from when we tested the render method).
+
+```go
+func TestConfig_Home(t *testing.T) {
+  pathToTemplates = "./templates"
+
+  rr := httptest.NewRecorder()
+  req, _ := http.NewRequest("GET", "/", nil)
+
+  ctx := getCtx(req)
+  req = req.WithContext(ctx)
+
+  handler := http.HandlerFunc(testApp.HomPage)
+  handler.ServerHTTP(rr, req)
+
+  if rr.Code != http.StatusOK {
+    t.Error("failed; expected 200 but got", rr.code)
+  }
+}
+```
+
+but we can be a bit smarter, and rather than test each page in a function, we could test them together, as long as they aren't doing weird database stuff.\
+we can create a slice of pages, with the url, expected return code, which handler and even what html data we expect to see in it.
+
+```go
+package main
+
+var pageTests = []struct {
+	name               string
+	url                string
+	expectedStatusCode int
+	handler            http.HandlerFunc
+	sessionData        map[string]any
+	expectedHTML       string
+}{
+	{
+		name:               "home",
+		url:                "/",
+		expectedStatusCode: http.StatusOK,
+		handler:            testApp.HomePage,
+	},
+	{
+		name:               "login page",
+		url:                "/login",
+		expectedStatusCode: http.StatusSeeOther,
+		handler:            testApp.LoginPage,
+		expectedHTML:       `<h1 class="mt-5">Login</h1>`,
+	},
+	{
+		name:               "logout",
+		url:                "/logout",
+		expectedStatusCode: http.StatusOK,
+		handler:            testApp.LoginPage,
+		sessionData: map[string]any{
+			"userID": 1,
+			"user":   data.User{},
+		},
+	},
+}
+```
+
+and instead of testing the homepage directly, we loop over the slice we created, and perform the test for each of them. we can add session data for each page, and put it into the context before sending the request to the handler.
+
+```go
+func Test_Pages(t *testing.T) {
+	pathToTemplates = "./templates"
+
+	for _, e := range pageTests {
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", e.url, nil)
+
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+
+		if len(e.sessionData) > 0 {
+			for key, value := range e.sessionData {
+				testApp.Session.Put(ctx, key, value)
+			}
+		}
+
+		e.handler.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("%s failed: expected %d, but got %d", e.name, e.expectedStatusCode, rr.Code)
+		}
+
+		if len(e.expectedHTML) > 0 {
+			html := rr.Body.String()
+			if !strings.Contains(html, e.expectedHTML) {
+				t.Errorf("%s failed: expected to find %s, but did not", e.name, e.expectedHTML)
+			}
+		}
+	}
+}
+```
+</details>
+
+### Testing The Login Handler
+
+<details>
+<summary>
+Special case for testing log-in handler.
+</summary>
+
+still in the "handlers_test.go" file. we will create a special test for th e "PostLogin" page. as usual, we change the path to the templates, but we also create some dummy data to send in the form. we add the data to the request and send it as a `POST` request to the login page. we check that after the action, the session has the required user data in it.
+
+```go
+func TestConfig_PostLoginPage(t *testing.T) {
+	pathToTemplates = "./templates"
+
+	postedData := url.Values{
+		"email": {"admin@example.com"},
+		"password": {"abc123abc123abc123abc123"},
+	}
+
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/login", strings.NewReader(postedData.Encode()))
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+
+	handler := http.HandlerFunc(testApp.PostLoginPage)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusSeeOther {
+		t.Error("wrong code returned")
+	}
+
+	if !testApp.Session.Exists(ctx, "userID") {
+		t.Error("did not find userID in session")
+	}
+}
+```
+we do some test coverage to find issues - our handlers use the production version of the User and Plan Models, and not the version from config struct. this could have been solved by using the **Repository pattern**.
+
+</details>
+
+### Testing A Handler That Uses Concurrency
+
 <!-- <details> -->
 <summary>
 //TODO: add Summary
 </summary>
+
+the "subscribeToPlan" is the handler that uses the most coroutines. we first need to modify the relative paths, which assume that we are at the root folder of the application. when we run tests, we are at the "cmd/web" folder. this is simple to do, we just make the paths variables so we can override them as needed (we can set them in the `TestMain` function when we start running tests).
+
+we create a new test for the handler, and now we care about the request parameter (which needs to be the id of the plan), we also need user data inside our session data. since our handlers does concurrent code, we need to wait for them to finish, and we have a wait group.
+
+```go
+func TestConfig_SubscribeToPlan(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/subscribe?id=1", nil)
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+
+	testApp.Session.Put(ctx, "user", data.User{
+		ID: 1,
+		Email: "admin@example.com",
+		FirstName: "Admin",
+		LastName: "User",
+		Active: 1,
+	})
+
+	handler := http.HandlerFunc(testApp.SubscribeToPlan)
+	handler.ServeHTTP(rr, req)
+
+	testApp.Wait.Wait()
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("expected status code of statusSeeOther, but got %d", rr.Code)
+	}
+}
+```
+
+we have a problem with the waitGroup, it seems that we had some problems with our test mailer object, we didn't have our <golang>select</golang> statement inside a loop, and we didn't decrement the counter correctly.
+
+```go
+	go func() {
+		for {
+			select {
+			case <-testApp.Mailer.MailerChan:
+				testApp.Wait.Done() // we didn't send anything here before!
+			case <-testApp.Mailer.ErrorChan:
+			case <-testApp.Mailer.DoneChan:
+				return
+			}
+		}
+	}()
+```
+
+we can also run the test and check for race conditions, which passes
+</details>
 
 </details>
 
@@ -3224,6 +4217,7 @@ Stuff worth remembering.
 - `go get`
 - `go test`
   - `-race` - check for race condition
+  - `-coverprofile=coverage.out` - create coverage pro
 - `go mod` - modules(dependencies)
   - go.mod and go.sum files
   - `init` - start a new mod file
@@ -3231,17 +4225,14 @@ Stuff worth remembering.
   - `vendor`
 - `go work` - workspace setup
   - go.work file
+- `go tool` run tools
+  - `cover -html=coverage.out` - visualize coverage
 
 ### The Sync Package
 
 <details>
-<summary>
-Synchronization Primitives: mutexes, waitGroups and channels.
-</summary>
 
-[documentation](https://pkg.go.dev/sync)
-
-<golang>Synchronization stuff</golang>
+Synchronization Primitives: mutexes, waitGroups and channels [documentation](https://pkg.go.dev/sync)
 
 - pass <golang>waitGroup</golang> variables by reference (pointer), not by copy.
 - decrement wait groups with deferred `wait.Done()`.
@@ -3254,7 +4245,9 @@ Synchronization Primitives: mutexes, waitGroups and channels.
 
 </details>
 
-Other Packages
+### Other Packages
+
+<details>
 
 - [go-chi/chi](https://github.com/go-chi/chi) - routing
 - [alexedwards/scs](https://github.com/alexedwards/scs) - session management
@@ -3262,5 +4255,17 @@ Other Packages
 - [vanng822/go-premailer](https://github.com/vanng822/go-premailer) - Inline styling for HTML mail in golang
 - [xhit/go-simple-mail](https://github.com/xhit/go-simple-mail) - mailing service
 - [bwmarrin/go-alone](https://github.com/bwmarrin/go-alone) - MAC signatures
+- [phpdave11/gofpdf](https://github.com/phpdave11/gofpdf) - working with PDF files.
+
+</details>
+
+### Testing
+
+<details>
+
+Testing a web application requires a <golang>setup_test.go</golang> file. all test files must end with `_test.go`, and they are usually named the same as what they are testing.
+
+</details>
+
 
 </details>

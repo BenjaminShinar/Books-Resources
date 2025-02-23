@@ -34,10 +34,16 @@
 # PDF files
 *.pdf
 
+
+# Mac file
+**/.DS_Store
+
 #exclude some go files
 !go.mod
+# exclude some more files
+
+!udemy_working_with_concurrency_in_go_golang/final-project/pdf/manual.pdf
 #workspace.code-workspace
 The Complete Google Go Programming Course For Beginners/app/main
-
 /.vscode/*
 !/.vscode/snippets.code-snippets
