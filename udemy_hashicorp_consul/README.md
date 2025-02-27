@@ -39,9 +39,9 @@ the exam has 9 objective, each will get a section of the course, there will a mi
 
 ## Objective 1: Explain Consul Architecture
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Consul Architecture Introduction.
 </summary>
 
 > sub objectives:
@@ -247,9 +247,9 @@ consul uses two protocols:
 
 ### Consensus Protocol (Raft)
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Node states and elections
 </summary>
 
 [RAFT protocol](https://raft.github.io/)
@@ -266,12 +266,16 @@ runs only on server agents. maintains strongly consistent data across all nodes.
 > - Maintaining committed log entries across server nodes
 > - Establishing a quorum
 
-A node (consul server agent) can be either the leader, a follower or a candidate.
+A node (consul server agent) can be either the leader, a follower or a candidate. a node starts as a follower, it can vote for itself or another node to be a leader. when in election stage, nodes can become candidates. so this is a very short phase.\
+Only the leader can ingest and write logs (updates), it is responsible for processing queries and transactions, and it replicates them to the followers, and after sending them to the table, it can determine that a log was "committed".\
+Followers accept logs from the leader, participate in leader election, and forward the RPC request to the leader.
+
+once a leader is established, it sends out heartbeat to all follower nodes. if a follower node doesn't receive a heartbeat during their randomly assigned timeout, it assumes the leader is dead and starts an election by changing it's state to be a candidate. the candidate votes for itself, and issues a request to establish the majority.
 
 > Raft nodes are always in one of three states:
 > - Leader
 > - Follower
-> - Candidate
+> - Candidate (short time)
 > 
 >  - Leader is responsible for:
 >   - Ingesting new log entries
@@ -282,14 +286,15 @@ A node (consul server agent) can be either the leader, a follower or a candidate
 >   - Forwarding RPC request to the leader
 >   - Accepting logs from the leader
 >   - Casting votes for leader election
-
-
+>
 > Consensus Protocol - Leader Election
 > - Leadership is based on randomized election timeouts
 > - Leader sends out frequent heartbeats to follower nodes
 > - Each server has a randomly assigned timeout (e.g., 150ms - 300ms)
 > - If a heartbeat isn't received from the leader, an election takes place
 > - The node changes its state to candidate, votes for itself, and issues a request for votes to establish majority
+
+when we make an API calls, it gets to the leader, which performs the request (writing the log) and tells the followers to replicate the change.
 
 a Log is an ordered sequence of entries, a changeset of events (changes to the cluster or the key value store) from the onset of the cluster.\
 A peerSet is all the members who maintain the replicated logs, which in our case, means all the consul server agents. a quorum is the number of nodes required for the cluster to function. 
@@ -313,6 +318,209 @@ A peerSet is all the members who maintain the replicated logs, which in our case
 
 ### Gossip Protocol (Serf)
 
+<details>
+<summary>
+Messaging, Service Discovery through gossip pools.
+</summary>
+
+The gossip protocol is used for communication for both consul servers and clients. it's manages the cluster membership, it handles broadcast messages, and and it can work across dataCenters, traffic inside the dataCenter uses the LAN gossip pool, and traffic between dataCenters uses the WAN gossip pool.
+
+> - Based on Serf
+>   - Used cluster wide – including multi-cluster
+>   - Used by clients and servers
+> - Responsible for:
+>   - Manage membership of the cluster (clients and servers)
+>   - Broadcast messages to the cluster such as connectivity failures
+>   - Allows reliable and fast broadcasts across datacenters
+>   - Makes use of two different gossip pools
+>       - LAN
+>       - WAN
+
+each dataCenter has it's own LAN gossip pool, containing all the members (client and servers), and it allows clients to quickly discover servers. it also offloads failure detection duties from the server to the clients, which reduces the server load. members of the same LAN gossip pool can communicate with one another quickly.
+
+> LAN Gossip Pool
+> 
+> - Each datacenter has its own LAN gossip pool
+> - Contains all members of the datacenter (clients & servers)
+> - Purpose
+>   - Membership information allows clients to discover servers
+>   - Failure detection duties are shared by members of the entire cluster
+> - Reliable and fast event broadcasts gossip Protocol
+
+The WAN Gossip pool is a global, unique pool, it includes all the servers, regardless of which dataCenter the belong to. server nodes can perform cross dataCenter requests, so we can handle failures at the dataCenter level.
+
+> WAN Gossip Pool
+> 
+> - Separate, globally unique pool
+> - All servers participate in the WAN pool regardless of datacenter
+> - Purpose
+>   - Allows servers to perform cross datacenter requests
+>   - Assists with handling single server or entire datacenter failures
+
+
+</details>
+
+### Network Traffic and Ports
+
+<details>
+<summary>
+Traffic protocols and ports.
+</summary>
+
+communication between consul agents (servers and client) goes over http and https protocols, this is secured by TLS certificate and the *gossip key*.
+
+we need to open the ports and configure them correctly. DNS usually uses port 53, so this might cause problems, especially with windows machine.
+
+> - All communication happens over http and https.
+> - Network communication protected by TLS and gossip key.
+> - Ports (assumes default):
+>   - HTTP API and UI – tcp/8500
+>   - LAN Gossip – tcp & udp/8301
+>   - WAN Gossip – tcp & udp/8302
+>   - RPC – tcp/8300
+>   - DNS – tcp/8600
+>   - Sidecar Proxy – 21000 - 21255
+
+we can access (send requests) to consul from just about anywhere in the network. the CLI can be run from any server node (since it forwards to the leader). we can also enable a UI interface and manage through it, but it needs to be in our network. 
+
+> - Consul API can be accessed by any machine (assuming network/firewall)
+> - Consul CLI can be accessed and configured from any server node
+> - UI can be enabled in the configuration file and accessed from anywhere
+
+</details>
+
+### Consul High Availability
+
+<details>
+<summary>
+Configuring Highly available cluster, and some advanced features.
+</summary>
+
+Consul should be clustered, and provide High Availability. we should strive to have either 3 or five consul servers in the cluster, seven max. running a cluster with one server is not for production environments. it's better to have an odd number of servers, which allows to lose one extra server before we no longer have quorum.
+
+> High availability is achieved using clustering
+> 
+> - HashiCorp recommends 3-5 servers in a Consul cluster
+> - Uses the Consensus protocol to establish a cluster leader
+> - If a leader becomes unavailable, a new leader is elected
+> 
+> General recommendation is to not exceed (7) server nodes
+> 
+> - Consul generates a lot of traffic for replication
+> - More than 7 servers may be negatively impacted by the network or negatively impact the network
+
+fault tolerance is the number of server we can lose before we don't have a quorum anymore. it increases in odd numbers, so that's why they are preferred over even numbered clusters.\
+(there are some more stuff we can do with non-voting nodes).\
+A single node should only be used for development, two nodes are practically useless, since losing one means the cluster is unusable. the more servers we have, the slower replication becomes, so going above 7 might effect performance.
+
+> | Consul Server Nodes | Quorum Size | Fault Tolerance |
+> | ------------------- | ----------- | --------------- |
+> | 1                   | 1           | 0               |
+> | 2                   | 2           | 0               |
+> | 3                   | 2           | 1               |
+> | 4                   | 3           | 1               |
+> | 5                   | 3           | 2               |
+> | 6                   | 4           | 2               |
+> | 7                   | 4           | 3               |
+
+#### Scaling for Performance
+
+for enterprise edition only - with enhanced read scalability we can have read replicas that only handle reads from clients, which takes some work off the leader node. these nodes participate in data replication, but not in quorum elections (they are non-voting members).
+
+> Consul Enterprise supports Enhanced Read Scalability with Read Replicas.
+> 
+> - Scale your cluster to include read replicas to scale reads
+> - Read replicas participate in cluster replication
+> - They do NOT take part in quorum election operations (non-voting)
+
+#### Voting vs. Non-Voting Servers
+
+when we used read-replicas, we created non-voting members,
+
+```sh
+consul operator raft list-peers
+```
+
+> - Consul servers can be provisioned to provide read scalability.
+> - Non-voting do not participate in the raft quorum (voting).
+> - Generally used in conjunction with redundancy zones.
+>
+> Configured using:
+> - `read_replica` (previously `non_voting_member`) setting in the config file.
+> - the `-read-replica`(previously`–non-voting-member`) flag using the CLI.
+
+#### Redundancy Zones
+
+another way to get scaling and resilience, we can deploy only one voting member in the Redundancy Zones, so if the voting member fails, the non-voting member is promoted and we maintain the quorum. if the entire zone fails, a non-voter from a different zone is promoted (to maintain the quorum). this is a a more managed way of having read-replicas, with an eye out for resiliency
+
+> - Provides both scaling and resiliency benefits by using non-voting servers
+> - Each fault zone only has (1) voting member
+>    - All others are non-voting members
+>
+> - If a voting member fails, a non-voting member in the same fault zone is promoted in order to maintain resiliency and maintain a quorum
+> - If an entire availability zone fails, a non-voting member in a surviving fault zone is promoted to maintain a quorum
+</details>
+
+### Consul Autopilot
+
+<details>
+<summary>
+Automatic Server management features.
+</summary>
+
+also an enterprise edition feature, helps with managing the cluster.
+
+```sh
+consul operator autopilot get-config
+consul operator autopilot set-config -cleanup-dead-servers=false
+```
+
+> Built-in solution to assist with managing Consul nodes
+>
+> - Dead Server Cleanup
+> - Server Stabilization
+> - Redundancy Zone Tags
+> - Automated Upgrades
+> 
+> Autopilot is on by default – disable features you don't want
+
+remove dead server from the cluster once the replacement is up.
+
+> Dead Server Cleanup
+> 
+> - Dead server cleanup will remove failed servers from the cluster once the  replacement comes online based on configurable threshold
+> - Cleanup will also be initialized anytime a new server joins the cluster
+> - Previously, it would take 72 hours to reap a failed server or it had to be done manually using consul force-leave. 
+
+A new server must be healthy for some amount of time before it can act as fully pledged node. this protects against having nodes that are shaky and unstable mess up the election protocol.
+
+> Server Stabilization
+> 
+> New Consul server nodes must be healthy for x amount of time 
+before being promoted to a full, voting member.
+> - Configurable time – default is 10 seconds
+
+spread cluster members across tags, good for High Availability.
+
+> Redundancy Zone Tags
+> 
+> - Ensure that Consul voting members will be spread across fault zones to always ensure high availability
+> - Example: In AWS, you can create fault zones based upon Availability Zones
+
+manage which servers can vote during consul server migration, nodes with the new version won't be able to vote until they are the majority, and after that point, nodes with the old version won't be able to vote until they are updated to the new version.
+
+> Automated Upgrade Migrations
+> 
+> - New Consul Server version > current Consul Server version
+> - Consul won't immediately promote newer servers as voting members
+> - Number of 'new' nodes must match the number of 'old' nodes
+
+</details>
+
+</details>
+
+## Objective 2: Deploy a Single DataCenter
+
 <!-- <details> -->
 <summary>
 //TODO: add Summary
@@ -320,19 +528,6 @@ A peerSet is all the members who maintain the replicated logs, which in our case
 
 
 </details>
-
-### Network Traffic and Ports
-### Consul High Availability
-### Scaling for Performance
-### Voting vs. Non-Voting Servers
-### Redundancy Zones
-### Consul Autopilot
-### Objective 1 - Section Recap
-### Objective 1 - Practice Questions
-
-
-</details>
-
 
 ## Takeaways
 
