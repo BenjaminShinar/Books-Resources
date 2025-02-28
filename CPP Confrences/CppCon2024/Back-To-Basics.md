@@ -334,7 +334,7 @@ C++20 added concepts (the <cpp>requires</cpp> clause), but we have ways to do th
 - <cpp>std::is_integral\<T>::value</cpp>
 - <cpp>std::is_integral_v\<T></cpp>
 
-### Writing Class Templates
+#### Writing Class Templates
 
 Keep it simple
 
@@ -457,7 +457,7 @@ A * B(C(D)); // what is this?
 
 if the keyword doesn't exists, then the compiler won't consider this a type.
 
-### Writing Function Templates
+#### Writing Function Templates
 
 > Make all template parameters deducible (Except when you can't).
 

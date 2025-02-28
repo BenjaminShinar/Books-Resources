@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore relocatability Björn Fahller
+// cSpell:ignore relocatability Björn Fahller Blarg
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -26,7 +26,9 @@
 - [ ] Reflection Is Not Contemplation - Andrei Alexandrescu
 - [x] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
 - [x] Reusable code, reusable data structures - Sebastian Theophil
-- [ ] The Most Important Design Guideline is Testability - Jody Hagins
+- [x] The Most Important Design Guideline is Testability - Jody Hagins
+
+---
 
 ### 10 Problems Large Companies Have Managing C++ Dependencies and How to Solve Them - Augustin Popa
 
@@ -262,5 +264,117 @@ Relocatability makes saving the state of the application trivial - just dump the
 Memory performance relies on time and space locality, we want to have objects that are accessed together stored together, relocating objects allows us to maintain and improve this.
 
 One issue is using *Value Mangers*, using <cpp>std::optional</cpp>, which currently doesn't take allocators, but can take a <cpp>std::vector</cpp> type with an custom allocator. this has something to do with type erasure (<cpp>std::any</cpp>, <cpp>std::function</cpp>). the language doesn't currently have support to access internals (???).
+
+</details>
+
+### The Most Important C++ Design Guideline is Testability - Jody Hagins
+
+<details>
+<summary>
+A different view on testability
+</summary>
+
+[The Most Important C++ Design Guideline is Testability](https://youtu.be/kgE8v5M1Eoo?si=5w4dnwmZakqDf0Yv), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/The_Most_Important_Design_Guideline_is_Testability.pdf), [event](https://cppcon2024.sched.com/event/1gZfl/the-most-important-design-guideline-is-testability).
+
+> Scott Meyers has famously proclaimed that the most important general design guideline is to make interfaces easy to use correctly and hard to use incorrectly.  I don't dispute that this is one of the most important design guidelines.\
+> However, in my close to 40 years of fighting in the C++ trenches, I'd argue that testability is by far the more important design guideline, and antecedent to both ease of use and performance (a particular C++ penchant).\
+> In this talk, we will discuss what testability means, and why it is so important.  We will briefly discuss some popular testing techniques, but most of our time will be spent looking into items of testability that are rarely discussed, but are extremely important in practice.
+
+Design interfaces for testability, have an holistic thought about systems and how they can be tested.
+
+> Why is Testing Important? We are human!
+>
+> - Making Mistakes: Every human is really, really good at making mistakes
+> - Being annoyed when OTHER people make mistakes
+
+Testability isn't just Unit Tests and TDD (Test Driven Development).
+
+#### Hidden State
+
+side tangent an example about having a hidden state and how it complicates testing. the best way is to having composability, but there's an old pattern to provide access to all private members.
+
+doing some tricks with template specializations... this shouldn't be done. but it's possible.
+
+```cpp
+template <typename TagT, auto...>
+struct Sudo;
+
+template <typename TagT>
+struct Sudo<TagT>
+{
+  inline static typename TagT::type value{};
+};
+
+template <typename TagT, typename TagT::type Member>
+struct Sudo<TagT, Member>
+{
+  inline static const decltype(Member) value = Sudo<TagT>::value = Member;
+};
+
+template <typename TagT, typename ObjectT>
+decltype(auto)
+sudo(ObjectT && object)
+{
+  assert(Sudo<TagT>::value);
+  return std::invoke(  Sudo<TagT>::value,  std::forward<ObjectT>(object));
+}
+
+template <typename ClassT, typename MemberT, typename = void>
+struct SudoTag
+{
+  using type = MemberT ClassT::*;
+};
+
+// usage
+namespace foo::bar { class Blarg { int x = 42; }; }
+
+using Blarg_x = SudoTag<foo::bar::Blarg, int>;
+template struct Sudo<Blarg_x, &foo::bar::Blarg::x>;
+
+int main()
+{
+  auto blarg = foo::bar::Blarg{};
+  std::cout << sudo<Blarg_x>(blarg) << '\n'; // print blarg.x
+}
+
+// with macro - less boilerplate
+  #define SUDO(NAMESPACE, TYPE, CLASS, MEMTYPE, MEMBER) \
+  namespace NAMESPACE { \
+  struct TYPE \
+  : SudoTag<CLASS, MEMTYPE> \
+  { }; \
+  } \
+  template struct Sudo<NAMESPACE::TYPE, &CLASS::MEMBER>
+// Then, you can use it like this...
+BP_SUDO(foo::bar, Blarg_x, foo::bar::Blarg, int, x);
+```
+
+#### Back to Testability
+
+Donald Knuth - offered bounties for bugs. but didn't think highly of unit tests and other testing methodologies. has some quotes that go against what we usually think as "best practice".
+
+- property based testing
+- fuzzing
+
+Avoid naked types - everything is a special type of it's own. never confuse the parameters and the order of the arguments. always have strong types.
+
+#### Case Study - Knight Capital
+
+> everything is an API.
+
+a company that had an issue in 2012 which lost the company 10 million dollars per minute for 45 minutes. they did some stock trading and things went bad. they had unused code still in the system, and they wanted to reuse a flag that was for the old system for the new one. the code was changed as part of refactoring but wasn't tested, eventually, the new version of the code was deployed to all but one machine. when the application went live, the one computer run the old code, which was called because of the repurposed flag, and then old code did the wrong thing, and because it wasn't tested properly, it behaved in a way that isn't part of normal procedure.
+
+this was a chain of errors, if any one of them didn't happen, this would be a non-event.
+
+> - Remove old code and add new code at the same time
+> - Reuse an existing "value" for completely different functionality
+> - Stopped using Power Peg in 2003, dead code still around
+> - Refactored code in 2005 ; moved dead code ; test still pass
+> - Manual deployment ; no review ; no tests
+> - Different components had different view of same thing
+> - email for important log messages
+> - Rollback made matters worse
+
+(how to test each of these points)
 
 </details>

@@ -79,7 +79,7 @@
 - [x] Creating a Sender/Receiver HTTP Server - Dietmar Kühl
 - [ ] Cross-Platform Determinism Out of the Box - Sherry Ignatchenko
 - [ ] Data Is All You Need for Fusion - Manya Bansal
-- [ ] Data Structures That Make Video Games Go Round - Al-Afiq Yeong
+- [x] Data Structures That Make Video Games Go Round - Al-Afiq Yeong
 - [ ] Deciphering C++ Coroutines - Mastering Asynchronous Control Flow - Andreas Weis
 - [ ] Deciphering Coroutines - Recap and Prerequisites - Andreas Weis
 - [ ] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
@@ -121,7 +121,7 @@
 - [ ] Optimizing with Modern C++ - Patrice Roy
 - [x] Peering forward — C++'s next decade - Herb Sutter
 - [ ] Performance and Efficiency in C++ for Experts, Future Experts, and Everyone Else - Fedor Pikus
-- [ ] Performance engineering - being friendly to your hardware - Ignas Bagdonas
+- [x] Performance engineering - being friendly to your hardware - Ignas Bagdonas
 - [ ] Perspectives on Contracts - Lisa Lippincott
 - [ ] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
 - [x] Reflection based libraries to look forward to - Saksham Sharma
@@ -143,7 +143,7 @@
 - [ ] Techniques to Optimize Multithreaded Data Building During Game Development - Dominik Grabiec
 - [ ] Template-less Meta-programming - Kris Jusiak
 - [x] The Beman Project: Bringing Standard Libraries to the Next Level - David Sankel
-- [ ] The Most Important Design Guideline is Testability - Jody Hagins
+- [x] The Most Important Design Guideline is Testability - Jody Hagins
 - [ ] The Power of Reducing Variable Scope - Jason Turner
 - [ ] This is C++ - Jon Kalb
 - [ ] To Int or to Uint, This is the Question - Alex Dathskovsky

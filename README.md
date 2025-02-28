@@ -262,6 +262,8 @@ Markdown formatting tricks, tips, etc
 
 [cspell dictionaries](https://cspell.org/docs/dictionaries/), [words in dictionaries](https://github.com/streetsidesoftware/cspell-dicts/tree/main/dictionaries).
 
+[supported languages in code fences](https://github.com/highlightjs/highlight.js/blob/main/SUPPORTED_LANGUAGES.md)
+
 ### Tags
 
 Dialog Box - don't use
