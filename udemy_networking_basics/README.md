@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Krausen datagram Netflow IPFIX HSRP VRRP nslookup NGFW Nord
+// cSpell:ignore Crisci datagram Netflow IPFIX HSRP VRRP nslookup NGFW Nord subnetting classful VLSM
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -422,7 +422,7 @@ NTP traffic flows over UDP port 123. we can get the time from several different 
 
 ## Network Security
 
-<!-- <details> -->
+<details>
 <summary>
 Basic network security and firewall.
 </summary>
@@ -449,11 +449,254 @@ we still get internet access, because our router has NAT capability, and can tra
 
 </details>
 
-### Using DMZ Networks to Protect Your Servers
-### Basic Layer 3 and 4 Firewall
-### Layer 7 Firewall (NGFW)
+### Firewall 
+
+<details>
+<summary>
+DMZ, firewalls at different layers.
+</summary>
+
+#### Using DMZ Networks to Protect Your Servers
+
+firewall zones and the DMZ - De-Militarized Zone.\
+The inside zone is the corporate LAN, stuff that needs to be accessed from outside are in the DMZ zone, it is still protected from the outside (public internet).\
+The DMZ is "semi-protected",  we use firewall in the boundaries between those zones/networks.
+
+#### Basic Layer 3 and 4 Firewall
+
+layer 3 and 4 firewalls (ip level and port/protocol levels).
+
+here are some example rules for allowing traffic (http, https, dns) and denying everything else. (using cisco format). the order of the rules matters (by priority), the decision is made based on the first matching rule.
+
+```cisco
+access-list 100 permit tcp any any eq 80
+access-list 100 permit tcp any any eq 443
+access-list 100 permit udp any any eq 53
+access-list 100 deny ip any any
+```
+
+some rules are using layer 4 data (protocol and port), and other use layer 3 data (ip based). we could replace the DNS rule with two fine grained rules instead. we only allow outbound dns (port 53) requests to ip `8.8.8.8`, and we deny all other udp traffic to that port. we are usually more concerned about incoming traffic.
+
+```cisco
+access-list 100 permit udp any host 8.8.8.8 eq 53
+access-list 100 deny udp any any eq 53
+```
+
+example of rules for an email server, allowing egress traffic with the tcp protocol to that server on specific ports. we can also have a default allow statement: `access-list 100 permit ip any any`, but this is not recommended.
+
+in our simple network topology, we have a physical device connected to network (router).
+
+#### Layer 7 Firewall (NGFW)
+
+so far we had layer 3 and 4 firewalls, which operates on the ip and ports. there are also layer 7 (application) firewalls, which can inspect the packet itself. it can match the content of the packet to known attack patterns (signatures).
+
+</details>
+
 ### Intrusion Detection and Prevention Systems (IDS/IPS)
+
+<details>
+<summary>
+detect and alert or block traffic based on signatures and behavior.
+</summary>
+
+an IDS (Intrusion **Detection** System) can be passive or active. takes a copy of the incoming traffic and inspects it for known signatures and general behavior patterns. it then creates an alert.\
+an IPS (Intrusion Prevention System) acts in a similar way, but it's part of the network path, so it doesn't just report, and it actively stops it.
+
+unlike a firewall rule, IDS and IPS can look for anomalies in network traffic, not just looking at individual traffic.
+
+</details>
+
 ### VPN Services for Internet Access (Nord, SurfShark, etc..)
+
+<details>
+<summary>
+Commercial VPN services.
+</summary>
+
+VPN - virtual private network.
+
+when we are in the public internet, instead of connecting directly to the destination, we first connect to the VPN server using secured AES256 encryption, and then the VPN acts as a proxy for us, hiding the traffic from the ISP and the site we send data to. for them, it seems like all traffic comes from VPN. this gives us more privacy and more security. however, this does affect the connection speed, and Commercial VPNs cost money, and must be trusted. 
+VPNs aren't 100% defense systems, and we still require an anti-virus.
+
+</details>
+
+</details>
+
+## WiFi
+
+<details>
+<summary>
+Introduction to WiFi Basics and Components.
+</summary>
+
+Wireless local area networks. no longer requiring an ethernet connection anymore.\
+there are different frequencies available (2.4 Ghz, 5 Ghz), they differ in terms of speed and range.\
+for a wifi, there will be a wifi device (access point), which is itself then connected to the network (usually through ethernet connection).\
+in a corporate network, there will be multiple wifi devices, and they usually will be connected to a switch (and then the router), all the access points need to be managed, this can be done through a Wireless LAN controller. we can enable mobility through all the access points without users losing connectivity. this is called "Extended Service Area", using a SSID (service set Identifier) as the network, instead of each access point exposing it's own network.
+
+</details>
+
+## IP Addressing and Subnetting
+
+<details>
+<summary>
+A crush-course lectures about Ip addressing.
+</summary>
+
+every device has an Ip address. this is different from the MAC address. we use the MAC address for local connections.
+
+we use DNS queries to find the ip of a website based on the human name.
+
+```sh
+nslookup google.com <dns- server-address>
+```
+
+### Types of IP addresses: Public vs. Private
+
+<details>
+<summary>
+private and public Ipv4 addresses.
+</summary>
+
+public ip address are globally unique, while private ip addresses are replicated across many networks, and only make sense inside the network, there are specified ranges for private ip address:
+
+- `10.0.0.0/8`
+- `172.16.0.0/12`
+- `192.168.0.0/16`
+
+there are more devices in the world than there are ipv4 addresses. devices get internet access through a router with NAT (network address translation) with a public ip address.
+
+we can get the private ipv4, subnet mask and default gateway from `ifconfig -a` command.
+
+- ipv4 address: 192.168.0.6
+- subnet mask: 255.255.255.0
+- default gate: 192.168.0.1
+
+comparing the private ip I see in the command line with the public Ip we see in websites that show it.
+</details>
+
+### Classful Vs. Classless Addressing
+
+<details>
+<summary>
+Historical networking addressing.
+</summary>
+
+different classes of public Ip ranges. some rules for assigning ranges.
+
+| class | from        | to                | notes                             |
+| ----- | ----------- | ----------------- | --------------------------------- |
+| A     | `1.0.0.0`   | `127.255.255.255` | `x.0.0.0/8`                       |
+| B     | `128.0.0.0` | `191.255.255.255` | `x.x.0.0/16`                      |
+| C     | `192.0.0.0` | `223.255.255.255` | `x.x.x.0/24`                      |
+| D     | `224.0.0.0` | `239.255.255.255` | reserved for multicast            |
+| E     | `240.0.0.0` | `255.255.255.255` | reserver, not for public internet |
+
+with class A addresses, each organization get the entire range, from `x.0.0.0` to `x.255.255.255`. it's a massive range of $256^3 =16,777,216$ addresses (`x.0.0.0/8`).
+Class B address are smaller, with $256^2 =  65,536$ addresses each. class C are even smaller, each with 256 addresses.\
+This isn't flexible enough, so it's no longer the preferred way to do things. instead, this has been replaced by classless inter-domain routing (CIDR).
+</details>
+
+### Binary And Ip Addressing
+
+<details>
+<summary>
+Different notations
+</summary>
+
+computer use binary notation `[0-1]`, humans use decimal notation`[0-9]`, and network engineers use Hexadecimal notation`[0-9abcdef]`.
+ip addresses are 4 decimal numbers between `0-255`, which is actually $2^8$, or two hexadecimal symbols. an octet is a number that uses 8 bits.
+
+#### Hands-On Practice With Binary Ip Addresses
+
+| ip            | hex         | binary                                | private/public |
+| ------------- | ----------- | ------------------------------------- | -------------- |
+| 192.168.1.10  | c0.a8.01.0a | 11000000_10101000_00000001_00001010   | private        |
+| 10.1.221.12   | 0a.01.dd.0c | 00001010_00000001_11011101_00001100  | private        |
+| 255.255.255.0 | ff.ff.ff.00 | 11111111_11111111_11111111_00000000  | public         |
+| 10.1.1.22     | 0A.01.01.06 | 00001010_00000001_00000001_00000110  | private        |
+| 44.12.25.64   | 2c.0c.19.40 | 00101100_00001100_00011001_01000000 | public         |
+| 199.168.3.12  | c7.a8.03.0c | 11000111_10101000_00000011_00001100  | public         |
+
+</details>
+
+### Why Is Subnetting Necessary?
+
+<details>
+<summary>
+The benefits of subnetting
+</summary>
+
+> Subnetting is the practice of diving a larger computer network into smaller, more manageable segments to improve network efficiency, security and ip address allocation.
+
+the router takes the entire network range and breaks it into subnets, boundaries in the network for each switch (or vlan). this reduces the broadcast domain and increases security by placing firewall rules between subnets.
+
+</details>
+
+### Working With Subnets And Cidr Notation
+
+<details>
+<summary>
+The CIDR notation in subnet
+</summary>
+
+the subnet mask breaks the ip address into the network address and the host address, so with the ip and the mask, we can identify where the subnet starts and where it ends - this also tells us where the broadcast address and the default gateway is.\
+we can combine the two into CIDR notation, the ip with the subnet bits after the slash.
+
+#### How Many Hosts In A Subnet?
+
+reserved addresses -
+1. first address is the network address
+2. the next address is the default gateway
+3. the last address is the broadcast address.
+
+<cloud>AWS</cloud> subnets have additional reserved addresses.
+
+#### Hands-On Practice With Subnets And Cidr Notation
+
+92.168.1.25/26 -> 92.168.1.0 address, range is 92.168.1.0 to 92.168.1.63 (broadcast address).
+</details>
+
+
+### Breaking Networks Into Smaller Subnets
+
+<details>
+<summary>
+Practice
+</summary>
+
+breaking 192.168.1.0.0/24 into 4 equal subnets.
+
+- 192.168.1.0/26
+- 192.168.1.64/26
+- 192.168.1.128/26
+- 192.168.1.192/26
+
+there are $2^{32-29}-2=6$ usable hosts in "/29" subnet, and $2^{32-10}-2 = 4,194,302$ hosts in a "/10" network.
+
+> Divide 172.16.0.0/16 into 4 smaller subnets. Two subnets must support 1000 devices each. Two subnets must support 400 devices each.\
+> Use the smallest possible subnets to accomplish these goals.
+
+we know that $2^9 = 512$ and $2^10=1024$, so our networks will have "/23" and "/22" cidr ranges.
+
+- 172.16.0.0/22
+- 172.16.4.0/22
+- 172.16.8.0/23
+- 172.16.10.0/23
+
+
+
+</details>
+
+### Network Address, Broadcast Address, And Default Gateway
+
+<details>
+<summary>
+Reserved addresses.
+</summary>
+
+the first address in the range is the network address, the first usable address is usually assigned to the default gateway, the last address is the broadcast address.
+</details>
 
 
 </details>
@@ -461,10 +704,12 @@ we still get internet access, because our router has NAT capability, and can tra
 
 ## Takeaways
 
-<!-- <details> -->
+<details>
 <summary>
 Stuff worth remembering
 </summary>
+
+### Layers
 
 | Layer   | Name         | Headers                        | Moniker                    |
 | ------- | ------------ | ------------------------------ | -------------------------- |
@@ -476,6 +721,15 @@ Stuff worth remembering
 | Layer 6 | Presentation |                                |                            |
 | Layer 7 | Application  |                                |
 
+### Private Ip Ranges
+
+| range            | from          | to                |
+| ---------------- | ------------- | ----------------- |
+| `10.0.0.0/8`     | `10.0.0.0`    | `10.255.255.255`  |
+| `172.16.0.0/12`  | `172.16.0.0`  | `172.31.255.255`  |
+| `192.168.0.0/16` | `192.168.0.0` | `192.168.255.255` |
+
+### Acronyms
 
 - NIC - Network Interface Card
 - MAC address - Media Access Control Address
@@ -487,17 +741,22 @@ Stuff worth remembering
 - Unknown Unicast - discover mapping of MAC to Port (switch level)
 - Multicast - send one message to multiple (but not all) destinations
 - Routers break L2 networks into segments with distinct ip ranges.
-- DNS
+- DNS - Domain Name Service 
 - DHCP - Dynamic Host Control Protocol
-- TFTP
-- network address - first address in range
-- default gateway address - second address in range
-- broadcast address - last address in range
+- TFTP - Trivial File Transfer Protocol
 - ICMP (ping) - Internet Control Message Protocol (L4 - network layer)
 - BGP - border gateway protocol, dynamic routing protocol.
 - NTP - Network Time Protocol
 - HSRP - Hot Standby Router Protocol
 - VRRP - Virtual Router Redundancy Protocol 
 - IPFIX - network visibility
+- reserved ips in subnet
+    - network address - first address in range
+    - default gateway address - second address in range
+    - broadcast address - last address in range
 - NAT - network address translation
+- NGFW - Next Generation Firewall
+- IDS/IPS - Intrusion Detection and Prevention Systems
+- SSID - Service Set Identifier
+- VLSM - Variable Length Subnet Masking
 </details>
