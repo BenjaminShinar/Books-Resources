@@ -2,9 +2,9 @@
     "version": "0.2",
     "ignorePaths": [],
     "dictionaryDefinitions": [],
-    "dictionaries": [],
+    "dictionaries": ["linux"],
     "words": [
-      "CCNA", "hostnames", "HDLC", "SNMP"
+      "CCNA", "hostnames", "HDLC", "SNMP", "tracert"
     ],
     "ignoreWords": [
       "Bombal", "Diffie"

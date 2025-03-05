@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore
+// cSpell:ignore VLSM
 -->
 
 <link rel="stylesheet" type="text/css" href="./markdown-style.css">
