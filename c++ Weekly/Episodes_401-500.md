@@ -2132,7 +2132,7 @@ there is no optimization of <cpp>std::Array</cpp> for the boolean type.
 This is related to how <cpp>std::vector</cpp> of bool was developed...
 
 instead of having an optimization of an array, we already have a dedicated data structure, the <cpp>std::bitset</cpp>. it provides some extra methods (flipping, seting and reseting all the bits, counting bits).\
-in the upcoming C++26 release it will also have constexpr support. which will make it even easier to use. 
+in the upcoming C++26 release it will also have constexpr support. which will make it even easier to use.
 </details>
 
 ## C++ Weekly - Ep 459 - C++26's Saturating Math Operations
@@ -2163,6 +2163,7 @@ int main()
   static_assert(std::saturate_cast<std::int16_t>(val2) == 32767);
 }
 ```
+
 </details>
 
 ## C++ Weekly - Ep 460 - Why is GCC Better Than Clang?
@@ -2285,7 +2286,6 @@ Printing variant using a lambda
 
 [Easily Printing `std::variant`](https://youtu.be/-oSuITjrzgU?si=7-i-9uP7BNZE-RHa)
 
-
 we can't print something with a runtime only known type (variant) through a compile known print function. we need to use a visitor somehow, but it becomes a bit silly looking.
 
 ```cpp
@@ -2329,8 +2329,7 @@ however, the generated code isn't the same, which is weird.
 
 </details>
 
-
-## C++ Weekly Ep 466 - invoke_r Should Not Exist
+## C++ Weekly Ep 466 - `invoke_r` Should Not Exist
 
 <details>
 <summary>
@@ -2391,5 +2390,133 @@ int main()
   return static_cast<int>(Settings::True);
 }
 ```
+
+</details>
+
+## C++ Weekly - Ep 468 - Use `-fvisibility=hidden`!
+
+<details>
+<summary>
+hiding internal functions from library consumers.
+</summary>
+
+[Use -fvisibility=hidden!](https://youtu.be/vtz8S10hGuc?si=6q90XXUzxWQFiuxy)
+
+when we build with `-fPIC` (position independent code) flag, we tell the compiler we are building a shared library (dll, so). this effects how the code is built and what can get inlined.
+
+```cpp
+auto value(const int val)
+{
+  return val;
+}
+auto get_value(const int val)
+{
+  return value(v);
+}
+
+int main(int argc, char** argv)
+{
+  return value(42);
+}
+```
+
+if we add `-fno-semantic-interposition`, this can restore the inlining behavior. the `-fvisibility=hidden` option makes the default behavior of functions to be only usable inside the library, so they aren't exposed to the consumers of the client. only things which are explicitly exported will be visible to outside consumers. there is some way to set it with CMAKE.
+</details>
+
+## C++ Weekly - Ep 469 - How to Print in C++23
+
+<details>
+<summary>
+the right way to print output in C++23
+</summary>
+
+[How to Print in C++23](https://youtu.be/s6CZmNOCoQU?si=cSC4ErGZbnEv938E)
+
+```cpp
+#include <cstdio>
+#include <fmt/core.h>
+#include <print>
+
+int main()
+{
+  std::puts("hello world");
+  // if we can use external libraries
+  fmt::print("Hello {}, {}\n", "Jason", 42);
+  // if we can't use external libraries
+  std::println("Hello {}, {}", "Jason", 42);
+  // last resort
+  std::cout << "Hello " << "Jason, " << 42 << '\n';
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 470 - `requires` Clause vs `requires` Expression?
+
+<details>
+<summary>
+When to use which one?
+</summary>
+
+[requires Clause vs requires Expression?](https://youtu.be/k1I4ZoB50_I?si=f9auEtOOdxqGj7o8)
+
+<cpp>requires</cpp> expressions check if a code is valid.
+
+```cpp
+int main()
+{
+  return requires (int i) {++i;};
+  //return requires (const int i) {++i;}; // fails to compile
+}
+```
+
+it should be inside a template. the code isn't executed, just checking the validity.
+
+```cpp
+template<typename Type>
+bool test_type() {
+  return requires (const Type i) { ++i; };
+}
+
+template<typename T>
+void myFunc(T t) requires false; // uncallble code
+
+int main()
+{
+  myFunc(42); // function doesn't exist
+  return test_type<int>();
+}
+```
+
+this is used for concepts, like <cpp>std::integral</cpp>.
+
+requires clause expect a boolean constant value, a requires expression (`requires requires`) checks if an expression can compile, it's usually is a code smell, and should be a concept by itself.
+
+</details>
+
+## C++ Weekly - Ep 471 - C++26's `=delete` With a Reason
+
+<details>
+<summary>
+Adding a reason in the error.
+</summary>
+
+[C++26's =delete With a Reason](https://youtu.be/9iFJRCHwSok?si=TVoh7X4xIfSShI_F)
+
+when we delete a function we make it a compilation error to call it, in C++26 we can add a text to explain the reason for the deletion.
+
+```cpp
+void myfunc(float);
+void myfunc(int) = delete("only float are allowed, don't using implicit conversions");
+
+int main()
+{
+  myFunc(4.0f); // ok
+  myFunc(4); // will fail compilation
+  myFunc(4.6); // will fail compilation, ambiguous call
+}
+```
+
+make it hard to use the library in the wrong way.
 
 </details>

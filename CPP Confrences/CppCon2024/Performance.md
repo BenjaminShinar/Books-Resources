@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore uffer
+// cSpell:ignore uffer NRVO URVO
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -10,11 +10,11 @@
 6 Talks about Performance.
 </summary>
 
-- [ ] Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ Codebases - Michelle Fae D'Souza
-- [ ] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
+- [x] Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ Codebases - Michelle Fae D'Souza
+- [x] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
 - [x] Fast and small C++ - When efficiency matters - Andreas Fertig
 - [ ] Limitations and Problems in std::function and Similar Constructs: Mitigations and Alternatives - Amandeep Chawla
-- [ ] Session Types in C++: A Programmer's Journey - Miodrag Misha Djukic
+- [x] Session Types in C++: A Programmer's Journey - Miodrag Misha Djukic
 - [x] When Nanoseconds Matter: Ultrafast Trading Systems in C++ - David Gross
 
 ### When Nanoseconds Matter: UltraFast Trading Systems in C++ - David Gross
@@ -498,5 +498,235 @@ void Fun3()
   Receiver(list);
 }
 ```
+
+</details>
+
+### Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ Codebases - Michelle Fae D'Souza
+
+<details>
+<summary>
+Return Value optimizations - when they happen and when to use.
+</summary>
+
+[Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ Codebases](https://youtu.be/WyxUilrR6fU?si=N-84m2JJ6Lfs627T), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Can_You_RVO.pdf), [event](https://cppcon2024.sched.com/event/1gZgE/can-you-rvo-using-return-value-optimization-for-performance-in-bloomberg-c-codebases), [compiler explorer playground](https://tinyurl.com/ICanRVO123).
+
+RVO - return value optimizations
+
+#### What is RVO
+
+Some history: in 1997, copy ellison was added to the standard. it defines when copy-ellison can be used.however, this still isn't used as much as it should, and this can cost in performance and in clean code.
+
+in short, copy elision is removing the construction of temporary objects and constructing them directly on the caller location, this saves us from copying and destroying the temporary object. there are two kinds of RVO - regular (unnamed) and named. NRVO returns a l-value object.
+
+```cpp
+MyObj example1()
+{
+  // NRVO
+  MyObj a = MyObj(3);
+  return a;
+}
+
+MyObj example2()
+{
+  // RVO
+  return MyObj(3);
+}
+
+int main()
+{
+  MyObj e1 = example1();
+  MyObj e2 = example2();
+  return 0;
+}
+```
+
+> Does my compiler have to support RVO?
+>
+> - Compilers are allowed to perform URVO since C++98
+> - Compilers are required to provide URVO support since C++17
+> - NRVO support is optional, but recommended
+
+We can turn down RVO with a compilation flag `-fno-elide-constructors`. it turns down Named RVO, but not Unnamed RVO. for msvc we need to turn it on with `/Zc:nrvo`, or use `/O2` optimization, and some other cases which apply this behavior.
+
+#### Anti-Patterns That Prevent RVO
+
+RVO doesn't happen if we disable it, if we return something that was constructed from outside the scope of the current function (returning a global, a parameter), or if the return type isn't the same as the thing being returned, such as returning a derived class from a function that declares to return a base class, if there are multiple return statements NRVO won't happen. NRVO won't happen when retruning a complex expression.
+
+```cpp
+MyObj example3()
+{
+  // two possible return values of the same type
+  MyObj x1 = MyObj(3);
+  MyObj x2 = MyObj(3);
+  int a = rand() % 100;
+  if (a > 50) {
+    return x1;
+  }
+  return x2;
+}
+
+MyObj example4()
+{
+  // complex expression
+  MyObj x1 = MyObj(3);
+  MyObj x2 = MyObj(3);
+  int a = rand() % 100;
+  return std::move(a>50 ? x1 : x2);
+}
+```
+
+for NRVO - either the copy or move constructors must exist (not deleted), URVO can work even if they are deleted.
+
+some examples: seeing if there's RVO. branches, expressions, CV qualifiers, return l-value or p-value variables, throwing expressions. returning parameters, returning a member from a local object, structured bindings, and other cases...
+
+> WARNING: If you are writing a copy / move constructor, never make the constructor do anything else other than a copy/move, because it can get elided!
+
+#### Using RVO for Performance Gains
+
+we shouldn't rewrite the codebase for RVO, it's usually a micro-optimization, so unless profiling tells us it's a bottleneck, existing code can remain as it is.\
+tooling can help us detect when we have a possibility for RVO gains, like using <cpp>std::move</cpp> incorrectly.
+
+</details>
+
+### Session Types in C++ - A Programmer's Journey - Miodrag Misha Djukic
+
+<details>
+<summary>
+Defining session types (interactions) and expressing them in C++.
+</summary>
+
+[Session Types in C++ - A Programmer's Journey](https://youtu.be/2uzYFhJjbNM?si=iPzH4z0vdVpQjH6A), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Session_Types_in_Cpp.pdf), [event](https://cppcon2024.sched.com/event/1kXEp/session-types-in-c-a-programmers-journey)
+
+session types is a mathematical term. this talk will try to implement the concept in C++.
+
+#### What are Types
+
+we start by looking at the "type" part of the session types, in mathmatical terms, types are connected to "sets". so we need to define what a set is. this is a rabbit hole, so we ignore it. we focus on types in a programming sense. types have different roles, and for most cases, a single type encompasses all the roles, but there are exceptions.
+
+> What are types used for in programming?\
+> Types are used for:
+>
+> - Abstraction
+>   - Knowing a type of something is enough to "work" with it. (We do not need to know all
+the details.)
+> - Documentation
+>   - Type informs us how we should interact with something.
+> - Efficiency
+>   - Carefully chosen type can lead to more efficient code.
+> - Expressivity
+>   - Meaning is encoded in both operation and operands' type.
+> - Detecting errors
+>   - Doing something (by accident) that does not "fit" the type will be detected as error.
+> - Safety
+>   - Varying explanations.
+>   - A guarantee that there are no certain kinds of errors.
+>   - Being unable to do a "wrong thing".
+
+types aren't the only ways to achieve everything, but they are part of them. so, a defintion that encompasses the above usage might be something like:
+
+> "A type defines a set of possible values and a set of operations (for an object)."\
+> ~ Bjarne Stroustrup, Programming Principles and Practices Using C++.
+
+#### What is a Session
+
+> - Interaction of two or more entities.
+> - It has a beginning and (usually) an end.
+> - In between, a sequence of interactions is happening.
+
+if we have an example of a client providing the server two numbers, and then an operation (addition or division) and getting a response back.
+we could describe it with an interaction diagram, which is also doing the things we wanted the type to do. we could also describe sessions as a valid sequence of interactions, or a formula:
+
+- side A: "?int; ?int; &(ADD: !int, DIV: !double); end".
+- side B: "!int; !int; &CirclePlus;(ADD: ?int, DIV: ?double); end"
+
+sessions can involve more than two processes, but we focus on binary session types for now. so session types describe behavior: what is the message, what is allowed, what is the order. (also: no deadlocks, eventual termination).
+
+(this is like a state machine).
+
+an example of a "scribble" protocol defintion
+
+```scribble
+module scribble.example.Purchasing;
+
+type <xsd> "QuoteRequest" from "Purchasing.xsd" as QuoteRequest;
+
+global protocol BuyGoods (role Buyer, role Seller) {
+  quote(QuoteRequest) from Buyer to Seller;
+
+  choice at Seller {
+    quote(Quote) from Seller to Buyer;
+    buy(Order) from Buyer to Seller;
+    buy(OrderAck) from Seller to Buyer;
+  } or {
+    quote(OutOfStock) from Seller to Buyer;
+  }
+}
+```
+
+in practice, we use session types in three different ways.
+
+1. write and verify protocol, generate code, use type.
+2. write code, extract protocol and verify
+3. use language facilities to describe the protocol, and then write a type, and extract protocol defintion.
+
+we will use the third way, starting from the middle, not abstract protocol defintion, but also not direct code.
+
+we could take a functional approach, monads, creating new objects, continuation passes. we need some way to have communication (channels between actors), either as using queues or networking sockets. we use a simplified abstraction.
+
+```cpp
+struct Comm {
+  Comm(SQ& forSending, SQ& forReceiving);
+  //..
+  template<typename T>
+  void send(T x) { /**/ }
+  template<typename T>
+  T recv() { /**/ }
+};
+Comm(Q1, Q2); // One end-point
+Comm(Q2, Q1); // The other end-point
+
+void serverFunc(Comm chan) {
+  auto v1 = chan.recv<int>();
+  auto v2 = chan.recv<int>();
+  chan.send(v1 + v2); // addition
+  chan.close();
+}
+
+void clientFunc(Comm chan) {
+  cout << "First num: ";
+  int x;
+  cin >> x;
+  chan.send(x);
+  cout << "Second num: ";
+  cin >> x;
+  chan.send(x);
+  auto r = chan.recv<int>();
+  cout << "Result: " << r << endl;
+  chan.close();
+}
+```
+
+we could introduce more types, make things more explicit, write for one side, and express the other side in those terms. using templates, channels, loops and stuff to express our interaction.\
+using <cpp>std::move</cpp> on the "this" object,
+
+</details>
+
+### Designing C++ Code Generator Guardrails: A Collaboration Among Outreach And Development Teams And Users - Sherry Sontag, Cb Bailey
+
+<details>
+<summary>
+The process of modernizing the code generator tool.
+</summary>
+
+[Designing C++ code generator guardrails: A collaboration among outreach and development teams and users](https://youtu.be/sAfUQUs_GbI?si=VSOmj_qO-ZWK_TSc), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Designing_Cpp_Code_Generator_Guardrails.pdf), [event](https://cppcon2024.sched.com/event/1gZhD/designing-c-code-generator-guardrails-a-collaboration-among-outreach-and-development-teams-and-users).
+
+Code generation tool in Bloomberg internal infrastructure, a talk about an RFC (request for comments) and how the modernization process went.
+
+cycles of shrinking and growing executables, each library adds more code and serialization, so the client-server architecture must keep working, and they need internal tooling to make sure things run, and this is achieved by having a code generator.
+the code generator handles the serialization, sending and receiving requests, and providing the basic framework for networking, threading, logging and metrics. all for allowing the users (internal developers inside the company) to focus on the business logic.\
+over time, those types escaped outside the bloomberg services eco-system, and things become hectic. a lot of libraries, sometime duplicating behavior, creating bloat and making things confusing.
+
+their goal:\
+reducing bloat, creating guidelines for new libraries, reviewing existing libraries. outreach to teams about how to use new tooling, how to name libraries, and what should be in it. stripping debug information from all generated code libraries, writing validtores for the new policies.
 
 </details>

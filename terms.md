@@ -5,8 +5,9 @@
 <link rel="stylesheet" type="text/css" href="./markdown-style.css">
 
 # Terms, Applications And Acronyms
+
 <summary>
-terms, applications and acronyms that came up and I didn't know about and should store somewhere
+Terms, applications and acronyms that came up and I didn't know about and should store somewhere.
 </summary>
 
 - hashicorp Nomad - orchestrator for VMs.
@@ -14,3 +15,5 @@ terms, applications and acronyms that came up and I didn't know about and should
 - hashicorp consul -
 - hashicorp consul template -
 - QEMU is a generic and open source machine emulator and virtualizer.
+- llvm - low level virtual machine
+- RFC - request for comments

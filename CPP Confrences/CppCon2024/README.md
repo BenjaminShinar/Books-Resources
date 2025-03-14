@@ -67,10 +67,10 @@
 - [ ] C++/Rust Interop: Using Bridges in Practice - Tyler Weaver
 - [ ] C++20 in Practice: A Complete Introduction 2024 - Nicolai Josuttis
 - [ ] C++26 Preview - Jeff Garland
-- [ ] Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ CodeBases - Michelle Fae D'Souza
+- [x] Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ CodeBases - Michelle Fae D'Souza
 - [ ] Case For Non-Moveable Types - Jason Turner
 - [ ] Code Generation from Unified Robot Description Format (URDF) for Accelerated Robotics - Paul Gesel
-- [ ] Common Package Specification (CPS) in practice: A full round trip implementation in Conan C++ package manager -Diego Rodriguez-Losada Gonzalez
+- [ ] Common Package Specification (CPS) in practice: A full round trip implementation in Conan C++ package manager - Diego Rodriguez-Losada Gonzalez
 - [x] Compile-time Validation - Alon Wolf
 - [x] Composing Ancient Mathematical Knowledge Into Powerful Bit-fiddling Techniques - Jamie Pond
 - [ ] Contracts for C++ - Timur Doumler
@@ -85,7 +85,7 @@
 - [ ] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
 - [ ] Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
 - [ ] Designing a Slimmer Vector of Variants - Christopher Fretz
-- [ ] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
+- [x] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
 - [ ] Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
 - [x] Fast and small C++ - When efficiency matters - Andreas Fertig
 - [x] Gazing Beyond Reflection for C++26 - Daveed Vandevoorde
@@ -107,7 +107,7 @@
 - [ ] Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
 - [ ] Limitations and Problems in std::function and Similar Constructs: mitigation and Alternatives - Amandeep Chawla
 - [ ] Linear Algebra with The Eigen C++ Library - Daniel Hanson
-- [ ] LLVM's Realtime Safety Revolution: Tools for Modern Mission Critical Systems - Christopher Apple, David Trevelyan
+- [x] LLVM's Realtime Safety Revolution: Tools for Modern Mission Critical Systems - Christopher Apple, David Trevelyan
 - [ ] Making Hard Tests Easy: A Case Study From the Motion Planning Domain - Chip Hogg
 - [ ] Many ways to kill an Orc (or a Hero) - Patrice Roy
 - [x] Message Handling with Boolean Algebra -Ben Deane
