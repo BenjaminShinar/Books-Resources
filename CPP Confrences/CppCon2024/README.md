@@ -35,7 +35,7 @@
 - [ ] Advanced and Modern C++ Programming: The Tricky Parts - Nicolai Josuttis
 - [ ] Adventures with Legacy CodeBases: Tales of Incremental Improvement - Roth Michaels
 - [ ] Another Grab-bag of Oddments - Ben Deane
-- [ ] Application of C++ in Computational Cancer Modeling - Ruibo Zhang
+- [x] Application of C++ in Computational Cancer Modeling - Ruibo Zhang
 - [ ] Author Signing: Andreas Fertig - Andreas Fertig
 - [ ] Author Signing: Nicolai Josuttis - Nicolai Josuttis
 - [x] Back to Basics: Almost Always Vector? - Kevin Carpenter
@@ -99,13 +99,13 @@
 - [ ] Implementing Particle Filters with Ranges - Nahuel Espinosa
 - [ ] Implementing Reflection using the new C++20 Tooling Opportunity: Modules - Maiko Steeman
 - [ ] import CMake; // Mastering C++ Modules - Bill Hoffman
-- [ ] Improving our safety with a quantities and units library - Mateusz Pusz
+- [x] Improving our safety with a quantities and units library - Mateusz Pusz
 - [ ] Improving your Team(work) - Callum Piper
 - [ ] Interesting Upcoming Features from Low latency, Parallelism and Concurrency from Kona 2023, Tokyo 2024, and St. Louis 2024 - Paul E. McKenney, Maged Michael,Michael Wong
 - [ ] Irksome C++ - Walter E Brown
 - [ ] Leveraging C++ for Efficient Motion Planning: RRT algorithm for robotic arms - Aditi Pawaskar
 - [ ] Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
-- [ ] Limitations and Problems in std::function and Similar Constructs: mitigation and Alternatives - Amandeep Chawla
+- [x] Limitations and Problems in std::function and Similar Constructs: mitigation and Alternatives - Amandeep Chawla
 - [ ] Linear Algebra with The Eigen C++ Library - Daniel Hanson
 - [x] LLVM's Realtime Safety Revolution: Tools for Modern Mission Critical Systems - Christopher Apple, David Trevelyan
 - [ ] Making Hard Tests Easy: A Case Study From the Motion Planning Domain - Chip Hogg
@@ -158,7 +158,7 @@
 - [x] When Lock-Free Still Isn't Enough: An Introduction to Wait-Free Programming and Concurrency Techniques - Daniel Anderson
 - [x] When Nanoseconds Matter: UltraFast Trading Systems in C++ - David Gross - Performance
 - [ ] Why is my build so slow? Compilation Profiling and Visualization - Samuel Privett
-- [ ] Work Contracts – Rethinking Task Based Concurrency and Parallelism for Low Latency C++ - Michael Maniscalco
+- [x] Work Contracts – Rethinking Task Based Concurrency and Parallelism for Low Latency C++ - Michael Maniscalco
 - [ ] xstd::any - A New Container for Any Type with Extra Features and Small Object Optimization - Erez Strauss
 
 ## Lighting Talks

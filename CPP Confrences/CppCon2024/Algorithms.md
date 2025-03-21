@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore hashers Adler32 inplace SWAR Superscalar
+// cSpell:ignore hashers Adler32 inplace SWAR Superscalar MPMC
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -18,7 +18,7 @@
 - [x] Taming the C++ Filter View - Nicolai Josuttis
 - [x] The Beman Project: Bringing Standard Libraries to the Next Level - David Sankel
 - [x] When Lock-Free Still Isn't Enough: An Introduction to Wait-Free Programming and Concurrency Techniques - Daniel Anderson
-- [ ] Work Contracts – Rethinking Task Based Concurrency and Parallelism for Low Latency C++ - Michael Maniscalco
+- [x] Work Contracts – Rethinking Task Based Concurrency and Parallelism for Low Latency C++ - Michael Maniscalco
 
 ---
 
@@ -595,7 +595,7 @@ benchmarking shows better latency for wait-free counters when there are more thr
 > Performance Implications
 >
 > - Never guess about performance
-> - But do hypothesize about performance by analyzing an algorithm’s progress guarantees, and use these progress guarantees to guide the design of your algorithm
+> - But do hypothesize about performance by analyzing an algorithm's progress guarantees, and use these progress guarantees to guide the design of your algorithm
 
 </details>
 
@@ -1105,7 +1105,7 @@ namespace opt = beman::optional26;
 int main() {
   opt::optional<int> x = /*…*/;
   for (auto i : x) {
-    std::cout << i << ‘\n’;
+    std::cout << i << '\n';
   }
 }
 
@@ -1117,7 +1117,7 @@ public:
 };
 void foo() {
   vector<Person> people = /* ... */;
-  // Compute eye colors of 'people’.
+  // Compute eye colors of 'people'.
   vector<string> eye_colors = people
     | views::transform(&Person::eye_color)
     | views::join
@@ -1271,4 +1271,204 @@ static_assert([] {
 and we can write our algorithm for the lane wise operation, both for multiplication and exponentiation.
 
 there is some place for optimizations, the number of minimal addition operation changes based the multiplier. the compiler is actually pretty good in understanding that itself. but using the lanes approach can sometime get better compiled code (less instructions).
+</details>
+
+### Work Contracts – Rethinking Task Based Concurrency And Parallelism For Low Latency C++ - Michael Maniscalco
+
+<details>
+<summary>
+An alternative to queues for better performance.
+</summary>
+
+[Work Contracts – Rethinking Task Based Concurrency and Parallelism for Low Latency C++](https://youtu.be/oj-_vpZNMVw?si=2g82kAoKTWne-ry7), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Work_Contracts.pdf), [event](https://cppcon2024.sched.com/event/1gZhA/work-contracts-rethinking-task-based-concurrency-and-parallelism-for-low-latency-c), [work contract repository](http://github.com/buildingcpp/work_contract).
+
+> "We cannot solve our problems with the same thinking we used when we created them."\
+> ~ Albert Einstein
+
+#### The Problem With Queues
+
+task based concurrency, replacing existing mechanism with something new. like Task queues, which become congested and lose performance. fixes to queues end up creating more problems that we need to work with.\
+MPMC - multi producer, multi consumer.
+
+> Problem #1 - Task Queues Do Not Scale Well:
+>
+> - Contention:
+>   - Even the most meticulously designed lock-free queues experience a significant drop in performance as the number of threads increases.
+> - Multiple sub-queues can be used to mitigate contention but this introduces a myriad of new problems:
+>   - Task starvation
+>   - Load balancing
+>   - Forfeits strict FIFO behaviour
+>   - Increases memory footprint (or requires allocations)
+>   - Terrible task selection "fairness"
+>
+> Problem #2 - No Inherent Support For Prioritization:
+>
+> - Priority queues address this but also come with new problems:
+>   - Increased complexity
+>   - Further degrade performance
+>   - Task starvation
+>   - Task aging
+> - Multiple queues for different priority also works but:
+>   - Scheduling
+>   - Task starvation, load balancing, work stealing
+>
+> Problem #3 - Encourages Tight Coupling of Data and Logic:
+>
+> - Queues are great for data:
+>   - FIFO for data is usually desirable
+>   - We usually want to preserve the order of our data
+> - Queues for logic (work) is not a good idea:
+>   - We couple logic and data together as tasks because:
+>   - Task Queues typically contain more than one type of task (different types of logic)
+>   - By the time a task reaches the front of the queue it is impossible to know which logic to apply to the data unless coupled together
+> - We could decouple logic from data but:
+>   - Then we would require a unique queue for each type of logic
+>   - But multiple queues brings other headaches such as scheduling, prioritization, etc, as enumerated previously
+>
+> Summary:
+>
+> - Queues do not scale well:
+>   - True even for the best lock free implementations
+> - Does not support prioritization:
+>   - Available options to mitigate this shortcoming introduce a myriad of other shortcomings which further complicate issues
+> - By their nature, queues bring tasks to threads:
+>   - Requiring tasks to convey both data and logic
+>   - Often leading to task class hierarchies, pointers to base classes, pools and allocators
+
+#### Introducing Work Contracts
+
+Work Contracts are the proposed alternative to Queues. a work contract is a callable object, the container is a tree-based, lock-free and usually wait free. each leaf is a signal, and the workers traverse the tree to reach to the work contracts.
+
+> - Work Contracts (Overview):
+>
+> - A Work Contract Group contains:
+>   - An array of Work Contracts (each with their own logic and, if needed, data, queue\<data>, etc)
+>   - A Signal Tree (which has as many leaf nodes as there are work contracts in the group)
+> - Threads are brought to the "task" rather than the "task" being brought to the threads (as is done with Task Queues)
+>   - Minimize thread contention because threads do not compete for the same Work Contract (task).
+>
+> The Signal Tree:
+>
+> - Lock Free with most operations also wait free
+>   - Allows MT traversal without locks and therefore parallel task execution with near zero contention between threads
+> - Excellent Scalability:
+>   - Over 40x higher throughput than the fastest MPMC queue at scale
+>   - Over 100x higher throughput than the average MPMC queue at scale
+>   - Approximately 1/2N memory requirement (N = number of nodes)
+>
+> The Work Contracts:
+>
+> - Enhanced "Tasks" separating data from logic:
+>   - Contain its own logic
+>   - Asynchronous execution
+>   - Recurring execution
+>   - Accesses its own data (user defined ingress)
+>   - Guaranteed single threaded execution
+>   - Supports optional asynchronous destruction logic
+
+benchmarks against established queue libraries. measuring throughput based on number of threads, also measuring the distribution of tasks and workers (task and thread fairness). for low contention, most perform about the same, but as we increase the contention (more push and pulls from the queue), the performance for queues suffers, but not for work contracts trees. at heavy loads, adding threads starts being detrimental on queues.\
+The improvement comes from the signal tree.
+
+> The Signal Tree:
+>
+> - Lock Free with most operations also wait free:
+>   - Allows MT traversal without locks and therefore parallel task execution with near zero contention between threads
+> - Excellent Scalability:
+>   - Over 40x higher throughput than the fastest MPMC queue at scale
+>   - Over 100x higher throughput than the average MPMC queue at scale
+>   - Approximately 1/2N memory requirement (N = number of nodes)
+> - Task Selection Bias:
+>   - Simple, efficient, technique allows for extremely fair task selection
+>   - Same technique can be used to create bias for task prioritization
+>   - Bias is per thread, not per tree, allowing each thread to dynamically change its bias between prioritization and fairness
+>   - Prioritization is opportunistic. Failure to find a high priority contract results in selection of a lower priority contract
+with zero additional overhead
+
+The signal tree is a perfect binary tree, each internal node has two children, and the leaf nodes are all the same depth. for leafs, the signal is either zero (off) or one (on). for internal nodes, the value is is the sum of the children.\
+To set a signal, we begin at the leaf node, set it to On (one), and traverse upwards to the root, increasing each node along the way by one. this uses atomic counters. To select a signal, we start at the root, if it has a non-zero, decrement by one, then we check the children and select a child with the positive value (here we can have a bias), and continue until reaching the leaf. this leaves the tree at a correct state with the sum property. the signal is associated with a work contract, so this means there is work to be done.\
+Bias flags are bits corresponding to the levels of the tree, and they indicate which child is preferred (left or right), if we designate leafs as high priority work, we can lock the bias flags to try to reach them first, so some workers can have priority, and some can be focused on fairness.
+
+a signal tree (work contract group) has a predetermined number of leaves.
+
+```cpp
+// create a work contract group
+work_contract_group workContractGroup(4);
+// create work work contract
+auto workContract = workContractGroup.create_contract([](){std::println("hello world!");});
+// schedule the work contract
+workContract.schedule(); // set signal
+// execute the next scheduled contract
+workContractGroup.execute_next_contract(); // execute, do work
+
+// executing the contract
+void work_contract_group::execute_next_contract()
+{
+  auto signalIndex = signalTree_.select();
+  contracts_[signalIndex].invoke();
+}
+```
+
+the work contract is a unit of work, similar to a task, but not the same. they have internal state, and have something like a "destructor", a callable which is invoked when the contract is expired - a release function. the next time the contract is executed, the special function is called. there is also a callback handler for exceptions.
+
+> Work Contracts support an optional "destructor"
+>
+> - Releasing a work contract will schedule it for destruction
+> - Going out of scope also 'releases' the work contract
+> - The 'destructor' will be invoked asynchronously
+> - A 'released' work contract is automatically 'scheduled' as well
+
+Work contracts are intended to be called multiple times, not just once. they only have logic in them, if we want data, we capture it through the contract with a reference. we can have a queue of data, and the work contract can grab it from there. because we use atomics, we don't need locks.\
+we can also pass a token to the work contract, which allows tasks to reschedule or release themselves from the signal tree.
+
+```cpp
+// create a work contract group
+work_contract_group workContractGroup(4);
+std::atomic<bool> done{false};
+// create work work contract
+auto workContract = workContractGroup.create_contract(
+  [i = 0](work_contract_token & token) mutable {
+    std::println("i = {}", i++);
+    if (i < 2)
+      token.schedule(); // do again
+    else
+      token.release(); // never do again
+  }
+  , [&](){std::println("destroyed"); done = true;} // "destructor"
+);
+workContract.schedule();
+while (!done)
+  workContractGroup.execute_next_contract();
+/* ouput
+  i = 0
+  i = 1
+  destroyed
+*/
+```
+
+#### Adding Threads
+
+we can have multiple threads operating on the same signal tree.
+
+```cpp
+work_contract_group workContractGroup;
+std::vector<std::jthread> threads(24); // workers
+for (auto & thread : threads)
+  thread = std::move(std::jthread([&](auto stopToken) {
+    while (!stopToken.stop_requested()) workContractGroup.execute_next_contract();
+  })
+);
+// create work work contract
+auto workContract = workContractGroup.create_contract(
+  [i = 0](auto & token) mutable { 
+    std::cout << "thread " << std::this_thread::get_id() << ", i = " << i++ << '\n'; 
+    token.schedule(); // work to be done
+  }
+);
+
+workContract.schedule();
+std::this_thread::sleep_for(std::chrono::seconds(10));
+// scope end, work contract is canceled. 
+```
+
+we can't re-schedule a work contract while it's set. it can't be stacked with more work, it must be cleared before it's set again.
 </details>

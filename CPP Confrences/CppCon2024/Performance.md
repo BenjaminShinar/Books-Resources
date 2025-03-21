@@ -13,7 +13,7 @@
 - [x] Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ Codebases - Michelle Fae D'Souza
 - [x] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
 - [x] Fast and small C++ - When efficiency matters - Andreas Fertig
-- [ ] Limitations and Problems in std::function and Similar Constructs: Mitigations and Alternatives - Amandeep Chawla
+- [x] Limitations and Problems in std::function and Similar Constructs: Mitigations and Alternatives - Amandeep Chawla
 - [x] Session Types in C++: A Programmer's Journey - Miodrag Misha Djukic
 - [x] When Nanoseconds Matter: Ultrafast Trading Systems in C++ - David Gross
 
@@ -728,5 +728,192 @@ over time, those types escaped outside the bloomberg services eco-system, and th
 
 their goal:\
 reducing bloat, creating guidelines for new libraries, reviewing existing libraries. outreach to teams about how to use new tooling, how to name libraries, and what should be in it. stripping debug information from all generated code libraries, writing validtores for the new policies.
+
+</details>
+
+### Limitations and Problems in `std::function` and Similar Constructs: Mitigations and Alternatives - Amandeep Chawla
+
+<details>
+<summary>
+Overhead costs of using constructs like <cpp>std::function</cpp>, <cpp>std::apply</cpp> and <cpp>std::packaged_task</cpp>. finding how to reduce operations and boiler-plate code.
+</summary>
+
+[Limitations and Problems in `std::function` and Similar Constructs: Mitigations and Alternatives](https://youtu.be/clpQVn_LAiM?si=ZOk9gfhV54wxqMF9), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Limitations_and_Problems_in_StdFunction_and_Similar.pdf), [event](https://cppcon2024.sched.com/event/1gZff/limitations-and-problems-in-stdfunction-and-similar-constructs-mitigations-and-alternatives).
+
+in lambda, the size is is determined by the captures, they don't have a unique class named, and therefore we can't put them into containers or pass them around directly. instead, we have <cpp>std::function</cpp>
+
+> - Is a class template.
+> - It is a general-purpose polymorphic function wrapper.
+> - Instances of std::function can store, copy, and invoke any CopyConstructible Callable target.
+> - Uses type-erasure under the hood to gain all the magical powers.
+> - Utilizes small-size optimization in case target size is within certain limits.
+
+for the demon, we have an instrumented class that tracks copies and move operations through the `_id` property.
+
+```cpp
+struct InstrumentedClass {
+  explicit InstrumentedClass(std::string id) : id_(std::move(id)){}
+
+  // Copy Constructor = id_ = "C("+ id_ +"):
+  InstrumentedClass(const InstrumentedClass & other);
+
+  // Move Constructor id_ = "M("+ id_ +"):
+  InstrumentedClass(InstrumentedClass && other);
+
+  // Copy Assignment id_ = "c=("+ id_ +"):
+  InstrumentedClass & operator=(const InstrumentedClass & other);
+
+  // Move Assignment id_ = "m=("+ id_ +"):
+  InstrumentedClass & operator=(InstrumentedClass && other);
+protected:
+  std::string id_;
+};
+```
+
+we can try some stuff with it, showing how the size of a lambda changes based on the action.
+
+```cpp
+// assume sizeof(InstrumentedClass) == 32
+InstrumentedClass obj1{"a"};
+InstrumentedClass obj2{"b"};
+
+auto ref_capture = [&] {
+  return std::make_tuple(obj1.id(), obj2.id());
+};
+
+auto value_capture = [=] {
+  return std::make_tuple(obj1.id(), obj2.id());
+};
+
+auto [r_id1, r_id2] = ref_capture();
+auto [v_id1, v_id2] = value_capture();
+
+std::out << "(" << r_id1 << ", " << r_id2 << ")\n"; // (a, b)
+std::out << "sizeof(ref_capture) = " << sizeof(ref_capture) << '\n'; // 16 - two pointers (references)
+std::out << "(" << v_id1 << ", " << v_id2 << ")\n"; // (C(a), C(b))
+std::out << "sizeof(value_capture) = " << sizeof(value_capture) << '\n'; // 64 - two objects copied into the lambda object
+```
+
+we now move further, passing this class into a queue. some code showing copies and moves when passing to a lambda and to queues. we want to get rid of copy operations and reduce the number of moves.
+
+there are other constructs we could have used. we have some cases where passing by reference (not const), won't work properly.
+
+```cpp
+void fn1(
+  InstrumentedClass byValue, InstrumentedClass & byRef,
+  Const InstrumentedClass & byCRef)
+{
+  std::out << "(" << byValue.id() << ", " << byRef.id() << ", " << byCRef.id()<< ")\n";
+}
+
+void fn2(
+  InstrumentedClass byValue,
+  Const InstrumentedClass & byCRef)
+{
+  std::out << "(" << byValue.id() << ", " << byCRef.id()<< ")\n";
+}
+
+// lambda
+[
+  byValue = std::move(byValue),
+  byRef = std::move(byRef),
+  byCRef = std::move(byCRef),
+]() mutable {
+  fn1(std::move(byValue), byRef, byCRef);
+}();
+/* output
+M(M(byValue))
+M(byRef)
+M(byCRef)
+*/
+
+// bind - can't directly work with function having reference parameters
+std::bind(
+  fn2,
+  std::move(byValue),
+  std::move(byCRef)
+)();
+/* output
+C(M(byValue))
+M(byCRef)
+*/
+
+// Asynchronous launch
+std::async(
+  std::launch::async,
+  fn1,
+  std::move(byValue),
+  std::move(byRef), // actually not allowed in the standard
+  std::move(byCRef)
+).get();
+/* output
+M(M(M(byValue)))
+M(M(byRef))
+M(M(byCRef))
+*/
+```
+
+> Summary of comparisons
+>
+> - Lambdas provide us the maximum flexibility and performs quite well.
+> - <cpp>std::async</cpp> can execute our code on a separate thread
+>   - No copies involved.
+>   - Implementation on windows gave us lower number of moves.
+>   - but we don't have much control on the execution context.
+
+the best result so far had 3 moves for parameters passed by values, 2 moves for those captured by reference (regular and const), and 4 moves for parameters captured inside the callback. this is what we strive to achieve - no copies, lowest possible moves.
+
+```cpp
+InstrumentedClass byValue("byValue");
+InstrumentedClass byRef("byRef");
+InstrumentedClass byCRef("byCRef");
+InstrumentedClass capturedInCB("capturedInCb");
+
+auto cbLambda = [capturedInCB = std::move(capturedInCB)](const auto & ids) {
+  for (const auto & id : ids) {
+    std::out << id << ", ";
+  }
+  std::out << capturedInCB.id() << "\n";
+};
+
+std::async(
+  std::launch::async,
+  asyncFn,
+  std::move(byValue),
+  std::move(byRef),
+  std::move(byCRef),
+  std::move(cbLambda)
+);
+/* output
+M(M(M(byValue)))
+M(M(byRef))
+M(M(byCRef))
+M(M(M(M(capturedInCb))))
+*/
+```
+
+the problem is with data capturing, we hold it in the container directly, can we move it to the heap and simply pass the pointer to it? until C++20, <cpp>std::function</cpp> couldn't take non-copyable parameters, such as <cpp>std::unique_ptr</cpp>, but <cpp>std::shared_ptr</cpp> is ok. this gives us less moves than what we had before, at the cost of using the reference counting mechanism. we also aren't generic enough.\
+we can get around the first problem by creating a unique MoveWrapper object that calls the move operator even when it is copied with the copy constructor. this is a a hack.
+
+```cpp
+auto holderWrapper = MoveWrapper( std::make_unique<Holder>(
+  std::move(byValue),
+  std::move(byRef),
+  std::move(byCRef),
+  std::move(cbLambda)
+));
+
+taskQueue.enqueue([holderWrapper = std:move(holderWrapper)] () {
+  auto & holder = holerWrapper.value();
+  asyncFn(
+    std::move(holder->byValue),
+    holder->byRef,
+    holder->byCRef,
+    std::move(holder->callbackFn)
+  );
+});
+```
+
+we still aren't generic enough, we could use the <cpp>std::tuple</cpp> with variadic template arguments to avoid defining classes by hand, but it has some problems with non-const references. we first wrap it in a holder class and use <cpp>std::invoke</cpp> and <cpp>std::apply</cpp>. we need to reduce some boiler plate code. we use some template meta-programming and <cpp>if constexpr</cpp> to create tuple converter and some more template magic to deduce the type from the asynchronous function. we apply the same ideas to generate the unique holder class.
 
 </details>
