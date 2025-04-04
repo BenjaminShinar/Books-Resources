@@ -10,16 +10,16 @@
 10 Talks about Scientific Computing C++.
 </summary>
 
-- [ ] - A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
-- [x] - Application Of C++ In Computational Cancer Modeling - Ruibo Zhang
-- [ ] - Bridging The Gap: Writing Portable Programs For Cpu And Gpu - Thomas Mejstrik
-- [ ] - Data Is All You Need For Fusion - Manya Bansal
-- [ ] - High-Performance Numerical Integration In The Age Of C++26 - Vincent Reverdy
-- [ ] - High-Performance, Parallel Computer Algebra In C++ - David Tran
-- [x] - Improving Our Safety With A Quantities And Units Library - Mateusz Pusz
-- [ ] - Linear Algebra With The Eigen C++ Library - Daniel Hanson
-- [ ] - To Int Or To Uint, This Is The Question - Alex Dathskovsky
-- [ ] - Vectorizing A Cfd Code With `Std::Simd` Supplemented By (Almost) Transparent Loading And Storing - Olaf Krzikalla
+- [ ] A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
+- [x] Application Of C++ In Computational Cancer Modeling - Ruibo Zhang
+- [ ] Bridging The Gap: Writing Portable Programs For Cpu And Gpu - Thomas Mejstrik
+- [ ] Data Is All You Need For Fusion - Manya Bansal
+- [ ] High-Performance Numerical Integration In The Age Of C++26 - Vincent Reverdy
+- [ ] High-Performance, Parallel Computer Algebra In C++ - David Tran
+- [x] Improving Our Safety With A Quantities And Units Library - Mateusz Pusz
+- [ ] Linear Algebra With The Eigen C++ Library - Daniel Hanson
+- [ ] To Int Or To Uint, This Is The Question - Alex Dathskovsky
+- [ ] Vectorizing A Cfd Code With `Std::Simd` Supplemented By (Almost) Transparent Loading And Storing - Olaf Krzikalla
 
 ---
 

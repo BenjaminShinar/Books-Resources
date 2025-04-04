@@ -39,7 +39,8 @@
     "Simula",
     "Xoroshiro",
     "Xoshiro",
-    "xstd"
+    "xstd",
+    "PIMPL"
   ],
   "ignoreWords": [
     "Maniscalco",

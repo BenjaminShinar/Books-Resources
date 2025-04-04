@@ -30,7 +30,7 @@
 
 - [ ] "Pick a random number... no, not that one!" - Tales of Real-World Exploits Based on Bad Randomness - Max Hoffmann
 - [x] 10 Problems Large Companies Have with Managing C++ Dependencies and How to Solve Them - Augustin Popa
-- [ ] A new dragon in the den: fast conversion from floating-point numbers - Cassio Neri
+- [ ] A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
 - [ ] A Simple Rollback System in C++: The Secret Behind Online Multiplayer Games - Elias Farhan
 - [ ] Advanced and Modern C++ Programming: The Tricky Parts - Nicolai Josuttis
 - [ ] Adventures with Legacy CodeBases: Tales of Incremental Improvement - Roth Michaels
@@ -43,13 +43,13 @@
 - [ ] Back to Basics: Debugging and Testing - Greg Law, Mike Shah
 - [ ] Back to Basics: Function Call Resolution -Ben Saks
 - [ ] Back to Basics: Functional Programming in C++ - Jonathan Müller
-- [x]  Back to Basics: Generic Programming - David Olsen
+- [x] Back to Basics: Generic Programming - David Olsen
 - [ ] Back to Basics: Lifetime Management - Phil Nash
 - [ ] Back to Basics: Object-Oriented Programming - Andreas Fertig
 - [ ] Back to Basics: R-values and Move Semantics - Amir Kirsh
 - [ ] Back to Basics: Unit Testing - Dave Steffen
 - [ ] Balancing Efficiency and Flexibility: Cost of Abstractions in Embedded Systems - Marcell Juhasz
-- [ ] Beyond Compilation Databases to Support C++ Modules: Build Databases - Ben Boeckel
+- [x] Beyond Compilation Databases to Support C++ Modules: Build Databases - Ben Boeckel
 - [ ] Bitcoin Script: Implementation Details and Use Cases - Kris Jusiak
 - [ ] Bitcoin: From the White Paper to the World's Reserve Currency - Eduardo Madrid
 - [ ] Bitcoin: History and Use Cases - Jon Kalb
@@ -58,7 +58,7 @@
 - [ ] BoF - GameDev, Growing our Conference Community - Guy Davidson
 - [ ] Boosting Software Efficiency: A Case Study of 100% Performance Improvement in an Embedded C++ System - Gili Kamma
 - [ ] Bridging the Gap: Writing Portable Programs for CPU and GPU - Thomas Mejstrik
-- [ ] Building CppCheck - What We Learned from 17 Years of Development - Daniel Marjamäki
+- [x] Building CppCheck - What We Learned from 17 Years of Development - Daniel Marjamäki
 - [ ] Building Safe and Reliable Surgical Robotics with C++ - Milad Khaledyan
 - [ ] C++ Exceptions for Smaller Firmware - Khalil Estell
 - [ ] C++ Software Design - Klaus Iglberger
@@ -105,7 +105,7 @@
 - [ ] Irksome C++ - Walter E Brown
 - [ ] Leveraging C++ for Efficient Motion Planning: RRT algorithm for robotic arms - Aditi Pawaskar
 - [ ] Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
-- [x] Limitations and Problems in std::function and Similar Constructs: mitigation and Alternatives - Amandeep Chawla
+- [x] Limitations and Problems in `std::function` and Similar Constructs: mitigation and Alternatives - Amandeep Chawla
 - [ ] Linear Algebra with The Eigen C++ Library - Daniel Hanson
 - [x] LLVM's Realtime Safety Revolution: Tools for Modern Mission Critical Systems - Christopher Apple, David Trevelyan
 - [ ] Making Hard Tests Easy: A Case Study From the Motion Planning Domain - Chip Hogg
@@ -152,13 +152,13 @@
 - [ ] Using Modern C++ to Build XOffsetDataStructure: A Zero-Encoding and Zero-Decoding High-Performance Serialization Library in the Game Industry - Fanchen Su
 - [ ] Vectorizing a CFD Code With `std::simd` Supplemented by (Almost) Transparent Loading and Storing - Olaf Krzikalla
 - [x] What Volatile Means (and Doesn't Mean) - Ben Saks
-- [ ] What's eating my RAM? - Jianfei Pan
-- [x] What's new for Visual Studio Code: Performance, GitHub Copilot, and CMake Enhancements - Alexandra Kemper, Sinem Akinci
+- [x] What's Eating My Ram? - Jianfei Pan
+- [X] What's New For Visual Studio Code: Performance, Github Copilot, And Cmake Enhancements - Alexandra Kemper, Sinem Akinci
 - [x] What's New in Visual Studio for C++ Developers - Michael Price, Mryam Girmay
-- [x] When Lock-Free Still Isn't Enough: An Introduction to Wait-Free Programming and Concurrency Techniques - Daniel Anderson
-- [x] When Nanoseconds Matter: UltraFast Trading Systems in C++ - David Gross - Performance
-- [ ] Why is my build so slow? Compilation Profiling and Visualization - Samuel Privett
-- [x] Work Contracts – Rethinking Task Based Concurrency and Parallelism for Low Latency C++ - Michael Maniscalco
-- [ ] xstd::any - A New Container for Any Type with Extra Features and Small Object Optimization - Erez Strauss
+- [X] When Lock-Free Still Isn't Enough: An Introduction To Wait-Free Programming And Concurrency Techniques - Daniel Anderson
+- [X] When Nanoseconds Matter: Ultrafast Trading Systems In C++ - David Gross - Performance
+- [x] Why Is My Build So Slow? Compilation Profiling And Visualization - Samuel Privett
+- [X] Work Contracts – Rethinking Task Based Concurrency And Parallelism For Low Latency C++ - Michael Maniscalco
+- [ ] `xstd::any` - A New Container For Any Type With Extra Features And Small Object Optimization - Erez Strauss
 
 ## Lighting Talks

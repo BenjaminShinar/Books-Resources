@@ -474,3 +474,17 @@ auto main() -> int
 from another terminal, we can curl to our server with `curl http://localhost::12345` or keep an open connection with `telnet localhost 12345` to see timeouts.
 
 </details>
+
+### Deciphering C++ Coroutines - Mastering Asynchronous Control Flow - Andreas Weis
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Deciphering C++ Coroutines - Mastering Asynchronous Control Flow](https://youtu.be/qfKFfQSxvA8?si=XC3uguw1axRK3txD), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Deciphering_Cpp_Coroutines.pdf), [event-1](https://cppcon2024.sched.com/event/1gZeS/deciphering-c-coroutines-mastering-asynchronous-control-flow),[event-2](https://cppcon2024.sched.com/event/1lQEu/deciphering-coroutines-recap-and-prerequisites).
+
+expanding on a talk from CppCon 2022 -[Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet](https://youtu.be/J7fYddslH0Q).
+
+
+</details>
