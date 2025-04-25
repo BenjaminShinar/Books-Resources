@@ -30,10 +30,10 @@
 
 - [ ] "Pick a random number... no, not that one!" - Tales of Real-World Exploits Based on Bad Randomness - Max Hoffmann
 - [x] 10 Problems Large Companies Have with Managing C++ Dependencies and How to Solve Them - Augustin Popa
-- [ ] A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
+- [x] A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
 - [ ] A Simple Rollback System in C++: The Secret Behind Online Multiplayer Games - Elias Farhan
 - [ ] Advanced and Modern C++ Programming: The Tricky Parts - Nicolai Josuttis
-- [ ] Adventures with Legacy CodeBases: Tales of Incremental Improvement - Roth Michaels
+- [x] Adventures with Legacy CodeBases: Tales of Incremental Improvement - Roth Michaels
 - [ ] Another Grab-bag of Oddments - Ben Deane
 - [x] Application of C++ in Computational Cancer Modeling - Ruibo Zhang
 - [ ] Author Signing: Andreas Fertig - Andreas Fertig
@@ -83,7 +83,7 @@
 - [ ] Deciphering C++ Coroutines - Mastering Asynchronous Control Flow - Andreas Weis
 - [ ] Deciphering Coroutines - Recap and Prerequisites - Andreas Weis
 - [ ] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
-- [ ] Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
+- [x] Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
 - [ ] Designing a Slimmer Vector of Variants - Christopher Fretz
 - [x] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
 - [ ] Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
@@ -109,7 +109,7 @@
 - [ ] Linear Algebra with The Eigen C++ Library - Daniel Hanson
 - [x] LLVM's Realtime Safety Revolution: Tools for Modern Mission Critical Systems - Christopher Apple, David Trevelyan
 - [ ] Making Hard Tests Easy: A Case Study From the Motion Planning Domain - Chip Hogg
-- [ ] Many ways to kill an Orc (or a Hero) - Patrice Roy
+- [x] Many ways to kill an Orc (or a Hero) - Patrice Roy
 - [x] Message Handling with Boolean Algebra -Ben Deane
 - [ ] Mix Assertion, Logging, Unit Testing and Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
 - [ ] Modern C++ Error Handling - Phil Nash

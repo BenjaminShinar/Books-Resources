@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore relocatability Björn Fahller Blarg
+// cSpell:ignore relocatability Björn Fahller Blarg multiplicator soooo maat
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -11,7 +11,7 @@
 </summary>
 
 - [x] 10 Problems Large Companies Have with Managing C++ Dependencies and How to Solve Them - Augustin Popa
-- [ ] Adventures with Legacy Codebases: Tales of Incremental Improvement - Roth Michaels
+- [x] Adventures with Legacy Codebases: Tales of Incremental Improvement - Roth Michaels
 - [ ] C++ Under the Hood: Internal Class Mechanisms - Chris Ryan
 - [ ] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
 - [ ] Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
@@ -376,5 +376,253 @@ this was a chain of errors, if any one of them didn't happen, this would be a no
 > - Rollback made matters worse
 
 (how to test each of these points)
+
+</details>
+
+### Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
+
+<details>
+<summary>
+CRTP, variant and design patterns.
+</summary>
+
+[Design Patterns - The Most Common Misconceptions (2 of N)](https://youtu.be/pmdwAf6hCWg?si=Ihpx8evhi69KwtMK), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Design_Patterns.pdf), [event](https://cppcon2024.sched.com/event/1gZfn/design-patterns-the-most-common-misconceptions-2-of-n).
+
+in the previous talk in "Meeting C++ 2023", the topics were:
+
+- Builder
+- Factory Method
+- Bridge
+- Design Pattern
+
+this talk will be about design patterns and virtual patterns
+
+#### CRTP - Curiously Recursive Template Pattern
+
+the base class is templated on the derived class. it allows us to sometimes remove virtual function calls.
+
+```cpp
+template<typename Derived>
+class Animal
+{
+private:
+  Animal() = default;
+  ~Animal() = default;
+  friend Derived;
+public:
+  void make_sound() const {
+    static_cast<Derived const&>(*this).make_sound()
+  }
+};
+
+class Sheep: public<Sheep>
+{
+  // not defining the destructor
+   void make_sound() const { std::cout << "baa"; }
+};
+```
+
+there are two limitations: there is no shared base class, each derived class has a different base class, so we can't have a collection of objects. but since everything is a template, this forces everything that comes into touch with it becomes a template itself. this moves our code from the source files to the headers.
+
+in C++23, we can replace CRTP with explicit object parameter ("deducing this")
+
+```cpp
+struct NumericalFunctions
+{
+  void scale(this auto&& self, double multiplicator)
+  {
+    self.setValue( self.getValue() * multiplicator );
+}
+};
+
+struct Sensitivity : public NumericalFunctions
+{
+  double getValue() const { return value; }
+  void setValue(double v) { value = v; }
+  double value;
+};
+
+int main()
+{
+  Sensitivity s{1.2} ;
+  s.scale(2.0);
+  std::println(std::cout, "s.getValue() = {}", s.getValue());
+}
+```
+
+however, we can't replace everything, we can't deduce the derived class from the base class. we only deduce the static type, not the dynamic one. CRTP has two behaviors: adding functionality, and creating static interfaces. we can replace CRTP with explicit object parameters when we add functionality, but not when we used CRTP for static interfaces.\
+Since the term is ambagious and refers to two things, we need terms to differentiate them.
+
+> CRTP for Static Interfaces
+>
+> - provides a base class for a related set/family of types.
+> - defines a common interface.
+> - is used via the base class interface.
+> - introduces an abstraction and is a design pattern.
+> - should be called **Static Interface**
+>
+> Adding Functionality via CRTP
+>
+> - provides implementation details for the derived class.
+> - does not define a common interface.
+> - is not used via the base class interface.
+> - does not introduce an abstraction, hence is no design pattern.
+> - should be called **Mixin**.
+
+c++20 concepts might seem similar to static interfaces, but concepts are "duck typing", it is much more permissive, static interfaces are "opt in". we could get around this by adding a requirement of <cpp>std::derived_from\<T,AnimalTag\></cpp> to the concept to restrict the set of types.
+
+```cpp
+template< typename T >
+concept Animal = requires(T animal) {
+  animal.make_sound();
+};
+
+template<Animal T>
+void print(T const& animal) {
+  animal.make_sound();
+}
+class Sheep {
+public:
+  void make_sound() const { std::cout << "baa"; }
+};
+int main() {
+  Sheep sheep;
+  print(sheep);
+}
+```
+
+#### std::variant
+
+The usual example of drawing shapes, starting with the classic OOP solution and adding a draw strategy object to avoid coupling with an implementation. we want to focus on separating code that changes often (low level implementation) from code that doesn't change that much.\
+This draws from the Gang of Four approach of using inheritance and virtual functions, which is something the C++ community tries to move away from.
+
+we can implement this with <cpp>std::variant</cpp>
+
+```cpp
+class Circle
+{
+public:
+ explicit Circle( double rad )
+ : radius{ rad }
+ , // ... Remaining data members
+ {}
+ double getRadius() const noexcept;
+ // ... getCenter(), getRotation(), ...
+private:
+ double radius;
+ // ... Remaining data members
+};
+class Square
+{
+public:
+ explicit Square( double s )
+ : side{ s }
+ , // ... Remaining data members
+ {}
+ double getSide() const noexcept;
+ // ... getCenter(), getRotation(), ...
+private:
+ double side;
+ // ... Remaining data members
+}
+using Shape = std::variant<Circle, Square>;
+using Shapes = std::vector<Shape>;
+
+class ShapesFactory
+{
+public:
+Shapes create( std::string_view filename )
+{
+  Shapes shapes{};
+  std::string shape{};
+  std::ifstream shape_file{ filename };
+  while( shape_file >> shape ) {
+    if( shape == "circle" ) {
+      double radius;
+      shape_file >> radius;
+      shapes.emplace_back( Circle{radius} );
+    }
+    else if( shape == "square" ) {
+      double side;
+      shape_file >> side;
+      shapes.emplace_back( Square{side} );
+    }
+    else {
+      break;
+    }
+  }
+    return shapes;
+  }
+};
+
+using Factory = std::variant<ShapesFactory>;
+
+using Drawer = std::variant<OpenGLDrawer>;
+void drawAllShapes(Shapes const& shapes, Drawer drawer) {
+  for(auto const& shape : shapes){
+    std::visit([](auto d, auto s){ d(s); }, drawer, shape);
+  }
+}
+
+// more code
+```
+
+> This solution is soooo much better:
+>
+> - No inheritance, but a functional approach
+> - No (smart) pointers, but values
+> - Proper management of graphics code
+> - Automatic, elegant life-time management
+> - Less code to write
+> - Soooo much simpler
+> - Better performance
+
+(some benchmarks)
+
+however, there is a problem. our design mixes level of implementation and responsibilities. rather than having two levels of architecture, we only have one thing. but maybe templates can help us? this might turn us into a templated nightmare...
+
+<cpp>std::variant</cpp> isn't a replacement to virtual functions. variants support a fixed set of types and an open set of operations, while virtual functions have an open set of types and a closed set of operations. a variant is a visitor design pattern.
+</details>
+
+### Adventures with Legacy Codebases: Tales of Incremental Improvement - Roth Michaels
+
+<details>
+<summary>
+Incrementally improving legacy code base.
+</summary>
+
+[Adventures with Legacy Codebases: Tales of Incremental Improvement](https://youtu.be/lN-dd-0PjRg?si=oytVnTjGIEqPG-5-), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Adventures_With_Legacy_Codebases.pdf), [event](https://cppcon2024.sched.com/event/1gZft/adventures-with-legacy-codebases-tales-of-incremental-improvement).
+
+> What is legacy code?
+>
+> - No tests
+> - Lot's of code
+> - Very old
+> - Authors may be gone
+> - Many C++ standards
+> - New/old styles
+> - New/old paradigms
+> - Bad decisions from the past that once made sense
+> - Possibly rewritten by a less skilled engineer
+
+[code-maat tool](https://github.com/adamtornhill/code-maat) to analyze code change from version control.
+
+not adding tests for code that won't change. focus on user/business value.
+
+linting with style guides (clang format), should be enforced by machine, not by human feedback. this messes with `git blame` in the codebase. using githooks to apply formatting on incoming changes and verifying it as part of the ci pipeline.\
+using static analysis: address, undefined behavior and thread-safety analyzers. also make this part of the pipeline, especially important when code should work on both AMD and ARM processors.\
+testing pyramid, moving up from unit test to integration test and up to End-to-End tests.
+
+#### Should we change legacy APIs?
+
+transitioning from custom home-made objects to external libraries to the standard library, like <cpp>std::optional</cpp>. we should avoid breaking changes.
+
+"Live at Head" - all internal libraries are always built from scratch, no internal versions, problems are detected immediately, not months afterwards when the new version is pulled.
+
+handling dependencies, using `clang-tidy` custom rules, `clang-tidy-diff` to only report on changed lines.
+
+#### Sharing Legacy Code
+
+Desire to standardize, reducing duplicate code, share unique code, have a single strategy for behavior (one installer, one UI library). share code you are proud of and think is good and useful.
 
 </details>

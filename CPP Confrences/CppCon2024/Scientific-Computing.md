@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Vectorizing kmph Electronvolt Kathir Farghani Alfraganus
+// cSpell:ignore Vectorizing kmph Electronvolt Kathir Farghani Alfraganus Grisu Grisù dyck Dybvig Andrysco Ranjit Jhala Sorin Jaffer Schubfach Raffaello Giulietti Junekey Jeon Florian Loitsch Tejú Jaguá
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -10,7 +10,7 @@
 10 Talks about Scientific Computing C++.
 </summary>
 
-- [ ] A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
+- [x] A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
 - [x] Application Of C++ In Computational Cancer Modeling - Ruibo Zhang
 - [ ] Bridging The Gap: Writing Portable Programs For Cpu And Gpu - Thomas Mejstrik
 - [ ] Data Is All You Need For Fusion - Manya Bansal
@@ -344,4 +344,147 @@ the inputs to our model are the starting population, the rates and the possible 
 
 more code examples, doing matrix stuff, column-wise operations and so on. then doing thing in parallel using <cpp>std::future</cpp> and launching the simulation in another thread.
 
+</details>
+
+### A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
+
+<details>
+<summary>
+Understanding floating points conversions algorithms.
+</summary>
+
+[A New Dragon In The Den: Fast Conversion From Floating-Point Numbers](https://youtu.be/fPZ1ZdA7Iwc?si=n605LzJnr2h0mWJo), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/A_New_Dragon_in_the_Den.pdf), [event](https://cppcon2024.sched.com/event/1gZgo/a-new-dragon-in-the-den-fast-conversion-from-floating-point-numbers)
+
+> Standard C++ provides a few functions to convert a double or float value to string, namely, <cpp>sprintf</cpp>, <cpp>stringstream::operator<<</cpp>, <cpp>snprintf</cpp>, <cpp>to_string</cpp>, <cpp>to_chars</cpp> and <cpp>format</cpp>.\
+> This talk concerns what goes on behind the scenes, i.e, the algorithms which these functions might use to do their job. Curiously, many of these algorithms have dragon-related names like Dragon, Grisu, Errol, Ryu and Dragonbox.
+
+(I don't know what this is)
+
+```cpp
+uint64_t next_dyck_word(uint64_t w) {
+  uint64_t a = w & -w;
+  uint64_t b = w + a;
+  uint64_t c = w ^ b;
+  c = (c / a >> 2) + 1;
+  c = ((c * c - 1) & 0xaaaaaaaaaaaaaaaa) | b;
+  return c;
+}
+```
+
+converting a floating point to a string. different output depending on what we do.
+
+```cpp
+double pi = std::numbers::pi;
+string s1 = (stringstream{}<< pi).str(); // 3.14159
+string s2 = to_string(pi); // 3.141593
+string tmp(32,'\0');
+auto s3 = std::to_chars(tmp.date(), tmp.data()+32, pi);
+s3.resize(tmp.ptr - tmp.data()); // 3.141592653589793
+string s4 = format("{}", pi); // 3.141592653589793
+```
+
+this isn't just in C++, there are different ways to print floating point data in every languages.
+
+a basic function to convert integers to strings looks something like this:
+
+```cpp
+std::size_t number_of_digits(unsigned n) {
+  size_t m = 1;
+  m += n > 9;
+  m += n > 99;
+  m += n > 999;
+  m += n > 9999;
+  m += n > 99999;
+  m += n > 999999;
+  m += n > 9999999;
+  m += n > 99999999;
+  m += n > 999999999;
+  return m;
+}
+
+std::string convert(unsigned n) {
+
+  std::size_t size = number_of_digits(n);
+  std::string str(size, '\0');
+  char* p = &str.back();
+
+  do {
+    *p = n % 10 + '0';
+    n /= 10;
+    --p;
+  } while(n);
+
+  return str;
+}
+```
+
+but for floating points, we might want something else.
+
+first, a refresher about how floating point numbers are stored in memory: the exponent and the mantissa. the space between consecutive values increase, we can represent more distinct values which are closer to zero. this is the IEEE-754 representation.
+
+for a 32 bit floating point value, the first bit is sign for the exponent, then 8 bits for the exponent, and the rest of the 23 bits for the mantissa. (something about the mantissa being an integer).\
+this is how we get to different results for different types:
+
+```cpp
+double x = 1.0 / 3.0;
+std::print("{}", x); // 0.3333333333333333
+float y = 1.0f / 3.0f;
+std::print("{}", y); // 0.33333334
+```
+
+the result of the calculation is somewhere between the two numbers the compiler can represent:
+$2^{-25}\times{11,184,810}$ and $2^{-25}\times{11,184,811}$, and it knows it's around $\frac{2}{3}$ ways towards the upper number, so it chooses to print that number, rather than truncate the result.
+
+The dragon's den - algorithms to convert floating points
+
+| year | dragon name | authors                  | Usage                 |
+| ---- | ----------- | ------------------------------|----------- |
+| 1990 | Dragon      | Guy L. Steele, Jon L. White               | |
+| 1996 |   NA          | Robert G. Burger and  R. Kent Dybvig      | |
+| 2010 | Grisù       | Florian Loitsch                           | many browsers, node|
+| 2016 | Errol       | Marc Andrysco, Ranjit Jhala, Sorin Lerner | |
+| 2013 | NA            | Aubrey Jaffer                             | |
+| 2018 | Ryū         | Ulf Adams                                 | C++, Gcc, Clang, Visual Studio |
+| 2020 | Schubfach   | Raffaello Giulietti                       | |
+| 2020 | Grisù-Exact | Junekey Jeon                              | |
+| 2022 | Dragonbox   | Junekey Jeon                              | <cpp>fmt</cpp> library |
+
+there are usually three steps to converting:
+
+1. decode representation to binary
+2. convert binary to decimal (exponent and mantissa)
+3. convert exponent and mantissa to string
+
+the middle step is the core focus of the dragon algorithms.
+
+> Given $m \in \mathbb{N}$ and $E \in \mathbb{Z}$ \
+> find $n \in \mathbb{N}$ and $F \in \mathbb{Z}$ \
+> such that $n \times 10^F \cong m \times 2^E$.
+
+for example: $11,184,811 \times 2^{-25} \cong 33,333,334 \times 10^{-8}$
+
+we care about:
+
+> - No information loss
+> - As short as possible
+> - As close as possible
+> - Tiebreak rules
+
+(examples)
+
+introducing the Guarani people of south america and their creation myth. they provide the source for the name of a new algorithm "Tejú Jaguá".
+
+> There must be some $n \times 10^F$ inside the permissible interval.\
+> If $F$ is bad, then two **consecutive** numbers and of this form fall before and after the
+permissible interval and thus $v -u = 10^F >2^E$ \
+>The larger $F$, the shorter $n$.\
+>We set $F$ to be the largest integer such that $10^F \leq 2 ^E$ \
+> i.e:\
+> $10^F \leq 2^E < 10^{F+1} \iff F \leq E \times log(2) < F+1 \iff F = \lfloor E \times log(2) \rfloor$
+
+(I don't know how to understand this).
+
+returns the shortest (after removing trailing zeros and adjusting exponents) decimal representation that fits the criteria if one such exists, and if not, returns the closest point inside the interval.
+
+some benchmarks against other algorithms.
 </details>

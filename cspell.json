@@ -8,6 +8,7 @@
     ],
     "words": [],
     "ignoreWords": [
+        "mathbb",
         "Udemy",
         "kodeKloud",
         "youtube"
