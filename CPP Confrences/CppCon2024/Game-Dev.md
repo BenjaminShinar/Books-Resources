@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Bataille Royale
+// cSpell:ignore Bataille Royale Tetris pgetinker
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -11,7 +11,7 @@
 </summary>
 
 - [ ] A Simple Rollback System in C++: The Secret Behind Online Multiplayer Games - Elias Farhan
-- [ ] Blazing Trails: Building the World's Fastest GameBoy Emulator in Modern C++ - Tom Tesch
+- [x] Blazing Trails: Building the World's Fastest GameBoy Emulator in Modern C++ - Tom Tesch
 - [ ] Cross-Platform Determinism Out of the Box - Sherry Ignatchenko
 - [x] Many ways to kill an Orc (or a Hero) - Patrice Roy
 - [ ] Techniques to Optimize Multithreaded Data Building During Game Development - Dominik Grabiec
@@ -386,4 +386,25 @@ using variants is also faster, but there are more considerations, such as compil
 
 a team battle between a group of heroes and a group of orcs. we hide some stuff in a private implementation, and add some complexity with weapons and spells at the hero side. we also add some randomness.\
 we need some changes to make sure hero can only attack monsters and vice-versa, and we need some driver code to choose which character attacks and which is attacked.
+</details>
+
+### Blazing Trails: Building the World's Fastest GameBoy Emulator in Modern C++ - Tom Tesch
+
+<details>
+<summary>
+Showing some stuff about the GameBoy console and emulation.
+</summary>
+
+[Blazing Trails: Building the World's Fastest GameBoy Emulator in Modern C++](https://youtu.be/4lliFwe5_yg?si=iV6ueM2WeBo71gtC), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Blazing_Trails.pdf), [event](https://cppcon2024.sched.com/event/1gZgB/blazing-trails-building-the-worlds-fastest-gameboy-emulator-in-modern-c)
+
+> Emulators require a strong grasp of hardware, low-level operations, and CPU architecture.Building one helps you understand how hardware like memory, registers, and buses work, and how they interact with machine code. This is valuable for a C++ programmer, as C++ often deals with system-level programming.
+
+it's reasonably "easy" to write an emulator, and there are testing rom, so this is a project that's a relatively doable, there is enough documentation for the chip design and known layout of the memory mapping, there is a fully mapped instruction set, which includes information about T-cycles (tick cycle, machine cycle) and M-cycles(memory cycle). there are two pages of OP codes (instructions).
+
+rather than implementing everything, we can choose a toy example: Tetris. this was the launch title and came bundled with every game. it only require M-cycle precision, uses 284 of the 501 opcodes, is small in size (doesn't require memory banking).
+
+using [pgetinker](https://pgetinker.com) to run the game online, like compiler explorer. taking the sample game from [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine).
+
+(more stuff)
+
 </details>

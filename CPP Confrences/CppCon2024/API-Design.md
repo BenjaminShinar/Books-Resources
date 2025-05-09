@@ -11,9 +11,9 @@
 </summary>
 
 - [x] Creating a Sender/Receiver HTTP Server - Dietmar Kühl
-- [ ] Deciphering C++ Coroutines - Mastering Asynchronous Control Flow - Andreas Weis
+- [x] Deciphering C++ Coroutines - Mastering Asynchronous Control Flow - Andreas Weis
 - [ ] Irksome C++ - Walter E Brown
-- [ ] Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design - Max Hoffmann
+- [x] Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design - Max Hoffmann
 - [x] Hidden Overhead of a Function API - Oleksandr Bacherikov
 - [x] Reflection based libraries to look forward to - Saksham Sharma
 
@@ -477,14 +477,233 @@ from another terminal, we can curl to our server with `curl http://localhost::12
 
 ### Deciphering C++ Coroutines - Mastering Asynchronous Control Flow - Andreas Weis
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Control flow management with coroutines and nested coroutines.
 </summary>
 
-[Deciphering C++ Coroutines - Mastering Asynchronous Control Flow](https://youtu.be/qfKFfQSxvA8?si=XC3uguw1axRK3txD), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Deciphering_Cpp_Coroutines.pdf), [event-1](https://cppcon2024.sched.com/event/1gZeS/deciphering-c-coroutines-mastering-asynchronous-control-flow),[event-2](https://cppcon2024.sched.com/event/1lQEu/deciphering-coroutines-recap-and-prerequisites).
+[Deciphering C++ Coroutines - Mastering Asynchronous Control Flow](https://youtu.be/qfKFfQSxvA8?si=XC3uguw1axRK3txD), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Deciphering_Cpp_Coroutines.pdf), [event-1](https://cppcon2024.sched.com/event/1gZeS/deciphering-c-coroutines-mastering-asynchronous-control-flow),[event-2](https://cppcon2024.sched.com/event/1lQEu/deciphering-coroutines-recap-and-prerequisites), [cheat-sheet](https://github.com/ComicSansMS/cpp20_coroutine_cheat_sheet).
 
 expanding on a talk from CppCon 2022 -[Deciphering C++ Coroutines - A Diagrammatic Coroutine Cheat Sheet](https://youtu.be/J7fYddslH0Q).
 
+C++23 add <cpp>std::generator</cpp> as a return type for <cpp>co_routines</cpp>.
+
+```cpp
+CustomType my_coroutine();
+
+std::generator<int> integer_sequence(int begin, int end) {
+  for (int i = begin; i < end; ++i) {co_yield i;}
+}
+
+int main() {
+  for(auto i:integer_sequence(0, 10)) {
+    std::println("{}", i);
+  }
+}
+```
+
+```cpp
+
+struct ReturnType // std::coroutine_traits<ReturnType,...> 
+{
+  struct promise_type {
+    promise_type(T...); // opt.
+    ReturnType get_return_object();
+    std::suspend_always initial_suspend();
+    // ---- * Start / + Shutdown ----
+    void return_value(T); 
+    void return_void();
+    void unhandled_exception();
+    std::suspend_always final_suspend() noexcept ;
+  };
+};
+
+struct Awaitable {
+  bool await_ready();
+  auto await_suspend(std::coroutine_handle<promise_type>);
+  auto await_resume();
+};
+```
+
+coroutines as cooperative threads, lets take this hypothetical stack
+
+1. inner_function (blocking)
+1. middle_function
+1. outer_function
+1. spawn_task
+1. main
+
+While we are blocking in the inner function, we want to continue doing work. we can use threads using <cpp>std::future</cpp> and <cpp>std::async</cpp>. but threads are costly to create and switch between, and they still consume CPU cycles while being blocked, and they force us to consider synchronization between threads. this also isn't a scabble solution.\
+A different option is using "green threads", sometimes called stackfull coroutines (userland thread, no support from the OS).
+
+```cpp
+auto spawn_task() {
+  return spawn_green_thread(outer_function);
+}
+
+IoResult inner_function() {
+  auto request = setup_non_blocking_io(...);
+  this_green_thread::suspend_waiting_for(request);
+  auto data = retrieve_io_data(request);
+  return IoResult::from_io_data(data);
+}
+```
+
+C++ coroutines are:
+
+> - Stackless
+> - We can only suspend one function at a time
+> - If we want to suspend a computation spanning multiple functions, we need to suspend them all one by one
+> - Goal: Suspend execution context larger than a single function
+
+we want to suspend nested coroutines, we could transform the entire chain into coroutines, but that makes the logic unclear, are our objects waiting for something, or are they true awaitble objects (in the sense of a return type). resuming nested suspended coroutine from the outside doesn't work. we want something that's like <cpp>co_awaiting</cpp>, but means: "Wake me up once that function has completed and it's result is available".
+
+(anatomy of a stacktrace/call stack), we would want to connect a coroutine to the the caller. changing the promise_type to have a handle to the caller, during symmetric transfers.
+
+(more stuff)
+
+we need something with the same functionalities of a scheduler, and it needs to interact with the inner function.
+
+(more stuff I didn't follow) getting the context in a debugger
+
+> Summary
+>
+> - Coroutines allow for extremely powerful manipulation of control flow between functions.
+> - To achieve best results, there should be some amount of uniformity between coroutine types.
+> - C++26 senders/receivers are a first step in this direction, but a lot is still in development there.
+> - C++ Coroutines are much more flexible than async/await in other languages. It is not yet clear what the best practices are for working with such a flexible feature.
+> - The community needs more people looking at this, trying interesting things, and joining the conversation.
+
+</details>
+
+### Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design - Max Hoffmann
+
+<details>
+<summary>
+Writing Secure Code That Isn't Just Memory Safety.
+</summary>
+
+[Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design](https://youtu.be/mv0SQ8dX7Cc?si=iXZlGuv0BXFoAiw8), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Security_Beyond_Memory_Safety.pdf), [event](https://cppcon2024.sched.com/event/1gZeJ/security-beyond-memory-safety-using-modern-c-to-avoid-vulnerabilities-by-design), [insecure code repo](https://github.com/not-a-trojan/secure_coding).
+
+#### Putting Memory Safety Aside
+
+memory safety, the white house press release that "Future Software Should Be Memory Safe" and the root cause of many TOP CVEs from the recent years.
+
+even if wanted to move to another language, such as RUST, it isn't practical to transform all existing codebases, and it's even un-reasonble to write all new code in it, since the eco-system isn't mature enough, and it will require massive re-training.
+
+but this talk isn't about memory safety.
+
+#### Security: Bugs and Vulnerabilities
+
+not all vulnerabilities are because of bugs, understanding what security means requires having a model of who the attacker is.
+
+> - Security is not about what is intended, but about what is possible.
+> - Security is inherently complex. A single mistake can be devastating.
+> - Solutions should be simple to reduce the risk of mistakes.
+> - Make the right thing easy and the wrong thing hard to do.
+
+In C, one of the language core assumptions is "trust the developer", the language gives us power to do what we want, and allows us to do almost anything. this is antithetical to secure coding.
+
+starting with an example of using secrets in code.
+
+```cpp
+std::array<char, 10> password_buffer;
+get_password(password_buffer);
+bool valid = try_authenticate(password_buffer);
+std::memset(password_buffer, 0, sizeof(password_buffer)); // get rid of the password
+```
+
+however, using <cpp>std::memset</cpp> at this case is a dead-write, and it will be optimized away, defeating the purpose. and besides, our real code rarely looks like that. it's much more complex: created and accessed at different times in different sub systems, some of which are legacy systems.
+
+lets create a wrapper for sensitive data:
+
+```cpp
+template <typename T>
+class Sensitive
+{
+  T m_content;
+public:
+  Sensitive() = default;
+  void secure_erase();
+  ~Sensitive() {secure_erase();}
+  // remove copy operations
+
+  Sensitive(Sensitive&& other){
+    m_content = other.m_content;
+    other.secure_erase();
+  } // move copy
+
+  // add move assignment
+
+  using Func void(*)(T&);
+  void with_sensitive_content(Func&& func) {func(m_content);}
+};
+```
+
+and when we use the data, we either pass the wrapper class when we are just passing the data, and we use the `with_sensitive_content` method when we want to actually access the sensitive data, and this acts as a marker that this code section should be carefully reviewed.\
+the `secure_erase` method isn't defined yet, but rather than using <cpp>std::memset</cpp>, we could try to use <cpp>std::memset_s</cpp> and <cpp>std::memset_explicit</cpp>, which shouldn't be optimized out, however, they are both still largely unsupported by compilers. we can try to play with compiler instructions or volatile variables, but neither gives us 100% assurance.
+
+#### Sample Product - The Friendly Billboard
+
+our sample product, we get messages into a shared memory, and determine if the message is friendly, update statistics, and if the message is friendly, we display it.
+
+```cpp
+struct ShowMessageCommand
+{
+  std::string_view message; // [input] text to display
+  Status* status // [output] reports status to user
+};
+
+enum class Status {
+  waiting,
+  accepted,
+  rejected
+};
+
+auto received = shared_memory.deserialize<ShowMessageCommand>();
+process_message_command(received.message, *received.status);
+
+void process_message_command(std::string_view message, Status& status)
+{
+  status = is_friendly(message) ? Status::accepted : Status::rejected;
+  update_statistics(status);
+  if (status == Status::accepted) {show_on_billboard(message);}
+}
+```
+
+we assume this implementation is functionally correct, and now we want to make it secure. for this, we first need to consider the attacking vector. since we only control the processing side, we assume all other parts are compromised and are manipulated by a malicious attacker. we start by going over the possible vulnerabilities and fixing them.
+
+##### Input Validation
+
+everything that is coming from outside should be validated, either checking it and rejecting if it fails, or sanitizing it (modifying it to adhere to what we accept). one possible mistake is to use the original value, either after we supposedly sanitized it, or when it's still possible for outside actor to modify it again. to get over it, we explicitly state the input data as untrusted with a wrapper class.
+
+```cpp
+template<typename T>
+class Untrusted {
+  T m_value;
+public:
+  template<typename Func>
+  auto sanitize(Func&& sanitizer){
+    return sanitizer(m_value);
+  }
+
+  template<typename Func>
+  std::optional<T> verify(Func&& predicate){
+    return predicate(m_value) ? std::optional{m_value} : std::nullopt;
+  }
+};
+```
+
+in our message example, we take a <cpp>std::string_view</cpp>, normally, this would point to a memory location in the shared memory, but the attacker can manipulate the message to point at our own memory, and trick us into exposing internal data.\
+we can separate the message type into two, one for the client to use, and one for internal use, the internal used message is treated as untrusted until validated.
+
+(don't read from untrusted source and don't base the control flow on it).\
+we had a status which was supposed to be an ouput parameter, but the meaning got lost and we used it in the control flow, we should specify in the type system that we should never read from it.
+
+##### Time of Check Vs Time Of Use
+
+vulnerabilities that happen when things change between the time we checked them and the time we use them, this happens for shared resources which are shared with an untrusted party. the easiest fix is to pull the data into the internal memory and avoid using the shared data. read the data only once. this can be more complicated when the shared data is a file system or something that can't be easily copied.
+
+#### Audience Questions and Comments
 
 </details>

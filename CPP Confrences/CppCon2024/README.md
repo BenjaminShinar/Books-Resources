@@ -41,7 +41,7 @@
 - [x] Back to Basics: Almost Always Vector? - Kevin Carpenter
 - [ ] Back to Basics: Concepts - Nicolai Josuttis
 - [ ] Back to Basics: Debugging and Testing - Greg Law, Mike Shah
-- [ ] Back to Basics: Function Call Resolution -Ben Saks
+- [ ] Back to Basics: Function Call Resolution - Ben Saks
 - [ ] Back to Basics: Functional Programming in C++ - Jonathan Müller
 - [x] Back to Basics: Generic Programming - David Olsen
 - [ ] Back to Basics: Lifetime Management - Phil Nash
@@ -54,12 +54,12 @@
 - [ ] Bitcoin: From the White Paper to the World's Reserve Currency - Eduardo Madrid
 - [ ] Bitcoin: History and Use Cases - Jon Kalb
 - [ ] Bitcoin: Role Playing Bitcoin Based Protocols Including the Lightning Network - Eduardo Madrid
-- [ ] Blazing Trails: Building the World's Fastest GameBoy Emulator in Modern C++ - Tom Tesch
+- [x] Blazing Trails: Building the World's Fastest GameBoy Emulator in Modern C++ - Tom Tesch
 - [ ] BoF - GameDev, Growing our Conference Community - Guy Davidson
 - [ ] Boosting Software Efficiency: A Case Study of 100% Performance Improvement in an Embedded C++ System - Gili Kamma
 - [ ] Bridging the Gap: Writing Portable Programs for CPU and GPU - Thomas Mejstrik
 - [x] Building CppCheck - What We Learned from 17 Years of Development - Daniel Marjamäki
-- [ ] Building Safe and Reliable Surgical Robotics with C++ - Milad Khaledyan
+- [x] Building Safe and Reliable Surgical Robotics with C++ - Milad Khaledyan
 - [ ] C++ Exceptions for Smaller Firmware - Khalil Estell
 - [ ] C++ Software Design - Klaus Iglberger
 - [ ] C++ Templates for Developers - Walter E Brown
@@ -130,7 +130,7 @@
 - [x] Reusable code, reusable data structures - Sebastian Theophil
 - [ ] Safety and Security Panel - Michael Wong, Andreas Weis, Gabriel Dos Reis,Herb Sutter,Lisa Lippincott, Timur Doumler
 - [ ] Secrets of C++ Scripting Bindings: Bridging Compile Time and Run Time - Jason Turner
-- [ ] Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design - Max Hoffmann
+- [x] Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design - Max Hoffmann
 - [ ] Sender Patterns to Wrangle Concurrency in Embedded Devices - Michael Caisse
 - [ ] Session Types in C++: A Programmer's Journey - Miodrag Misha Djukic
 - [ ] Shared Libraries and Where To Find Them - Luis Caro Campos

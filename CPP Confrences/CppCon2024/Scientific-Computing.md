@@ -19,7 +19,7 @@
 - [x] Improving Our Safety With A Quantities And Units Library - Mateusz Pusz
 - [ ] Linear Algebra With The Eigen C++ Library - Daniel Hanson
 - [ ] To Int Or To Uint, This Is The Question - Alex Dathskovsky
-- [ ] Vectorizing A Cfd Code With `Std::Simd` Supplemented By (Almost) Transparent Loading And Storing - Olaf Krzikalla
+- [ ] Vectorizing A CFD Code With `std::simd` Supplemented By (Almost) Transparent Loading And Storing - Olaf Krzikalla
 
 ---
 
@@ -237,7 +237,7 @@ std::cout << "Tenerife-Bahamas distance: " << Tenerife_Bahamas_distance.in(nmi) 
 > Implementing a physical quantities and units library is much
 harder than it may initially appear.
 
-explicit constructors, everywhere, always provide the unit and the value. interacting with legacy code that still use primitives. requiring more than one dimension for a quantity. length is one thing, but height, width, distance and wavelengths aren't the same thing, even if they are all measured with the same units. our type system must be able to tell them apart and prevent confusion. this is achieved by defining <cpp>quantity_spec</cpp> following the ISO defintions. we can be as safe as we wish, depending on how exact we want to be.
+explicit constructors, everywhere, always provide the unit and the value. interacting with legacy code that still use primitives. requiring more than one dimension for a quantity. length is one thing, but height, width, distance and wavelengths aren't the same thing, even if they are all measured with the same units. our type system must be able to tell them apart and prevent confusion. this is achieved by defining <cpp>quantity_spec</cpp> following the ISO definations. we can be as safe as we wish, depending on how exact we want to be.
 
 type quantities
 

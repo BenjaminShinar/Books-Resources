@@ -622,7 +622,7 @@ the details.)
 >   - A guarantee that there are no certain kinds of errors.
 >   - Being unable to do a "wrong thing".
 
-types aren't the only ways to achieve everything, but they are part of them. so, a defintion that encompasses the above usage might be something like:
+types aren't the only ways to achieve everything, but they are part of them. so, a definition that encompasses the above usage might be something like:
 
 > "A type defines a set of possible values and a set of operations (for an object)."\
 > ~ Bjarne Stroustrup, Programming Principles and Practices Using C++.
@@ -643,7 +643,7 @@ sessions can involve more than two processes, but we focus on binary session typ
 
 (this is like a state machine).
 
-an example of a "scribble" protocol defintion
+an example of a "scribble" protocol definition
 
 ```scribble
 module scribble.example.Purchasing;
@@ -667,9 +667,9 @@ in practice, we use session types in three different ways.
 
 1. write and verify protocol, generate code, use type.
 2. write code, extract protocol and verify
-3. use language facilities to describe the protocol, and then write a type, and extract protocol defintion.
+3. use language facilities to describe the protocol, and then write a type, and extract protocol definition.
 
-we will use the third way, starting from the middle, not abstract protocol defintion, but also not direct code.
+we will use the third way, starting from the middle, not abstract protocol definition, but also not direct code.
 
 we could take a functional approach, monads, creating new objects, continuation passes. we need some way to have communication (channels between actors), either as using queues or networking sockets. we use a simplified abstraction.
 

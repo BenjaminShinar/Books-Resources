@@ -88,7 +88,7 @@ int main()
 }
 ```
 
-However, coroutines can't be used in constexpr. They exist (by defintion) on the heap, and we cannot choose how it's done, there is no custom memory allocation (<cpp>std::pmr</cpp>).
+However, coroutines can't be used in constexpr. They exist (by definition) on the heap, and we cannot choose how it's done, there is no custom memory allocation (<cpp>std::pmr</cpp>).
 
 other features include:
 
@@ -2501,7 +2501,7 @@ requires clause expect a boolean constant value, a requires expression (`require
 Adding a reason in the error.
 </summary>
 
-[C++26's =delete With a Reason](https://youtu.be/9iFJRCHwSok?si=TVoh7X4xIfSShI_F)
+[C++26's `=delete` With a Reason](https://youtu.be/9iFJRCHwSok?si=TVoh7X4xIfSShI_F)
 
 when we delete a function we make it a compilation error to call it, in C++26 we can add a text to explain the reason for the deletion.
 
