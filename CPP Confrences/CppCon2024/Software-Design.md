@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore relocatability Björn Fahller Blarg multiplicator soooo maat
+// cSpell:ignore relocatability Björn Fahller Blarg multiplicator soooo maat Monostate runge_kutta4
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -19,11 +19,11 @@
 - [ ] Hiding your Implementation Details is Not So Simple - Amir Kirsh
 - [ ] High-performance Cross-platform Architecture: C++ 20 Innovations - Noah Stein
 - [ ] How Meta Made Debugging Async Code Easier with Coroutines and Senders - Ian Petersen, Jessica Wong
-- [ ] Modern C++ Error Handling - Phil Nash
-- [ ] Monadic Operations in Modern C++: A Practical Approach - Vitaly Fanaskov
-- [ ] Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements - Katherine Rocha
+- [x] Modern C++ Error Handling - Phil Nash
+- [x] Monadic Operations in Modern C++: A Practical Approach - Vitaly Fanaskov
+- [x] Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements - Katherine Rocha
 - [ ] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
-- [ ] Reflection Is Not Contemplation - Andrei Alexandrescu
+- [x] Reflection Is Not Contemplation - Andrei Alexandrescu
 - [x] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
 - [x] Reusable code, reusable data structures - Sebastian Theophil
 - [x] The Most Important Design Guideline is Testability - Jody Hagins
@@ -625,4 +625,923 @@ handling dependencies, using `clang-tidy` custom rules, `clang-tidy-diff` to onl
 
 Desire to standardize, reducing duplicate code, share unique code, have a single strategy for behavior (one installer, one UI library). share code you are proud of and think is good and useful.
 
+</details>
+
+### Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements - Katherine Rocha
+
+<details>
+<summary>
+Comparing Old and Modern Software Patterns.
+</summary>
+
+[Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements](https://youtu.be/ffz4oTMGh5E?si=9XLcGF9nVeLUJoiy), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Newer_Isn%E2%80%99t_Always_Better.pdf), [event](https://cppcon2024.sched.com/event/1gZhF/newer-isnt-always-better-investigating-legacy-design-trends-and-their-modern-replacements).
+
+Two camps of people: those who look at existing patterns and thing we should keep them, and those who insist on shaking up how things work. we need to find a middle way of modernizing software without sacrificing what works. we look at trends (software patterns), both old and new, and investigate if they hold up.
+
+#### Examples: Old Pattern vs New Pattern
+
+first example: comparing index based loops to newer ranged loops.
+
+```cpp
+std::vector<std::string> vec {"sun", "earth", "moon", "jupiter"};
+
+// old style
+for (auto i = 0uz; i < vec.size(); ++i)
+{
+  std::cout << vec[i] << "\n";
+  std::cout << vec.at(i) << "\n";
+}
+
+// new style
+for (const auto& object : vec)
+{
+  std::cout << object << "\n";
+}
+```
+
+> Original Trend – Index For Loop:
+>
+> - Provides an index that can be used to access an element
+> - Index can be used for in loop side effects/calculations
+> - Doesn't require a group of items
+> - More dangerous access operations
+>
+> New Trend – Range Based For Loop:
+>
+> - More data oriented
+> - More readable
+
+next example is Global Interfaces vs Global State.\
+the original trend is using a singleton to hold state, with the new trend of "Monostate" and dependency injection (dependency inversion principle). we can have global interfaces (logging, I/O, resource management, graphics) or global data (initial parameters, state parameters).
+
+> Original Trend - Singleton:
+>
+> - Hold one copy of global data/interface and allow others access
+> - Usually accessed through a getInstance() or Instance() function
+> - Easily accessed
+> - Identifiable
+> - Hard to test
+> - Quintessentially Overused
+>
+> New Trend – Monostate:
+>
+> - Make every object in the class static
+> - Multiple objects all with the same value
+> - Easy to transition to multiple objects
+> - May not work well to replace interface singletons
+>
+> New Trend – Dependency Injection:
+>
+> - Not a global object
+> - Injects the dependency into each of the using objects
+
+```cpp
+template <typename T>
+class Singleton {
+public:
+  static T& getInstance()
+  {
+    static T instance;
+    return instance;
+  }
+private:
+  Singleton();
+};
+
+class Plotting {
+public:
+  void plot(double x, double y)
+  {
+  // ...
+  }
+};
+
+using PlottingSingleton = Singleton<Plotting>;
+
+// monostate
+
+class Plotting {
+public:
+  void plot(double x, double y)
+  {
+  // ...
+  }
+private:
+  static std::queue plottingQueue;
+};
+
+// dependency injection
+
+class Plotting {
+public:
+  void plot(double x, double y)
+  {
+  // ...
+  }
+};
+
+class Gps {
+public:
+  Gps(Plotting& plotter);
+  void setPlotter(Plotting& plotter);
+  void getPositionVelocityAcceleration(Plotting& plotter);
+private:
+  Plotting& plotter;
+};
+```
+
+a C++ specific example is SFINAE vs c++20 <cpp>concepts</cpp>. both constrain templated code (function, classes) and break during compilation time rather than runtime.
+
+> Original Trend – Substitution Failure is Not an Error (SFINAE):
+>
+> - Substitution Failure Is Not An Error
+> - Constraints on templates
+> - Known for difficult to read errors
+> - Difficult to constrain
+>
+> New Trend – Concepts:
+>
+> - Compile Time constraints
+> - Named set of requirements
+> - Improved compiler errors
+> - Easier to create custom constraints for
+
+```cpp
+// SFINAE
+#include <boost/type_traits/has_operator.hpp>
+template <typename Time,
+  typename OutputType,
+  typename = std::enable_if_t<std::is_arithmetic_v<Time>>,
+  typename = std::enable_if_t<std::is_arithmetic_v<OutputType> ||
+  (
+    boost::has_multiplies<OutputType, Time>::value && 
+    boost::has_plus<OutputType>::value
+  )>,
+  bool = true>
+inline constexpr OutputType runge_kutta4_sfinae(std::function<OutputType(Time, OutputType)> fun,
+Time time,
+OutputType y0,
+Time timestep)
+{
+  auto k1 = fun(time, y0);
+  auto k2 = fun(time + timestep * 0.5, y0 + k1 * timestep * 0.5);
+  auto k3 = fun(time + timestep * 0.5, y0 + k2 * timestep * 0.5);
+  auto k4 = fun(time + timestep, y0 + k3 * timestep);
+  return (y0 + (k1 + 2 * k2 + 2 * k3 + k4) * timestep / 6);
+}
+
+// concepts
+template<typename T>
+concept arithmetic = std::integral<T> || std::floating_point<T>;
+
+template<class T, typename Num>
+concept add_multiply = requires(T t, Num num) {
+  t * num;
+  t + t;
+};
+
+template <arithmetic Time, typename OutputType>
+requires (add_multiply<OutputType, Time>)
+inline constexpr OutputType runge_kutta4_concepts(std::function<OutputType(Time, OutputType)> fun,
+Time time,
+OutputType y0,
+Time timestep)
+{
+  auto k1 = fun(time, y0);
+  auto k2 = fun(time + timestep * 0.5, y0 + k1 * timestep * 0.5);
+  auto k3 = fun(time + timestep * 0.5, y0 + k2 * timestep * 0.5);
+  auto k4 = fun(time + timestep, y0 + k3 * timestep);
+  return (y0 + (k1 + 2 * k2 + 2 * k3 + k4) * timestep / 6);
+}
+```
+
+concepts help simplify the requirements and make the compiler errors easier to read.
+
+Polymorphism also has different patterns, the old pattern being virtual functions, and the new trend being CRTP and the C++23 explicit object parameter ("Deducing This"). polymorphism is one of the key concepts of object oriented programming, we define a general interface (abstraction) and allow concrete implementations for different classes.
+
+> Original Trend – Virtual Functions:
+>
+> - Run-Time Polymorphism
+> - Quintessential Object Oriented Method
+> - Overused
+>
+> New Trend – Curiously Recurring Template Pattern (CRTP):
+>
+> - Compile Time Polymorphism
+> - Force a Downcast from the Parent to Access Child Elements
+> - Explicit Cast
+>
+> New Trend – Explicit Object Parameter/Deducing This:
+>
+> - C++23 Feature
+> - Simplifies Compile Time Polymorphism
+
+```cpp
+// virtual functions
+struct NetworkConnection
+{
+  virtual void initializeConfig() = 0; // Pure Virtual
+  void init()
+  {
+    initializeConfig();
+    // ...
+  };
+};
+
+struct Tcp : public NetworkConnection
+{
+  void initializeConfig() override
+  {
+    // ...
+  }
+};
+
+struct Udp : public NetworkConnection
+{
+  void initializeConfig() override
+  {
+    // ...
+  }
+};
+
+// CRTP
+
+template <class Derived>
+class NetworkConnection
+{
+public:
+  void init()
+  {
+    (static_cast<Derived*>(this))->initializeConfig();
+    // ...
+  };
+};
+
+class Tcp : public NetworkConnection<Tcp>
+{
+public:
+  void initializeConfig()
+  {
+    // ...
+  }
+};
+
+class Udp : public NetworkConnection<Udp>
+{
+public:
+  void initializeConfig()
+  {
+    // ...
+  }
+};
+
+// Explicit Object Parameter
+
+struct NetworkConnection
+{
+public:
+  void init(this auto&& self)
+  {
+    self.initializeConfig();
+    // ...
+  };
+};
+
+class Tcp : public NetworkConnection
+{
+public:
+  void initializeConfig()
+  {
+    // ...
+  }
+};
+
+class Udp : public NetworkConnection
+{
+public:
+  void initializeConfig()
+  {
+    // ...
+  }
+};
+```
+
+examples of multi-level inheritance over at compiler explorer
+
+- [virtual function](https://godbolt.org/z/T51xE5qbK)
+- [CRTP](https://godbolt.org/z/s3ed4Yorv)
+- [Implicit Object Parameter](https://godbolt.org/z/ccsoaf3ec)
+
+in the CRTP example, it's not trivial to get the same behavior as the virtual function example, we would need to add some templating magic to overcome it.
+
+#### Conclusion
+
+> Other Potential Evaluations:
+>
+> - Union vs Variant
+> - Enum vs Enum Class
+> - Raw Pointers vs Reference vs Smart Pointers
+> - Raw Iterators vs Standard Algorithms
+> - C-Style Casts vs Fancy Casts (static, dynamic, reinterpret, const casts)
+> - Allocators vs <cpp>PMR</cpp>
+> - <cpp>printf</cpp> vs <cpp>std::cout</cpp> vs <cpp>libfmt</cpp>
+> - Object Oriented Programming vs Functional Programming vs Data-Oriented Design
+
+we see that in some cases, newer patterns aren't strictly better than old patterns, we need to evaluate alternatives for each use case.
+</details>
+
+### Reflection Is Not Contemplation - Andrei Alexandrescu
+
+<details>
+<summary>
+Reflection and it's relation to identity.
+</summary>
+
+[Reflection Is Not Contemplation](https://youtu.be/H3IdVM4xoCU?si=S-RHuAIiHrERG_4B), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Reflection_Is_Not_Contemplation.pdf), [event](https://cppcon2024.sched.com/event/1gZhJ/reflection-is-not-contemplation).
+
+> - Static reflection without code generation is incomplete
+> - The "reading" part of reflection generally agreed upon
+> - The "generation" part of reflection suffered of neglect
+>   - P2996 very gingerly sneaks in a foot in the door (define_class)
+>   - P3294 finally blows the door off its hinges
+> - The two facets of reflection are equally important
+> - Where do AI tools fit within this craze?
+>
+> The Reflection Circularity Problem - Without generation, we're chasing our tails
+
+reflection basics:
+
+> - Recall `^^x` reflects on `x`, `[:y:]` un-reflects (splices) `y`; `[:^^x:]` is `x`
+> - Large consensus on introspection query: contemplation is great
+> - Fear and loathing about code generation
+>   - Expansion of existing introspection objects deemed acceptable
+> - Consequence:
+>   - Severely limited: can't do 3D with 2D abilities
+>   - No consensus on "how much" generation is just enough
+>   - No clarity on necessary primitives
+
+OOP and templates were movements towards reflection, with OOP allowing us to call function that haven't been written yet (abstraction), and templates allow us to design with types that weren't written yet.
+
+> Reflection: "I can customize types that will not have been meant for customization".
+
+we want to use reflection to create classes, in the following example, we would want to define a class with data member, who have getters and setters.
+
+```cpp
+// reflection
+struct Book {
+  consteval { 
+    property("author", ^^std::string);
+    property("title", ^^std::string); 
+  }
+};
+
+// Equivalent hand-written code
+struct Book {
+  std::string m_author;   
+  const std::string& get_author() const { return m_author; }
+  void set_author(std::string s) { m_author = std::move(s); }
+  std::string m_title;
+  const std::string& get_title() const { return m_title; }
+  void set_title(std::string s) { m_title = std::move(s); }
+};
+```
+
+we create identifiers from the string, and added some stuff them ("m_", "get_" and "_set"), it's crucial that translating strings into identifiers will be fluid, easy, and accurate. identifiers might bet introduced and then used in the generated code.
+
+(splicing is the act of generated code)
+
+> Comparison of Splicing Models
+>
+> - **The Spec API**: function calls create a "spec" of a type that is spliced
+>   - Complex; problematic; death of a thousand cuts
+> - **The CodeReckons API**: OOP interface for AST building
+>   - Verbose, loquacious, garrulous, prolix, long-winded, circumlocutory, and unceasingly inclined toward linguistic superfluity.
+> - **String Injection**: offer a primitive that splices compile time strings into code
+>   - Horribly unstructured. Also… can't use macros?!?
+> - **Fragments**: C++ fragments of stylized code
+>   - Thorough early checking makes complexity explode
+
+#### Token Sequences - P3294
+
+> "There’s a representation of C++ code that is well-defined, complete, and easy to understand: C++ code."\
+> ~ Daveed Vandevoorde
+
+Creating C++ code from C++ code.
+
+> - At this point complexity is a huge liability
+> - Adding yet another sublanguage to C++ deemed undesirable
+> - String-based generation best; let’s eliminate its disadvantages
+> - Strings opaque/unwieldy? Use token sequences instead of strings
+>   - Cost: one added literal kind
+> - Injection risks and dangers? Restrict string expansion
+>   - Carefully controlled escapes, interpolation-style
+
+```cpp
+constexpr auto t1 = ^^{ a + /* hi! */ b }; // three tokens - comment is removed
+static_assert(std::is_same_v<decltype(t1), std::meta::info>);
+constexpr auto t2 = ^^{ a += ( }; // partial expression, 3 tokens again
+constexpr auto t3 = ^^{ abc { def }; // Error, unpaired brace
+```
+
+a new kind of literal - <cpp>token sequences</cpp> (or <cpp>token strings</cpp>)
+
+> - Escapes inside a token sequence:
+>   - `\( expr )` evaluates expr eagerly during creation of the token sequence
+>   - `\id( e1, e2, ... )` concatenates strings and integrals, creates an identifier
+>   - `\tokens( expr )` expands another token sequence
+> - Inside any <cpp>consteval</cpp> function:
+>   - `queue_injection( tokens_expr )` injects a token sequence into the current declaration context
+
+code comparisons:
+
+```cpp
+// property Using The Spec API
+template <class T> using getter_type = auto() const -> T const&;
+template <class T> using setter_type = auto(T const&) -> void;
+consteval auto property(string_view name, meta::info type) -> void {
+  auto member = inject(
+    data_member_spec{.name=std::format("m_{}", name), .type=type}
+    );
+  inject(
+    function_member_spec{
+      .name=std::format("get_{}", name),
+      .signature=substitute(^getter_type, {^type}),
+      .body=defer(member, ^[]<std::meta::info M>(auto const& self) -> auto const& {
+          return self.[:M:];
+        }
+      )
+    }
+  );
+  inject(
+    function_member_spec{
+      .name=std::format("set_{}", name),
+      .signature=substitute(^setter_type, {^type}),
+      .body=defer(member, ^[]<std::meta::info M>(auto& self, typename [:type_of(M):] const& x) -> void {
+          self.[:M:] = x;
+        }
+      )
+    }
+  );
+}
+
+// property Using The CodeReckons API
+object_type(mp, make_const(decl_of(b)));
+return_type(mp, make_lvalue_reference(make_const(type)));
+append_method(
+  b,
+  identifier{("get_" + name).c_str()},
+  mp,
+  [member_name](method_builder& b){
+    append_return(b,
+      make_field_expr(make_deref_expr(make_this_expr(b)), member_name)
+    );
+  }
+);
+method_prototype mp1;
+append_parameter(
+  mp1,
+  "x",
+  make_lvalue_reference(make_const(type))
+);
+object_type(mp1, decl_of(b));
+return_type(mp1, ^void);
+append_method(
+  b,
+  identifier{("set_" + name).c_str()},
+  mp1,
+  [member_name](method_builder& b){
+    append_expr(
+      b,
+      make_operator_expr(
+        operator_kind::assign,
+        make_field_expr(make_deref_expr(make_this_expr(b)), member_name),
+        make_decl_ref_expr(parameters(decl_of(b))[1])
+      )
+    );
+  }
+ );
+}
+
+// property Using Token Sequences
+
+consteval void property(std::meta::info type, std::string_view name) {
+  queue_injection(^^{
+    [:\(type):] \id("m_", name); // define the private member
+    [:\(type):] const& \id("get_", name)() const {
+      return \id("m_", name);
+    } // define the getter
+    void \id("set_", name)([:\(type):] x) {
+      \id("m_", name) = std::move(x);
+    } // define the setter
+  });
+}
+```
+
+#### Implementing Identity
+
+> "You can observe a lot by just implementing identity"\
+> ~ Yogi Berra
+
+Identity defines fungibility, comparision of "same object" vs "a copy", it also affects aliasing, self-assignment, self-move, double deletion and other stuff. an identity function can be inserted at any sub-expression without changing the meaning. it is a fundamental concept of computer science, this is the reason javascript has both the `==` and the `===` operators.
+
+there are iterations of C++ identity functions in C++, which need to deal with rvalue, lvalue, references and other weird edge-cases. <cpp>decltype</cpp>, <cpp>decltype(auto)</cpp> and <cpp>std::forward</cpp> are heavily used.
+
+```cpp
+// naive implementation
+template <typename T>
+T&& identity(T&& x) { return x; }
+
+const int& a = identity(42); // dangling
+int&& b = identity(42); // dangling
+auto&& c = identity(42); // dangling
+
+// better - two templates
+template <class T>
+T& identity(T& x) { return x; } // returns reference
+template <class T>
+T identity(T&& x) { return std::move(x); } // returns a value
+
+// even better - universal reference
+template <class T>
+T identity(T&& x) { return T(std::forward<T>(x));} // might call a constructor, or a noop cast
+
+// C++14 style
+template <class T>
+decltype(auto) identity(T&& x) {return T(std::forward<T>(x));}
+
+template <class A, class B>
+decltype(auto) min(A&& a, B&& b) {
+  static_assert( /* ... no dangerous comparisons ...*/ );
+  return b < a ? B(std::forward<B>(b)) : A(std::forward<A>(a));
+}
+```
+
+[implementing `min` with identity example](godbolt.org/z/bGPnjM76e)
+
+#### Identity And Reflection
+
+Reflection is the process of deconstructing and reconstructing an entity back into an identical one. once we have this ability, everything becomes easier.
+
+> - Herb keynote's interface example?
+>   - Deconstruct type, clone inserting `virtual` and `=0` for each member function
+>   - Complain if you find data members or other suspect items
+> - polymorphic_base:
+>   - Deconstruct type, reassemble making sure no copying allowed
+>   - Ensure the destructor is public/virtual or protected/nonvirtual
+> - ordered:
+>   - Deconstruct type, reassemble and add <cpp>operator<=></cpp>
+> - The point is (re)assembly from small, replaceable pieces
+
+it's fairly easy to clone a class, but a harder challenge is cloning a class template. the reflection must preserve the order, introspect function templates, signature constraints (<cpp>noexcept</cpp> clauses, attributes), inner classes (<cpp>iterator</cpp>), and template function signatures (<cpp>std::erase</cpp>), and there are probably many other pitfalls we aren't aware off.
+
+#### Can AI Help?
+
+can generative AI do this? could we simply ask AI to write the code we want instead of reflection? AI models are the stronger than ever, but are also the dumber than they'll ever be in the future. it can write code faster than any human, but not as fast as compilation. AI can also have different results every time, rather than determistic output which is what we need.
+</details>
+
+### Modern C++ Error Handling - Phil Nash
+
+<details>
+<summary>
+Errors in C++, past, present and what might be in the future.
+</summary>
+
+[Modern C++ Error Handling](https://youtu.be/n1sJtsjbkKo?si=lqV65wNXHvYFwLD_), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Modern_Cpp_Error_Handling.pdf), [event](https://cppcon2024.sched.com/event/1gZgs/modern-c++-error-handling).
+
+#### Evolution of Error Handling
+
+errors can be disappointments, things that we know are possible, we know they are coming.\
+we start with a simple numbers parser. we don't have error handling.
+
+```cpp
+int parse_int(std::string_view number) {
+  acc = 0;
+  for(char c : number) {
+    if(c < '0' || c > '9') // TODO: +, -, digit separators?
+      return acc;
+    acc *= 10;
+    acc += c-'0';
+  }
+  return acc;
+}
+std::println("{}", parse_int("42")); // 42
+std::println("{}", parse_int("42x")); // 42
+std::println("{}", parse_int("x42")); // 0
+```
+
+let's test if the number contains non-numeric characters
+
+```cpp
+[[nodiscard]] bool is_int(std::string_view number) {
+  for(char c : number) {
+    if(c < '0' || c > '9')
+      return false;
+  }
+  return true;
+}
+void test(std::string_view str) {
+  if(is_int(str))
+    std::println("{} is an int", str);
+  else
+    std::println("{} is not an int", str);
+}
+
+test("42"); // 42 is an int
+test("42x"); // 42x is not an int
+test("x42"); // x42 is not an int
+```
+
+we don't know if trailing characters are allowed, so let's externalize that information and let the user decide.
+
+```cpp
+enum class ParseStatus {
+ Numeric,
+ StartsNumerically,
+ NonNumeric
+};
+
+[[nodiscard]] ParseStatus is_int(std::string_view number) {
+  bool first_digit = true;
+  for(char c : number) {
+    if(c < '0' || c > '9') {
+      return first_digit ? ParseStatus::NonNumeric : ParseStatus::StartsNumerically;
+    }
+  first_digit = false;
+  }
+  return ParseStatus::Numeric;
+}
+
+void test(std::string_view str) {
+  switch(is_int(str)) {
+    case ParseStatus::Numeric:
+      std::println("{} is an int", str);
+    break;
+    case ParseStatus::StartsNumerically:
+      std::println("{} starts with an int", str);
+    break;
+    case ParseStatus::NonNumeric:
+      std::println("{} is not an int", str);
+    break;
+  }
+}
+
+test("42"); // 42 is an int
+test("42x"); // 42x starts with an int
+test("x42"); // x42 is not an int
+```
+
+we can use an out parameter for the result and the return value for the status. or set a global flag for errors (<cpp>errno</cpp>, like classic C). a C++ approach might be to throw exception, it's not popular, but they are good for performance in the happy path, and they push the error handling back onto the caller. but it's really falling out of style. they have affect on performance in the error path, and are non-determistic.
+
+C++ 17 added the <cpp>std::optional</cpp> class, which can signal success and errors, but doesn't distinguish between different errors.
+
+```cpp
+std::optional<int> parse_int(std::string_view number) {
+  int out = 0;
+  for(char c : number) {
+    if(c < '0' || c > '9')
+      return {};
+    out *= 10;
+    out += c-'0';
+  }
+  return out;
+}
+void test(std::string_view str) {
+  if(auto oi = parse_int(str))
+    std::println("{}", *oi);
+  else
+    std::println("Error");
+}
+```
+
+C++23 has <cpp>std::expected</cpp>, which can either return the value, or an unexpected type, so we can contain the error inside it.
+
+```cpp
+std::expected<int, std::runtime_error>
+parse_int(std::string_view number) {
+  int out = 0;
+  bool first_digit = true;
+  for(char c : number) {
+    if(c < '0' || c > '9') {
+      return first_digit ?
+        std::unexpected(std::runtime_error("passed string is not a number")) :
+        std::unexpected(std::runtime_error("passed string has non-numeric digits"));
+    }
+    out *= 10;
+    out += c-'0';
+    first_digit = false;
+  }
+  return out;
+}
+ 
+void test(std::string_view str) {
+  if(auto ei = parse_int(str))
+    std::println("{}",*ei);
+  else
+    std::println("Error: {}", ei.error().what());
+}
+```
+
+we have a problem with composability, we might have nested uses of <cpp>std::expected</cpp> which we need to convert between. we can overcome it with c++23 monadic operations: <cpp>.transform()</cpp>, <cpp>.and_then()</cpp>, <cpp>.or_else()</cpp> and <cpp>.transform_error()</cpp> (only for <cpp>std::expected</cpp>).
+
+```cpp
+void test(std::string_view str) {
+  auto ef = parse_int(str)
+  .transform([](int i) { return i-1; } )
+  .and_then([](int i) -> std::expected<float, std::runtime_error> { 
+      if(i != 0)
+        return 1.f / i;
+      else
+        return std::unexpected(std::runtime_error("Divide by zero"));
+    })
+  .transform_error([](auto const& ex) { 
+      return std::string(ex.what()); 
+    });
+  if(ef)
+    std::println("{}",*ef);
+  else
+    std::println("Error: {}", ef.error());
+}
+```
+
+#### Avoid Disappointments
+
+another example, getting the name of the month based on the number.
+
+```cpp
+std::string month_names[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+std::string month_as_string(int month) {
+  return month_names[month-1];
+}
+
+std::println("Month: {}", month_as_string(1)); // JAN
+std::println("Month: {}", month_as_string(0)); // <nothing>
+std::println("Month: {}", month_as_string(10000)); // garbage
+```
+
+lets fix this to constrain the values and throw an exception.
+
+```cpp
+std::string month_as_string(int month) {
+  if(month < 1 || month > 12)
+    throw std::out_of_range("month must be between 1 and 12");
+  return month_names[month-1];
+}
+
+std::string month_as_string(int month) {
+  assert(month >= 1 && month <= 12); // static assert
+  return month_names[month-1];
+}
+```
+
+we could have two versions of this, one for values we've previously checked and we know are valid, and one for un-vetted arguments. we could do all kinds of stuff, like templates and <cpp>constexpr</cpp> with enums.
+
+we don't want all that, we want our code and types to be *correct by construction*, the class can't be instantiated with bad values.
+
+```cpp
+struct unchecked{}; 
+
+class Month {
+  int month;
+public:
+  static bool is_valid(int month) {
+    return month >= 1 && month <= 12;
+  }
+  Month(int month): month(month) {
+    if(!is_valid(month))
+      throw std::out_of_range("month must be between 1 and 12");
+  }
+  Month(int month, unchecked): month(month) {
+    assert(is_valid(month));
+  }
+  int value() const { return month; }
+
+};
+
+std::string month_as_string(Month month) {
+  return month_names[month.value()-1]; // can be member function
+}
+```
+
+we still don't have contracts in C++, but it's an upcoming feature. we crate a macro to replicate the behavior.
+
+```cpp
+#ifndef NDEBUG
+#define pre(expr) do{ if(!(expr)){ violation_handler({#expr}); } } while(false)
+#else
+#define pre(expr) do{} while(false)
+#endif
+
+bool is_valid_month(int month) {
+  return month >= 1 && month <= 12;
+}
+void test(int month) {
+  std::println("{}", month_as_string(month));
+}
+
+std::string month_as_string(int month) {
+  pre(is_valid_month(month));
+  return month_names[month-1];
+}
+```
+
+a violation handler is a function pointer that we can assign to.
+
+```cpp
+struct ViolationInfo{
+  std::string_view expr;
+  std::source_location loc = std::source_location::current();
+  std::string make_message() const {
+    return std::format("{}:{}:{}: precondition failed: ({}): in function: {}",
+    loc.file_name(), loc.line(), loc.column(), expr, loc.function_name() );
+  }
+};
+
+void default_violation_handler(ViolationInfo const& info) {
+  std::print("{}", info.make_message());
+  std::abort();
+}
+auto violation_handler = &default_violation_handler;
+```
+
+we can replace the default behavior to a "throwing" violation handler, there is some problem with marking function as <cpp>noexcept</cpp>, since the violation handler might throw.\
+there is a principal called "Lakos Rule" which calls for conservative use of <cpp>noexcept</cpp> in the standard library. it distinguishes between wide contracts (no precondidtos) and narrow contracts (have precondition), and functions with narrow preconditions should be marked <cpp>noexcept</cpp>.
+
+(some stuff about testing).
+</details>
+
+### Monadic Operations in Modern C++: A Practical Approach - Vitaly Fanaskov
+
+<details>
+<summary>
+Using Monadic Operations
+</summary>
+
+[Monadic Operations in Modern C++: A Practical Approach](https://youtu.be/Ely9_5M7sCo?si=NxPmgOeDnlktlKXW), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Monadic_Operations_in_Modern_Cpp.pdf), [event](https://cppcon2024.sched.com/event/1gZgZ/monadic-operations-in-modern-c++-a-practical-approach).
+
+> Agenda
+>
+> - Briefly about expected and optional
+> - Common use cases of expected
+> - Monadic operations in software development
+> - Tips and tricks
+
+<cpp>std::optional</cpp> is a container that either has or doesn't have a value, it can be used as a return value or a parameter, and in the upcoming C++26 standard library, it would be <cpp>view</cpp> that either contains one value (if the optional has a value) or none (if it doesn't), this will allow us to use range operations with it. <cpp>std::expected</cpp> can either contain a value of the expected type, or a value from the unexpected type (<cpp>std::unexpected</cpp>).
+
+an example of using <cpp>std::expected</cpp>, with one possible pitfall.
+
+```cpp
+void loadWidget()
+{
+  if (const auto widgetBox = getNewWidget(); widgetBox.has_value()) {
+    const auto widget = widgetBox.value();
+    // Do something with the widget ...
+  } else {
+    const auto error = widgetBox.error();
+    // Handle the error ...
+ }
+}
+
+void loadWidgetV2()
+{
+  const auto widgetBox = getNewWidget();
+  if (widgetBox.has_value()) {
+    // Do something with the widget ...
+  } else {
+    const auto error = widgetBox.error();
+    log("Cannot get a new widget {}: {}.", widgetBox.value(), error); // error! calling .value() 
+  }
+}
+```
+
+monadic operations - functional programming style
+
+- <cpp>and_then</cpp>
+- <cpp>or_else</cpp>
+- <cpp>transform</cpp>
+- <cpp>transform_error</cpp>
+
+```cpp
+getWidget()
+  .and_then(
+  [](const auto &widget) -> std::expected<Widget, WidgetError> {
+    // Do something with the widget ...
+    return widget;
+  });
+
+getWidget()
+  .transform([](const auto &widget)->ID {return widget.id();});
+
+getWidget()
+  .and_then(/*...*/) // do something
+  .or_else([](const auto& error) {log(error);}); // do this on the error
+
+getWidget()
+  .and_then(/*...*/) // do something
+  .transform_error(&fmt::to_string<WidgetError>); // call this on the error,
+```
+
+moving to monadic operations begins with defining boundaries, what can be changed, usually this is the class or library boundary. this depends on who consumes the code and how much we can change the API.
+
+we can use <cpp>std::bind_front</cpp> and <cpp>std::bind_back</cpp> to create closures over functions to pass them as monadic operations. (suggestion to move away from OOP to functional programming).
 </details>

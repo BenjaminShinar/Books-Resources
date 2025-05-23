@@ -25,6 +25,7 @@
     "initializable",
     "invokable",
     "jthread",
+    "libfmt",
     "linalg",
     "mdarray",
     "mdspan",

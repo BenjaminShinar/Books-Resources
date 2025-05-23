@@ -112,11 +112,11 @@
 - [x] Many ways to kill an Orc (or a Hero) - Patrice Roy
 - [x] Message Handling with Boolean Algebra -Ben Deane
 - [ ] Mix Assertion, Logging, Unit Testing and Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
-- [ ] Modern C++ Error Handling - Phil Nash
+- [x] Modern C++ Error Handling - Phil Nash
 - [ ] Modern C++: When Efficiency Matters - Andreas Fertig
-- [ ] Monadic Operations in Modern C++: A Practical Approach - Vitaly Fanaskov
+- [x] Monadic Operations in Modern C++: A Practical Approach - Vitaly Fanaskov
 - [ ] Multi Producer, Multi Consumer, Lock Free, Atomic Queue - User API and Implementation - Erez Strauss
-- [ ] Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements - Katherine Rocha
+- [x] Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements - Katherine Rocha
 - [ ] Official ISO C++ WG21 SG meeting of low latency/embedded/games/finance and Machine Learning - Michael Wong
 - [ ] Optimizing with Modern C++ - Patrice Roy
 - [x] Peering forward — C++'s next decade - Herb Sutter
