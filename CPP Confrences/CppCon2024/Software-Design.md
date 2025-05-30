@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore relocatability Björn Fahller Blarg multiplicator soooo maat Monostate runge_kutta4
+// cSpell:ignore relocatability Björn Fahller Blarg multiplicator soooo maat Monostate runge_kutta4 TPOIASI Hyrum
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -12,17 +12,17 @@
 
 - [x] 10 Problems Large Companies Have with Managing C++ Dependencies and How to Solve Them - Augustin Popa
 - [x] Adventures with Legacy Codebases: Tales of Incremental Improvement - Roth Michaels
-- [ ] C++ Under the Hood: Internal Class Mechanisms - Chris Ryan
-- [ ] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
-- [ ] Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
+- [x] C++ Under the Hood: Internal Class Mechanisms - Chris Ryan
+- [x] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
+- [x] Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
 - [ ] Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
-- [ ] Hiding your Implementation Details is Not So Simple - Amir Kirsh
+- [x] Hiding your Implementation Details is Not So Simple - Amir Kirsh
 - [ ] High-performance Cross-platform Architecture: C++ 20 Innovations - Noah Stein
 - [ ] How Meta Made Debugging Async Code Easier with Coroutines and Senders - Ian Petersen, Jessica Wong
 - [x] Modern C++ Error Handling - Phil Nash
 - [x] Monadic Operations in Modern C++: A Practical Approach - Vitaly Fanaskov
 - [x] Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements - Katherine Rocha
-- [ ] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
+- [x] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
 - [x] Reflection Is Not Contemplation - Andrei Alexandrescu
 - [x] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
 - [x] Reusable code, reusable data structures - Sebastian Theophil
@@ -1023,14 +1023,14 @@ we create identifiers from the string, and added some stuff them ("m_", "get_" a
 
 #### Token Sequences - P3294
 
-> "There’s a representation of C++ code that is well-defined, complete, and easy to understand: C++ code."\
+> "There's a representation of C++ code that is well-defined, complete, and easy to understand: C++ code."\
 > ~ Daveed Vandevoorde
 
 Creating C++ code from C++ code.
 
 > - At this point complexity is a huge liability
 > - Adding yet another sublanguage to C++ deemed undesirable
-> - String-based generation best; let’s eliminate its disadvantages
+> - String-based generation best; let's eliminate its disadvantages
 > - Strings opaque/unwieldy? Use token sequences instead of strings
 >   - Cost: one added literal kind
 > - Injection risks and dangers? Restrict string expansion
@@ -1544,4 +1544,773 @@ getWidget()
 moving to monadic operations begins with defining boundaries, what can be changed, usually this is the class or library boundary. this depends on who consumes the code and how much we can change the API.
 
 we can use <cpp>std::bind_front</cpp> and <cpp>std::bind_back</cpp> to create closures over functions to pass them as monadic operations. (suggestion to move away from OOP to functional programming).
+</details>
+
+### Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
+
+<details>
+<summary>
+Understanding the problem with range iterator and suggesting improvements.
+</summary>
+
+[Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges?](https://youtu.be/NAwn5WqNXJw?si=JK89fj9RizxRymgI), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Ranges.html), [event](https://cppcon2024.sched.com/event/1gZgc/ranges++-are-output-range-adaptors-the-next-iteration-of-c++-ranges), [daisy-chain repository](https://github.com/dhollman/daisychains).
+
+Major flaw in the design of ranges.
+
+#### The Problem of ranges
+
+> TPOIASI - "The Terrible Problem Of Incrementing A Smart Iterator"
+
+```cpp
+println("{}",
+  std::vector{1, 2, 3, 4, 5}
+  | transform([](int n) { return n * 2; })
+  | filter([](int n) { return n % 4 == 0; })
+); 
+// [4, 8]
+```
+
+if we do debug printing and use lambdas,  we can see the calls. for elements which pass the filter stage, we see another call to the previous step in the pipeline.
+
+```cpp
+auto t = [](int n) {
+  println("transform({})", n);
+  return n * 2;
+};
+auto f = [](int n) {
+  println("filter({})", n);
+  return n % 4 == 0;
+};
+println("{}", 
+  vector{1, 2, 3, 4, 5}
+  | transform(t) | filter(f));
+
+/*
+transform(1)
+filter(2)
+transform(2)
+filter(4)
+transform(2) - why this?
+transform(3) 
+filter(6)
+transform(4)
+filter(8)
+transform(4) - why this?
+transform(5)
+filter(10)
+[4, 8]
+*/
+```
+
+we can look at the standard library implementation and try to get an understanding of the problem, there is a lot of weird code in <cpp>std::transform_view</cpp>. eventually, we drill down enough and find the <cpp>operator++</cpp> of the iterator, which simply increments the underlying iterator. there is also something about the dereference operator.
+
+> Is <cpp>filter_view</cpp> broken?
+>
+> Anything that dereferences the underlying iterator somewhere other than <cpp>operator*()</cpp> is going to have this problem. such as:
+>
+> - <cpp>drop_while</cpp> - in <cpp>drop_while_view::begin()</cpp>
+> - <cpp>take_while</cpp> - in <cpp>sentinel_t<take_while_view>::operator==()</cpp>
+> - <cpp>chunk_by</cpp>
+> - <cpp>slide</cpp>
+> - <cpp>set_difference</cpp>
+> - <cpp>is_permutation</cpp>
+> - <cpp>std::sort</cpp>
+
+we invoke the dereference behavior both when we iterate and when we dereference, so we have more calls than expected.
+
+```cpp
+println("{}", vector{1, 2, 3, 4, 5} 
+  | slide(3));
+/*
+[[1,2,3], [2,3,4], [3,4,5]]
+*/
+
+auto f = [](int x) { return x * 2; };
+println("{}", vector{1, 2, 3, 4, 5} 
+  | transform(f))
+
+/*
+[[2,4,6], [4,6,8], [6,8,10]]
+*/
+```
+
+lets do more debug printing:
+
+```cpp
+auto f = [](int x) { 
+  if(x == 3) println("f(3)");
+  return x * 2;
+};
+println("{}", vector{1, 2, 3, 4, 5} 
+  | transform(f) 
+  | slide(3));
+/*
+f(3)
+f(3)
+f(3)
+[[2,4,6], [4,6,8], [6,8,10]]
+*/
+```
+
+> If `f` is "expensive", the author of this code probably doesn't understand that `f` isn't evaluated until it's needed ("evaluated lazily").\
+> We can argue about whether or not that's a reason to disallow ranges in large-scale software engineering context.\
+> We can argue about whether or not that's a reason to disallow ranges in large-scale software engineering context.
+>
+> Is `transform(f) | filter(g)` the same problem?
+
+```cpp
+int count_f_2 = 0;
+auto f = [&](int n) { count_f_2 += (n == 2); return n * 2; };
+auto g = [](int n) { return n % 4 == 0; };
+println("{}", vector{1, 2, 3, 4, 5} 
+  | transform(f)
+  | filter(g));
+println("f(2) was called {} times", count_f_2);
+
+// [4, 8]
+// f(2) was called 2 times
+```
+
+we need to understand lazy and eager evaluations.
+
+> Question: when is the result of f(2) "needed"?\
+> It depends on how lazy you are!\
+> The latest possible time when you need the result of f(2) is right before you have to print it.\
+> The "surprise" here comes from eagerly evaluating <cpp>iterator_t<filter_view>::operator++()</cpp> before we know when (or if) <cpp>iterator_t<filter_view>::operator*()</cpp> is going to be called!
+>
+> - This is the most important point in this presentation.
+> - This is a different "flavor" of surprise than not understanding laziness generally.
+> - What if we wait until we know what we're going to do with the result of `f(2)` before we call it?
+
+#### Pull vs. Push Programming Models
+
+trying to solve the issue.
+
+pull and push models aren't the same as eager and lazy models.
+
+```cpp
+auto f = [](int x) { return x * 2; }
+auto g = [](int y) { return y % 4 == 0; }
+auto v = iota(1, 6) 
+  | transform(f) 
+  | filter(g)
+  | to<vector>();
+println("{}", v);
+// [4, 8]
+```
+
+we can model this as each view wrapping its' input, wrapping from right-to-left. but alternatively, what if we wrapped over the output, and treated it as wrapping from left-to-right?
+
+```cpp
+// Pseudo-code hand-wavy you-get-the-idea
+// input wrapping
+auto view1 = transform(iota(1, 6), f);
+auto view2 = filter(view1, g);
+auto view3 = to<vector>(view2);
+
+// output wrapping
+auto link3 = filter(to<vector>(), g);
+auto link2 = transform(link3, f);
+auto link1 = iota(link2, 1, 6);
+```
+
+the pull model is right-to-left - wrapping the input. the push model is left-to-right - wrapping the output.
+
+```cpp
+auto v = evaluate(
+  iota(1, 6) 
+  >>= transform([](int x) { return x * 2; })
+  >>= filter([](int y) { return y % 4 == 0; })
+  >>= to<vector<int>>());
+std::println("{}", v);
+```
+
+<cpp>operator>>=()</cpp> has different associativity than the pipe operator. the right associativity means that we first evaluate the right side, just as we want for the push model!
+
+```cpp
+w | x | y | z;  // ((w | x) | y) | z
+a >>= b >>= c >>= d;  // a >>= (b >>= (c >>= d))
+```
+
+we want something like a pipe, but using the `>>=` behavior with the right-to-left associativity.\
+we will try to implement this ourselves. we implement the filter, the transformer, the `iota` generator, the creation of the vector, the evaluator
+
+```cpp
+auto obj1 = filter(f);
+auto obj2 = obj1{transform(g)};
+
+template <class Pred>
+struct filter {
+  Pred pred;
+  template <class NextLink>
+  struct adaptor {
+    Pred pred;
+    NextLink next;
+    template <class T>
+    auto push_value(T value) {
+      if (pred(value)) {
+        next.push_value(value);
+      }
+    }
+  };
+};
+
+template <class Fn>
+struct transform {
+  Fn fn;
+  template <class NextLink>
+  struct adaptor {
+    Fn fn;
+    NextLink next;
+    template <class T>
+    auto push_value(T value) {
+      next.push_value(fn(value));
+    }
+  };
+};
+ 
+struct iota {
+  int ibegin, iend;
+  template <class NextLink>
+  struct adaptor {
+    int ibegin, iend;
+    NextLink next;
+    auto generate() {
+      for (int i = ibegin; i < iend; ++i) {
+        next.push_value(i);
+      }
+    }
+  };
+};
+
+template <class Container>
+struct to {
+  Container output;
+  template <class T>
+  auto push_value(T value) {
+    output.push_back(value);
+  }
+  template <class Self>
+  decltype(auto) get_output(this Self&& self) { 
+    return std::forward_like<Self>(self.output);
+  }
+};
+```
+
+we need to define the operator overload and create the evaluator. we use a mixin (not CRTP) for an intrusive inheritance.
+
+```cpp
+template <class Chain>
+auto evaluate(Chain chain) {
+  chain.generate();
+  return std::move(chain).get_output();
+}
+
+struct link_base {
+  template <class Self, class NextLink>
+  auto operator>>=(this Self&& self, NextLink next) {
+    return std::forward<Self>(self).adapt(std::move(next));
+  }
+};
+ 
+template <class Fn>
+struct filter : link_base {
+  Fn fn;
+  explicit filter(Fn f) : fn(f) {}
+  template <class NextLink>
+  auto adapt(NextLink next) {
+    return adaptor<NextLink>{fn, std::move(next)};
+  }
+  /* ... */
+};
+
+struct output_passthrough {
+  template <class Self>
+  decltype(auto) get_output(this Self&& self) { 
+    return std::forward_like<Self>(self.next).get_output();
+  }
+};
+```
+
+we are wrapping right-to-left, from outermost to inner most.
+
+[compiler explorer](https://cppcon.godbolt.org/z/hY63aEfKo) example with all the code,
+
+we can also do the same for <cpp>take_while</cpp>, we need to update the convention for breaking out of a link in a chain.
+
+we still have some problems, reverse doesn't work with output wrappers, neither does sorting, and there are use cases which are awkward to create (slide window). but there are also use-cases which don't work well with the pull-model, like flattening a one-to-many transformation. the two models can exist alongside one-another.
+</details>
+
+### C++ Under the Hood: Internal Class Mechanisms - Chris Ryan
+
+<details>
+<summary>
+Learning a bit about how C++ classes work.
+</summary>
+
+[C++ Under the Hood: Internal Class Mechanisms](https://youtu.be/gWinNE5rd6Q?si=ZyXX7nt5Cof56LZc), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Cpp_Under_The_Hood.pdf), [event](https://cppcon2024.sched.com/event/1gZfx/c++-under-the-hood-internal-class-mechanisms).
+
+> We are going to talk about internal C++ class mechanisms:
+>
+> - C++ Onion, inheritance and polymorphic mechanisms.
+> - Member Data Pointers
+> - Member Function Pointers
+>   - Stack Frame / Base Pointer mechanics
+>   - Construction/Destruction order
+>   - Running code before and after main()
+
+#### The Virtual Table
+
+inheritance vs composition (aggregation). a person **has a** name, but a person **is not a** name. an employee **is a** person, but an employee **doesn't have a** name.
+
+the inheritance hierarchy, the hidden pointer to the virtual table in the base class.
+
+```cpp
+struct A {
+  v_table* __v_table_ptr; // hidden
+  int a{};
+  std::string str1{};
+  A() {Bar(); /*... */}
+  virtual A~() {Bar(); /*... */}
+  virtual void Foo() { std::cout << "A::Foo()"}
+  void Bar() { Foo();}
+};
+
+struct B : A {
+  int b{};
+  std::string str2{};
+  B() {Bar(); /*... */}
+  virtual B~() {Bar(); /*... */}
+  virtual void Foo() { std::cout << "B::Foo()"}
+};
+
+struct C : B {
+  int c{};
+  std::string str3{};
+  C() {Bar(); /*... */}
+  virtual C~() {Bar(); /*... */}
+  virtual void Foo() { std::cout << "C::Foo()"}
+};
+
+static A::'v_table'[]= {A::~(), A::Foo()}
+static B::'v_table'[]= {B::~(), B::Foo()}
+static C::'v_table'[]= {C::~(), C::Foo()}
+```
+
+when a constructor is called, it initializes the pointer to the class v_table, each constructor and destructor set the pointer according to the class, so the value of the pointer can change. the base class is effectively a data member.\
+constructing is done inside-out (expanding out), while destructing is outside-in (digging in).
+
+#### Pointer Types
+
+> - C Pointer types
+>   - `int *` Pointer to Data
+>   - `int(*)(int)` Pointer to Function
+> - Member Pointer types
+>   - `int Foo::*` Pointer to Member Data
+>   - `int(Foo::*)(int)` Pointer to Member Function
+
+[compiler explorer](https://godbolt.org/z/rKzdTsejz) example.
+
+pointer to function declaration: `int (*foo) (int, int)`, the return type of the target function on the left, the parameter types of the target function on the right, and the declaration (pointer type and the name) in the middle. it's a lot easier to define in outside using `typedef` or a `using` alias. C is lenient with the placement of the `*` symbol, but C++ is stricter.\
+a pointer to a member function has some weird stuff when taking the address of a virtual function. there is internal secret `Thunk` function, which is returned when taking the address of a polymorphic function, the function calculates the appropiate address based on the call site, and does the re-direction.
+
+> Fundamental Theorem of Software Engineering:\
+> Any problem can be solved by adding a layer of indirection.
+
+`Null` is usually zero in C, but that's not the standard, the C standard says the Null should evaluate to zero, and unassigned pointers should have the value of null. C++ has <cpp>std::nullptr</cpp>, which is more clearly defined, it's still not required to be zero. our null is actually -1 in memory, because of some reasons relating to offset in memory.
+
+we can create a sorting function that takes a data member pointer, so it's a generic thing which can sort based on a key chosen programmatically. we can also expand this to sort using multiple keys with templated pack expansion.
+
+[compiler explorer](https://godbolt.org/z/e9r9fbvvz) example.
+
+#### Object Memory Footprint.
+
+the virtual table is always at offset zero, it's always nice the destructor is the first method in the virtual table array. things get complicated with multiple inheritance (even without the diamond inheritance problem).
+
+#### Stack Frames
+
+the startup routine calls the main function, it pushes the stack pointer and the base pointer accordingly. something similar happens for every function call (which opens a new frame). also something with the instruction pointer.
+
+The RTTI (real time type information) is also part of the virtual table.
+</details>
+
+### How to Hide C++ Implementation Details - Amir Kirsh
+
+<details>
+<summary>
+Ideas for hiding how our code is implemented.
+</summary>
+
+[How to Hide C++ Implementation Details](https://youtu.be/G5tXjYzfg9A?si=bMXXQyCMo4ymlDEa), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Hiding_your_Implementation_Details_is_Not_So_Simple.pdf), [event](https://cppcon2024.sched.com/event/1gZgW/hiding-your-implementation-details-is-not-so-simple).
+
+> - Encapsulation
+>   - Protect Object Integrity - Expose the necessary interfaces only.
+>   - Easier to Use - Users see only what they need to.
+>   - Improves Maintainability - Internal changes don't affect external code.
+>   - Easier to Debug - Data modifications happens internally, in specific places.
+> - Decoupling
+>   - Reduces Dependencies - Components depend only what we actually expose.
+>   - Facilitates Changes - Changes in one part of the system don't necessarily affect others.
+>   - Enhances Reusability - Components become more generic, thus can be better reused.
+>   - Improves Testability - Easier to test components in isolation.
+
+we agree that hiding implementation details is important (access modifiers), but it's not always easy. there is always time pressure and other stuff with higher pritoties. some times there are even real technical constraints, which we need to work with. we don't want to always work with interfaces to avoid virtual calls, and sometimes exposing the returned type helps with performance.
+
+```cpp
+std::pair<First, Second> p;
+auto k = p.first;
+auto v = p.second;
+
+class Bar {
+  // ... more code
+public:
+  const std::map<string, int>& getProperties() const;
+};
+
+class Foo {
+public:
+  // we prefer the ctor below to be private but it doesn't compile :(
+  Foo(int value) : value(value) {}
+  static unique_ptr<Foo> create(int value) {
+    return std::make_unique<Foo>(value); // this needs a public constructor
+  }
+};
+auto foo = Foo::create(7);
+```
+
+> our goal: Investigate code examples:
+>
+> - See how we expose implementation details
+> - Understand why it's not the best design, per case
+> - Propose a better design, hiding the implementation details
+
+for example, <cpp>std::pair</cpp> having it private members exposed prevents us from having a lazy evaluated second member.
+
+```cpp
+// assume function is constrained on PAIR having fields first and second
+template<typename PAIR>
+std::ostream& operator<<(std::ostream& out, const PAIR& pair) {
+  return out << pair.first << ' ' << pair.second;
+}
+// ok
+auto stdpair = std::make_pair("bye", 42);
+std::cout << stdpair << std::endl;
+// can we allow our pair to lazily evaluate its second?
+auto squarepair = SquarePair(7);
+std::cout << squarepair << std::endl;
+```
+
+also, structs, in general, have public data members by default. if we use private data members and expose "getters", then we can treat those getters as constraints for templates, and have different kinds of objects with the same public interface. (duck typing).
+
+> Takeaway
+>
+> - Keep data members (and static members) in the private.
+> - Always.
+> - To begin with.
+
+#### API (including internal API of all kinds!)
+
+> Hyrum's Law:\
+> "Developers come to depend on all observable traits and behaviors of an interface, even if they are not defined in the contract"\
+> With a sufficient number of users of an API, it does not matter what you promise in the contract: all observable behaviors of your system will be depended on by somebody.
+
+applications tend to use a small part of the API, and the unused parts of APIs are more bug prone. having too many options (including overloads) will lead to the wrong option being selected at some point. smaller APIs are more testable.
+
+> Be Lean and Mean
+>
+> 1. Keep your API short and concise. (add as needed, and only for there is a real need).
+> 2. Limit your API to what should actually be used (arguments, return value etc.) - do not expose too much of your design!
+> 3. Different usages may get different *view* (or copy) of the same data, exposing only what is relevant.
+
+context-specific, things might be required to be exposed for one use-case, but be hidden for other usages.  
+
+> - If they don't need it, don't give it.
+> - If they get it, they'll use it.
+> - If they use it, they'll abuse it.
+> - Trust no one
+
+language tools for passing arguments:
+
+- Value semantics
+- Interfaces
+- Pimpl idiom
+- Wrapper classes as a view, wrapping the original
+- C++20 concepts
+
+> Exercise - "Const Map, Mutable Vals"\
+> Initialize a map, then pass it in a way such that values can be modified but the map itself cannot be modified.
+
+reminder about SFINAE and c++20 <cpp>concepts</cpp>, the `requires` clause and `requires` expression.
+
+```cpp
+// note: function may modify values but should not alert the map itself!
+void foo(ConstDictMutableVals auto& d) {
+  d[1] = 3;
+}
+int main() {
+  std::map<int, int> myMap = {{1, 0}, {2, 0}};
+  foo(myMap);
+  for (const auto& [k, v] : myMap) {
+    std::cout << k << ": " << v << std::endl;
+  }
+}
+```
+
+the above code isn't enough, since if the key doesn't exists, it creates it. let's check the key exists first.
+
+```cpp
+void foo(ConstDictMutableVals auto& d) {
+  auto itr = d.find(1);
+  if(itr != d.end()) itr->second = 3;
+}
+
+template <typename T>
+concept ConstDictMutableVals = requires(T t, typename T::key_type key) {
+  typename T::iterator;
+  typename T::key_type;
+  typename T::mapped_type;
+  { t.find(key) } -> std::same_as<typename T::iterator>;
+  t.find(key) != t.end();
+};
+```
+
+this isn't enough, it only tells us what we can do, but it doesn't prevent us from using other stuff. we might be able to test it by testing with a class that only provides what's defined in the concept, and not anything else.\
+we can also apply the wrapper approach.
+
+```cpp
+template<Dictionary Dict>
+void foo(ConstDictMutableValues<Dict> d) {
+  d.assign(1, 3);
+}
+
+template<Dictionary Dict>
+class ConstDictMutableValues {
+  Dict& d_;
+public:
+  explicit ConstDictMutableValues(Dict& d) : d_(d) {}
+  bool assign(const Key& key, Value value) {
+    auto itr = d_.find(key);
+    if(itr == d_.end()) return false;
+    itr->second = std::move(value);
+    return true;
+  }
+};
+```
+
+our wrapper class takes the reference and only exposes what we need to use in the method.
+
+#### Hiding Smart Pointers and Hierarchies
+
+this code has too many pointers a allocation with raw pointers.
+
+```cpp
+// we want the following code:
+Expression* e = new Sum (
+  new Exp(new Number(3), new Number(2)),
+  new Number(-1)
+);
+cout << *e << " = " << e->eval() << endl;
+delete e;
+// to print something like:
+// ((3 ^ 2) + (-1)) = 8
+```
+
+moving to smart pointers, it still looks bad because we are requiring the caller to pass the <cpp>std::unique_ptr</cpp>.
+
+```cpp
+auto e = std::make_unique<Sum>(
+  std::make_unique<Exp>(
+    std::make_unique<Number>(3),
+    std::make_unique<Number>(2)
+  ),
+  std::make_unique<Number>(-1)
+);
+cout << *e << " = " << e->eval() << endl;
+```
+
+we could hide the smart pointer inside the constructor of the class, it's easier to read for the user, and we can change how we implement the behavior in the future.
+
+```cpp
+class BinaryExpression: public Expression {
+  std::unique_ptr<Expression> e1, e2;
+public:
+template<typename Expression1, typename Expression2>
+BinaryExpression(Expression1 e1, Expression2 e2)
+: e1(std::make_unique<Expression1>(std::move(e1))),
+e2(std::make_unique<Expression2>(std::move(e2))) {}
+// ...
+};
+```
+
+there are also design patterns to hid implementation details:
+
+> - State Pattern - Employee is an Employee, regardless of his employment type - a state
+> - Strategy Pattern - A PathFinder is a PathFinder, regardless if using BFS or DFS - a strategy
+> - Factory Method - The user shall not be bothered with the exact object type instantiated
+
+exposing less information on return values:
+
+```cpp
+// what do you say about this one?
+vector<int> foo() {
+  return vector {1, 2, 4};
+}
+
+// is this one better?
+auto foo() {
+  return vector {1, 2, 4};
+}
+
+// and what about this one?
+random_access_range_of<int> auto foo2() {
+  return vector {1, 2, 4};
+}
+```
+
+#### Summary and Additional Stuff
+
+leaky abstraction - such as <cpp>std::vector\<bool></cpp> which returns a proxy and basically shouldn't be used. hiding away helper functions inside inner classes. preferring protected member functions over protected data members. keeping the data members private as much as possible.
+
+testing private behavior is usually a sign that something is wrong. it's ok to get the state, but it's a problem if we have a set 'setter'.
+
+the private token idiom also called "Access Token Pattern", "Passkey Pattern", "Authorization Token Pattern", "Key Token Idiom". this is how we solve the original problem of having <cpp>std::make_unique</cpp> and still prevent others from creating objects of the class.
+
+```cpp
+class Foo {
+  int value;
+  class PrivateToken {};
+public:
+  Foo(int value, PrivateToken) : value(value) {}
+  static unique_ptr<Foo> create(int value) {
+    return std::make_unique<Foo>(value, PrivateToken{});
+  }
+  int getValue() const { return value; }
+};
+
+auto foo = Foo::create(7);
+// we can never create a private token outside the class, only the class and it's friends can can the private token.
+```
+
+</details>
+
+### Refactoring C++ Code for Unit testing with Dependency Injection - Peter Muldoon
+
+<details>
+<summary>
+Bringing in dependency injection to real code-bases.
+</summary>
+
+[Refactoring C++ Code for Unit testing with Dependency Injection](https://youtu.be/as5Z45G59Ws?si=ECxmQ7wf571cc4oY), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Dependency_Injection_in_Cpp.pdf), [event](https://cppcon2024.sched.com/event/1gZfe/dependency-injection-in-c++-a-practical-guide).
+
+> Dependency Injection
+>
+> 1. Decreases coupling between functionality blocks
+> 2. Used to make a class/function independent of its underlying dependencies
+> 3. Improves the reusability – and so testability - of code.
+> 4. Better long term maintainability of code.
+
+Testing without dependency injection is more similar to integration testing, it requires bringing up a function full enviornment (more or less), configurations, databases, components, etc...\
+It's harder to specify the test-cases, it's longer to run the entire thing which makes development slower.
+
+Dependency injection relies on interfaces, rather than use real components like a real database we rely on mock components which behave like them, but without side effects.
+
+#### Dependency Injection Options
+
+> Link-time Dependency Injection - Uses Link-time switching of functionality
+>
+> - Allows limited Testing
+> - No code changes/contamination in actual production application required
+> - The code using the dependent functionality has no say in which implementation is being executed
+>   - Externally Injected during compilation via `LIBPATH` or `#IFDEF`
+
+there are drawbacks, if each test case requires a different build, we end up with a very complicate build file. this also leads to many undefined behavior and ODR violations.
+
+> Dependency Injection via inheritance- Create a base class interface or extend from an existing Class
+> 
+> - Can handle lots of methods
+> - Rich interface
+> - Well understood mechanism
+> - Virtual functions + override
+> - Easier to add to older codebases
+
+this works well with old code bases from the era of OOP, so it's easy to substitute them. we can also use interfaces instead of inheritance, so the test class doesn't interfere with the real class.\
+however, this can lead to messy interfaces which must be in the real interface, and there's the problem of adding extra indirection calls (not a real performance effect, to be honest).
+
+> Dependency Injection via templates - Create a Class that satisfies the calls made on the class by the function
+> 
+> - Can handle lots of methods being mocked
+>   - Only need to define the methods actually used
+> - Compile time so no runtime virtual calls overhead
+> - Can use concepts(C++20) to define an "interface"
+
+this requires a lot of code change, heavy use of templates, and increases compilation time.
+
+> Dependency Injection via type erasure - Call any thing satisfying a function signature – via <cpp>std::function</cpp>/<cpp>std::move_only_function</cpp>/<cpp>std::invoke</cpp> or something similar
+>
+> - Invokable on any callable target
+> - Versatile
+
+this has similar overhead to runtime virtual calls, and we can only handle one method being substituted.
+
+> Null Valued Objects - A stub with no functionality - only satisfying the type requirements
+> 
+> - Disables a part(s) of the system not under test
+> - Supplies the correct type but no actual implementation logic
+>   - Supplied arguments discarded
+>   - Returns fixed values
+
+##### Dependency Injection Types
+
+when and how we inject the mocking substitute.
+
+- Setter Dependency Injection - might leave the class in unusable state, makes the whole thing dangerous.
+- Method Injection - changes the function signature to take the method
+- construction injection - capture the dependency in the constructor. changes the signature of the class creation.
+
+#### Real World Dependency Injection
+
+the concept is something like this:
+
+> Control all Dependencies in a system
+> 
+> - Identify functional blocks
+>   - Allow Injection of flexible functionality
+>   - Capture inputs, control outputs
+> - Where to insert Dependencies
+>   - Drop all "invariant" dependencies into constructors
+>   - Drop all other dependencies into function method calls
+> - Just add a virtual hop for called functions
+>   - Add virtual to function declarations
+>   - Use function forwarding of calls
+>   - Ignores bad interfaces
+
+in real codebases, there are problems, code gathers complexity and noise over time.
+
+> Dependency Injection roadblocks
+>
+> - Objects full creation hidden inside functions/classes
+>   - No handle to inject new functionality
+>   - Default class constructors initialized via Singletons/Globals
+> - Reaching through multiple objects
+>   - Long chains of mock classes needed as boilerplate
+>   - Breaks the principle of least knowledge
+> - Disentangling getting information from setting state
+>   - Dig out the pure functions
+> - Having too many dependencies in a class / functional block
+>   - Impractical to pass large number of Dependencies in constructor / method
+> - Classes (hierarchies) packed with huge chunks of functionality
+>   - God Classes doing too many things
+>   - Many dependencies, too numerous to inject
+> - Functionality splintered and spread throughout the codebase
+>   - Fragmented throughout the inheritance chain
+>   - Duplicated throughout the codebase
+>   - Blended into general utility classes
+> - Lack of Data structure
+>   - Ungrouped data
+
+there are ways to refactor the code to be more suited to unit-testing, we can slowly extract pieces of code into internal classes and interfaces, we can separate stuff and start using the new things to test one another with dependency injection. breaking apart methods with too many parameters. these are all good practices regardless of dependency injection.
+
+Dependency injection for widely used APIs, using default parameters (keep API, break ABI), having the old function forward to a new function (keep API and ABI).\
+Using lazy initialization and passing stuff as injection, using dependencies providers. also a problem with templated member functions (they can't be virtual).
+
 </details>

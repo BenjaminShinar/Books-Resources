@@ -63,7 +63,7 @@
 - [ ] C++ Exceptions for Smaller Firmware - Khalil Estell
 - [ ] C++ Software Design - Klaus Iglberger
 - [ ] C++ Templates for Developers - Walter E Brown
-- [ ] C++ Under the Hood: Internal Class Mechanisms - Chris Ryan
+- [x] C++ Under the Hood: Internal Class Mechanisms - Chris Ryan
 - [ ] C++/Rust Interop: Using Bridges in Practice - Tyler Weaver
 - [ ] C++20 in Practice: A Complete Introduction 2024 - Nicolai Josuttis
 - [ ] C++26 Preview - Jeff Garland
@@ -82,7 +82,7 @@
 - [x] Data Structures That Make Video Games Go Round - Al-Afiq Yeong
 - [ ] Deciphering C++ Coroutines - Mastering Asynchronous Control Flow - Andreas Weis
 - [ ] Deciphering Coroutines - Recap and Prerequisites - Andreas Weis
-- [ ] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
+- [x] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
 - [x] Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
 - [ ] Designing a Slimmer Vector of Variants - Christopher Fretz
 - [x] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
@@ -123,7 +123,7 @@
 - [ ] Performance and Efficiency in C++ for Experts, Future Experts, and Everyone Else - Fedor Pikus
 - [x] Performance engineering - being friendly to your hardware - Ignas Bagdonas
 - [ ] Perspectives on Contracts - Lisa Lippincott
-- [ ] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
+- [x] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
 - [x] Reflection based libraries to look forward to - Saksham Sharma
 - [ ] Reflection Is Not Contemplation - Andrei Alexandrescu
 - [x] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
