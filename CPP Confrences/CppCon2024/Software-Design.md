@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore relocatability Björn Fahller Blarg multiplicator soooo maat Monostate runge_kutta4 TPOIASI Hyrum
+// cSpell:ignore relocatability Björn Fahller Blarg multiplicator soooo maat Monostate runge_kutta4 TPOIASI Hyrum Exfiltration Nokoyawa STRINGIZE unifex
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -15,10 +15,10 @@
 - [x] C++ Under the Hood: Internal Class Mechanisms - Chris Ryan
 - [x] Dependency Injection in C++ : A Practical Guide - Peter Muldoon
 - [x] Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
-- [ ] Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
+- [x] Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
 - [x] Hiding your Implementation Details is Not So Simple - Amir Kirsh
-- [ ] High-performance Cross-platform Architecture: C++ 20 Innovations - Noah Stein
-- [ ] How Meta Made Debugging Async Code Easier with Coroutines and Senders - Ian Petersen, Jessica Wong
+- [x] High-performance Cross-platform Architecture: C++ 20 Innovations - Noah Stein
+- [x] How Meta Made Debugging Async Code Easier with Coroutines and Senders - Ian Petersen, Jessica Wong
 - [x] Modern C++ Error Handling - Phil Nash
 - [x] Monadic Operations in Modern C++: A Practical Approach - Vitaly Fanaskov
 - [x] Newer Isn't Always Better, Investigating Legacy Design Trends and Their Modern Replacements - Katherine Rocha
@@ -271,7 +271,7 @@ One issue is using *Value Mangers*, using <cpp>std::optional</cpp>, which curren
 
 <details>
 <summary>
-A different view on testability
+A different view on testability.
 </summary>
 
 [The Most Important C++ Design Guideline is Testability](https://youtu.be/kgE8v5M1Eoo?si=5w4dnwmZakqDf0Yv), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/The_Most_Important_Design_Guideline_is_Testability.pdf), [event](https://cppcon2024.sched.com/event/1gZfl/the-most-important-design-guideline-is-testability).
@@ -1474,7 +1474,7 @@ there is a principal called "Lakos Rule" which calls for conservative use of <cp
 
 <details>
 <summary>
-Using Monadic Operations
+Using Monadic Operations.
 </summary>
 
 [Monadic Operations in Modern C++: A Practical Approach](https://youtu.be/Ely9_5M7sCo?si=NxPmgOeDnlktlKXW), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Monadic_Operations_in_Modern_Cpp.pdf), [event](https://cppcon2024.sched.com/event/1gZgZ/monadic-operations-in-modern-c++-a-practical-approach).
@@ -2226,7 +2226,7 @@ Dependency injection relies on interfaces, rather than use real components like 
 there are drawbacks, if each test case requires a different build, we end up with a very complicate build file. this also leads to many undefined behavior and ODR violations.
 
 > Dependency Injection via inheritance- Create a base class interface or extend from an existing Class
-> 
+>
 > - Can handle lots of methods
 > - Rich interface
 > - Well understood mechanism
@@ -2237,7 +2237,7 @@ this works well with old code bases from the era of OOP, so it's easy to substit
 however, this can lead to messy interfaces which must be in the real interface, and there's the problem of adding extra indirection calls (not a real performance effect, to be honest).
 
 > Dependency Injection via templates - Create a Class that satisfies the calls made on the class by the function
-> 
+>
 > - Can handle lots of methods being mocked
 >   - Only need to define the methods actually used
 > - Compile time so no runtime virtual calls overhead
@@ -2253,7 +2253,7 @@ this requires a lot of code change, heavy use of templates, and increases compil
 this has similar overhead to runtime virtual calls, and we can only handle one method being substituted.
 
 > Null Valued Objects - A stub with no functionality - only satisfying the type requirements
-> 
+>
 > - Disables a part(s) of the system not under test
 > - Supplies the correct type but no actual implementation logic
 >   - Supplied arguments discarded
@@ -2272,7 +2272,7 @@ when and how we inject the mocking substitute.
 the concept is something like this:
 
 > Control all Dependencies in a system
-> 
+>
 > - Identify functional blocks
 >   - Allow Injection of flexible functionality
 >   - Capture inputs, control outputs
@@ -2312,5 +2312,423 @@ there are ways to refactor the code to be more suited to unit-testing, we can sl
 
 Dependency injection for widely used APIs, using default parameters (keep API, break ABI), having the old function forward to a new function (keep API and ABI).\
 Using lazy initialization and passing stuff as injection, using dependencies providers. also a problem with templated member functions (they can't be virtual).
+
+</details>
+
+### Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
+
+<details>
+<summary>
+Understanding Attacks and Vulnerabilities.
+</summary>
+
+[Embracing an Adversarial Mindset for C++ Security](https://youtu.be/glkMbNLogZE?si=Hnz_hHFDysk8Gbhx), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Embracing_an_Adversarial_Mindset_for_Cpp_Security.pdf), [event](https://cppcon2024.sched.com/event/1i0y4/embracing-an-adversarial-mindset-for-c++-security).
+
+> Thinking Like an Adversary
+>
+> - Challenging assumptions
+> - Creatively using resources
+> - Understanding an attacker's motivation
+
+examples of "stealing a cup of coffee" with different levels of effort: dine and dash, hop over the counter, use fake currency, pull the fire alarm, threaten the barista and even cause an explosion.\
+we have a sample application that takes an image, serializes it and sends it to the cloud for some processing, we take an adversary perspective to attack the system.
+
+> Adversary Motivation
+>
+> |What | Who | How | Effort level|
+> |---|---|---|---|
+> | Privilege Escalation | Ransomware gangs,advanced adversaries,Game hackers |Looking at the trust between medium to high integrity levels, Configurations, Filesystem| Medium |
+> | Lateral movement | Financial criminals,advanced adversaries |Focus on code be execution from different sessions, Shared memory allocations, Use-After-Free | Medium-High |
+> | Remote Execution | Advanced adversaries| Deserialization,Client-Server interfaces | High |
+> | Denial of Service |Hacktivists, Script Kiddies,Game hackers | Client-Server interfaces | Low |
+
+#### Trends And Attack Vectors
+
+Vulnerabilities are effected trends, changes to defensive practices (better security) lead to different attack vectors, and adoption of new technologies (cloud, containers, micro-services) open up new targets. there are regulatory changes that push towards better security with higher standards, and there are better threat detection tools - endpoint detection, compiler security extensions and bug bounties programs.
+
+> Upward Trends of Vulnerabilities by Type
+>
+> - Memory Safety issues (**stay dominant**)
+>   - Heap Corruption
+>   - Heap Read
+>   - Use After Free
+>   - Arbitrary Memory Access
+>   - Race Condition
+> - Remote Code Execution (RCE)
+> - Elevation of Privilege (EoP)
+> - Numeric Errors
+> - Input Validation
+> - Race Conditions
+> - Security Feature Bypasses
+
+**Heap corruption** is directing a program to access locations on the heap outside the expected bounds, *heap grooming* is the process of modifying the heap from an uknown state into a malicious code. **Remote Code Execution** is a high value exploit, and has an expanded attack service due to rise of cloud computing, remote work and internet-connected devices.
+
+> Attack Chain
+>
+> 1. Reconnaissance
+> 1. Intrusion
+> 1. Exploitation
+> 1. Privilege Escalation
+> 1. Persistence & Evasion
+> 1. Command & Control
+> 1. Lateral Movement
+> 1. Exfiltration
+
+Elevation of privilege is crucial for lateral movement from the entry point to other components. security feature bypasses
+
+#### Notable Vulnerabilities In The Wild
+
+- Nokoyawa Ransomware - CVE-2023-28252
+- BITTER APT group CVE-2021-28310
+- PrintNightmare CVE-2021-1675
+- Raspberry Robin Malware - CVE-2021-1732
+
+> Nokoyawa Ransomware CVE-2023-28252
+>
+> - Elevation-of-privilege in Common Log File System (CLFS) clfs.sys driver
+> - Out-of-bounds write (increment) that can be exploited when the system attempts to extend a metadata block.
+> - Could have been easily discovered with the help of fuzzing
+> - Driver had extensive use of try/catch blocks to catch exceptions.
+> - Access violation exceptions were masked by an exception handler and the code continues its normal execution like nothing happened
+> - Uses a Base Log File to trigger the exploit
+>
+> | Address | Usage|
+> |---|---|
+> | 0x0000 | Control Block|
+> | 0x0400 | Control Block Shadow|
+> | 0x0800 | Base Block|
+> | 0x8200 | Base Block Shadow|
+> | 0xFC00 | Truncate Block|
+> | 0xFE00 | Truncate Block Shadow|
+>
+> Steps
+>
+> 1. First you need to get the kernel address
+> 2. Create the path to the .blf files
+> 3. Create a trigger .blf file
+> 4. Modify the trigger .blf file
+> 5. Find the Base Block (offset 0x800) kernel address of the trigger .blf
+> 6. Call AddLogContainer with the handle of the trigger .blf
+> 7. Create a spray .blf file
+> 8. Groom the memory for the spray
+> 9. Trigger the out-of-bounds write.
+
+(a long explanation that I don't want to copy)
+
+something about grabbing the "system token" from the kernel namespace and using it in some other program to access the system-namespace from the user-space.
+
+other CVEs used for privilege escalation, using out-of-bounds exploits, CVE for remote code execution to add a corrupted printer driver.
+
+#### Defining The Trust Boundary And Identifying Attack Surfaces
+
+What is a Trust Boundary? - Anytime there is a crossing of the trust between an untrusted component to a trusted component.
+
+> - Downloads from the internet
+> - Network interfaces (ports and drivers)
+> - Inter-process Communication (COM, RPC, Pipes, Shared Memory)
+> - Parsing
+> - Deserialization
+> - Filesystem access (Configuration Files)
+> - Sandbox interfaces (Shared memory, ports)
+> - Authentication
+> - Logging
+> - Cryptographic Keys
+> - Kernel Drivers (IOCTL)
+> - Message Queue Systems
+
+we can reduce the attack surfaces by using attack surface analyzer tools, isolating problematic areas and handling untrusted data. now that we have more cloud based applications, we have extra rings of privilege, rather than the kernel being level zero, there are additional levels below it for the hypervisor, the system management node and the management engine.
+
+#### Strategies for Secure C++ Development
+
+[gsl - guideline support library](https://github.com/microsoft/gsl), a header only library by microsoft with types that enforce the C++ Core Guidelines.
+
+code suggestions:
+
+| Topic | Suggestions |
+|---|---|
+| Pointer Usage|  Validate pointer addresses ranges before use |
+| User to Kernel| Validating user mode data in the kernel |
+| Index Bounds checking| Always perform bounds checking on arrays and buffer access,Avoid  arithmetic errors with bounds checking|
+| Avoid type confusion| Types need to be validated before a struct member is accessed -  <cpp>gsl::narrow_cast</cpp> or <cpp>wil::safe_cast</cpp>|
+| Caller identity | Always identify the caller process |
+| Enums |Verify enums with signedness |
+| Safe Constructs | default to <cpp>gsl::Span</cpp> to replace traditional buffer |
+| Memory Initialization|  Secure memory initialization i.e. `RTLSecureZeroMemory` (windows) |
+| Null memory | Always guard null memory access |
+| Bad Asserts | Don't use asserts to hide bugs or validation |
+| Try-Catch | Try-Catch blocks are big indicators of bugs |
+| Recursion | Always ensure there is a max depth on recursion |
+| Warnings | Don't Disable Warnings! Warnings highlight bigger issues |
+
+List of compiler hardening options - flags that help get better security, list of banned functions to avoid using, tools to be used in the development workflow, vetting and using open source tools in a secure matter.
+
+Isolation, separating trust levels, doing out-of-process parsing, using sandboxing and secure enclaves.
+
+</details>
+
+### C++ 20 Innovations: High-Performance Cross-Platform Architecture in C++ - Noah Stein
+
+<details>
+<summary>
+Applying the Open Closed Principle for cross platform architecture.
+</summary>
+
+[C++ 20 Innovations: High-Performance Cross-Platform Architecture in C++](https://youtu.be/8MEsM_YKA3M?si=NPSJEoAXK2gW0kNi), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/High_Performance_Cross_Platform_Architecture.pdf), [event](https://cppcon2024.sched.com/event/1gZfr/high-performance-cross-platform-architecture-c++-20-innovations), [ARK repo](https://github.com/noahstein/Ark).
+
+> Cross-Platform Architecture Goals
+>
+> - Take advantage of all platforms
+> - Focus on the compiler
+> - Minimize boilerplate and unnecessary code
+> - Minimize redundant code
+> - Minimize modifying existing code
+> - Minimize preprocessor macros
+>
+> The Design
+>
+> - Implement a family of quaternion classes, an illustrative example from a larger project
+> - Project build issues
+> - Inclusion of platform-specific header files
+> - Concept hierarchies
+> - Class and Function Design
+
+The Open-Closed Principle from OOP, open for extension, closed for modification. the classic "draw shape" example, with C code without OOP and then C++ code with OOP. the core of the principle is that once a code is released, it shouldn't change, since users rely on it. we shouldn't introduce change that effects behavior of existing code. dividing the OCP into weak and strong forms, the strong form doesn't modify the existing code at all. the weak form modifies code but not behavior or interfaces, recompilation is required, but no additional changes.
+
+This also holds for cross-platform design, adding new platform shouldn't change how previous platforms behave.
+
+> What is a Platform?
+>
+> - A specific set of features
+> - A feature is an abstract unit of functionality requiring implementations that differ depending upon the target machine architecture.
+> - Features may be hardware: CPU architecture, SIMD instruction set, DMA controller, GPIO module, etc.
+> - Features may be software: OS, graphics API, etc.
+> - Features may not be totally orthogonal, e.g. x86/SSE, DirectX/Windows
+
+features are defined in header files, and pre-processor macros generate the correct header file for each platform. the order matters.
+
+```cpp
+#define INCLUDE_PLT(Feature, File) INCLUDE_BUILD_FILENAME(Feature, File)
+#define INCLUDE_PLT_FEATURE(Feature) INCLUDE_STRINGIZE(Feature.h)
+#define INCLUDE_BUILD_FILENAME(Feature, File) INCLUDE_STRINGIZE(File ## _ ## Feature.h)
+#define INCLUDE_STRINGIZE(String) #String
+#define INCLUDE_SIMD(File) INCLUDE_PLT(PLT_SIMD, File)
+```
+
+features also need to be defined in the build system, one header file for each unique implementation, the build also needs to set the specific platform. having a common header file which is shared across all platforms.
+
+using Quaternions as the example: four dimensional complex numbers, is data and operations. we define it using c++20 <cpp>concepts</cpp>
+
+```cpp
+template<typename Q>
+concept Quaternion = requires(Q q)
+{
+  typename Q::Scalar;
+  Arithmetic<typename Q::Scalar>;
+  { q.w() } -> std::same_as<typename Q::Scalar>;
+  { q.x() } -> std::same_as<typename Q::Scalar>;
+  { q.y() } -> std::same_as<typename Q::Scalar>;
+  { q.z() } -> std::same_as<typename Q::Scalar>;
+};
+
+template<typename T>
+concept Arithmetic = std::is_arithmetic_v<T>; // alias
+
+template<typename T, typename U>
+concept MutuallyArithmetic = requires (T t, U u)
+{
+  requires Arithmetic<T>;
+  requires Arithmetic<U>;
+  { t + u }; // have the operations
+  { t - u };
+  { t * u };
+  { t / u };
+};
+```
+
+Standard Quaternion Type: Declaration and Data, we need some specialized constructors and operators.
+
+```cpp
+template<typename S, typename I = plt::simd::PLT_SIMD>
+class Quat {
+public:
+  using Scalar = S;
+private:
+  Scalar w_, x_, y_, z_;
+  // ... Constructors
+  // ... Accessors
+};
+```
+
+using expression trees: `q1+q2*q3` is `QuaternionAddition(q1, QuaternionMultiplication(q2,q3))`, each node in the tree is a an object.
+
+now we can move to work on the specialization for the feature for the platform.
+
+```cpp
+#define SIMD_HAS_NEON32
+#include <type_traits>
+#include "simd.h"
+namespace plt::simd {
+  struct Neon32 : Common {};
+  template<typename SIMD>
+  concept Neon32Family = std::derived_from<SIMD, Neon32>;
+}
+// 
+#include <arm_neon.h>
+template<>
+class Quat<float, plt::simd::Neon32>
+{
+  float32x4_t value_;
+  public:
+  using Scalar = float;
+  // ... Constructors
+  // ... Accessors
+};
+```
+
+> Where are We Now?
+>
+> - The class alone compiles, links, and passes tests
+> - Quaternions will now use Neon registers
+> - The algorithms are all common implementations
+> - Data is moved into general-purpose registers for computations
+> - Depending on the platform, may see a performance gain at this stage
+
+we can start writing optimized functions, taking advantage of what the platform gives us (for neon, specialized Quat for float)
+
+(another example of adding SSE feature header, specialized for float and doubles)
+
+function overloading resolution, subsumption, concepts aren't derived from one another, but if they subsum another concept, they get priority in the overload resolution process.
+
+```cpp
+struct Sse:Common {};
+struct Sse2:Sse {};
+
+template<typename SIMD>
+concept SseFamily=std::derived_from<SIMD, Sse>;
+
+template<typename SIMD>
+concept Sse2Family=SseFamily<SIMD> && std::derived_from<SIMD, Sse2>;
+
+template<typename SIMD>
+concept Sse2Derived=std::derived_from<SIMD, Sse2>;
+```
+
+AVX replaces SSE4, now having 256-bit registers, which we can use to fit an entire `Quat<double>` object into a single register. this causes some problems if we continue the same way we did so far. we need even more header files separation, acting as a layer of indirection.
+
+there is an outdated repo on github with the code.
+</details>
+
+### How Meta Made Debugging Async Code Easier with Coroutines and Senders - Ian Petersen, Jessica Wong
+
+<details>
+<summary>
+Debugging Asynchronous Code stack trace.
+</summary>
+
+[How Meta Made Debugging Async Code Easier with Coroutines and Senders](https://youtu.be/nHy2cA9ZDbw?si=eRE2d4VuiDnWPOX2), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/How_Meta_Made_Debugging_Async_Code_Easier_with_Coroutines_and_Senders.pdf), [event](https://cppcon2024.sched.com/event/1gZgT/how-meta-made-debugging-async-code-easier-with-coroutines-and-senders), [demo](https://github.com/fbsamples/cppcon24-async-demo/tree/main)
+
+Stack Traces for Async Code are Unhelpful. work is done across different threads (main thread, IO thread, workpool thread), but the stack trace is separate. Meta developed an **Async Stack** that uses coroutines and senders to show a complete view of the work done, even when it's not at the same thread.
+
+this is a demo application which follows the Folly async proposal by Lewis Baker (*unifex* in the code samples). it reads dictionary files and calculates the average length of the words.
+
+```cpp
+int main(int argc, char** argv) 
+{
+  unifex::static_thread_pool pool; // thread pool
+  io_uring_context ctx; // context
+  unifex::task<void> task = async_main({argv + 1, argc - 1},  pool, ctx); // takes a span of argv
+  unifex::sync_wait(std::move(task)); // start the work
+  return 0;
+}
+
+unifex::task<void> async_main(unifex::span<char*> args, auto &pool, auto &io) 
+{
+  auto jobs = args |
+  views::transform([io](fs::path fileName)->unifex::task<word_stats> {
+    auto file = unifex::open_file_read_only(io, fileName);
+    return process_file(std::move(file));
+  });
+  auto stats = co_await unifex::on(pool.get_scheduler(), unifex::when_all_range(jobs.begin(), jobs.end())); // sender algorithm, do the work on the thread pool
+
+  // print results
+  for (std::size_t i = 0; i < stats.size(); ++i) {
+    double mean = (double)stats[i].chars / (double)stats[i].lines;
+    std::printf("Average word length in %s is %g\n", args[i], mean);
+  }
+}
+
+struct word_stats { 
+  unsigned long chars{}; 
+  unsigned long lines{} 
+};
+
+unifex::task<word_stats> process_file(auto file) {
+  word_stats result;
+  std::array<char, 4096> buffer;
+  int64_t offset = 0;
+  while (std::size_t bytesRead = co_await async_read_some_at(file, offset, buffer)) // read from a file
+  {
+    auto validBytes = unifex::span(buffer.data(), bytesRead); // number of bytes
+    auto newlines = ranges::count(validBytes, '\n'); //
+    result.lines += newlines; // number of words
+    result.chars += (bytesRead - newlines); // numer of characters
+    offset += bytesRead;
+  }
+  co_return result;
+}
+```
+
+#### Running the Demo
+
+we run the program in a debugger.
+
+```sh
+lldb-18 .build/AsyncStackDemo -- /user/share/dict/american-english /user/share/dict/german
+$ b main.cpp:70 # add a break point
+$ bt # show stack trace
+```
+
+the stack trace is a mess, a lot of the frames are coming from the sender library and not from our code. we can import a script from the "folly" library and try it.
+
+```sh
+command script import scripts/co_by.py # import script
+co_bt # run the script
+```
+
+now we have a somewhat better stacktrace, it does go all the way down to the main function, and if we remove some stuff, we can make it into something understandable. it still shows standard library code, but we can focus on the code in our files, and there are some frames which aren't real stack frames, they are logical frames that connect the work.
+
+#### Walking The Stack
+
+> So what do we need?
+>
+> 1. Walk the regular stack... until we find the first async frame
+> 1. Walk the async stack... until we find the end
+> 1. walk the regular stack back to main
+
+to reconstruct the stack, we use the stack frame and the frame pointer, we look at the return address to the previous stack, and continue this process. the stack is contiguous, but we travel it like a linked list, because each frame is different size. we identify the first async stack because we marked the frame before it (the one drop) with a variable in thread local storage, this variable points to the stackframe sentry. now we move to the next async stack, this is also done through the thread local storage, we continue with the same behavior until we reach the main function stack frame, for which the previous stack pointer is null.\
+There are some magic variables we create.
+
+```cpp
+struct AsyncStackRoot {
+  std::atomic<AsyncStackFrame*> topFrame;
+  AsyncStackRoot* nextRoot;
+  frame_ptr stackFramePtr;
+  instruction_ptr returnAddress;
+};
+
+struct AsyncStackFrame {
+  AsyncStackFrame* parentFrame;
+  instruction_ptr instructionPointer;
+  AsyncStackRoot* stackRoot;
+};
+```
+
+the *unifex* library does the work of storing the data and accessing it. the return address comes from where the sender is created.
+
+> So how did we bring async stacks to Unifex?
+>
+> - Every async operation owns an AsyncStackFrame
+> - Threads executing part of an async operation have an AsyncStackRoot on a frame in their stack
+> - Every sender algorithm captures its return address
 
 </details>

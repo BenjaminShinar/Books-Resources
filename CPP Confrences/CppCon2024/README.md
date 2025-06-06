@@ -86,16 +86,16 @@
 - [x] Design Patterns - The Most Common Misconceptions (2 of N) - Klaus Iglberger
 - [ ] Designing a Slimmer Vector of Variants - Christopher Fretz
 - [x] Designing C++ code generator guardrails: A collaboration among outreach and development teams and users - Sherry Sontag, CB Bailey
-- [ ] Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
+- [x] Embracing an Adversarial Mindset for C++ Security - Amanda Rousseau
 - [x] Fast and small C++ - When efficiency matters - Andreas Fertig
 - [x] Gazing Beyond Reflection for C++26 - Daveed Vandevoorde
 - [x] Hidden Overhead of a Function API - Oleksandr Bacherikov
 - [ ] Hiding your Implementation Details is Not So Simple - Amir Kirsh
 - [ ] High-performance Concurrency in C++ - Fedor Pikus
-- [ ] High-performance Cross-platform Architecture: C++ 20 Innovations - Noah Stein
+- [x] High-performance Cross-platform Architecture: C++ 20 Innovations - Noah Stein
 - [ ] High-Performance Numerical Integration in the Age of C++26 - Vincent Reverdy
 - [ ] High-performance, Parallel Computer Algebra in C++ - David Tran
-- [ ] How Meta Made Debugging Async Code Easier with Coroutines and Senders - Ian Petersen, Jessica Wong
+- [x] How Meta Made Debugging Async Code Easier with Coroutines and Senders - Ian Petersen, Jessica Wong
 - [ ] Implementing Particle Filters with Ranges - Nahuel Espinosa
 - [ ] Implementing Reflection using the new C++20 Tooling Opportunity: Modules - Maiko Steeman
 - [ ] import CMake; // Mastering C++ Modules - Bill Hoffman
@@ -133,7 +133,7 @@
 - [x] Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design - Max Hoffmann
 - [ ] Sender Patterns to Wrangle Concurrency in Embedded Devices - Michael Caisse
 - [ ] Session Types in C++: A Programmer's Journey - Miodrag Misha Djukic
-- [ ] Shared Libraries and Where To Find Them - Luis Caro Campos
+- [x] Shared Libraries and Where To Find Them - Luis Caro Campos
 - [x] So You Think You Can Hash - Victor Ciura
 - [ ] spanny 2: rise of std::mdspan - Griswald Brooks
 - [ ] Structured Concurrency in C++ - Mateusz Pusz

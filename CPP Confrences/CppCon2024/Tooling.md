@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Qlibs fftw rtsan noundef dispatchv resultv Wfunction Wperf nonallocating Wunknown perfetto IWYU Wirth valgrind dhat jemalloc
+// cSpell:ignore Qlibs fftw rtsan noundef dispatchv resultv Wfunction Wperf nonallocating Wunknown perfetto IWYU Wirth valgrind dhat jemalloc lfoo Xlinker lopencv
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -20,7 +20,7 @@
 - [X] Llvm's Realtime Safety Revolution: Tools For Modern Mission Critical Systems - Christopher Apple, David Trevelyan
 - [ ] Mix Assertion, Logging, Unit Testing And Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
 - [ ] Secrets Of C++ Scripting Bindings: Bridging Compile Time And Run Time - Jason Turner
-- [ ] Shared Libraries And Where To Find Them - Luis Caro Campos
+- [x] Shared Libraries And Where To Find Them - Luis Caro Campos
 - [x] What's Eating My Ram? - Jianfei Pan
 - [X] What's New For Visual Studio Code: Performance, Github Copilot, And Cmake Enhancements - Alexandra Kemper, Sinem Akinci
 - [X] What's New In Visual Studio For C++ Developers - Michael Price & Mryam Girmay
@@ -987,4 +987,80 @@ For External Fragmentation, we check what is the largest block we can allocate, 
 
 we want to reduce the fragmentation, or de-fragment the memory. there is no magic solution, at the hardware level, there is page-meshing, at the OS level there is the linux buddy system, and at the memory allocator level, we might pass some parameters to tune the performance, or use a different malloc implementation such as "jemalloc" and replace the allocator in our code. the best thing to do is to change the memory usage pattern in the application. local allocators can separate where long lived data is stored from the short lived data.
 
+</details>
+
+### Shared Libraries And Where To Find Them - Luis Caro Campos
+
+<details>
+<summary>
+Shared Libraries and how are they used.
+</summary>
+
+[Shared Libraries And Where To Find Them](https://youtu.be/Ik3gR65oVsM?si=ago4Lx7jBGUA11nB), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Shared_Libraries_and_Where_To_Find_Them.pdf), [event](https://cppcon2024.sched.com/event/1gZez/shared-libraries-and-where-to-find-them)
+
+> From the point of view of a C++ developer, compiled code typically ends up in either:
+>
+> - The executables themselves
+> - Static libraries
+> - Shared libraries
+>
+> Libraries are a vehicle for "reusable" code code that can be  invoked by other libraries or applications (even from other languages)
+
+the lecture covers:
+
+- WHEN shared libraries are needed
+- WHICH programs needs to locate shared libraries
+- TOOLS to query, troubleshoot
+- WHERE to find shared libraries
+
+we can separate the "when" into phases, first into "build" and "run" phases, and then further division of configuring the build, static linking, dynamic linking and packaging application. the linker matches the library during the build phase, and the runtime linker matches it when running the application.
+
+```sh
+g++ my_program.cpp -o my_program # fails
+g++ my_program.cpp -o my_program -lfoo # link with library
+g++ my_program.cpp -o my_program -lfoo -Xlinker --verbose # verbose to show the search path
+```
+
+the linker has a search procedure, determining where the linker searches for the libray. the linker path is stored into the executable. it also stores the libraries that the executable needs
+
+```sh
+file my_program
+readelf -l my_program | grep interpreter
+readelf -d my_program
+objdump -p my_program | grep NEEDED
+
+ldd my_program # will run the libraries
+```
+
+a common occurrence is that our library is not in a default location, this can happen when the library is local to the project, when we use a different version from the one installed in the file-system, or when it's vendored in.
+
+```sh
+g++ my_program.cpp -o my_program -lfoo # library isn't at the default search path
+g++ my_program.cpp -o my_program -L/opt/foo/lib -lfoo # add library path to the linker
+./my_program # can't find foo library
+LD_LIBRARY_PATH=/opt/foo/lib  # change environment variable
+LD_DEBUG=libs ./my_program 
+ld.so --library_path /opt/foo/lib ./my_program # invoke the application with linker and library path
+g++ my_program.cpp -o my_program -L/opt/foo/lib -lfoo -Wl,-rpath,/opt/foo/lib # embed the library location and the run path into the executable
+readelf -d my_program
+```
+
+there is also the case of transitive dependencies. creating a shared library and using it for an executable, there are indirect dependencies to consider. `RUNPATH` is a newer linux variable, but it only affects direct dependencies, unlike `RPATH` (which was deprecated). there is also `LD_LIBRARY_PATH`, but it has lower priority, some confusion.
+
+Apple OS platforms are similar to linux, but not identical. the linker is still called `ld`, but there are other tools for file inspection, and there is a different search path behavior.\
+Windows are also different, there are two files, one for the linktime (.LIB extention, not the same as static libraries) and one for runtime (.DLL), some other differences from linux and MAC-OS.
+
+#### Build Systems
+
+> Build systems: Why locate libraries?\
+> The linker already tells us if it can’t find a library.
+>
+> - We could just do `-lopencv_core` and let the linker fail if the library can't be found.
+> - But we may see things like the following in our build scripts:
+>   - `find_package(OpenCV)`
+>   - `PKG_CHECK_MODULES([OPENCV], [opencv >= 2.0])`
+
+package descriptor files allow us to work with build systems, do additional checks (versions, architectures, platforms, etc...), and fail early in the build process rather than wait for the entire build and link to finish.
+
+CMake has a "build tree" and an "install tree", but again, it's different for windows. package managers like conan and vcpkg can help. something about bundling.
 </details>
