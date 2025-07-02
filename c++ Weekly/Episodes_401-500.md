@@ -2520,3 +2520,105 @@ int main()
 make it hard to use the library in the wrong way.
 
 </details>
+
+
+## C++ Weekly - Ep 472 - C++23's static lambdas?!
+
+<details>
+<summary>
+Using lambdas without an object.
+</summary>
+
+[C++23's static lambdas?!](https://youtu.be/M_AUMiSbAwQ?si=pzCxnIaDpTvnjYTz)
+
+making a call and index operator static.
+
+we could do this in the past:
+
+```cpp
+struct Callable
+{
+  static auto operator()(int val) {return val + 42;}
+};
+int main()
+{
+  auto x = Callable(42); // won't work
+  auto x2 = Callable::operator()(42); // will work
+}
+```
+
+but we can also create static lambdas directly, maybe this should have the default behavior, since it would allow the compiler to skip creating the object.
+
+```cpp
+int main()
+{
+  auto l = [](int val) static {return val + 42;};
+  return l(10);
+}
+```
+
+(playing with the code and compiler options to show this in action).
+
+</details>
+
+## C++ Weekly - Ep 473 - `continue` and `break` Statements
+
+<details>
+<summary>
+Flow Control statements.
+</summary>
+
+[continue and break Statements](https://youtu.be/CiB1ex0hi3w?si=NqJX-V_dmb_jKley)
+
+we can use the `continue` and `break` flow control statements, even inside a for loop.
+
+```cpp
+#include <initilazier_list>
+
+int main()
+{
+  for (const auto x: {2,3,4,5,6,7,8,9})
+  {
+    if (x==4) {continue;}
+    std::cout << x << '\n';
+  }
+}
+```
+
+the two should be considered a code-smell, and if we catch ourselves writing them, we should consider if there's an alternative.
+</details>
+
+## C++ Weekly - Ep 474 - What Can LEA Do For You?
+
+<details>
+<summary>
+LEA - load effective address instruction.
+</summary>
+
+[What Can LEA Do For You?](https://youtu.be/Ac7cdsIbjE0?si=zdPxInixN_cunFb7)
+
+LEA instruction - load effective address, comparing the instruction and how it operates in X86 and ARM architectures.
+the compiler tries to use a few instructions as possible, and avoiding multiplication instructions.
+</details>
+
+## C++ Weekly - Ep 475 - Lambdas On The Heap?
+
+<details>
+<summary>
+constucting lambdas on the heap - how and why.
+</summary>
+
+[Lambdas On The Heap?](https://youtu.be/W4G2xJX9Gnw?si=Hs2GMULTt2us8Tsz)
+
+```cpp
+int main()
+{
+  auto l = new decltype([]{return 42;});
+  return (*l)();
+}
+```
+
+this might be relevant for a lambda with a large capture, we can't create a lambda directly becuase of the capture, but we can create a lambda and then move it to the heap.
+</details>
+
+
