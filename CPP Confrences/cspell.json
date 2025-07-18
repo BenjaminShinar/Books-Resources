@@ -16,6 +16,7 @@
     "consteval",
     "constinit",
     "CRTP",
+    "CTRE",
     "cvref",
     "Cyclomatic",
     "declval",

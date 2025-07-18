@@ -18,8 +18,8 @@ Workload orchestrator.
 > Nomad is a flexible workload orchestrator that enables an organization to easily deploy and manage any containerized or legacy application using a single, unified workflow. Nomad can run a diverse workload of Docker, non-containerized, microservice, and batch applications.\
 > Nomad enables developers to use declarative infrastructure-as-code for deploying applications. Nomad uses bin packing to efficiently schedule jobs and optimize for resource utilization. Nomad is supported on macOS, Windows, and Linux.
 
-
 ### Quick Start
+
 [nomad quick start](https://developer.hashicorp.com/nomad/tutorials/get-started)
 
 > Nomad is a flexible scheduler and workload orchestrator that enables you to deploy and manage any application across on-premise and cloud infrastructure at scale.
@@ -36,7 +36,6 @@ in most cases, we have a strong machine with with very low utilization (2% perce
 
 nomad has job files, but also has APIs for jobs, and a job queue. for example, CircleCI uses nomad to run builds (1000 jobs a minute), even if there isn't enough capacity at one moment, the queue will handle the requests eventually.\
 A different use-case is high-performance computing (HPC), there is c C1m challenge (one million containers), and nomad can do this in less than five minutes, there are also even larger jobs.
-
 
 > Some of Nomad's main features include:
 >
@@ -131,7 +130,6 @@ Vault is packed as a binary, it needs to be added to the PATH. then we can run i
 
 we can create a vault server in development mode on the local machine. it does not persist data, and it unseals data automatically,
 
-
 ```sh
 vault
 vault -help
@@ -153,7 +151,7 @@ unset VAULT_ADDR VAULT_CACERT
 
 ### Token and Secrets
 
-to authenticate against vault, we need a token, this is what we grabbed and saved in the previous example. that was the root token, which has the root policy. tokens usually have a TTL, after which they must be renewed. tokens can have a limit on usage, even before the TTL expires. a token is identified by the accessor, which is the unique name. 
+to authenticate against vault, we need a token, this is what we grabbed and saved in the previous example. that was the root token, which has the root policy. tokens usually have a TTL, after which they must be renewed. tokens can have a limit on usage, even before the TTL expires. a token is identified by the accessor, which is the unique name.
 
 ```sh
 vault token lookup -accessor <token accessor>
@@ -170,6 +168,7 @@ vault token renew -accessor <token accessor>
 ```
 
 we can revoke a token manually
+
 ```sh
 vault token create -policy=default -period=10m
 # grab token

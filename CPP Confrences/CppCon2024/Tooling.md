@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Qlibs fftw rtsan noundef dispatchv resultv Wfunction Wperf nonallocating Wunknown perfetto IWYU Wirth valgrind dhat jemalloc lfoo Xlinker lopencv
+// cSpell:ignore Qlibs fftw rtsan noundef dispatchv resultv Wfunction Wperf nonallocating Wunknown perfetto IWYU Wirth valgrind dhat jemalloc lfoo Xlinker lopencv Luabind chaiscript monostate libfuzzer lclang fuzztest cxxmodules
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -7,23 +7,23 @@
 ## Tooling
 
 <summary>
-15 Talks about tooling and supports for C++.
+15 Talks about tooling and support for C++.
 </summary>
 
 - [x] Beyond Compilation Databases To Support C++ Modules: Build Databases - Ben Boeckel
-- [X] Building Cppcheck - What We Learned From 17 Years Of Development - Daniel Marjamäki
+- [x] Building Cppcheck - What We Learned From 17 Years Of Development - Daniel Marjamäki
 - [ ] C++/Rust Interop: Using Bridges In Practice - Tyler Weaver
-- [ ] Common Package Specification (Cps) In Practice: A Full Round Trip Implementation In Conan C++ Package Manager - Diego Rodriguez-Losada Gonzalez
-- [X] Compile-Time Validation - Alon Wolf
+- [x] Common Package Specification (Cps) In Practice: A Full Round Trip Implementation In Conan C++ Package Manager - Diego Rodriguez-Losada Gonzalez
+- [x] Compile-Time Validation - Alon Wolf
 - [ ] Implementing Reflection Using The New C++20 Tooling Opportunity: Modules - Maiko Steeman
-- [ ] Import Cmake; // Mastering C++ Modules - Bill Hoffman
-- [X] Llvm's Realtime Safety Revolution: Tools For Modern Mission Critical Systems - Christopher Apple, David Trevelyan
-- [ ] Mix Assertion, Logging, Unit Testing And Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
-- [ ] Secrets Of C++ Scripting Bindings: Bridging Compile Time And Run Time - Jason Turner
+- [x] Import Cmake; // Mastering C++ Modules - Bill Hoffman
+- [x] Llvm's Realtime Safety Revolution: Tools For Modern Mission Critical Systems - Christopher Apple, David Trevelyan
+- [x] Mix Assertion, Logging, Unit Testing And Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
+- [x] Secrets Of C++ Scripting Bindings: Bridging Compile Time And Run Time - Jason Turner
 - [x] Shared Libraries And Where To Find Them - Luis Caro Campos
 - [x] What's Eating My Ram? - Jianfei Pan
-- [X] What's New For Visual Studio Code: Performance, Github Copilot, And Cmake Enhancements - Alexandra Kemper, Sinem Akinci
-- [X] What's New In Visual Studio For C++ Developers - Michael Price & Mryam Girmay
+- [x] What's New For Visual Studio Code: Performance, Github Copilot, And Cmake Enhancements - Alexandra Kemper, Sinem Akinci
+- [x] What's New In Visual Studio For C++ Developers - Michael Price & Mryam Girmay
 - [x] Why Is My Build So Slow? Compilation Profiling And Visualization - Samuel Privett
 
 ---
@@ -1053,7 +1053,7 @@ Windows are also different, there are two files, one for the linktime (.LIB exte
 #### Build Systems
 
 > Build systems: Why locate libraries?\
-> The linker already tells us if it can’t find a library.
+> The linker already tells us if it can't find a library.
 >
 > - We could just do `-lopencv_core` and let the linker fail if the library can't be found.
 > - But we may see things like the following in our build scripts:
@@ -1063,4 +1063,697 @@ Windows are also different, there are two files, one for the linktime (.LIB exte
 package descriptor files allow us to work with build systems, do additional checks (versions, architectures, platforms, etc...), and fail early in the build process rather than wait for the entire build and link to finish.
 
 CMake has a "build tree" and an "install tree", but again, it's different for windows. package managers like conan and vcpkg can help. something about bundling.
+</details>
+
+### Secrets of C++ Scripting Bindings: Bridging Compile Time and Run Time - Jason Turner
+
+<details>
+<summary>
+Creating A simple scripting engine.
+</summary>
+
+[Secrets of C++ Scripting Bindings: Bridging Compile Time and Run Time](https://youtu.be/Ny9-516Gh28?si=hCmAgmtOiqwBW76k), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Secrets_of_Cpp_Scripting_Bindings.pdf), [event](https://cppcon2024.sched.com/event/1gZf2/secrets-of-c++-scripting-bindings-bridging-compile-time-and-run-time).
+
+SWIG - Simplified Wrapper Interface Generator, generates wrapper for multiple languages to integrate with C++. later expanded into ChaiScript.
+
+other alternatives existed:
+
+- <cpp>boost::python</cpp>
+- Sol2
+- Luabind
+
+> Talk Goals:
+>
+> 1. You'll understand the challenges of bridging compile time <-> run time
+> worlds
+> 2. You'll understand one possible solution
+> 3. You'll be able to pick up from the simple example and build your own
+> simple scripting tool
+
+#### ChaiScript
+
+> ChaiScript:
+>
+> - Header-only scripting engine designed for embedding in C++
+> - Automatic function / type deduction
+> - Native script function <-> C++ Function interaction
+> - Full support for exceptions
+> - Just Works (TM)
+
+[minimal example](https://godbolt.org/z/z33z3qqo)
+
+```cpp
+#include <chaiscript/chaiscript.hpp>
+
+std::string helloWorld(const std::string &t_name) {
+    return "Hello " + t_name + "!";
+}
+int main() {
+    chaiscript::ChaiScript chai; // declare engine
+    chai.add(chaiscript::fun(&helloWorld), "helloWorld"); // add function to script
+    chai.eval(R"(puts(helloWorld("Bob"));)"); // evaluate script
+} 
+```
+
+Since it was a header-only library, it was compiled with whatever flags the users had, which requires a lot of work to make it compatible with any configuration. it was also a project that led to learning a lot about the language and got the career started.
+
+- Template Meta Programming
+- Lambdas
+- <cpp>constexpr</cpp>
+- Static Analysis
+- Compiler Warning Options
+- Runtime Analysis
+- Sanitizers
+- Fuzz Testing
+
+*cons_expr* is a later incarnation of the same idea, a scheme-inspired embedded scripting engine without dynamic allocations.
+
+#### Building Our Own Scripting Engine
+
+> Code Goals:
+>
+> 1. Simple
+> 2. Succinct
+> 3. Readable
+> 4. Leverages the standard library
+>
+> Code Non-Goals
+>
+> 1. We are not worried about performance
+> 2. We are not worried about compile-time
+> 3. We are not worried about binary size
+
+we have two parts that we need, the first is to register the function with the engine, the second is to call the registered function with runtime values.
+
+##### Registering Functions
+
+we want to be able to "add" various functions onto the engine, it needs to be able to handle different kinds of functions with different arguments and return types.
+
+[starting example](https://godbolt.org/z/W8M7Wed7j)
+
+```cpp
+int add(int, int);
+int abs(int);
+void print(int);
+void print(std::string_view);
+
+struct ScriptEngine {
+    void add(/**/); /// what here?
+};
+int main() {
+    ScriptEngine se;
+    se.add(&add, "add");
+    se.add(&abs, "abs");
+    se.add(&print, "print_int");
+    se.add(&print, "print_string");
+}
+```
+
+our function *that can match functions* must be a template, and it will use template pattern matching.\
+we need to handle:
+
+- free functions
+  - including class static member functions
+  - both <cpp>noexcept(true)</cpp> and <cpp>noexcept(false)</cpp>
+- member function
+  - cv qualified <cpp>const</cpp>, <cpp>volatile</cpp>, <cpp>const volatile</cpp> and nothing.
+  - reference qualified `&`, `&&` (and nothing)
+  - both <cpp>noexcept(true)</cpp> and <cpp>noexcept(false)</cpp>
+- object with the call operator (`operator()`) overload
+
+(note: during the talk it came up that we can template the `noexcept` parameter)
+
+```cpp
+template<typename Ret, typename ... Param, bool NoExcept>
+void add(Ret (*func)(Param...), noexcept(NoExcept) ); // can match any free function
+template<typename Ret, typename Class, typename ... Param>
+void add(Ret (Class::*f)(Param...));
+template<typename Ret, typename Class, typename ... Param>
+void add(Ret (Class::*f)(Param...) const);
+template<typename Ret, typename Class, typename ... Param>
+void add(Ret (Class::*f)(Param...) volatile);
+template<typename Ret, typename Class, typename ... Param>
+void add(Ret (Class::*f)(Param...) const volatile);
+template<typename Ret, typename Class, typename ... Param>
+void add(Ret (Class::*f)(Param...) &);
+template<typename Ret, typename Class, typename ... Param>
+void add(Ret (Class::*f)(Param...) const &);
+/// and so many more
+template<typename Func> void add(Func &&func) {
+    add(&Func::operator()); /// fallback that then registers overloaded call operator
+}
+```
+
+static member functions are just free functions, same as <cpp>explict this</cpp> functions.
+before C+11 variadic templates, we could either declare a template for every number of parameters or use macro (such as `BOOST_PP` for preprocessing).
+
+```cpp
+template<typename Ret>
+void add(Ret (*f)());
+template<typename Ret, typename P1>
+void add(Ret (*f)(P1));
+template<typename Ret, typename P1, typename P2>
+void add(Ret (*f)(P1, P2));
+template<typename Ret, typename P1, typename P2, typename P3>
+void add(Ret (*f)(P1, P2, P3));
+```
+
+after we define the function signature, we need to store them somehow on the scripting engine. a generic way to store any possible type of callable. the first thing that comes to mind is templates, but we can't store a function template, and we can't get a pointer to a function template. for this talk, we will simplify the mental model and say that generic function templates don't exist, only the instantiations of such, and because of that, we can't take the address of the generic function, only of a concrete type.
+
+```cpp
+SomeType generic_function(std::span<SomeType>);
+```
+
+the "SomeType" should be able to hold any type, including void (which can't be stored), we can either use <cpp>std::any</cpp>, or a variant <cpp>std::variant\<std::monostate, int, std::string_view\></cpp>.
+
+> - `std::any` - The approach taken by **ChaiScript**. It's magic and trivially easy for the user
+> - `std::variant` - The approach taken by **cons_expr**. Requires more foreknowledge of the types wanted
+
+for this talk, we will use the `std::any`, even if it can cause heap allocations (and therefore can't be compile-time complete).
+
+```cpp
+#include <any>
+#include <functional>
+#include <span>
+#include <vector>
+
+struct ScriptEngine {
+std::vector<std::function<std::any(std::span<std::any>)>> functions;
+
+template<typename Ret, typename ... Param>
+    void add(Ret (*f)(Param...));
+};
+```
+
+lets actually write the function, we have some assumptions about typing, no conversion support, no checking for number of arguments. this uses a lot of parameter expansions (the ellipses `...` syntax).
+
+```cpp
+template<typename Ret, typename ... Param>
+void add(Ret (*f)(Param...)) {
+    functions.push_back(
+        [f](std::span<std::any> params) -> std::any { // stored lambda
+            // a lambda that knows how to take the span of anys
+            // and cast them to the desired types
+            const auto invoker = // helper lambda
+                [&]<std::size_t... Index>(std::index_sequence<Index...>) {
+                    /// we need to unpack the parameter types and the indices together
+                    /// this works because they have the same pack size
+                    /// replace `any_cast` with your own helper that does
+                    /// any conversions you want.
+                    return func(std::any_cast<Param>(params[Index])...);
+                };
+            return invoker(std::make_index_sequence<sizeof...(Param)>());
+        }
+    );
+}
+```
+
+we also need to store the name of the function somehow, so we use a map - [compiler explorer example](https://godbolt.org/z/frnrT7h76)
+
+##### Invoking a Function
+
+now that we 'stored' the function, we want to call it.
+
+```cpp
+#include <any>
+#include <functional>
+#include <map>
+#include <span>
+#include <string>
+#include <array>
+
+struct Function {
+    std::function<std::any(std::span<std::any>)> callable;
+    std::size_t arity;
+};
+std::map<std::string, Function> functions;
+template <typename Ret, typename... Param>
+void add(std::string name, Ret (*func)(Param...)) {
+    // code from before
+}
+
+int main() {
+    add("+", +[](int x, int y) { return x + y; }); // register a lambda
+    std::array<std::any, 2> values{1, 2}; /// turn the arguments into an array
+    return std::any_cast<int>(functions.at("+").callable(values)); /// call the stored function
+}
+```
+
+#### Why Do This At All?
+
+scripting funnel,
+
+this code block
+
+```cpp
+int main() {
+    add("-", +[](int x, int y) { return x - y; }); // register substraction
+    add("*", +[](int x, int y) { return x * y; }); // register multiplication
+    add("to_string", +[](int x) { return std::to_string(x); }); // to_string
+    add("print", +[](int x) { return std::to_string(x); }); // printing - probably a bug
+    std::vector<std::any> stack;
+    stack.push_back(1);
+    stack.push_back(3);
+    stack.push_back(6);
+    eval("*", stack); // evaluate 3 * 6 and push back to stack
+    eval("-", stack); // evaluate 1 - 18 and push to stack
+    eval("to_string", stack); // transform -17 to string
+    eval("print", stack); // ???
+    return std::any_cast<int>();
+}
+```
+
+is the same as `print(to_string(1 - (3 * 6)))`, which we could have in a input file. this is our new goal now. there is some road block with function that return `void`, and there is problem with overload functions (name mangling!).\
+function execution takes the function name, grabs the function arity (number of arguments), and returns them as a span from the stack and sends them to the function and removes them from the stack. if the result has a value, we push it back onto the stack.
+
+[the final result on compiler explorer](https://compiler-explorer.com/z/dzofzoros) - scripting engine, parsing input and evaluation, [example with some enrichments and homework](https://compiler-explorer.com/z/86558dW56).
+
+##### Overloading
+
+if we want to handle overloads, we can either use 'arity-based' overloading, which is usually easier, but doesn't work well with our stack-based approach. the other option is using type-based overloading, which usually only happens in languages with static polymorphism (c++, D, java, C#). so the best approach is to avoid using overloading entirely.
+</details>
+
+### Mix Assertion, Logging, Unit Testing And Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
+
+<details>
+<summary>
+The ZeroErr framework for testing and how it was developed.
+</summary>
+
+[Mix Assertion, Logging, Unit Testing And Fuzzing: Build Safer Modern C++ Application](https://youtu.be/otSPZyXqY_M?si=S_Qlk9kaUoMYRRyq), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Mix_Assertion_Logging_Unit_Testing_and_Fuzzing.pdf), [event](https://cppcon2024.sched.com/event/1gZe3/mix-assertion-logging-unit-testing-and-fuzzing-build-safer-modern-c++-application), [repository](https://github.com/sunxfancy/zeroerr).
+
+[online demo](https://replit.com/@sunxfancy/ZeroErr-Demo)
+
+#### The ZeroErr Framework
+
+started as a tool for printing data, instead of overloading the <cpp>operator<<</cpp> for each type.
+
+```cpp
+// LOG(INFO) << Data;
+// ASSERT(a > b, “A > B is not true”, a, b);
+std::ostream& operator<<(std::ostream& out, const myStruct& data);
+std::ostream& operator<<(std::ostream& out, my_ordered_map<std::string, myStruct> data);
+std::ostream& operator<<(std::ostream& out, std::unique_ptr<myStruct> ptr);
+std::ostream& operator<<(std::ostream& out, llvm::Value* data);
+```
+
+Having a framework for logging avoids polluting the namespace, helps with templating and extendability, and has customization points. both logging and assertions have similar behavior, an assertion usually has a logging built in to print the error statement.
+
+a story about checking a cache functionality in a unit test, leads to us wanting to check the log itself for a specific output - we would want to check a side effect of the code (writing to a log). we could have also used an error code as a return value for each type of known error, but there are advantages for checking the log.
+
+> - No need to change the API
+> - No need to maintain the Error Code
+> - Can check detailed information for a log message
+> - Can capture additional context information if needed
+> - Make sure specific path is taken
+
+Fuzzing tests generate input for a function, usually string based arguments, this is used to detect bugs. *libfuzzer* is an example of a fuzzer.
+
+```cpp
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+    DoSomethingInterestingWithMyAPI(Data, Size);
+    return 0;
+}
+```
+
+we can integrate the fuzzer directly into the framework to avoid additional CI-CD steps, and have the fuzzer take advantage of the other features in the framework.
+
+> Motivation of ZeroErr
+>
+> - Providing a way to make logged data can be accessed in unit testing
+> - No need to write print function for a compositional type (e.g. <cpp>std::map\<std::string, int></cpp>)
+> - Allow user to write assertion for both in source code and unit testing code
+> - Failure assertion can be logged
+> - All features provided could be used in fuzzing
+
+a header only library.
+
+```cpp
+#define ZEROERR_IMPLEMENTATION
+#include "zeroerr.hpp"
+int fib(int n) {
+    REQUIRE(n >= 0, "n must be non-negative");
+    REQUIRE(n < 20, "n must be less than 20");
+    if (n <= 1) {
+        return 1;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+TEST_CASE("fib function test") {
+    CHECK(fib(0) == 1);
+    CHECK(fib(1) == 1);
+    CHECK(fib(2) == 2);
+    CHECK_THROWS(fib(20));
+}
+
+TEST_CASE("log test") {
+    // logging macros
+    LOG("Basic log");
+    WARN("Warning log");
+    ERR("Error log");
+    FATAL("Fatal log");
+    LOG("log with basic type {} {} {} {}", 1, true, 1.0, "string");
+    std::vector<std::tuple<int, float, std::string>> data = {
+        {1, 1.0, "string"},
+        {2, 2.0, "string"}
+    };
+    LOG("log with complex type: {data}", data);
+    LOG_IF(1==1, "log if condition is true");
+    LOG_FIRST(1==1, "log only at the first time condition is true");
+    WARN_EVERY_(2, "log every 2 times");
+    WARN_IF_EVERY_(2, 1==1, "log if condition is true every 2 times");
+    DLOG(WARN_IF, 1==1, "debug log for WARN_IF");
+}
+
+// check inside logs
+Expr* parseExpr(std::string input) {
+    static std::map<std::string, Expr*> cache;
+    if (cache.count(input) == 0) {
+        Expr* expr = parse_the_input(input);
+        cache[input] = expr;
+        return expr;
+    } else {
+        LOG("CacheHit: input = {input}", input);
+        return cache[input]->Clone();
+    }
+}
+
+TEST_CASE("parsing test") {
+    zeroerr::suspendLog();
+    std::string log;
+    Expr* e1 = parseExpr("1 + 2");
+    log = LOG_GET(parseExpr, "CacheHit", input, std::string);
+    CHECK(log == std::string{});
+    Expr* e2 = parseExpr("1 + 2");
+    log = zeroerr::LogStream::getDefault()
+        .getLog<std::string>("parseExpr", "CacheHit", "input");
+    CHECK(log == "1 + 2");
+    zeroerr::resumeLog();
+}
+
+//  fuzzing
+unsigned find_the_biggest(const std::vector<unsigned>& vec) {
+    if (vec.empty()) {
+        WARN("Empty vector, vec.size() = {size}", vec.size());
+        return 0;
+    }
+    // implementation
+}
+
+FUZZ_TEST_CASE("fuzz_test") {
+    FUZZ_FUNC([=](const std::vector<unsigned>& vec) {
+        zeroerr::suspendLog();
+        unsigned ans = find_the_biggest(vec);
+        // verify the result
+        for (unsigned i = 0; i < vec.size(); ++i) CHECK(ans >= vec[i]);
+        if (vec.size() == 0) {
+            CHECK(ans == 0);
+            // verify WARN message to make sure the path is correct
+            CHECK(LOG_GET(find_the_biggest,
+            "Empty vector, vec.size() = {size}", size, size_t) == 0);
+        }
+        zeroerr::resumeLog();
+        })
+    .WithDomains(ContainerOf<std::vector<unsigned>>(InRange<unsigned>(0, 100)))
+    .WithSeeds({{{0, 1, 2, 3, 4, 5}}, {{1, 8, 4, 2, 3}}})
+    .Run(100);
+}
+```
+
+Using Clang and libFuzzer with the sanitizer.
+
+```sh
+clang++ -std=c++11 -fsanitize=fuzzer-no-link \
+-L='clang++ -print-runtime-dir' \
+-lclang_rt.fuzzer_no_main-x86_64 \
+-o test_fuzz test_fuzz.cpp
+```
+
+> What makes ZeroErr Different
+>
+> - Provide a cohesive solution for mixing assertion, logging, unit testing and fuzzing.
+> - Logged data is structural and accessible
+> - A structure-aware fuzzing API for quickly create fuzzing test cases as easy as
+writing unit tests.
+
+#### Pretty Printer
+
+The printing component of the framework, it uses a template and decompositions to print complex types.
+
+starting with the basic implementation for a <cpp>std::map</cpp> object, assuming the Key and Value types themselves are streamable.
+
+```cpp
+template <typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::map<K, V>& map) {
+    os << "{";
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        os << it->first << ": " << it->second;
+        if (std::next(it) != map.end()) {
+            os << ", ";
+        }
+    }
+    os << "}";
+    return os;
+}
+```
+
+instead of having a specified template for each container, we can decompose the type
+
+> - <cpp>is_integral\<T></cpp>
+> - <cpp>is_streamable\<T></cpp>
+> - <cpp>is_autoptr\<T></cpp> - `print(ptr.get());`
+> - <cpp>is_container\<T></cpp> - `for(auto ele : container) print(ele);`
+> - <cpp>is_tuple\<T></cpp> - `print(std::get<I>(tup));`
+
+matching integral types with <cpp>std::enable_if_t</cpp>, matching containers because they have `.begin()` and `.end()` functions, creating custom type traits, using an explicitly declared to_string if the type already has it, some conflicts in rules.
+
+```cpp
+template <typename... Ts>
+using void_t = void;
+
+// containers
+template <typename T, typename = void>
+struct iterable : std::false_type {};
+
+template <typename T>
+struct iterable<T,
+    void_t<decltype(std::declval<T>().begin()),
+    decltype(std::declval<T>().end())>
+> : std::true_type {};
+
+// has explicit to_string method
+template <typename T, typename = void>
+struct contain_to_string : std::false_type {};
+
+template <typename T>
+struct contain_to_string<T,
+    void_t<decltype(std::declval<T>().to_string())>
+> : std::true_type {};
+
+// what happens if both apply?
+template <typename T>
+typename std::enable_if<iterable<T>::value, std::ostream&>::type
+operator<<(std::ostream& os, const T& ctn);
+
+template <typename T>
+typename std::enable_if<contain_to_string<T>::value, std::ostream&>::type
+operator<<(std::ostream& os, const T& obj);
+```
+
+if two template overloads match, then there's a compilation error, they don't have a priority ranking. this can be done either with overloading or partial specializations.
+
+#### Assertion Engine
+
+Assertion has two behaviors, in user source code, it logs a failure and throws exception, but in testing code, it prints when fails, counts failure and can throw exception to stop the test case.
+
+#### Logging API
+
+structured logs - log level, timestamp, file path, and then the data. has a stringify method when objects aren't copyable. support for concurrent queues (not messing up the output file)
+
+#### Fuzzing API
+
+> - Domain is a set of all possible inputs for a data structure.
+> - Corpus is the internal representation of a domain.
+>
+> Those two concepts are coming from google/fuzztest and autotest.
+
+for example, text is a string, the domain is any possible string, but the corpus is an array of characters - including the non-printable characters, escape characters and null terminators.
+
+</details>
+
+### Import Cmake; // Mastering C++ Modules - Bill Hoffman
+
+<details>
+<summary>
+Showing some issues with CMake and Modules.
+</summary>
+
+[Import Cmake; // Mastering C++ Modules](https://youtu.be/7WK42YSfE9s?si=ZLXXz4IWHYmR_ZJc), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/import_CMake_Mastering_Cpp_Modules.pdf), [event](https://cppcon2024.sched.com/event/1gZe6/import-cmake-mastering-c++-modules).
+
+integrating CMake with C++20 Modules.
+
+ChatGPT doesn't have good answers, because there isn't enough code that uses modules.
+
+basic module file
+
+```cpp
+// B.cpp
+export module B;
+export void b() { }
+
+// A.cpp
+export module A;
+import B;
+export void a() {
+    b();
+}
+```
+
+when a compiler sees this code, it creates a BMI (build module interface) file, it has some different names and extensions depending on the compiler
+
+- MSVC - `.ifc`
+- GCC - `.gcm`
+- Clang - `.pcm`
+
+simply running the command `cl -std:c++20 -interface -c A.cpp` doesn't work, as it cannot find the B module. we first need to run a compile step on file B, this is not what we're used to having with `#include` statements.
+
+> Chicken and the Egg
+>
+> - Modules require the build system to know which files produce which BMI files and which files consume them
+> - Need to parse/compile file to find that out
+> - So... We need to compile the code before we can compile the code...
+
+CMake has support with fortran modules since 2005, but fortran modules aren't the same as c++ modules.
+
+DAG - directed acyclic graph.
+
+currently (2024), the GNinja and MSBuild generators have some support for building modules with cmake.
+
+`cl -std:c++20 -scanDependencies A.json -c A.cpp`
+
+```json
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "A.obj",
+            "outputs": [
+                "A.json",
+                "A.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "A",
+                    "source-path": "c:\\users\\hoffman\\work\\cxxmodules\\cxx-modules-examples\\simple\\a.cpp"
+                }
+            ],
+            "requires": [
+                {
+                    "logical-name": "B"
+                }
+            ]
+        }
+    ]
+}
+```
+
+CMake `FILE_SET`, either `HEADERS` or `CXX_MODULES`. also `CXX_MODULES_BMI` when installing targets, and `CXX_SCAN_FOR_MODULES` to make cmake look for modules per file or not.
+
+```cmake
+cmake_minimum_required(VERSION 3.23)
+project(simple CXX)
+set(CMAKE_CXX_STANDARD 20)
+add_library(simple)
+target_sources(simple
+    PRIVATE
+    FILE_SET cxx_modules TYPE CXX_MODULES FILES
+    A.cpp B.cpp
+)
+```
+
+[are we modules yet?](https://arewemodulesyet.org/) - a tracker for how much of the popular C++ libraries support modules. this still less than 100 libraries out of a few thousands.
+
+attempting to add a module for CTRE(compile time regular expression) library.
+
+the source code.
+
+```cpp
+import std;
+import ctre;
+
+std::optional<std::string_view> extract_number(std::string_view s) noexcept {
+    if (auto m = ctre::match<"[a-z]+([0-9]+)">(s)) {
+        return m.get<1>().to_view();
+    } else {
+        return std::nullopt;
+    }
+}
+
+int main() {
+    auto opt = extract_number("hello123");
+    if (opt) {
+        std::string s(*opt);
+        std::cout << s << "\n";
+    }
+    return 0;
+}
+```
+
+the cmake file
+
+```cmake
+cmake_minimum_required(VERSION 3.29)
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
+project(import_ctre)
+find_package(ctre REQUIRED)
+add_executable(ctre_hello ctre_hello.cpp)
+target_link_libraries(ctre_hello PRIVATE ctre::ctre)
+```
+
+all sorts of weird issues, looking at how <cpp>import std;</cpp> will be supported. looking at how clang and MSVC do it, looking as cmake 3.30 and how it will support importing the standard library.
+
+</details>
+
+### Common Package Specification (Cps) In Practice: A Full Round Trip Implementation In Conan C++ Package Manager - Diego Rodriguez-Losada Gonzalez
+
+<details>
+<summary>
+Using Common Package Specification files with Conan.
+</summary>
+
+[Common Package Specification (Cps) In Practice: A Full Round Trip Implementation In Conan C++ Package Manager](https://youtu.be/pFQHQEm98Ho?si=k8-Loecfyc0XKmzy), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Common_Package_Specification_In_Practice.pdf), [event](https://cppcon2024.sched.com/event/1gZew/common-package-specification-cps-in-practice-a-full-round-trip-implementation-in-conan-c++-package-manager).
+
+Outline:
+
+> - Introduction to Common Package Specification (CPS)
+> - Creation of CPS files from existing Conan packages
+> - Loading CPS files generated by build systems
+> - Generating build system native files from CPS
+> - Location of CPS files
+> - Lessons learned and conclusions
+
+combine a package with the included requirements, giving more information to the build tools and package management systems. CPS is intended to be standardized eventually, and they will look something like this:
+
+```json
+{
+    "cps_version": "0.12.0",
+    "name": "zlib",
+    "version": "1.3.1",
+    "configurations": ["release"],
+    "default_components": ["zlib"],
+    "components": {
+        "zlib": {
+            "type": "archive",
+            "includes": ["@prefix@/include"],
+            "location": "@prefix@/lib/libz.a"
+        }
+    }
+}
+```
+
+demo of generating cps files, using conan.\
+loading cps files into build systems, still experimental in CMake (requires setting flag).\
+more demo.
+
 </details>

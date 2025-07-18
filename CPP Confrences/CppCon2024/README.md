@@ -70,7 +70,7 @@
 - [x] Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ CodeBases - Michelle Fae D'Souza
 - [ ] Case For Non-Moveable Types - Jason Turner
 - [ ] Code Generation from Unified Robot Description Format (URDF) for Accelerated Robotics - Paul Gesel
-- [ ] Common Package Specification (CPS) in practice: A full round trip implementation in Conan C++ package manager - Diego Rodriguez-Losada Gonzalez
+- [x] Common Package Specification (CPS) in practice: A full round trip implementation in Conan C++ package manager - Diego Rodriguez-Losada Gonzalez
 - [x] Compile-time Validation - Alon Wolf
 - [x] Composing Ancient Mathematical Knowledge Into Powerful Bit-fiddling Techniques - Jamie Pond
 - [ ] Contracts for C++ - Timur Doumler
@@ -98,7 +98,7 @@
 - [x] How Meta Made Debugging Async Code Easier with Coroutines and Senders - Ian Petersen, Jessica Wong
 - [ ] Implementing Particle Filters with Ranges - Nahuel Espinosa
 - [ ] Implementing Reflection using the new C++20 Tooling Opportunity: Modules - Maiko Steeman
-- [ ] import CMake; // Mastering C++ Modules - Bill Hoffman
+- [x] import CMake; // Mastering C++ Modules - Bill Hoffman
 - [x] Improving our safety with a quantities and units library - Mateusz Pusz
 - [ ] Improving your Team(work) - Callum Piper
 - [ ] Interesting Upcoming Features from Low latency, Parallelism and Concurrency from Kona 2023, Tokyo 2024, and St. Louis 2024 - Paul E. McKenney, Maged Michael,Michael Wong
@@ -111,7 +111,7 @@
 - [ ] Making Hard Tests Easy: A Case Study From the Motion Planning Domain - Chip Hogg
 - [x] Many ways to kill an Orc (or a Hero) - Patrice Roy
 - [x] Message Handling with Boolean Algebra -Ben Deane
-- [ ] Mix Assertion, Logging, Unit Testing and Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
+- [x] Mix Assertion, Logging, Unit Testing and Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
 - [x] Modern C++ Error Handling - Phil Nash
 - [ ] Modern C++: When Efficiency Matters - Andreas Fertig
 - [x] Monadic Operations in Modern C++: A Practical Approach - Vitaly Fanaskov
@@ -129,7 +129,7 @@
 - [x] Relocation: Blazing Fast Save And Restore, Then More! - Eduardo Madrid
 - [x] Reusable code, reusable data structures - Sebastian Theophil
 - [ ] Safety and Security Panel - Michael Wong, Andreas Weis, Gabriel Dos Reis,Herb Sutter,Lisa Lippincott, Timur Doumler
-- [ ] Secrets of C++ Scripting Bindings: Bridging Compile Time and Run Time - Jason Turner
+- [x] Secrets of C++ Scripting Bindings: Bridging Compile Time and Run Time - Jason Turner
 - [x] Security Beyond Memory Safety - Using Modern C++ to Avoid Vulnerabilities by Design - Max Hoffmann
 - [ ] Sender Patterns to Wrangle Concurrency in Embedded Devices - Michael Caisse
 - [ ] Session Types in C++: A Programmer's Journey - Miodrag Misha Djukic
@@ -153,12 +153,12 @@
 - [ ] Vectorizing a CFD Code With `std::simd` Supplemented by (Almost) Transparent Loading and Storing - Olaf Krzikalla
 - [x] What Volatile Means (and Doesn't Mean) - Ben Saks
 - [x] What's Eating My Ram? - Jianfei Pan
-- [X] What's New For Visual Studio Code: Performance, Github Copilot, And Cmake Enhancements - Alexandra Kemper, Sinem Akinci
+- [x] What's New For Visual Studio Code: Performance, Github Copilot, And Cmake Enhancements - Alexandra Kemper, Sinem Akinci
 - [x] What's New in Visual Studio for C++ Developers - Michael Price, Mryam Girmay
-- [X] When Lock-Free Still Isn't Enough: An Introduction To Wait-Free Programming And Concurrency Techniques - Daniel Anderson
-- [X] When Nanoseconds Matter: Ultrafast Trading Systems In C++ - David Gross - Performance
+- [x] When Lock-Free Still Isn't Enough: An Introduction To Wait-Free Programming And Concurrency Techniques - Daniel Anderson
+- [x] When Nanoseconds Matter: Ultrafast Trading Systems In C++ - David Gross - Performance
 - [x] Why Is My Build So Slow? Compilation Profiling And Visualization - Samuel Privett
-- [X] Work Contracts – Rethinking Task Based Concurrency And Parallelism For Low Latency C++ - Michael Maniscalco
+- [x] Work Contracts – Rethinking Task Based Concurrency And Parallelism For Low Latency C++ - Michael Maniscalco
 - [ ] `xstd::any` - A New Container For Any Type With Extra Features And Small Object Optimization - Erez Strauss
 
 ## Lighting Talks

@@ -2521,7 +2521,6 @@ make it hard to use the library in the wrong way.
 
 </details>
 
-
 ## C++ Weekly - Ep 472 - C++23's static lambdas?!
 
 <details>
@@ -2573,7 +2572,7 @@ Flow Control statements.
 we can use the `continue` and `break` flow control statements, even inside a for loop.
 
 ```cpp
-#include <initilazier_list>
+#include <initializer_list>
 
 int main()
 {
@@ -2605,7 +2604,7 @@ the compiler tries to use a few instructions as possible, and avoiding multiplic
 
 <details>
 <summary>
-constucting lambdas on the heap - how and why.
+constructing lambdas on the heap - how and why.
 </summary>
 
 [Lambdas On The Heap?](https://youtu.be/W4G2xJX9Gnw?si=Hs2GMULTt2us8Tsz)
@@ -2618,7 +2617,131 @@ int main()
 }
 ```
 
-this might be relevant for a lambda with a large capture, we can't create a lambda directly becuase of the capture, but we can create a lambda and then move it to the heap.
+this might be relevant for a lambda with a large capture, we can't create a lambda directly because of the capture, but we can create a lambda and then move it to the heap.
+
 </details>
 
+## C++ Weekly - Ep 476 - C++23's Fold Algorithms
 
+<details>
+<summary>
+Fold operations
+</summary>
+
+[C++23's Fold Algorithms](https://youtu.be/s8UInkalVgs?si=06N-57W5zcabrRHy)
+
+fold algorithms under the ranges library, and some other under the numeric header
+
+- <cpp>ranges::fold_left</cpp>
+- <cpp>ranges::fold_left_first</cpp>
+- <cpp>ranges::fold_right</cpp>
+- <cpp>ranges::fold_right_last</cpp>
+- <cpp>ranges::fold_left_with_iter</cpp>
+- <cpp>ranges::fold_left_first_with_iter</cpp>
+- <cpp>accumulate</cpp>
+- <cpp>reduce</cpp> - out of order, not determistic
+
+for example, for input of `[1,2,3,4]` with `op`:
+
+- left fold -> `op(op(op(op(init,1), 2), 3), 4)`
+- right fold -> `op(1, op(2, op(3, op(4, init))))`
+
+if the order of operations matters (like division), then this matters.
+
+```cpp
+#include <vector>
+#include <print>
+#include <numeric>
+#include <functional>
+
+int main() {
+
+  std::vector data {1.1, 2.2, 3.3, 4.4, 5.5, 6.6};
+  std::print("{}\n", std::accumulate(data.begin(), data.end(), 0)); // bug!
+  std::print("{}\n", std::accumulate(data.begin(), data.end(), 0.0)); // use this!
+}
+```
+
+we expect the answer to be 23.1, but we get 21 instead. this is because we used 0 as the initial value, and it got converted into integer operations.\
+we could also have used the <cpp>fold_left_first</cpp> operation. which actually returns an <cpp>std::optional</cpp> object.
+
+```cpp
+int main() {
+  std::vector data {1.1, 2.2, 3.3, 4.4, 5.5, 6.6};
+  std::print("{}\n", std::ranges::fold_left_first(data, std::plus<>{}).value()); // UB if there was no data.
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 477 - What is Empty Base Optimization? (EBO)?
+
+<details>
+<summary>
+Optimizing Away empty base classes.
+</summary>
+
+[What is Empty Base Optimization? (EBO)?](https://youtu.be/KU-Ahb86izo?si=tat4rxrHe1qXHnCl)
+
+objects must have unique address, even if they don't have data in them.
+
+```cpp
+struct E {};
+struct B {
+  int i;
+};
+struct C : B {
+  int j;
+}
+struct S : E {
+  int k;
+}
+int main()
+{
+  std::print("{}\n", sizeof(E)); // 1 - must have non-zero size to have a unique address
+  std::print("{}\n", sizeof(B)); // 4 - size of int
+  std::print("{}\n", sizeof(C)); // 8 - base + size of int
+  std::print("{}\n", sizeof(S)); // 4 - only size of int
+}
+```
+
+an empty base optimization removes generated non-zero sizes, base classes are collapsed down if they are empty in order to optimize object layouts, so if our class inherits from several empty base classes, those classes might be removed entirely.
+
+</details>
+
+## C++ Weekly - Ep 478 - Lambdas on the Heap (2)
+
+<details>
+<summary>
+Following on a previous video.
+</summary>
+
+[Lambdas on the Heap (2)](https://youtu.be/qMGi_tdKrrk?si=J0kfvY6gpNYaDzD4)
+
+the previous video had some mistakes - "can we move a lambda"?
+
+```cpp
+auto make_lambda() {
+  struct S {
+    S(S &&) = delete;
+    S(const S &) = delete;
+    S() = default;
+    int x = 42;
+  };
+  auto lambda = [s=S{}]() {
+
+  };
+  //return lambda; // can't be moved or copied
+
+ auto *lambda2 = new auto([s = S{}]() {
+    return s.x;
+  });
+  (*lambda)(); // call lambda
+  std::unique_ptr<std::remove_cvref_t<decltype(*lambda2)>> ptr(lambda2); // create a unique pointer.
+  return ptr;
+}
+```
+
+we should use return value optimization anyway, rather than create a local  object and rely on NRVO to optimize it. we use `new auto` to create something, but in our case we need some extra fodder.
+
+</details>
