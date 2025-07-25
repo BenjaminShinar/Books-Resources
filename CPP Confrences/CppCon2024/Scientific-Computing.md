@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Vectorizing kmph Electronvolt Kathir Farghani Alfraganus Grisu Grisù dyck Dybvig Andrysco Ranjit Jhala Sorin Jaffer Schubfach Raffaello Giulietti Junekey Jeon Florian Loitsch Tejú Jaguá
+// cSpell:ignore Vectorizing kmph Electronvolt Kathir Farghani Alfraganus Grisu Grisù dyck Dybvig Andrysco Ranjit Jhala Sorin Jaffer Schubfach Raffaello Giulietti Junekey Jeon Florian Loitsch Tejú Jaguá armpl sger sgerb cblas saxpy
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -13,7 +13,7 @@
 - [x] A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
 - [x] Application Of C++ In Computational Cancer Modeling - Ruibo Zhang
 - [ ] Bridging The Gap: Writing Portable Programs For Cpu And Gpu - Thomas Mejstrik
-- [ ] Data Is All You Need For Fusion - Manya Bansal
+- [x] Data Is All You Need For Fusion - Manya Bansal
 - [ ] High-Performance Numerical Integration In The Age Of C++26 - Vincent Reverdy
 - [ ] High-Performance, Parallel Computer Algebra In C++ - David Tran
 - [x] Improving Our Safety With A Quantities And Units Library - Mateusz Pusz
@@ -487,4 +487,115 @@ permissible interval and thus $v -u = 10^F >2^E$ \
 returns the shortest (after removing trailing zeros and adjusting exponents) decimal representation that fits the criteria if one such exists, and if not, returns the closest point inside the interval.
 
 some benchmarks against other algorithms.
+</details>
+
+### Data Is All You Need For Fusion - Manya Bansal
+
+<details>
+<summary>
+Getting better performance with function composition.
+</summary>
+
+[Data Is All You Need For Fusion](https://youtu.be/pEcOZDRXhNM?si=YkS4K6wZ_dZRJTL8), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Data_is_All_you_Need_For_Fusion.pdf), [event](https://cppcon2024.sched.com/event/1gZgf/data-is-all-you-need-for-fusion).
+
+the example of matrix multiplication - high performant code isn't a simple nested loop.
+
+- tiles
+- vectorization
+- parallelization
+- cacheing
+
+a compiler can't divine all those techniques to optimize basic code into the advanced patterns, and even if it could, it would still need to be updated for each new hardware. the library has a simple interface that hides a very complex mechanism with different optimization depending on the hardware.
+
+> Key Observation #1: Black boxing high performance implementations through function interfaces is a powerful tool.
+
+example: scalar with vectors (one of which is transposed) accumulated with another scalar.
+
+$A= \alpha(X \times y^T) + \beta \times A$
+
+this is considered a simple computation, with an apple ARM machine, the best performant code resides in two libraries:
+
+<cpp>armpl.h</cpp>, we can do the result in one function call.
+
+```cpp
+#include <armpl.h>
+void armpl_sgerb(/*....*/){
+  sgerb_(&m, &n, &alpha, 
+    x.get_data(), &inc_x_y,
+    y.get_data(), &inc_x_y, &beta,
+    A.get_data(), &m);
+}
+```
+
+<cpp>Accelerate</cpp> by apple, requires two function calls.
+
+```cpp
+# include <Accelerate.h>
+void armpl_sgerb(/*....*/){
+  cblas_sger(CblasColMajor, x.m, y.n, alpha,
+    x.get_data(), 1,
+    y.get_data(), 1,
+    A.get_data(), R.m);
+  cblas_saxpy(m * n, beta,
+    A.get_data(), inc_x_y,
+    A.get_data(), inc_x_y); 
+}
+```
+
+there are performance differences between the libraries, so we look into it to find the reason. there is no difference in the performance when multiplying vectors (which is the most compute intensive part). the problem lies in the composition part, the result of the intermidiate is out of cache and we suffer a miss.
+
+but what if did things in chunks and process subsets to exploit locality for caching?
+
+```cpp
+# include <Accelerate.h>
+void armpl_sgerb(/*....*/){
+  for (int j = 0; j < R.n; j += ColTile) {
+    cblas_sger(CblasColMajor, m, 1, alpha,
+      x.get_data(), 1,
+      &y(0 ,j), 1,
+      &R(0, j), R.m);
+      
+    cblas_saxpy(m * ColTile, 1.0f,
+      &A(0, j), inc_x_y,
+      &R(0, j), inc_x_y); 
+  }
+}
+```
+
+this actually brings the performance to the same level as the better library!
+
+> Key Observation #2: Naive function composition results in locality losses.
+
+the compiler isn't good at understanding this kind of code, but we ask the questions:
+
+> 1. Question: What information does a compiler need to generate code that exploits locality?
+> 2. Question: What information does a compiler need to keep the control and opacity of function interfaces while still making their composition performant?
+>
+> The Big Idea: Enrich function interfaces with data production and consumption pattern to automatically fuse computation.
+
+Fern! is an open source library for function composition fusion.
+
+```cpp
+Pipeline pipeline({
+  vadd(a, b, len, out_1),
+  vadd(out_1, c, len, out_2),
+});
+
+pipeline.constructPipeline();
+pipeline = pipeline.finalize();
+```
+
+it figures out dependencies between the functions and fuses them together into chunked subsets and computes them. it can work with multiple other sources, such as Intel deep learning, math kernel and some databases, and even trees!.\
+an output first perspective. an example of a convolution function. creating the struct that eventually becomes the fusion function, defining the input and the pipeline.
+
+some decomposition are legal, but there are some subset decompositions aren't, this limitation to "self-similar" data structures allows fern to run hierarchal-decompose.\
+there are a lot of stuff for adding data structures, overriding function from the base class, views, materialization and other stuff. exposing an API to control properties of the fused code, which can improve locality depending on the machine.
+
+- split
+- parallelize
+- bind constants
+- breaking pipelines (computing outside the pipeline)
+- creating sub-pipelines (finer granularity)
+
+another example with blurring data (averaging on the x and y axis).
 </details>

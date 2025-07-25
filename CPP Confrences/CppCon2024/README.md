@@ -41,7 +41,7 @@
 - [x] Back to Basics: Almost Always Vector? - Kevin Carpenter
 - [ ] Back to Basics: Concepts - Nicolai Josuttis
 - [ ] Back to Basics: Debugging and Testing - Greg Law, Mike Shah
-- [ ] Back to Basics: Function Call Resolution - Ben Saks
+- [x] Back to Basics: Function Call Resolution - Ben Saks
 - [ ] Back to Basics: Functional Programming in C++ - Jonathan Müller
 - [x] Back to Basics: Generic Programming - David Olsen
 - [ ] Back to Basics: Lifetime Management - Phil Nash
@@ -64,7 +64,7 @@
 - [ ] C++ Software Design - Klaus Iglberger
 - [ ] C++ Templates for Developers - Walter E Brown
 - [x] C++ Under the Hood: Internal Class Mechanisms - Chris Ryan
-- [ ] C++/Rust Interop: Using Bridges in Practice - Tyler Weaver
+- [x] C++/Rust Interop: Using Bridges in Practice - Tyler Weaver
 - [ ] C++20 in Practice: A Complete Introduction 2024 - Nicolai Josuttis
 - [ ] C++26 Preview - Jeff Garland
 - [x] Can You RVO? Using Return Value Optimization for Performance in Bloomberg C++ CodeBases - Michelle Fae D'Souza
@@ -78,7 +78,7 @@
 - [ ] Cpp2/cppFront BoF informal meetup - Neil Henderson
 - [x] Creating a Sender/Receiver HTTP Server - Dietmar Kühl
 - [ ] Cross-Platform Determinism Out of the Box - Sherry Ignatchenko
-- [ ] Data Is All You Need for Fusion - Manya Bansal
+- [x] Data Is All You Need for Fusion - Manya Bansal
 - [x] Data Structures That Make Video Games Go Round - Al-Afiq Yeong
 - [ ] Deciphering C++ Coroutines - Mastering Asynchronous Control Flow - Andreas Weis
 - [ ] Deciphering Coroutines - Recap and Prerequisites - Andreas Weis
@@ -97,7 +97,7 @@
 - [ ] High-performance, Parallel Computer Algebra in C++ - David Tran
 - [x] How Meta Made Debugging Async Code Easier with Coroutines and Senders - Ian Petersen, Jessica Wong
 - [ ] Implementing Particle Filters with Ranges - Nahuel Espinosa
-- [ ] Implementing Reflection using the new C++20 Tooling Opportunity: Modules - Maiko Steeman
+- [x] Implementing Reflection using the new C++20 Tooling Opportunity: Modules - Maiko Steeman
 - [x] import CMake; // Mastering C++ Modules - Bill Hoffman
 - [x] Improving our safety with a quantities and units library - Mateusz Pusz
 - [ ] Improving your Team(work) - Callum Piper

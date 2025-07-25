@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Qlibs fftw rtsan noundef dispatchv resultv Wfunction Wperf nonallocating Wunknown perfetto IWYU Wirth valgrind dhat jemalloc lfoo Xlinker lopencv Luabind chaiscript monostate libfuzzer lclang fuzztest cxxmodules
+// cSpell:ignore Qlibs fftw rtsan noundef dispatchv resultv Wfunction Wperf nonallocating Wunknown perfetto IWYU Wirth valgrind dhat jemalloc lfoo Xlinker lopencv Luabind chaiscript monostate libfuzzer lclang fuzztest cxxmodules RTTR repr rustc
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -12,10 +12,10 @@
 
 - [x] Beyond Compilation Databases To Support C++ Modules: Build Databases - Ben Boeckel
 - [x] Building Cppcheck - What We Learned From 17 Years Of Development - Daniel Marjamäki
-- [ ] C++/Rust Interop: Using Bridges In Practice - Tyler Weaver
+- [x] C++/Rust Interop: Using Bridges In Practice - Tyler Weaver
 - [x] Common Package Specification (Cps) In Practice: A Full Round Trip Implementation In Conan C++ Package Manager - Diego Rodriguez-Losada Gonzalez
 - [x] Compile-Time Validation - Alon Wolf
-- [ ] Implementing Reflection Using The New C++20 Tooling Opportunity: Modules - Maiko Steeman
+- [x] Implementing Reflection Using The New C++20 Tooling Opportunity: Modules - Maiko Steeman
 - [x] Import Cmake; // Mastering C++ Modules - Bill Hoffman
 - [x] Llvm's Realtime Safety Revolution: Tools For Modern Mission Critical Systems - Christopher Apple, David Trevelyan
 - [x] Mix Assertion, Logging, Unit Testing And Fuzzing: Build Safer Modern C++ Application - Xiaofan Sun
@@ -1755,5 +1755,604 @@ combine a package with the included requirements, giving more information to the
 demo of generating cps files, using conan.\
 loading cps files into build systems, still experimental in CMake (requires setting flag).\
 more demo.
+
+</details>
+
+### Implementing Reflection Using The New C++20 Tooling Opportunity: Modules - Maiko Steeman
+
+<details>
+<summary>
+Reflection before C++26 by taking advantage of modules.
+</summary>
+
+[Implementing Reflection Using The New C++20 Tooling Opportunity: Modules](https://youtu.be/AAKA5ozAIiA?si=rlSdpqHh7ryi2xWq), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Implementing_Reflection_using_the_new_Cpp20_Tooling_Opportunity.pdf), [event](https://cppcon2024.sched.com/event/1gZf7/implementing-reflection-using-the-new-c++20-tooling-opportunity-modules), [repository](https://github.com/FireFlyForLife/NeatReflection).
+
+reflection will come as a language feature in C++26, but we can still implement the same behavior in C++20 with external tools.
+
+reflection - the ability to ask about the code, getting 'metadata' about it, such as knowing which members and methods are available.\
+this can be usefull in many cases, such as serialization:
+
+```cpp
+json value_to_json(any any_value) {
+    // Handle builtins
+    if (any_value.type() == the_type<int>())
+        return json{ any_value.value<int>() };
+    if (any_value.type() == the_type<double>())
+        return json{ any_value.value<double>() };
+    if (any_value.type() == the_type<std::string>())
+        return json{ any_value.value<std::string>() };
+    // Recurse for classes
+    if (any_value.is_class()) {
+        return serialize_struct(any_value);
+    }
+}
+
+json serialize_struct(any any_value) {
+    json json;
+    for (Field f : reflect_fields(any_value)) {
+        json[f.name]["value"] = value_to_json(f.value());
+        json[f.name]["type"] = f.type;
+    }
+    return json;
+}
+```
+
+other usages:
+
+> - Extension to the type system
+> - WPF, Automatic Bindings
+> - Language bindings: Python
+> - Content editors
+> - Automatic change detection
+
+RTTI - Real Time Type Information.
+
+what we need to do
+
+- query a type for the fields
+- query an object for each of the fields
+
+the client API will look something like this:
+
+```cpp
+struct AnyRef {
+    void* value;
+    const Type* type;
+};
+
+json serialize_struct(AnyRef any_value) {
+    json json;
+    for (const Field& f : any_value.type->fields) {
+        json[f.name]["value"] = f.value(any_value);
+        json[f.name]["type"] = f.type;
+    }
+    return json;
+}
+```
+
+we will also have a type registry, an in-memory storage for all types, each type will have the metadata relating to it (fields and methods). we will use virtual inheritance.
+
+```cpp
+extern std::unordered_map<std::string, Type> type_registry;
+template<typename T> void register_type(Field[], Method[]);
+
+struct Field;
+struct Method;
+struct Type {
+    std::string name;
+    std::vector<Field*> fields;
+    std::vector<Method*> methods;
+};
+
+class Field {
+public:
+    virtual ~Field() = default;
+    virtual std::string_view name() = 0;
+    virtual const Type* type() = 0;
+    virtual AnyRef value(void* object) = 0;
+};
+
+class Method {
+public:
+    virtual ~Method() = default;
+    virtual std::string_view name() = 0;
+    virtual const Type* return_type() = 0;
+    virtual std::span<const Type> parameter_types() = 0;
+    virtual AnyRef invoke(void* object, std::span<void*> args) = 0;
+};
+```
+
+today, without reflection, if we wish to store a type into the registry, we have an option to do this manually with a macro.
+
+```cpp
+struct MyStruct {
+    MyStruct() {};
+    void func(double) {};
+    int data;
+};
+
+RTTR_REGISTRATION {
+    registration::class_<MyStruct>("MyStruct")
+    .constructor<>()
+    .property("data", &MyStruct::data)
+    .method("func", &MyStruct::func);
+}
+```
+
+there are also other options, which aren't as flexible.
+
+- using <cpp>boost</cpp> for aggregated types - only fields (not member methods). doesn't handle type invariants.
+- code parsers - external tools to read the source code, very complex and hard to maintain, requires a build system integration. the Unreal game engine and the <cpp>QT</cpp> library use this.
+- existing compilers frontend - <cpp>LibClang</cpp>, <cpp>ClangTooling</cpp> - exiting tools, but also require integrating with the build system.
+
+we don't want those, the compiler already knows everything, so why do we need to jump through all those hoops?\
+we can look at the c++ compilation process - header files contain type info, which is already parsed and inserted into the source files. the types are now known, but are in the form of object files. we would like to take the type information before it's compiled and use it for writing source code.\
+C++20 modules replace header file with modules, which are stored as module interfaces, which are then compiled into binary module interfaces. there is no way to 'plug-in' commands in the middle of the process (which is where we would like to put our generator), but we can create an artificial boundary with a new 'project' that depends on the original data. it uses the original project as a dependency.
+
+(NOTE: we can actually override the compiler and have it direct output to a generator program in the middle of compilation)
+
+we can look at the structure of a ".ifc" file - the MSVC format for modules.
+
+- file signature
+- header
+  - offset to the table of contents
+- partitions 1.. n
+  - type indices and qualifiers
+- string table
+- table of contents
+  - mapping to the partitions
+
+limitations to this model of reflection.
+
+- modules only
+- no user attributes
+- BMI filename query
+- templates aren't instantiated - additional parsing required
+- compiler specific
+
+#### How Can This Library Be Used
+
+the library is meant to be used in different stages of the work, such as field abstraction in a type registry. using a "pointer to member", a relative pointer, somehow de-virtualizing functions?\
+*(I don't understand this)*
+
+replacing <cpp>typeid()</cpp> with a faster alternative, using <cpp>std::atomic</cpp> and local static variables to generate a consistent unique identifier for each type.\
+having an array of base class objects without slicing.
+
+</details>
+
+### C++/Rust Interop: Using Bridges In Practice - Tyler Weaver
+
+<details>
+<summary>
+Connect C++ and Rust with "bridging" libraries.
+</summary>
+
+[C++/Rust Interop: Using Bridges In Practice](https://youtu.be/RccCeMsXW0Q?si=WM3uaXdaRzLO614o), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Cpp_Rust_Interop.pdf), [event](https://cppcon2024.sched.com/event/1gZfi/c++rust-interop-using-bridges-in-practice).
+
+#### Connecting Rust
+
+connecting existing C++ codebase to work with new Rust components, for example, a library with multiple plugin, most of the algorithms were written in C++, but wanting to also connect with Rust plugins.
+
+- c++ headers
+- c++ source (used `extern "C"` from rust)
+- unsafe Rust (C abi)
+- safe rust
+
+starting a "Joint" type, which exists in both c++ and Rust.\
+it is a move-only type, since we explicitly declared the constructors for move but not for copying.
+
+```cpp
+class Joint {
+public:
+    Joint() noexcept;
+    ~Joint() noexcept = default;
+    Joint(Joint&& other) noexcept = default;
+    Joint& operator=(Joint&& other) noexcept = default;
+};
+```
+
+```rs
+pub struct Joint {
+    name: String,
+    parent_link_to_joint_origin: Isometry3<f64>,
+}
+
+impl Joint {
+    pub fn new() -> Self;
+}
+```
+
+The unsafe rust, allocating and deallocating, declaring functions that call the rust "constructor" and "destructor". in rust, there is no UB for creating objects, so the allocating isn't `unsafe`. we also tell the rust compiler to not mangle the names, and to use C calling conventions.
+
+```rs
+#[no_mangle]
+extern "C" fn robot_joint_new() -> *mut Joint {
+    Box::into_raw(Box::new(Joint::new()))
+}
+
+#[no_mangle]
+extern "C" fn robot_joint_free(joint: *mut Joint) {
+    unsafe {
+        drop(Box::from_raw(joint));
+    }
+}
+```
+
+back to the C++ code, we add a private member of a unique pointer to store the address of the object. we pull the destructor function from the rust code.
+
+```cpp
+namespace robot_joint {
+
+class Joint {
+public:
+    Joint() noexcept;
+    ~Joint() noexcept = default;
+    Joint(Joint&& other) noexcept = default;
+    Joint& operator=(Joint&& other) noexcept = default;
+    private:
+    std::unique_ptr<rust::Joint, deleter_from_fn<robot_joint_free>> robot_joint_;
+};
+
+} // namespace robot_joint
+
+namespace robot_joint::rust {
+
+struct Joint;
+
+} // namespace robot_joint::rust
+
+extern "C" {
+    extern void robot_joint_free(robot_joint::rust::Joint*);
+}
+
+template<auto fn>
+struct deleter_from_fn {
+    template<typename T>
+    constexpr void operator()(T* arg) const {
+        fn(arg);
+    }
+};
+
+extern "C" {
+    extern robot_joint::rust::Joint* robot_joint_new();
+}
+namespace robot_joint {
+
+Joint::Joint() noexcept : robot_joint_{robot_joint_new()} {}
+
+} // namespace robot_joint
+```
+
+all of that stuff so far can be done by code generators, but there still isn't support for library code. for example, robotics code uses matrix calculation from the *Eigen* library. we want to glue a library type from C++ to a library type in Rust.
+
+```cpp
+class Joint {
+public:
+    Eigen::Isometry3d calculate_transform(const Eigen::VectorXd& variables);
+};
+```
+
+our c++ code should call the rust code.
+
+```rs
+impl Joint {
+    pub fn calculate_transform(&self, variables: &[f64]) -> Isometry3<f64>;
+}
+```
+
+(luckily for us, the default is column-wise matrix), something about passing C arrays as parameters between C++ and Rust - they naturally decay into pointers, but if we store them inside a type, then it maintains the size.
+
+```rs
+use std::ffi::{c_double, c_uint};
+#[repr(C)]
+struct Mat4d {
+    data: [c_double; 16], // array doubles
+}
+
+#[no_mangle]
+extern "C" fn robot_joint_calculate_transform(
+    joint: *const Joint,
+    variables: *const c_double,
+    size: c_uint,
+    ) -> Mat4d {
+    unsafe {
+        let joint = joint.as_ref().expect("Invalid pointer to Joint"); // convert to reference, "borrow"
+        let variables = std::slice::from_raw_parts(variables, size as usize); // create slice
+        let transform = joint.calculate_transform(variables); // actual work using the rust joint object function
+        Mat4d {
+            data: transform.to_matrix().as_slice().try_into().unwrap(), // type cast into array of c_doubles
+        }
+    }
+}
+```
+
+and the C++ calling side, we define a type with a c-array member to avoid pointer decay. we pass the raw pointer to the matrix data and the number of elements, and we get back a struct with an array of doubles, which we then use to construct back the eigen type.
+
+```c++
+struct Mat4d {
+    double data[16];
+};
+
+extern "C" {
+    extern struct Mat4d robot_joint_calculate_transform(const robot_joint::rust::Joint*, const double*, unsigned int);
+}
+
+namespace robot_joint {
+
+Eigen::Isometry3d Joint::calculate_transform(const Eigen::VectorXd& variables) {
+    const auto rust_isometry = robot_joint_calculate_transform(robot_joint_.get(), variables.data(), variables.size()); // call rust code through the pointer
+    Eigen::Isometry3d transform;
+    transform.matrix() = Eigen::Map<Eigen::Matrix4d>(rust_isometry.data); // transform raw data into eigen type
+    return transform;
+}
+
+} // namespace robot_joint
+```
+
+> Manual Interop
+>
+> - Create unsafe Rust functions for creating and deleting Rust objects
+> - Store the Rust object in a <cpp>std::unique_ptr</cpp>
+> - Move only C++ type containing <cpp>std::unique_ptr</cpp> of Rust type with methods
+> - Fixed sized arrays wrapped in structs can be used in FFI
+> - Use method implementations to bridge library types
+
+#### Exposing a CMake Target
+
+making the library available for others to use by integrating with the build system.
+
+using [corrosion](https://github.com/corrosion-rs/corrosion) (formerly "cmake-cargo") to integrate rust into existing cmake.
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(
+    bridge
+    GIT_REPOSITORY https://github.com/you/bridge
+    GIT_TAG main
+    SOURCE_SUBDIR "crates/bridge-cpp")
+
+FetchContent_MakeAvailable(bridge)
+target_link_libraries(mytarget PRIVATE bridge::bridge)
+```
+
+in rust the file folder layout is standardized so the build system simply works out of the box. the rust package is called a "crate".
+
+- Cargo.toml
+- README.md
+- crates
+  - bridge
+    - Cargo.toml
+    - src
+      - lib.rs
+  - bridge-cpp
+    - Cargo.toml
+    - CMakeLists.txt
+    - cmake
+      - bridgeConfig.cmake.in
+    - include
+      - bridge.hpp
+    - src
+      - lib.cpp
+      - lib.rs
+    - tests
+      - CMakeLists.txt
+      - tests.cpp
+
+the "Cargo.toml" file in the root folder.
+
+```toml
+[workspace]
+members = ["crates/bridge", "crates/bridge-cpp"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021
+```
+
+the "crates/bridge-cpp/Cargo.toml" file. we manually name the library and build it as a static library, and we define the dependency to a local path.
+
+```toml
+[package]
+name = "bridge-cpp"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "bridge_unsafe"
+crate-type = ["staticlib"]
+
+[dependencies]
+bridge = { path = "../bridge" }
+```
+
+the "crates/bridge-cpp/CMakeLists.txt" file. building it a static library and making the `install` work for end users that want to use the cpp library in their project.
+
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(bridge VERSION 0.1.0)
+find_package(Eigen3 REQUIRED)
+include(FetchContent)
+
+FetchContent_Declare(
+    Corrosion
+    GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+    GIT_TAG v0.4
+)
+
+FetchContent_MakeAvailable(Corrosion)
+
+corrosion_import_crate(
+    MANIFEST_PATH Cargo.toml
+    CRATES bridge-cpp
+)
+
+add_library(bridge STATIC src/lib.cpp)
+
+target_include_directories(
+    bridge PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>$<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(bridge PUBLIC Eigen3::Eigen)
+target_link_libraries(bridge PRIVATE bridge_unsafe)
+set_property(
+    TARGET bridge 
+    PROPERTY CXX_STANDARD 20
+)
+set_property(
+    TARGET bridge
+    PROPERTY POSITION_INDEPENDENT_CODE ON
+)
+
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
+install(
+    TARGETS bridge bridge_unsafe
+    EXPORT ${PROJECT_NAME}Targets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(
+    EXPORT ${PROJECT_NAME}Targets
+    NAMESPACE bridge::
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+)
+
+configure_package_config_file(
+    cmake/bridgeConfig.cmake.in "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+)
+
+install(
+    FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+)
+
+install(
+    FILES include/bridge.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+```
+
+and the "crates/bridge-cpp/cmake/bridgeConfig.cmake.in" file
+
+```CMake
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Eigen3)
+
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+```
+
+#### Using C++ Libraries in Rust
+
+calling C++ code from rust. doing the reverse of what we did earlier.
+
+"cargo.toml" file.
+
+```toml
+[dependencies]
+cxx = "1.0"
+
+[build-dependencies]
+cxx-build = "1.0"
+anyhow = "1.0.79"
+git2 = "0.18.2"
+conan2 = "0.1"
+cmake = "0.1"
+```
+
+the "build.rs" file is part of the build, we can put anything non-standard here, it integrates with conan, github, etc...\
+the script runs only if the "src" folder or the script itself has changed. otherwise, it doesn't do anything. it expects to have some environment variables set for it. it creates a tool chain file and passing it to cmake.
+
+```rs
+use conan2::ConanInstall;
+use std::path::{Path, PathBuf};
+
+fn main() -> anyhow::Result<()> {
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src");
+
+    let out_dir: PathBuf = std::env::var_os("OUT_DIR")
+        .expect("OUT_DIR environment variable must be set")
+        .into();
+
+    let data_tamer_url = "https://github.com/PickNikRobotics/data_tamer";
+    let data_tamer_source = out_dir.join(Path::new("data_tamer"));
+    if !data_tamer_source.exists() {
+        git2::Repository::clone(data_tamer_url, data_tamer_source.as_path())?;
+    }
+
+    let data_tamer_cpp = out_dir.join(Path::new("data_tamer/data_tamer_cpp"));
+
+    let conan_instructions = ConanInstall::with_recipe(&data_tamer_cpp)
+        .build("missing")
+        .run()
+        .parse();
+
+    let conan_includes = conan_instructions.include_paths();
+    let toolchain_file = out_dir.join(Path::new("build/Debug/generators/conan_toolchain.cmake"));
+    let data_tamer_install = cmake::Config::new(&data_tamer_cpp)
+        .define("CMAKE_TOOLCHAIN_FILE", toolchain_file)
+        .build();
+
+    let data_tamer_lib_path = data_tamer_install.join(Path::new("lib"));
+    let data_tamer_include_path = data_tamer_install.join(Path::new("include"));
+    
+    cxx_build::bridge("src/main.rs")
+        .includes(conan_includes)
+        .include(data_tamer_include_path)
+        .include("src")
+        .std("c++17")
+        .compile("demo");
+    
+    println!("cargo:rustc-link-search=native={}", data_tamer_lib_path.display());
+    println!("cargo:rustc-link-lib=static=data_tamer");
+
+    conan_instructions.emit();
+    Ok(())
+}
+```
+
+the c++ "shim" header file with a single free function that calls <cpp>std::make_unique</cpp>.
+
+```cpp
+#pragma once
+#include <memory>
+
+namespace DataTamer {
+
+template <typename T, typename... Args>
+std::unique_ptr<T> construct_unique(Args... args) {
+    return std::make_unique<T>(args...);
+}
+
+}
+```
+
+using the c++ library from the rust code, telling the compiler to bridge with a c++ namespace, what to include and matching c++ functions with their rust equivalents.
+
+```rs
+#[cxx::bridge(namespace = "DataTamer")]
+mod data_tamer {
+    unsafe extern "C++" {
+        include!("shim.hpp");
+        include!("data_tamer/data_tamer.hpp");
+
+        type ChannelsRegistry;
+
+        #[rust_name = "channels_registry_new"]
+        fn construct_unique() -> UniquePtr<ChannelsRegistry>;
+    }
+}
+
+fn main() {
+    let mut registry = data_tamer::channels_registry_new();
+}
+```
 
 </details>

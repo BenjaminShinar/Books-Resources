@@ -2745,3 +2745,110 @@ auto make_lambda() {
 we should use return value optimization anyway, rather than create a local  object and rely on NRVO to optimize it. we use `new auto` to create something, but in our case we need some extra fodder.
 
 </details>
+
+## C++ Weekly - Ep 479 - `final` (and when to use it)
+
+<details>
+<summary>
+When to use the keyword and what effects it has.
+</summary>
+
+[`final` (and when to use it)](https://youtu.be/NoFQnqUZLdA?si=P-izkl9q1eKkyPC2)
+
+the <cpp>final</cpp> keyword can be added on a class or function definition.
+
+with a member function, we should use only one of the <cpp>virtual</cpp>, <cpp>override</cpp> and <cpp>final</cpp>. they shouldn't be used together. if we declare virtual and final together, we might be hiding an function that we weren't intending to, by declaring a new virtual function with the same name. this is usually a bug.
+
+```cpp
+struct Base_f final {
+  // class can't be used as a base class
+};
+struct Derived_f : public Base_f {
+  // not allowed, error!
+};
+
+struct Base {
+  virtual void go() = 0;
+};
+
+struct Derived : public Base {
+  void go() override {}
+};
+
+struct MoreDerived : public Derived {
+  void go() final {}
+};
+
+struct DerivedAgain : public MoreDerived {
+  void go() override {} // error!
+};
+
+struct OtherBase {
+  virtual void foo(int) = 0;
+};
+struct OtherDerived : public OtherBase {
+  virtual void foo() final {} 
+};
+```
+
+there are cases when using the <cpp>final</cpp> keyword can hurt performance. but for some cases, it helps by allowing the compiler to replace virtual calls.
+
+```cpp
+struct B {
+  virtual void go(int) const = 0;
+};
+
+struct D : B {
+  void go(int) const override {}
+};
+
+struct L final : D {
+  void go(int) const;
+};
+
+void go_base(const B &b) {
+  b.go(1); // virtual call
+}
+
+void go_final_leaf(const L &l) {
+  l.go(1); // inline the function call directly.
+}
+
+int main()
+{
+
+}
+```
+
+we can mark things as `final` if we decide it is a programming error to further derive from a type, we might get a performance boost, or take a hit. it is mostly good for code cleanness and readability.
+
+</details>
+
+## C++ Weekly - Ep 480 - `cmath` vs `math.h` vs `abs` vs `std::abs`, fight!
+
+<details>
+<summary>
+Confusion where the `abs` functions come from.
+</summary>
+
+[`cmath` vs `math.h` vs `abs` vs `std::abs`, fight!](https://youtu.be/0kciYs-sK6M?si=OJCrsSMnJPiMMBVO)
+
+comparing different implementations for getting the absolute value.
+
+```cpp
+#include <iostream>
+#include <cmath> // should be wrapper around math.h
+#include <iomanip>
+
+void print(auto val) {
+  std::cout << std::setprecision(20) << abs(val) << '\n'; // print 3
+  std::cout << std::setprecision(20) << std::abs(val) << '\n'; // print 3.14
+}
+int main() {
+  print(-3.141592653589793231);
+}
+```
+
+some confusion about "cmath" and "math.h", somehow math.h brings in <cpp>std::abs</cpp> into the global scope. it's better to always qualify them with `std::` to avoid confusion.
+
+</details>
