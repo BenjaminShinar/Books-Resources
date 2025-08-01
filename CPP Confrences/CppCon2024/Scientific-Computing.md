@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Vectorizing kmph Electronvolt Kathir Farghani Alfraganus Grisu Grisù dyck Dybvig Andrysco Ranjit Jhala Sorin Jaffer Schubfach Raffaello Giulietti Junekey Jeon Florian Loitsch Tejú Jaguá armpl sger sgerb cblas saxpy
+// cSpell:ignore Vectorizing kmph Electronvolt Kathir Farghani Alfraganus Grisu Grisù dyck Dybvig Andrysco Ranjit Jhala Sorin Jaffer Schubfach Raffaello Giulietti Junekey Jeon Florian Loitsch Tejú Jaguá armpl sger sgerb cblas saxpy NVCC CUDATAGS expt
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -12,7 +12,7 @@
 
 - [x] A New Dragon In The Den: Fast Conversion From Floating-Point Numbers - Cassio Neri
 - [x] Application Of C++ In Computational Cancer Modeling - Ruibo Zhang
-- [ ] Bridging The Gap: Writing Portable Programs For Cpu And Gpu - Thomas Mejstrik
+- [x] Bridging The Gap: Writing Portable Programs For Cpu And Gpu - Thomas Mejstrik
 - [x] Data Is All You Need For Fusion - Manya Bansal
 - [ ] High-Performance Numerical Integration In The Age Of C++26 - Vincent Reverdy
 - [ ] High-Performance, Parallel Computer Algebra In C++ - David Tran
@@ -437,17 +437,17 @@ $2^{-25}\times{11,184,810}$ and $2^{-25}\times{11,184,811}$, and it knows it's a
 
 The dragon's den - algorithms to convert floating points
 
-| year | dragon name | authors                  | Usage                 |
-| ---- | ----------- | ------------------------------|----------- |
-| 1990 | Dragon      | Guy L. Steele, Jon L. White               | |
-| 1996 |   NA          | Robert G. Burger and  R. Kent Dybvig      | |
-| 2010 | Grisù       | Florian Loitsch                           | many browsers, node|
-| 2016 | Errol       | Marc Andrysco, Ranjit Jhala, Sorin Lerner | |
-| 2013 | NA            | Aubrey Jaffer                             | |
+| year | dragon name | authors                                   | Usage                          |
+|------|-------------|-------------------------------------------|--------------------------------|
+| 1990 | Dragon      | Guy L. Steele, Jon L. White               |                                |
+| 1996 | NA          | Robert G. Burger and  R. Kent Dybvig      |                                |
+| 2010 | Grisù       | Florian Loitsch                           | many browsers, node            |
+| 2016 | Errol       | Marc Andrysco, Ranjit Jhala, Sorin Lerner |                                |
+| 2013 | NA          | Aubrey Jaffer                             |                                |
 | 2018 | Ryū         | Ulf Adams                                 | C++, Gcc, Clang, Visual Studio |
-| 2020 | Schubfach   | Raffaello Giulietti                       | |
-| 2020 | Grisù-Exact | Junekey Jeon                              | |
-| 2022 | Dragonbox   | Junekey Jeon                              | <cpp>fmt</cpp> library |
+| 2020 | Schubfach   | Raffaello Giulietti                       |                                |
+| 2020 | Grisù-Exact | Junekey Jeon                              |                                |
+| 2022 | Dragonbox   | Junekey Jeon                              | <cpp>fmt</cpp> library         |
 
 there are usually three steps to converting:
 
@@ -598,4 +598,231 @@ there are a lot of stuff for adding data structures, overriding function from th
 - creating sub-pipelines (finer granularity)
 
 another example with blurring data (averaging on the x and y axis).
+</details>
+
+### Bridging The Gap: Writing Portable Programs For Cpu And Gpu - Thomas Mejstrik
+
+<details>
+<summary>
+Finding ways to write portable code for CPU and GPU using CUDA. introducing patterns for solutions.
+</summary>
+
+[Bridging The Gap: Writing Portable Programs For Cpu And Gpu](https://youtu.be/7zfROx6KWAI?si=ISvsycWrSrYCfNBf), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Bridging_the_Gap.pdf), [event](https://cppcon2024.sched.com/event/1gZfu/bridging-the-gap-writing-portable-programs-for-cpu-and-gpu).
+
+Cuda allows writing c++ code for NVida GPU. we want to write code that is performant both on the CPU and the GPU without much boilerplate.\
+some machines don't have GPUs yet, but still want to use the same library, development and testing is also much easier on the CPU.
+
+#### Cuda
+
+In Cuda there are different types of functions:
+
+| type         | run location | can call       | notes                          |
+|--------------|--------------|----------------|--------------------------------|
+| `__host__`   | CPU          | host, global   | "normal" function              |
+| `__global__` | GPU          | global, device | act as entry points to the GPU |
+| `__device__` | GPU          | global, device | should do the work             |
+
+```cpp
+# include <cstdio >
+
+__device__ int print () { return 0; }
+__global__ void kernel () { printf ( "%i", print () ); }
+__host__ void start () { kernel <<< 2, 3 >>>(); }
+
+int main () { // implicitly __host__
+  start ();
+  return cudaDeviceSynchronize ();
+}
+```
+
+the most used compilers are NVCC which compiles for the device only, needs to work with another compiler for the host, and clang.\
+in this example, there are structs which are supposed to be used either on the host or the device. we have some possible problems.
+
+```cpp
+struct H { __host__ int func() { return 42; } };
+struct D { __device__ int func() { return 666; } };
+
+template <typename T> __host__ __device__
+int wrap() { return T{}.func(); }
+
+int main () {
+  return H.func(); // OK
+  // return D.func(); // can't be called since we are on a host, compilation error
+  // return wrap<H>(); // compilation warning about instantiating a device function calling a host function
+  // return wrap<D>(); // no warning, UB at runtime
+}
+```
+
+when compiling in clang, there are different results.
+
+#### Patterns
+
+some solutions, each with upsides and downsides.
+
+##### Mark Everything For Both
+
+one possible solution is to `__host__ __device__` all our functions, so it could run both on the host and device. obviously, this causes code bloat, increases compilation times, and hides logical errors.
+
+```cpp
+// mhz.h
+__host__ __device__ inline constexpr
+float MHzToWavelength(int frequency_in_MHz)
+{
+  return 299792458.f/(frequency_in_MHz * 1000. f * 1000. f);
+}
+
+// mhz.cpp
+# include "mhz.h"
+# include <cstdio>
+
+int main(int argc , char **) {
+  printf("%f", MHzToWavelength(argc));
+}
+```
+
+this will fail unless our compiler knows about the cuda annotations, so we can define a macro for it. we need to be careful when defining macros with double underscores.
+
+```cpp
+#ifndef CUDATAGS
+  #define CUDATAGS
+  #ifndef __CUDACC__
+    #define HST
+    #define DEV
+  #else
+    #define HST __host__
+    #define DEV __device__
+  #endif
+#endif
+
+HST DEV
+void func () {}
+```
+
+##### Conditional Function Bodies
+
+the next option is to have a conditional function body, if there are different implementations for the host and device versions. during compilation, we check the compiler and if the compilation flags are set to compile for the host or the device machine.
+
+```cpp
+#if defined(__clang__) && defined(__CUDA__) && !defined(__CUDA_ARCH__)
+// clang compiling CUDA code, host mode.
+#endif
+
+#if defined(__clang__) && defined(__CUDA__) && defined(__CUDA_ARCH__)
+// clang compiling CUDA code, device mode.
+#endif
+```
+
+so the code ends up something like this:
+
+```cpp
+__host__ __device__
+float norm(const Vec3f & v) {
+  #ifndef CUDA ARCH
+    double sum = 0;
+    for (int i = 0; i < 3; ++i)
+      sum += v[i]*v[i];
+    return sqrtf((float)sum);
+  #else
+    return norm3df(v[0] ,v[1] ,v[2]);
+  #endif
+}
+```
+
+the problem is that our signatures, function templates and everything else must not depend on whether `__CUDA_ARCH__` is defined or not. this is another case where there are differences between clang and the NVCC compilers.
+
+##### `constexpr` Everything
+
+```cpp
+constexpr int func() {
+  std::array<int, 5> a;
+  /* ... */
+  return std::accumulate(a.begin(), a.end(), 0);
+}
+```
+
+there is an experimental compiler flag <cpp>--expt-relaxed-constexpr</cpp> for nvcc that allows us to overcome some issues of using `constexpr` function from the device, even though they are usually considred host functions. this doesn't always work.
+
+##### Disabling Cuda Warnings
+
+```cpp
+template<typename Container>
+__host__ __device__ constexpr
+void fill_ones(Container & ct) {
+  for (auto & x : ct) 
+    x = 1;
+}
+
+#include <vector>
+int main() {
+  std::vector<int> v{1 ,2 ,3 ,4 ,5};
+  fill_ones(v); // can't call device functions from the host - compiler warning
+}
+```
+
+if anything else fails, we can always disable the warnings:
+
+> - function scope pragmas
+>   - `#pragma hd_warning_disable`
+>   - `#pragma nv_exec_check_disable`
+> - line scope pragmas
+>   - `#pragma nv_diagnostic_push,`
+>   - `#pragma nv_diag_suppress`
+>   - `#pragma nv_diagnostic_pop`
+> - global scope: compiler flags
+>   - `--diag-suppress 20011,20014`
+> - Patterns from before
+
+some libraries use this option to disable warnings, but it forces the users to look closely and search for logical issues themselves.
+
+##### `__host__ __device__`  Template
+
+this option uses macro and <cpp>concepts</cpp>, we wrap the function body inside a macro and then we instantiate it according to the provided enum value (host, device or both).
+
+```cpp
+enum class HDC {Hst, Dev ,HstDev};
+
+#define MACRO(targ_ ,hdc_ ,func_) \
+  template<targ_, HDC x = hdc_> requires(x == HDC::Hst) \
+  __host__ func_ \
+  template<targ_, HDC x = hdc_> requires(x == HDC::Dev) \
+  __device__ func_ \
+  template<targ_, HDC x = hdc_> requires(x == HDC::HstDev) \
+  __host__ __device__ func_
+
+MACRO(typename Container, hdc<Container>,
+  void fill_ones(Container & ct) {for (auto & e : ct) e = 1;})
+
+#include <vector>
+int main() {
+  std::vector<int> v{1 ,2 ,3 ,4 ,5};
+  fill_ones(v);
+}
+```
+
+#### Function Dispatch Triple
+
+a solution that didn't work at the end,
+
+> 1. `__host__ __device__` template for dispatcher
+> 2. Dispatcher forwards arguments to one `__host__ __device__` function.
+> 3. Disable cuda warnings
+> 4. Take care of parentheses and commas
+> 5. <cpp>std::enable_if</cpp> trickery with C++17
+> 6. Empty arguments in macros
+
+#### The Cuda Proposals
+
+the official proposal by Cuda is to have conditional `__host__ __device__` annotations (which accept a boolean parameter).
+
+```cpp
+template<typename T>
+__host__(hdc<T> == HDC::Hst)
+__device__(hdc<T> == HDC::Dev)
+void wrap() {
+  T{}.func();
+}
+```
+
+this will forbid bad cross function calls in compile time.
+
 </details>

@@ -44,7 +44,7 @@
 - [x] Back to Basics: Function Call Resolution - Ben Saks
 - [ ] Back to Basics: Functional Programming in C++ - Jonathan Müller
 - [x] Back to Basics: Generic Programming - David Olsen
-- [ ] Back to Basics: Lifetime Management - Phil Nash
+- [x] Back to Basics: Lifetime Management - Phil Nash
 - [ ] Back to Basics: Object-Oriented Programming - Andreas Fertig
 - [ ] Back to Basics: R-values and Move Semantics - Amir Kirsh
 - [ ] Back to Basics: Unit Testing - Dave Steffen
@@ -57,7 +57,7 @@
 - [x] Blazing Trails: Building the World's Fastest GameBoy Emulator in Modern C++ - Tom Tesch
 - [ ] BoF - GameDev, Growing our Conference Community - Guy Davidson
 - [ ] Boosting Software Efficiency: A Case Study of 100% Performance Improvement in an Embedded C++ System - Gili Kamma
-- [ ] Bridging the Gap: Writing Portable Programs for CPU and GPU - Thomas Mejstrik
+- [x] Bridging the Gap: Writing Portable Programs for CPU and GPU - Thomas Mejstrik
 - [x] Building CppCheck - What We Learned from 17 Years of Development - Daniel Marjamäki
 - [x] Building Safe and Reliable Surgical Robotics with C++ - Milad Khaledyan
 - [ ] C++ Exceptions for Smaller Firmware - Khalil Estell
@@ -141,7 +141,7 @@
 - [ ] Talk Tech and Keep Your Audience Awake - Andrei Alexandrescu, Sherry Sontag
 - [x] Taming the C++ Filter View - Nicolai Josuttis
 - [ ] Techniques to Optimize Multithreaded Data Building During Game Development - Dominik Grabiec
-- [ ] Template-less Meta-programming - Kris Jusiak
+- [x] Template-less Meta-programming - Kris Jusiak
 - [x] The Beman Project: Bringing Standard Libraries to the Next Level - David Sankel
 - [x] The Most Important Design Guideline is Testability - Jody Hagins
 - [ ] The Power of Reducing Variable Scope - Jason Turner

@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore nsdm Unruh ftrivial
+// cSpell:ignore nsdm Unruh ftrivial Berne Heisenbugs ification reflexpr unreflexpr
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -10,11 +10,11 @@
 7 Talks about future features.
 </summary>
 
-- [ ] Contracts for C++ - Timur Doumler
+- [x] Contracts for C++ - Timur Doumler
 - [x] Peering forward — C++'s next decade - Herb Sutter
 - [ ] Perspectives on Contracts - Lisa Lippincott
 - [ ] Safety and Security Panel - Michael Wong, Andreas Weis, Gabriel Dos Reis, Herb Sutter, Lisa Lippincott, Timur Doumler
-- [ ] Template-less Meta-programming - Kris Jusiak
+- [x] Template-less Meta-programming - Kris Jusiak
 - [ ] This is C++ - Jon Kalb
 - [x] Gazing Beyond Reflection for C++26 - Daveed Vandevoorde
 
@@ -33,7 +33,7 @@ Talking about future suggestions for reflection, even beyond the basic things pl
 
 #### Basic Reflection (P2996)
 
-In a simple defintion, reflection allows us to look at our code as data, this will require some new language support features.
+In a simple definition, reflection allows us to look at our code as data, this will require some new language support features.
 
 The <cpp>^^</cpp> reflection operator, which we apply to a type and get the <cpp>std::meta::info</cpp> type (computation domain). in the new <cpp>meta</cpp> header.
 
@@ -465,7 +465,7 @@ code in compile time (<cpp>constexpr</cpp>, <cpp>consteval</cpp>) already reject
 
 #### Simplicity
 
-we can combine reflection and safety to write simpler code. most features add complexity, but some good features actually make other code simpler, and reduce overall complexity. ranges and futures are examples of this, adding them to the standard reduced the page count. we take code patterns and elevate them to language defintions. the code doesn't only express the "how", but also the "what". we have intent built-in into the code.
+we can combine reflection and safety to write simpler code. most features add complexity, but some good features actually make other code simpler, and reduce overall complexity. ranges and futures are examples of this, adding them to the standard reduced the page count. we take code patterns and elevate them to language definations. the code doesn't only express the "how", but also the "what". we have intent built-in into the code.
 
 an example of using reflection to define interfaces and the syntactic sugar.
 
@@ -516,5 +516,486 @@ with reflection and generation, we could improve engines and language extensions
 
 small talk with _Andrei Alexandrescu_ discussing reflection to instrument types (wrapping around them with counts for each method) and using reflection to define domain specific languages like mathematical expressions, SQL statements and even C++ code.\
 Things that are hard today will become easier, things which are impossible will become possible. for this future to come, all information in the source code must be reflect-able (e.g. the default accessability of structs and classes), and all code must generate-able, and all generated code must be visible (for debugging and visualization).
+
+</details>
+
+### Contracts for C++ - Timur Doumler
+
+<details>
+<summary>
+The P2900 proposal for contracts, and what are contracts used for.
+</summary>
+
+[Contracts for C++](https://youtu.be/8niXcszTjis?si=JKyRi4sr3xd4uAOU), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Contracts_For_Cpp.pdf), [event](https://cppcon2024.sched.com/event/1gZfV/contracts-for-c++)
+
+The C++26 contracts proposal, adding function contract assertions.
+
+```cpp
+Widget getWidget (index i)
+  pre (i > 0) // precondition
+  post (w: w.index() == i); // postcondition
+  {
+    auto *db = getDatabase();
+    contract_assert (db != nullptr); // assortment statements
+    return db->retrieveWidget;
+  }
+```
+
+this is part of the SG21 contracts working group in the c++ standard.
+
+the story of contracts starts in 1986 with the book "Design by Contract" and the Eiffel programming languages, in 2001 D came out with native contract support, and in 2012 Ada gained contracts.\
+C++ first contract proposal was in 2004 ("D-Like Contracts"), then another proposal in 2013 ("BDE Contracts") which also failed, a merged proposal in 2015("attribute-like") and then in 2019 the SG21 workgroup was formed, and in 2023 they suggested the "Contracts MVP" approach. which is currently suggested to C++26.
+
+#### What Are Contracts?
+
+> Design By Contracts: An approach for software design:
+>
+> - Define formal, precise and verifiable interface specifications for software components, extending their ordinary definition with:
+>   - precondition - Condition on passed-in arguments and/or program state when a function is called. Obligation of caller (client)
+>   - postcondition - Condition on return value and/or program state when a function returns. Obligation of callee (implementer)
+> - invariants (class invariants, loop invariants...)
+> - called "Contracts" in accordance with a conceptual metaphor with the conditions and obligations of business contract
+
+this talk is only about pre and post condition, today we have contracts as plain-language description (in the comments), but they aren't enforced. for example, the pre-condition for the square brackets operator is to use indexes larger than zero, and if the contract isn't followed there will be undefined behavior.
+
+#### What Are Contracts For?
+
+different usecases for contracts, as reported by the community
+
+> - static analysis
+> - verification
+> - formal proofs
+> - optimisation
+> - safety
+> - diagnose bugs
+> - security
+> - correctness
+> - tooling support
+> - annotations
+> - debugging
+> - expressivity
+
+a single proposal can't do all of those things, but the P2900 proposal focuses on a subset of the needs.
+
+> - Timur Doumler - P2900 Contracts enhance a C++ program with configurable checks of its correctness, thereby helping to diagnose and fix bugs, across API boundaries.
+> - Lisa Lippincott - P2900 Contracts allow the programmer to express expectations about program state, and optionally verify that those expectations are met.
+> – Joshua Berne - P2900 Contracts allow the programmer to specify states that are considered incorrect at certain points in a C++ program, particularly when calling and returning from functions, and then manage how such defects can be detected and mitigated, in a portable and scalable fashion, during program evaluation.
+
+```cpp
+// without contracts
+
+class Widget<T> {
+public:
+  // Returns a reference to the element at position `index`.
+  // The behaviour is undefined unless `index < size()`.
+  T& operator[] (size_t index) {
+    return _data[index]; // potentially UB here :(
+  }
+
+  T& at (size_t index) {
+    if (index >= size())
+      throw std::logic_error("Index out of bounds!");
+    return _data[index];
+  }
+  
+  T& safe_get_element (size_t index) {
+    if (index >= size())
+      std::terminate();
+    return _data[index];
+  }
+
+  std::size_t size() const;
+
+private:
+  T* _data;
+};
+
+// with contracts
+class WidgetX<T> {
+public:
+  // Returns a reference to the element at position `index`.
+  // The behaviour is undefined unless `index < size()`.
+  T& operator[] (size_t index)
+    pre (index < size())
+  {
+    return _data[index]; 
+  }
+
+  std::size_t size() const;
+
+private:
+  T* _data;
+
+};
+```
+
+with the contract, we express through code what are the conditions we operate on. then we divide the responsibilities between different roles.
+
+> - Caller / client
+>   - reads contract assertions
+>   - ensures preconditions are met
+>   - expects postconditions to be met
+> - Callee / implementer
+>   - writes contract assertions
+>   - expects preconditions to be met
+>   - ensures postconditions are met
+> - Build engineer / owner of main()
+>   - enables & configures contract checks
+>   - decides what happens in case of contract violation
+
+since the contracts are part of the code, we can operate on them programmatically, however, they aren't part of the 'regular' code flow, so we can change the behavior regarding them without changing the code itself.\
+this is similar to <cpp>assert</cpp>, which we already have and we can enable/disable when compiling, and we can define the behavior when it fails. but the classic assertion isn't flexible enough.\
+P2900 contracts are a superior replacement for assertions and macros. they are proper C++ code without the weird behavior of parsing macros, without the ODR that can happen when linking and without the possible compilation pitfalls. Macros can't go on declarations, only in the definations. contracts belong to the function declaration (but the can be repeated in the definition, if they are exactly the same as those in the declaration). post conditions can refer to the return value without messing up elisions and RVO.
+
+contracts are evaluated at different points.
+
+> - Precondition assertions (<cpp>pre</cpp>):
+>   - after the initialisation of function parameters,
+>   - before the evaluation of the function body
+> - Postcondition assertions (<cpp>post</cpp>):
+>   - after the result object value has been initialised and local automatic variables have been destroyed
+>   - but prior to the destruction of function parameters
+> - Assertion statements (<cpp>contract_assert</cpp>):
+>   - when the statement is executed
+
+contracts (pre and post) can refer to private variable, the name lookup rules behave as-if the statement is in the function body scope. when declareing a post condition, the variable it refer to must be const.
+
+```cpp
+int clamp(int v, int min, int max)
+  pre (min <= max);
+  post (r: val < min ? r == min : r == val)
+  post (r: val > max ? r == max : r == val)
+{
+  min = max = value = 0;
+  return 0; // won't compile
+}
+
+int clamp(const int val, const int min, const int max)
+  pre (min <= max)
+  post (r: val < min ? r == min : r == val) // parameters must be const
+  post (r: val > max ? r == max : r == val); // on all declarations!
+  {
+    // code goes here
+  }
+```
+
+With the classic assert statements, we always terminate the program. with macros, the behavior changes for each component. When a contract assertion fails, a contract-violation handler is called, the default behavior is to log a message to stdout and terminate, but we can customize it to our needs. just like the <cpp>operator new()</cpp>, we can change the behavior at link time (also called replaceable function or 'weak symbol').
+
+```cpp
+void ::handle_contract_violation(const std::contracts::contract_violation& violation)
+{
+  LOG(std::format("Contract violated at: {}\n", violation.location()));
+}
+```
+
+we can log the error, throw an exception, trigger a breakpoint if a debugger is present, or optionally invoke the default behavior with <cpp>std::contracts::invoke_default_contract_violation_handler(violation);
+</cpp>.
+
+> Lakos Rule - Do not put <cpp>noexcept</cpp> on a function with preconditions, even if it never throws when called correctly!\
+> C++ Standard follows the Lakos Rule, e.g. <cpp>std::vector::operator[]</cpp>
+
+the standard contract library API is defined in the <cpp>std::contracts</cpp> namespace, under the <cpp>contracts</cpp> header. this header is only used to write the user-defined contract violation handler, not for writing contracts.
+
+```cpp
+namespace std::contracts {
+  class contract_violation {
+  // No user-accessible constructor, not copyable/movable/assignable
+  public:
+    std::source_location location() const noexcept;
+    const char* comment() const noexcept;
+    detection_mode detection_mode() const noexcept;
+    evaluation_semantic semantic() const noexcept;
+    assertion_kind kind() const noexcept;
+  };
+  void invoke_default_contract_violation_handler(const contract_violation&);
+
+  enum class detection_mode : int {
+    predicate_false = 1,
+    evaluation_exception = 2,
+    // implementation-defined additional values allowed, must be >= 1000
+  };
+
+  enum class assertion_kind : int {
+    pre = 1,
+    post = 2,
+    assert = 3,
+    // implementation-defined additional values allowed, must be >= 1000
+  };
+}
+```
+
+#### Evaluation Semantics
+
+the evaluation policy controls how we interact with the predicates, if we are sure the program is correct, we can ignore the checks and conserve cycles, and we can choose how to behave if the predicate is not fulfilled.
+
+> A contract assertion can be evaluated with one of the following evaluation semantics:
+>
+> - `ignore`: do not check the predicate (but still parse it)
+> - `observe`: check the predicate, if the check fails call the contract-violation handler, when handler returns continue
+> - `enforce`: check the predicate, if the check fails call the contract-violation handler, when handler returns terminate the program
+> - `quick_enforce`: check the predicate, if the check fails immediately
+terminate the program
+> - `assume`: do not check the predicate and optimize on the assumption that it is true (= if it is false, the behaviour is undefined) - not in P2900
+
+the proposal doesn't specify when the choice is made, it can be made at compile time with a compiler flag, and load time, at link time or even chosen at runtime (e.g. if a debugger is present). we can also choose how much of the contracts to check, we can choose to evaluate only a subset of them (pre or post), choose them at random, at regular intervals, and other stuff.\
+This means that we can't rely on side effects in the contract, which was something Macro occasionally did.
+
+```cpp
+#include <cassert>
+#ifndef NDEBUG
+  unsigned nIter = 0;
+#endif
+while (keepIterating()) {
+  assert(++nIter < maxIter);
+  // ...
+}
+
+// can't (yet) have code conditional on
+// whether contract checks are enabled
+unsigned nIter = 0;
+while (keepIterating()) {
+  contract_assert(++nIter < maxIter); // bad, can't change state!
+  // ... ^^^^^^^ may break!
+}
+```
+
+> The Contracts Prime Directive:\
+>The presence or evaluation of a contract assertion in a program should not alter the correctness of that program
+>
+> - Statically enforced:
+>   - Adding a contract assertion can't affect Concepts / overload resolution / noexcept operator / SFINAE / if constexpr ...
+>   - Adding a contract assertion that is not checked can't cause runtime overhead
+> - Responsibility of the user:
+>   - Don't use predicates with side effects that can alter the correctness of the program, the result of another contract assertion, or a subsequent check of the same contract assertion
+> - Benefit: You can't get "Heisenbugs" - (e.g. bugs appearing/disappearing when you enable/disable a contract check)
+
+#### New In P2900 Revision 8: Virtual Function Support!
+
+a recent addison to the proposal, allowing predicates on virtual functions, separating callee and caller facing contracts. it combines static checks on the caller side depending on the interface used.
+
+```cpp
+struct UnaryFunction {
+  virtual Value compute(ArgList args)
+  pre (args.size() == 1);
+};
+
+struct BinaryFunction {
+  virtual Value compute(ArgList args)
+  pre (args.size() == 2);
+};
+
+struct VariadicFunction: UnaryFunction, BinaryFunction {
+  Value compute(ArgList args) override
+  /* no preconditions */;
+};
+
+int main() {
+  VariadicFunction varFunc;
+  test(varFunc);
+}
+
+void test(VariadicFunction& varFunc) {
+  varFunc.compute({1}); // OK
+  varFunc.compute({2, 3}); // OK
+  varFunc.compute({4, 5, 6}); // OK
+}
+
+void test(UnaryFunction& unaryFunc) {
+  unaryFunc.compute({1}); // OK
+  unaryFunc.compute({2, 3}); // violation
+  unaryFunc.compute({4, 5, 6}); // violation
+}
+
+void test(BinaryFunction& binFunc) {
+  binFunc.compute({1}); // violation
+  binFunc.compute({2, 3}); // OK
+  binFunc.compute({4, 5, 6}); // violation
+}
+```
+
+#### Open Question For P2900
+
+> - make pre / post work on coroutines?
+> - make pre / post work on function pointers
+> - Keep `const`-ification?
+> - undefined behavior in contract predicates
+
+for function pointers, it's not clear where the information lives, it it's in the code then it interacts with templates, overloading and name mangling. if it's in the value, then it has runtimes overheads and wouldn't work with <cpp>typedef</cpp>, and also AST won't work for non-trivial stuff and across translation units.\
+for contracts, parameters and local variables used in them are implicitly `const`, so there is a question what do with contracts when the stuff isn't marked as such. there is a problem of what to do with undefined behavior in contracts, which can still happen (overflow).\
+There are suggestions about how to extend the contracts in the future, such as comparing 'old values' from previous calls.
+
+> P2900 Contracts vs. safety & security
+>
+> - Contract assertions can significantly improve correctness & safety of code,
+>   - but you have to actually add them to your code!
+> - Contract assertions can detect if a contract was violated,
+>   - but not prove that no contract was violated! (only a subset of the plain-language contract can be expressed in code)
+> - Contract assertions check for correctness during evaluation of the program
+>   - includes constant evaluation
+> - Contract assertions do not change the semantics of the language
+>   - No new language constraints
+>   - No new language guarantees (e.g. guaranteed memory safety)
+
+</details>
+
+### Template-less Meta-programming - Kris Jusiak
+
+<details>
+<summary>
+Value based template metaprogramming.
+</summary>
+
+[Template-less Meta-programming](https://youtu.be/yriNqhv-oM0?si=IdLDgNmfdB2gZsNl), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Template-Less_Meta-Programming.pdf), [event](https://cppcon2024.sched.com/event/1gZeh/template-less-meta-programming).
+
+Metaprogramming is generating code by code, templates are one way of doing metaprogramming, which was chosen by C++. this talk will be about meta-programming that isn't templates-based.\
+
+```cpp
+template<class... Ts>
+template<class T>
+constexpr variant<Ts...>::variant(T&& t)
+  : index{find_index<T, Ts...>} // Powered by TMP
+  , // ...
+{ }
+
+template<size_t I, class... Ts>
+constexpr auto get(tuple<Types...>&&) noexcept ->
+  typename tuple_element<I, tuple<Ts...>>::type&&; // Powered by TMP
+
+template<class TFirst, class... TRest>
+array(TFirst, TRest...) -> array<
+  typename Enforce_same<TFirst, TRest...>::type, // Powered by TMP
+  1 + sizeof...(TRest)
+  >;
+```
+
+The standard template library (STL) doesn't have a metaprogramming library. there was a proposal by Peter Dimov for a library.\ we could use MP to pack structs into a tighter format, and then get better performance, we could also use it for domain specific languages and state-machine.
+
+> A brief history of template metaprogramming
+>
+> - C++
+>   - Type-based TMP (<cpp>boost.mpl</cpp> -> <cpp>boost.mp11</cpp>)
+>   - Heterogeneous-based TMP (<cpp>boost.fusion</cpp> -> <cpp>boost.hana</cpp>)
+>   - Value-based TMP (<cpp>mp</cpp>, P2996 proposal)
+>   - Circle-lang (meta model)
+> - Zig-lang (comptime)
+
+an example of value-based TMP - finding the index of a specific type in a list of types,
+
+```cpp
+template<class T, class... Ts>
+constexpr auto find_index() -> std::size_t; // TODO
+static_assert(0u == find_index<int, int, float, short>()); 
+static_assert(1u == find_index<int, float, int, short>());
+static_assert(2u == find_index<int, float, short, int>());
+static_assert(3u == find_index<void, float, short, int>());
+```
+
+we will want to somehow iterate over the types, check each of them and return the index, we need some magic to happen here using typeIds. a typeId must be unique for the type.
+
+```cpp
+template<class T, class... Ts>
+constexpr auto find_index() -> std::size_t {
+  std::array ts{meta<Ts>...};
+  for (auto i = 0u; i < ts.size(); ++i) {
+    if (ts[i] == meta<T>) {
+      return i;
+    }
+  }
+  return ts.size();
+}
+```
+
+we can refactor this into something more modern, use ranges and <cpp>constexpr</cpp>, or use stl algorithms internally, but does removing raw loops help making compilation faster? or does it make it slower?
+
+we can do another example for returning a type, rather than the index. until c++26 the standard did it with recursive templates.
+
+more examples, one example of getting types that can be used for constructing a different type.
+
+```cpp
+struct bar { };
+struct foo {
+  foo(int) { }
+  foo(bar) { }
+};
+static_assert(std::is_same_v<
+  std::variant<int, bar>, // because of foo(int) and foo(bar)
+  variant_for_t<foo, const int&, int&&, std::string_view, bar, void>>
+);
+
+template<class T>
+constexpr auto variant_for(const std::ranges::range auto& ts) -> std::ranges::range auto {
+  std::vector<info> r;
+  for (auto t : ts) {
+    if (invoke<std::is_constructible, T>(t)) {
+      r.push_back(invoke<std::remove_cvref>(t));
+    }
+  }
+  std::ranges::sort(r);
+  r.erase(std::ranges::unique(r), r.end());
+  return r;
+}
+
+static_assert(std::vector{meta<int>} == variant_for<foo>(meta<int&>));
+```
+
+or with ranges
+
+```cpp
+template<class T>
+constexpr auto variant_for(const std::ranges::range auto& ts) -> std::ranges::range auto {
+  auto&& r = ts
+    | std::views::filter(is_constructible<T>)
+    | std::views::transform(remove_cvref)
+    | std::ranges::to<std::vector>();
+  std::ranges::sort(r);
+  r.erase(std::ranges::unique(r), r.end());
+  return r;
+}
+
+template<class T> constexpr auto is_constructible = [](auto t) {
+  return invoke<std::is_constructible, T>(t);
+}
+```
+
+#### Adding Reflection To The Mix
+
+the same behavior of value based metaprogramming works with the upcoming reflection feature. we get the meta type for free instead of creating stuff ourselves.
+
+```cpp
+//^^T // reflection operator (reflexpr)
+static_assert(^^int == ^^int);
+static_assert(^^int != ^^void);
+static_assert(typeid(^^int) == typeid(^^void));
+
+//[: ... :] // splicer operator (unreflexpr)
+typename [: ^^int :] i = 42; // int i = 42;
+static_assert(typeid([: ^^int :]) == typeid(int));
+```
+
+back to a previous example
+
+```cpp
+constexpr auto find_index(auto t, const std::ranges::range auto& ts) -> std::size_t {
+  if (const auto found = std::ranges::find(ts, t); found) {
+    return std::distance(v.begin(), found);
+  }
+  return ts.size();
+}
+static_assert(
+  0u == find_index(^^int, std::array{^^int, ^^float, ^^short}) and
+  1u == find_index(^^float, std::array{^^int, ^^float, ^^short}) and
+  2u == find_index(^^short, std::array{^^int, ^^float, ^^short}) and
+  3u == find_index(^^void, std::array{^^int, ^^float, ^^short})
+);
+```
+
+#### Benchmarking
+
+[comparison between the different approaches](https://qlibs.github.io/mp/)
+
+> - Circle-lang meta model is the fastest to compile all around
+> - Type-based Metaprogramming with template aliases/builtins (<cpp>boost.mp11</cpp>) is much faster to compile than recursive template instantiations (<cpp>std::tuple</cpp>)
+> - Value-based Metaprogramming with is significantly slower to compile than STL with raw primitives!
+> - Value-based Metaprogramming has a lot of potential (<cpp>std::simd</cpp>, <cpp>std::execution</cpp>) but <cpp>constexpr</cpp> evaluation has to be JITTED instead of INTERPRETED
 
 </details>

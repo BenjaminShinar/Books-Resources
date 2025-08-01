@@ -16,7 +16,7 @@
 - [x] Back to Basics: Function Call Resolution - Ben Saks
 - [ ] Back to Basics: Functional Programming in C++ - Jonathan Müller
 - [x] Back to Basics: Generic Programming - David Olsen
-- [ ] Back to Basics: Lifetime Management - Phil Nash
+- [x] Back to Basics: Lifetime Management - Phil Nash
 - [ ] Back to Basics: Object-Oriented Programming - Andreas Fertig
 - [ ] Back to Basics: R-values and Move Semantics - Amir Kirsh
 - [ ] Back to Basics: Unit Testing - Dave Steffen
@@ -807,5 +807,68 @@ void Person::swap(Person &other) {
 ```
 
 the mistaken version uses qualified names <cpp>std::swap</cpp>, the other version brings in the function block with the `using` statement, and then we allow the function resolution to work. the argument dependant lookup will bring the SAKS namespace into the mix, and the non-template function would be preferred.
+
+</details>
+
+### Back to Basics: Lifetime Management - Phil Nash
+
+<details>
+<summary>
+Special member functions - constructors and assignment operators.
+</summary>
+
+[Back to Basics: Lifetime Management](https://youtu.be/aMvIv6blzBs?si=idrxVJlxd4lvTw_3), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Back_to_Basics_Lifetime_Management.pdf), [event](https://cppcon2024.sched.com/event/1gZes/back-to-basics-lifetime-management).
+
+lifetime phases:
+
+- construction
+- assignment
+- destruction
+
+> lessons from the "Effective C++ book" - "Do as the ints do":
+>
+> - "Adhere to the principle of least astonishment"
+> - "Recognize that anything somebody can do, they will do. They'll throw exceptions, they'll assign objects to themselves, they'll use objects before giving them values"
+> - "As a result, make your classes easy to use correctly and hard to use incorrectly".
+
+even complex types such as <cpp>std::vector</cpp> follow the same lifetime phases. it's also true for pointers.
+
+- constructors
+  - default constructor <cpp>T()</cpp>
+  - custom constructor <cpp>T(a, b, c)</cpp>
+  - copy constructor <cpp>T(T &)</cpp>
+  - move constructor <cpp>T(T &&)</cpp>
+- assignments
+  - copy assignment <cpp>operator=(T const&)</cpp>
+  - move assignment <cpp>operator=(T &&)</cpp>
+- destruction
+  - destructor <cpp>~T()</cpp>
+
+those are the special member functions - we usually get them (except the custom constructor) from the compiler, as long as we don't do something to prevent it. if we want to tell the compiler to generate them, we use the <cpp>=default;</cpp> for them.\
+we prefer default member initialization over doing work in the empty constructor.
+
+- the rule of three/five - if we define one of the constructors or the assignment operators, we should define all of them (or explicitly <cpp>default</cpp> them).
+- rule of zero - Always strive to have the compiler  generated Special Member  functions do the right thing.
+
+showing examples of stuff, some stuff missing and breaking. pointers, ownership, which guidelines to follow, etc...
+
+```cpp
+Widget(Widget const& other) :
+  name(other.name),
+  age(other.age),
+  gadget(new Gadget(*other.gadget)) {}
+
+Widget& operator=(Widget const& other) {
+  Widget temp(other);
+  using std::swap;
+  swap(name, temp.name);
+  swap(age, temp.age);
+  swap(gadget, temp.gadget);
+  return *this;
+}
+```
+
+the <cpp>using std::swap</cpp> trick inside the function scope to make sure we use the specialized swapping. using <cpp>std::move</cpp> on temporary object to call the move constructor if one exists, otherwise it uses the copy constructor. not forgetting <cpp>std::exchange</cpp> which returns the value of the first argument, and sets it to the second argument. move constructor should be <cpp>noexcept</cpp>, which gives performance boosts for some standard containers which want to use it, and if it's not marked as such, they will use the copy constructor instead.\
+using smart pointers for ownership management: <cpp>std::unique_ptr</cpp>, <cpp>std::shared_ptr</cpp>, <cpp>std::make_unique</cpp>. if we have only value types or manager type, we should stick to the rule of zero. this is the best case.
 
 </details>

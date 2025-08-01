@@ -2852,3 +2852,49 @@ int main() {
 some confusion about "cmath" and "math.h", somehow math.h brings in <cpp>std::abs</cpp> into the global scope. it's better to always qualify them with `std::` to avoid confusion.
 
 </details>
+
+## C++ Weekly - Ep 481 - What is Tail Call Elimination (Optimization)?
+
+<details>
+<summary>
+Letting the compiler optimize function calls away.
+</summary>
+
+[What is Tail Call Elimination (Optimization)?](https://youtu.be/cjiraPsZQIs?si=X97IcSLBblFxgna6)
+
+this isn't only for recursion. when we return the result of a function call, the compiler can do some tricks.
+
+```cpp
+int get_value();
+
+
+int test() {
+  return get_value();
+}
+
+int main() {
+  return test();
+}
+```
+
+this works when the functions have the same return type, if there's casting or type change involved, the compiler has to do some work and can't optimize away the intermediate step. if we have multiple parameters that we send forward, they should be in the same order. if they are in a different order, the compiler needs to do some work to change the order. this is a bit of an optimization, as we keep the values in the correct register between function calls. the compiler might not do tail call elimination if we call the function twice, since if it doesn't know what the function does, it might have side effects which change stuff, so it can't optimize it anymore.
+
+</details>
+
+## C++ Weekly - Ep 482 - Safely Wrapping C APIs
+
+<details>
+<summary>
+Writing a wrapper over file reading with RAII.
+</summary>
+
+[Safely Wrapping C APIs](https://youtu.be/RtxZaKUtU-c?si=8J4eUer2wtg3oPBn)
+
+the posix manual pages have some possible leaks if we just copy from them. lets try to make a wrapper over the file handling C APIs.
+
+- using strong types
+- not allowing implicit conversions
+- closing the file handle at destruction
+- getting NRVO when with the designated initializer (dot notation)
+
+</details>
