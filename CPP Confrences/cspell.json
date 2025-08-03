@@ -42,7 +42,9 @@
     "Xoroshiro",
     "Xoshiro",
     "xstd",
-    "PIMPL"
+    "PIMPL",
+    "-werror",
+    "wextra"
   ],
   "ignoreWords": [
     "Maniscalco",

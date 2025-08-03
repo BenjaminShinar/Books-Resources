@@ -11,7 +11,7 @@
 </summary>
 
 - [x] Back to Basics: Almost Always Vector? - Kevin Carpenter
-- [ ] Back to Basics: Concepts - Nicolai Josuttis
+- [x] Back to Basics: Concepts - Nicolai Josuttis
 - [ ] Back to Basics: Debugging and Testing - Greg Law, Mike Shah
 - [x] Back to Basics: Function Call Resolution - Ben Saks
 - [ ] Back to Basics: Functional Programming in C++ - Jonathan Müller
@@ -870,5 +870,199 @@ Widget& operator=(Widget const& other) {
 
 the <cpp>using std::swap</cpp> trick inside the function scope to make sure we use the specialized swapping. using <cpp>std::move</cpp> on temporary object to call the move constructor if one exists, otherwise it uses the copy constructor. not forgetting <cpp>std::exchange</cpp> which returns the value of the first argument, and sets it to the second argument. move constructor should be <cpp>noexcept</cpp>, which gives performance boosts for some standard containers which want to use it, and if it's not marked as such, they will use the copy constructor instead.\
 using smart pointers for ownership management: <cpp>std::unique_ptr</cpp>, <cpp>std::shared_ptr</cpp>, <cpp>std::make_unique</cpp>. if we have only value types or manager type, we should stick to the rule of zero. this is the best case.
+
+</details>
+
+### Back to Basics: Concepts - Nicolai Josuttis
+
+<details>
+<summary>
+Looking at Concepts.
+</summary>
+
+[Back to Basics: Concepts](https://youtu.be/jzwqTi7n-rg?si=YiFbeNsJGGYTVuFZ), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Back_To_Basics_Concepts.pdf), [event](https://cppcon2024.sched.com/event/1gZep/back-to-basics-concepts).
+
+concepts are actually a new feature (C++20), but are still important to improve to quality of the language and the code we write.
+
+```cpp
+template<typename CollT, typename T>
+void add(CollT& coll, const T& val) {
+  coll.push_back(val);
+}
+
+std::vector<int> coll1;
+std::set<int> coll2;std::unordered_set<int> uset;
+add(coll1, 42); // OK
+add(coll2, 42); // ERROR: no push_back()
+```
+
+we could have another function which uses `insert`, but then we have violation of ODR because the function signature is the same. we could use SFINAE or some other trickery, but the easier way is to employ <cpp>concepts</cpp>. the concept acts as a more specialized candidate for overload resolution.
+
+```cpp
+template<typename CollT
+concept HasPushBack = requires(CollT c, CollT::value_type v) {
+  c.push_back(v);
+};
+
+template<typename CollT, typename T>
+  requires HasPushBack<CollT>
+void add(CollT& coll, const T& val) {
+  coll.push_back(val);
+}
+
+template<typename CollT, typename T>
+void add(CollT& coll, const T& val) {
+  coll.insert(val);
+}
+
+std::vector<int> coll1;
+std::set<int> coll2;
+add(coll1, 42); // OK, uses 1st add() calling push_back()
+add(coll2, 42); // OK, uses 2nd add() calling insert()
+```
+
+the <cpp>requires</cpp> expression defines the valid code that must be satisfied for the concept.
+
+```cpp
+template<typename CollT, typename T>
+  requires HasPushBack<CollT>
+void add(CollT& coll, const T& val) {
+  coll.push_back(val);
+}
+
+// same as
+template<HasPushBack CollT, typename T>
+void add(CollT& coll, const T& val) {
+  coll.push_back(val);
+}
+```
+
+if we make a mistake when writing the concept, the concept code will still compile, but won't be used properly, so it's best to have <cpp>static_assert</cpp> statements to validate the concepts.
+
+```cpp
+template<typename CollT>
+concept HasPushBack = requires (CollT c, CollT::value_type v) {
+  c.pushback(v); // OOPS: spelling error
+};
+// test code:
+static_assert(HasPushBack<std::vector<int>>);
+static_assert(!HasPushBack<std::set<int>>);
+std::vector<int> coll1;
+static_assert(HasPushBack<decltype(coll1)>);
+```
+
+we can use concept together with signature, we reduce the visual load of the template.
+
+```cpp
+template<HasPushBack CollT, typename T>
+void add(CollT& coll, const T& val) {
+  coll.push_back(val);
+}
+
+// same as
+void add(HasPushBack auto& coll, const auto& val) {
+  coll.push_back(val);
+}
+```
+
+the <cpp>requires</cpp> clause can also come after the signature, we might want to use <cpp>std::remove_cvref_t</cpp> in the concept definition, especially when the type is a reference type. C++20 ranges and concepts play well together, such as the <cpp>std::ranges::range_value_t</cpp> utility and the <cpp>std::ranges::range</cpp> concept. concepts can support multiple template parameters and can be combined together, since they are just compile time boolean expressions.\
+We shouldn't have too fine-grained concepts, we shouldn't introduce a concept for a single statement, it's better to have broader concepts. we can also check the results of an expression.
+
+```cpp
+template<typename T>
+concept range = requires(T& t) {
+  std::ranges::begin(t);
+  std::ranges::end(t);
+};
+```
+
+there are requirement which can't be expressed in code, such as requiring constant time, being a non-modifying iterators, and other stuff.\
+concepts can be combined with <cpp>if constexpr</cpp>, since they evaluate in compile time to a boolean expression. we could re-write the concept as a constraint.
+
+```cpp
+void add(auto& coll, const auto& val)
+{
+  if constexpr (requires { coll.push_back(val); }) {
+    coll.push_back(val);
+  }
+  else {
+    coll.insert(val);
+  }
+}
+```
+
+the <cpp>requires requires</cpp>, with the first one defining a constraint, and the second one defining the requirements.
+
+> Concept Terminology
+>
+> - Requirements
+>   - Expressions to specify a restriction with `requires{...}`
+>     - Operations that have to be valid
+>     - Types that have to be defined/returned
+> - Concepts
+>   - Names for one or more requirements
+> - Constraints
+>   - Restrictions for the availability/usability of generic code
+>   - Specified as
+>     - `requires` clauses of concepts or ad-hoc requirements
+>     - *Type constraints* (concepts applied to template parameters or auto)
+> - No code is generated
+>   - Code is evaluated only to decide whether/what to compile
+
+possibility for ambiguous concepts, subsumption of concepts, everything related to concepts has impact on compile time. looking at a hierarchy of standard concepts. they do not subsume automatically, it must be explicitly stated.
+
+> Concepts can be used for:
+>
+> - Function templates
+> - Class templates
+>   - Including their member functions
+> - Alias templates
+> - Variable templates
+> - Non-type template parameters
+>   - Concepts **cannot** be used for concepts
+
+concepts in member function act as constraints, they make a method 'possible' to call or 'impossible'.
+
+```cpp
+template<typename T>
+class MyType {
+  T value;
+  public:
+  // ..
+  void print() const {
+  std::cout << value << '\n';
+  }
+  bool isZero() const requires std::integral<T> || std::floating_point<T> {
+    return value == 0;
+  }
+
+  bool isEmpty() const requires requires { value.empty(); } {
+    return value.empty();
+  }
+};
+
+MyType<double> mt1;
+mt1.print(); // OK
+if (mt1.isZero()) { ... } // OK
+if (mt1.isEmpty()) { ... } // ERROR
+
+MyType<std::string> mt2;
+mt2.print(); // OK
+if (mt2.isZero()) { ... } // ERROR
+if (mt2.isEmpty()) { ... } // OK
+```
+
+we can use constrains on values, if this is done during compile time.
+
+```cpp
+constexpr bool isPrime(int val) {
+  for (int i = 2; i <= val/2; ++i) {
+    if (val % i == 0) {
+      return false;
+    }
+  }
+  return val > 1; // 2 and 3 are primes, 0 and 1 not
+}
+```
 
 </details>

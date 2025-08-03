@@ -12,7 +12,7 @@
 
 - [x] Contracts for C++ - Timur Doumler
 - [x] Peering forward — C++'s next decade - Herb Sutter
-- [ ] Perspectives on Contracts - Lisa Lippincott
+- [x] Perspectives on Contracts - Lisa Lippincott
 - [ ] Safety and Security Panel - Michael Wong, Andreas Weis, Gabriel Dos Reis, Herb Sutter, Lisa Lippincott, Timur Doumler
 - [x] Template-less Meta-programming - Kris Jusiak
 - [ ] This is C++ - Jon Kalb
@@ -998,4 +998,38 @@ static_assert(
 > - Value-based Metaprogramming with is significantly slower to compile than STL with raw primitives!
 > - Value-based Metaprogramming has a lot of potential (<cpp>std::simd</cpp>, <cpp>std::execution</cpp>) but <cpp>constexpr</cpp> evaluation has to be JITTED instead of INTERPRETED
 
+</details>
+
+### Perspectives on Contracts - Lisa Lippincott
+
+<details>
+<summary>
+Getting consensus on contracts.
+</summary>
+
+[Perspectives on Contracts](https://youtu.be/yhhSW-FSWkE?si=WBw6eDEQ9MA5779J), [event](https://cppcon2024.sched.com/event/1h1r4/perspectives-on-contracts).
+
+Error detection requires redundancy, assertions are redundant by nature. we can choose between error detection and performance with the <cpp>NDEBUG</cpp> flag. In C, we could have made this choice separately for each translation unit, but in C++, since we have template instatantiaction and code the can be seen across them and ODR violations.\
+contracts are a way to solve this problem in C++, we have a standard definition of what assertion statements do, no matter what compiler settings are used. this definition is very vague.
+
+> Different points of view:
+>
+> - contracts make no difference to the program - a successful assertion should **do** nothing significant.
+> - contracts make a significant difference to the program - a assertion should **say** something significant.
+
+Pre and Post conditions exist between the caller and callee. this is the "contract", the points of agreements, this is how we decide if the bug is at the client (caller) or the library (callee). logically, they happen between the two translation units, but since they are code, it can't be possible. so actually, the conditions are more complicated than that.
+
+condition-type     | translation unit | direction
+-------------------|------------------|----------
+caller-facing pre  | caller           | backward
+callee-facing pre  | callee           | forward
+callee-facing post | callee           | backward
+caller-facing post | caller           | forward
+
+There is a difference in view point. backwards facing is the detective, we suspect a bug exists, we want to track it to the root and verify the code we wrote is meeting expectations. in contrast, the forward facing point of view is that of the engineer (safety first), it protects from bugs before they happen, and limit the effect of the bugs to avoid disasters.
+
+An assertion might be executed more than once, and because of that, the assertion statement (contract) shouldn't do anything significant. there is also the issue of virtual functions and function pointers. the caller only sees the baseclass pre and post conditions, while the callee sees the over-riding conditions. those might not be the same. if the contracts don't match up, there is a problem of substituion, a gap in the inheritance, not following Liskov SOLID principles. (something about V-tables layout).\
+There are situations where we make de-virtual calls, in those cases the compiler knows which derived class is being called, and it could check the overrides pre and post condition even from the caller side. this would lead us to executing the assertions an additional time. (something about old code with suspect assertions).
+
+Can we test an assertion doesn't do anything "significant"?  for now this is mostly a metric that exists in our mental model. we could do some calculations on a known "significant" thing, run the 'suspect' assertions and then check the known significant thing again. in practice, this means we can re-check assertions again and again, as long as nothing other than assertions happened between them.
 </details>

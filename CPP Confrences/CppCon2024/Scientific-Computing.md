@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Vectorizing kmph Electronvolt Kathir Farghani Alfraganus Grisu Grisù dyck Dybvig Andrysco Ranjit Jhala Sorin Jaffer Schubfach Raffaello Giulietti Junekey Jeon Florian Loitsch Tejú Jaguá armpl sger sgerb cblas saxpy NVCC CUDATAGS expt
+// cSpell:ignore Vectorizing kmph Electronvolt Kathir Farghani Alfraganus Grisu Grisù dyck Dybvig Andrysco Ranjit Jhala Sorin Jaffer Schubfach Raffaello Giulietti Junekey Jeon Florian Loitsch Tejú Jaguá armpl sger sgerb cblas saxpy NVCC CUDATAGS expt Weiler
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -17,8 +17,8 @@
 - [ ] High-Performance Numerical Integration In The Age Of C++26 - Vincent Reverdy
 - [ ] High-Performance, Parallel Computer Algebra In C++ - David Tran
 - [x] Improving Our Safety With A Quantities And Units Library - Mateusz Pusz
-- [ ] Linear Algebra With The Eigen C++ Library - Daniel Hanson
-- [ ] To Int Or To Uint, This Is The Question - Alex Dathskovsky
+- [x] Linear Algebra With The Eigen C++ Library - Daniel Hanson
+- [x] To Int Or To Uint, This Is The Question - Alex Dathskovsky
 - [ ] Vectorizing A CFD Code With `std::simd` Supplemented By (Almost) Transparent Loading And Storing - Olaf Krzikalla
 
 ---
@@ -824,5 +824,308 @@ void wrap() {
 ```
 
 this will forbid bad cross function calls in compile time.
+
+</details>
+
+### To Int Or To Uint, This Is The Question - Alex Dathskovsky
+
+<details>
+<summary>
+Choosing the incorrect integer can cause problems.
+</summary>
+
+[To Int Or To Uint, This Is The Question](https://youtu.be/pnaZ0x9Mmm0?si=KfprKuim9mGMoTZn), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/To_Int_or_to_Uint_This_is_the_Question.pdf), [event](https://cppcon2024.sched.com/event/1gZg0/to-int-or-to-uint-this-is-the-question).
+
+different opinions about using signed and unsigned types.
+
+> "There are far too many integer types, there are far too lenient rules for mixing them together, and it’s a major bug source, which is why I’m saying stay as simple as you can, use {signed} integers till you really need something else."
+> ~ Bjarne Stroustrup
+>
+> "The need for signed integer arithmetic is often misplaced as most integers never represent negative values within a program. The indexing of arrays and iteration count of a loop reflects this concept as well. There should be a propensity to use unsigned integers more often than signed, yet despite this, most coders incorrectly choses to use signed integers almost exclusively."\
+> ~ Dale Weiler
+
+we start with a simple example of the same function using either signed or unsigned integers.
+
+```cpp
+#include <stdint.h>
+
+int64_t add_and_divide_s(int64_t a, int64_t b){
+  return (a+b)/2;
+}
+
+uint64_t add_and_divide_u(uint64_t a, uint64_t b){
+  return (a+b)/2;
+}
+```
+
+We can look at the assembly, the signed version is much longer! the signed version has some arithmetical shifts to get the sign.\
+Division by two is the same as shifting once to the right, and shifting is much faster than division. division has a really bad performance, and the compiler will try to use other option whenever possible. (out of order execution of instructions pipelines).
+
+```MIPS
+# add_and_divide_s(long, long)
+lea rcx, [rdi + rsi]
+mov rax, rcx
+shr rax, 63
+add rax, rcx
+sar rax
+ret
+
+# add_and_divide_u(unsigned long, unsigned long)
+lea rax, [rdi + rsi]
+shr rax
+ret
+```
+
+> - In the current example we are dividing the number by two and so, division by two is just like shifting the number right, as all numbers are represented in the binary form. Therefor using n/2 is equal to n>>1.
+> - Each instruction that is fetched from the memory is pushed into a pipeline, one of the steps in the pipeline is execution, execution may be piped as well.
+> - Each execution has its own unit and there is a limited number of execution units. (depends on the CPU)
+> - Each instruction has its own latency
+
+Unsigned intergers are represented with modulo 2 (`%`), support only positive numbers, and overflow is well defined. signed integers support negative numbers, and overflow is undefined behavior! they can be stored in different ways:
+
+1. sign and magnitude - one bit for sign, the rest are the numbers themselves
+2. One's complement - invert all bits for negative numbers, includes the negative zero.
+3. Two's complement - start with positive, invert all bits and then add 1, ignore overflows.
+
+| Bits | Unsigned | One's Complements | Two's Complement |
+|------|----------|-------------------|------------------|
+| 000  | 0        | 0                 | 0                |
+| 001  | 1        | 1                 | 1                |
+| 010  | 2        | 2                 | 2                |
+| 011  | 3        | 3                 | 3                |
+| 100  | 4        | -3                | -4               |
+| 101  | 5        | -2                | -3               |
+| 110  | 6        | -1                | -2               |
+| 111  | 7        | -0                | -1               |
+
+in C++20, it was decided that all negative numbers must be stored using two complement.
+
+> Shifting: Arithmetic and Logical:
+>
+> - SHR: Logical right shift means shifting the bits to the right and MSB becomes 0.
+> - SAR: Arithmetic right shift means shifting the bits to the right and MSB bit is same as in the original number.
+
+there are also differences in rounding, either to zero or to the nearest number.
+
+#### Signed and Unsigned Pitfalls
+
+weird things can happen!
+
+```cpp
+auto add_uint8(uint8_t a, uint8_t b) {
+  return a+b;
+}
+
+add_uint8(255u, 1u); // 256!
+```
+
+the compiler promotes the types to an integer, and then also deduces the auto return type to int, so we get **256**, rather than overflow. if we specify the return type to `uint8_t`, it will still promote them to signed intergers, but will also narrow the result back to unsigned char, and the result will be zero because of the overflow.
+
+```cpp
+auto add_auto(auto a, auto b) {
+  return a+b;
+}
+
+add_auto(uint64_t(1), int64_t(-2)); // 18446744073709551615
+```
+
+the signed type will be promoted to unsigned, so we will get a very wrong answer.
+
+```cpp
+uint64_t count(uint64_t size) {
+  uint64_t count;
+  for (int i = 0; size - i >= 0 ; i++){
+    count++;
+  }
+  return count;
+}
+```
+
+in this case, i is promoted to unsigned and this will be an infinite loop. there is another example with possible overflows. as long as the indexing and the counter are different types, we might get problem. using the <cpp>auto</cpp> keyword doesn't help us here. it's easy to abuse it if we assign zero to it without specifying the type with a specifier.
+
+```cpp
+void do_something(std::byte *bytes, unint32_t size) {
+  for (auto i =0; i < size ;i++;) {
+  }
+}
+```
+
+<cpp>size_t</cpp> is another possible issue, it is unsigned, defined back in the C89 standard. <cpp>std::ssize_t</cpp> is signed version, which can represent at least the range of `[-1, {SSIZE_MAX}]`. which is usefull since the size of standard containers is signed.
+
+```cpp
+uint64_t do_it(uint64_t count) {
+  return 1 << (count % 64);
+}
+```
+
+in this case, 1 is a signed integer, so the shifting behavior is not what we except it to be.
+
+##### Arithmetic series
+
+> Series of numbers where the difference between any two sequential numbers is constant.
+
+we have a simple formula to get the value of an arithmetic series.
+
+$\sum\limits_{k=1}^n a_k = \frac{n(a_1+a_n)}{2}$
+
+we can write the same loop for signed and unsigned versions, and then look at the resulting assembly.\
+the compiler recognizes the signed version and collapses it to the formula - but not for the unsigned version. this is a significant difference in performance. the reason for this is that unsigned overflow is defined behavior which the compiler must respect. for signed integers, overflow is undefined, so the compiler can ignore it and optimize.
+
+however, it's bad form to rely on undefined behavior, and the US government recommends against it.
+
+#### What To Do?
+
+We should use the warning flags `-Wall -Wextra -pedantic -Werror` to stop hiding warnings. it will be annoying the first time, but after fixing them once it will be easy to keep them out. this will protect us from comparing integers of different signs.\
+We should also use newer compilers, as they usually fix bugs and have better performance.\
+Sanitizers can help us detect issues that really happen, such as `-fsanitize=signed-integer-overflow` and `-fsanitize=unsigned-integer-overflow`. they have nearly zero runtime cost.
+if we want better performance, we can use special types: <cpp>int_fastN_t</cpp> and <cpp>uint_fastN_t</cpp>, this tells the compiler we don't care which actual type is used, and that it should be optimized for fast computation.
+
+helpers and safe comparators
+
+- <cpp>std::make_signed_t</cpp>
+- <cpp>std::make_unsigned_t</cpp>
+- <cpp>std::cmp_equal</cpp> - `==`
+- <cpp>std::cmp_not_equal</cpp> - `!=`
+- <cpp>std::cmp_less</cpp> - `<`
+- <cpp>std::cmp_less_equal</cpp> - `<=`
+- <cpp>std::cmp_greater</cpp> - `>`
+- <cpp>std::cmp_greater_equal</cpp> - `>=`
+
+```cpp
+// wrong
+int64_t max1(auto x, auto y) {
+  if (x < y) return y;
+  return x;
+}
+// right
+int64_t max2(auto x, auto y) {
+  if (std::cmp_less(x,y)) return y;
+  return x;
+}
+
+max1(-10, 20ul); // -10 - wrong!
+max2(-10, 20ul); // 20 - right!
+```
+
+> - Avoid using auto when not sure about the type
+> - Use concrete types when possible!
+> - Use modern loops as much as you can
+> - Use strong types.
+
+aliases (the <cpp>using</cpp> and <cpp>typedef</cpp>) aren't strong types.
+
+</details>
+
+### Linear Algebra With The Eigen C++ Library - Daniel Hanson
+
+<details>
+<summary>
+Some stuff about Linear algebra and the Eigen library.
+</summary>
+
+[Linear Algebra With The Eigen C++ Library](https://youtu.be/99G-APJkMc0?si=RiVkeESvGh3BorK0), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Linear_Algebra_with_The_Eigen_Cpp_Library.pdf), [event](https://cppcon2024.sched.com/event/1gZgl/linear-algebra-with-the-eigen-c++-library).
+
+Linear algebra is usually matrix operations.
+
+#### History Of Linear Algebra
+
+back in 1998, you could either write your own matrix class and operation or use a commercial library. in 2002 the <cpp>boost BLAS</cpp> library was released, with BLAS standing for "Basic Linear Algebra Subroutines", which provided matrix and vector representations, matrix addition, subtraction and multiplications. there were additional open source libraries over the years: Eigen (2006), Armadillo (2009), Blaze (2012) - which are all expression template based libraries.\
+in the modern times, we have <cpp>mdspan</cpp> for c++23, a non-owning view of containers whose elements reside in contiguous memory (<cpp>std::vector</cpp>, <cpp>std::mdarray</cpp> and <cpp>Eigen::VectorXd</cpp>).\
+we have a future linear algebra interface based on BLAS called <cpp>stdBLAS</cpp>, which is supposed to be independent of which library is used.
+
+#### The Eigen C++ Template Library
+
+> Eigen - A C++ template library for linear algebra: matrices, vectors, numerical
+solvers, and related algorithms.
+>
+> - first released in 2006
+> - header only
+> - uses expression templates and lazy evaluation
+> - dense and sparse matrix representations
+
+it is the basis of the popular TensorFlow library for data science and machine learning.
+
+can work with the usual numerical types: int, float, double <cpp>std::complex</cpp>, has fixed square matrix aliases for the basic dimension, or we can define our own. it also supports dynamic dimensions.
+
+```cpp
+#include <Eigen/Dense>
+using Eigen::MatrixXd;
+MatrixXd mtx {
+  {1.0, 2.0, 3.0},
+  {4.0, 5.0, 6.0},
+  {7.0, 8.0, 9.0},
+  {10.0, 11.0, 12.0}
+}; // data is enter row-major, but is stored in column-major order
+
+MatrixXd mtx{4, 3}; // 4 rows, 3 columns
+mtx << 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0;
+
+MatrixXd mtx{2, 2};
+// 0-index as is the case in C++ generally:
+mtx(0, 0) = 3.0;
+mtx(1, 0) = 2.5;
+mtx(0, 1) = -1.0;
+mtx(1, 1) = mtx3(1, 0) + mtx3(0, 1);
+```
+
+it supports matrix product with the operator overload (not element-by-element multiplication), scalar multiplication, and addition and substraction with the overload `+` and `-` operator.
+
+we can take mathematical expressions and write them almost identically in code.
+
+$$
+\begin{align*}
+w = Au + Bv \\
+M = AB + (uv)C
+\end{align*}
+$$
+
+```cpp
+MatrixXd A, B, C; // ... more matrix
+VectorXd u, v; // more vector
+VectorXd w = A * u + B * v;
+MatrixXd M = A * B + u.dot(v) * C; // u.dot(v): dot product uv
+```
+
+we can iterate over Eigen vector containers and apply the standard library algorithms. for example, populate a vectorXd with random number with <cpp>std::generate</cpp> and the T-distribution, and apply the <cpp>std::max_element</cpp>. and the special `.UnaryExpr` which behaves similar to <cpp>std::transform</cpp>.
+
+```cpp
+#include <random>
+#include <algorithm>
+// ....
+VectorXd u{12}; // 12 elements
+std::mt19937_64 mt{100}; // Mersenne Twister engine, seed = 100
+std::student_t_distribution<> t_dist{5}; // 5 degrees of freedom
+std::generate(u.begin(), u.end(), [&mt, &t_dist]() {return t_dist(mt);});
+auto max_u = std::max_element(u.begin(), u.end()); // Returns iterator
+double dot_prod = std::inner_product(u.begin(), u.end(), v.begin(), 0.0);
+
+MatrixXd vals {
+  {9.0, 8.0, 7.0},
+  {3.0, 2.0, 1.0},
+  {9.5, 8.5, 7.5},
+  {3.5, 2.5, 1.5}
+};
+vals = vals.unaryExpr([](double x) {return x * x;});
+```
+
+all sort of matrix decompositions and solvers, best fit estimates.
+
+```cpp
+MatrixXd X{30, 4};
+X.col(0) = VectorXd::Ones(30); // assign column to a vector of Ones
+X.col(1) = VectorXd{{-0.044700, -0.007888, /*...*/, 0.001440}};
+X.col(2) = VectorXd{{-0.019003, 0.026037, /*...*/, 0.052195}};
+X.col(3) = VectorXd{{-0.030629, 0.024919, /*...*/, -0.004396}};
+VectorXd Y{30}; // 30 observations
+Y << -0.039891, 0.001788, /* ...*/ , 0.011249; // 
+
+VectorXd beta = X.householderQr().solve(Y);
+```
+
+#### Linear Algebra Interface In C++26
+
+the <cpp>std::linalg</cpp> namespace, the arbitrary interface, with the sample implementation in <cpp>std::experimental</cpp>.
+
+(more example code).
 
 </details>

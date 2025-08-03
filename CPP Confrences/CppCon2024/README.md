@@ -39,7 +39,7 @@
 - [ ] Author Signing: Andreas Fertig - Andreas Fertig
 - [ ] Author Signing: Nicolai Josuttis - Nicolai Josuttis
 - [x] Back to Basics: Almost Always Vector? - Kevin Carpenter
-- [ ] Back to Basics: Concepts - Nicolai Josuttis
+- [x] Back to Basics: Concepts - Nicolai Josuttis
 - [ ] Back to Basics: Debugging and Testing - Greg Law, Mike Shah
 - [x] Back to Basics: Function Call Resolution - Ben Saks
 - [ ] Back to Basics: Functional Programming in C++ - Jonathan Müller
@@ -106,7 +106,7 @@
 - [ ] Leveraging C++ for Efficient Motion Planning: RRT algorithm for robotic arms - Aditi Pawaskar
 - [ ] Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
 - [x] Limitations and Problems in `std::function` and Similar Constructs: mitigation and Alternatives - Amandeep Chawla
-- [ ] Linear Algebra with The Eigen C++ Library - Daniel Hanson
+- [x] Linear Algebra with The Eigen C++ Library - Daniel Hanson
 - [x] LLVM's Realtime Safety Revolution: Tools for Modern Mission Critical Systems - Christopher Apple, David Trevelyan
 - [ ] Making Hard Tests Easy: A Case Study From the Motion Planning Domain - Chip Hogg
 - [x] Many ways to kill an Orc (or a Hero) - Patrice Roy
@@ -122,7 +122,7 @@
 - [x] Peering forward — C++'s next decade - Herb Sutter
 - [ ] Performance and Efficiency in C++ for Experts, Future Experts, and Everyone Else - Fedor Pikus
 - [x] Performance engineering - being friendly to your hardware - Ignas Bagdonas
-- [ ] Perspectives on Contracts - Lisa Lippincott
+- [x] Perspectives on Contracts - Lisa Lippincott
 - [x] Ranges++: Are Output Range Adaptors the Next Iteration of C++ Ranges? - Daisy Hollman
 - [x] Reflection based libraries to look forward to - Saksham Sharma
 - [ ] Reflection Is Not Contemplation - Andrei Alexandrescu
@@ -146,7 +146,7 @@
 - [x] The Most Important Design Guideline is Testability - Jody Hagins
 - [ ] The Power of Reducing Variable Scope - Jason Turner
 - [ ] This is C++ - Jon Kalb
-- [ ] To Int or to Uint, This is the Question - Alex Dathskovsky
+- [x] To Int or to Uint, This is the Question - Alex Dathskovsky
 - [ ] Tools Every C++ Developer Should Know - Jason Turner
 - [ ] Unraveling string_view: Basics, Benefits, and Best Practices - Jasmine Lopez, Prithvi Okade
 - [ ] Using Modern C++ to Build XOffsetDataStructure: A Zero-Encoding and Zero-Decoding High-Performance Serialization Library in the Game Industry - Fanchen Su
