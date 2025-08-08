@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Vectorizing spanny URDF
+// cSpell:ignore Vectorizing spanny URDF lexme Bazel RECC
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -47,8 +47,8 @@
 - [x] Back to Basics: Lifetime Management - Phil Nash
 - [ ] Back to Basics: Object-Oriented Programming - Andreas Fertig
 - [ ] Back to Basics: R-values and Move Semantics - Amir Kirsh
-- [ ] Back to Basics: Unit Testing - Dave Steffen
-- [ ] Balancing Efficiency and Flexibility: Cost of Abstractions in Embedded Systems - Marcell Juhasz
+- [x] Back to Basics: Unit Testing - Dave Steffen
+- [x] Balancing Efficiency and Flexibility: Cost of Abstractions in Embedded Systems - Marcell Juhasz
 - [x] Beyond Compilation Databases to Support C++ Modules: Build Databases - Ben Boeckel
 - [ ] Bitcoin Script: Implementation Details and Use Cases - Kris Jusiak
 - [ ] Bitcoin: From the White Paper to the World's Reserve Currency - Eduardo Madrid
@@ -104,7 +104,7 @@
 - [ ] Interesting Upcoming Features from Low latency, Parallelism and Concurrency from Kona 2023, Tokyo 2024, and St. Louis 2024 - Paul E. McKenney, Maged Michael,Michael Wong
 - [ ] Irksome C++ - Walter E Brown
 - [ ] Leveraging C++ for Efficient Motion Planning: RRT algorithm for robotic arms - Aditi Pawaskar
-- [ ] Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
+- [x] Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
 - [x] Limitations and Problems in `std::function` and Similar Constructs: mitigation and Alternatives - Amandeep Chawla
 - [x] Linear Algebra with The Eigen C++ Library - Daniel Hanson
 - [x] LLVM's Realtime Safety Revolution: Tools for Modern Mission Critical Systems - Christopher Apple, David Trevelyan
@@ -162,3 +162,150 @@
 - [ ] `xstd::any` - A New Container For Any Type With Extra Features And Small Object Optimization - Erez Strauss
 
 ## Lighting Talks
+
+<summary>
+Lighting talks - less than ten minutes
+</summary>
+
+### LC++ and Rust Bindings - Mixing It Best With CMake - Damien Buhl
+
+<details>
+<summary>
+Mixing C++ and Rust as a cocktail
+</summary>
+fast build matters, especially if the problem happens on a CI-CD for a specific target that isn't replicated locally. shifting the pipeline to the left. mixing C++ and Rust.\
+combining CMake, Boost for parsing, cargo to create a new rust library, `corrosion` to combine them, and binding rust and C++ together.
+</details>
+
+### Every Use Case of Colon and Ellipses in C++ - Ali Almutawa Jr.
+
+<details>
+<summary>
+the most dots in a C++ expression.
+</summary>
+
+colon - `:`, ellipses - `...`. finding out how many dots we can have in one expression. this is legal C++ code.
+
+```cpp
+struct S1 {int i;};
+struct S2 {S1 s1;};
+
+template<typename T>
+struct OP {void operator[](){};};
+
+template<typename... Types>
+void f(Types... args) {
+    ::func([
+        args...,
+        ...more_args = args,
+        s=[cond = false]{
+            struct B: OP<Types>...{
+                friend types...;
+                using OP<Types>::operator[]...;
+            public:
+                int x: 2;
+                B() : x{0} {}
+            };
+            [[Ali::Ben(...: :: . .*)]] label: return cond? B{}: B{};
+        }()
+        ] <typename...Ts>(auto dot, Ts... As, ...) -> std::size_t {
+            using Type = Types...[0];
+            for(auto i: {1}){
+                switch(i)
+                  case 0: default: return (dot.*....*As);
+                return .0;
+        }(S2{}, &S2::s1, &S1::i)
+    )
+}
+```
+
+</details>
+
+### Do You Love or Hate Your C++ Build System? - Helen Altshuler
+
+<details>
+<summary>
+comparing Bazel and CMake.
+</summary>
+
+the build system should get things done, but engineers hate them.
+
+(interaction with audience)
+
+- Cmake
+- Bazel
+- Conan
+- MSBuild
+- local machine
+- onPrem hardware
+- public cloud
+
+bazel was build for cross platform comptability, designed to work with multiple languages and defining dependencies. hermeticism and dependency graphs. using remote execution, even combining with CMake.
+
+</details>
+
+### Generative C++ - Alon Wolf
+
+<details>
+<summary>
+Doing weird things in compile time.
+</summary>
+
+C++ modules, generating code, doing work at compile time, creating files. compiler proxy (with CMake).
+
+</details>
+
+### Remote Execution Caching Compiler (RECC) for C++ Builds - Shivam Bairoliya
+
+<details>
+<summary>
+A tool to reduce Build Times.
+</summary>
+
+an open source compiler that priorities caching and compiling on remote machines. intercepting compiler commands to either retrieve cached results or send the request to a remote machine, creating a deterministic dependency tree (graph) and hash key.
+
+</details>
+
+### What Does a CMake Developer Want From CMake? - Ben Boeckel
+
+<details>
+<summary>
+Wishlist items for CMake - what we want, what we have, how possible is the request?
+</summary>
+
+today everything is a string, we would like it as a type. sanity checks on variable names, today we can do `set(0 1)` and it will be allowed. better code generation like `ninja` rules. better makefile generator. more file sets (not just headers and modules), maybe for special types of files like Qt or protobuff. declarative input, remove the imperative code.
+
+</details>
+
+### What LLMs Won't Ever be Able to Do - Ben Deane
+
+<details>
+<summary>
+logic puzzles.
+</summary>
+
+logic crosswords, clues, showing how to solve logic puzzles and what kinds of clues are there. LLMs can't do this.
+
+</details>
+
+### C++ in the Cloud: One NIF at a Time with Elixir - Sakshi Verma
+
+<details>
+<summary>
+Calling C++ from Elixir
+</summary>
+
+Elixir is functional programming language, built for concurrency and scalability, built on the 'erLang' language. NIF - native implemented function - allow Elixir to call C++ directly. we create a share module from C++ and load it into the elixir machine.
+
+</details>
+
+### The Present and Future of Cross-Platform GUI in C++ - Matt Aber
+
+<details>
+<summary>
+writing efficient applications that cross compile.
+</summary>
+
+Cross platform GUI, like QT, 3d media, also in desktop application which are first web apps and are then ported to desktop application after the fact. also possible to start with C++ and then move to web-assembly, but it isn't free.\
+we want to target a shared environment, a true "write once, run anywhere". this is browseless web-assembly, it can interact with the web assembly system interface to escape the 'sandbox' of regular web assembly.
+</details>

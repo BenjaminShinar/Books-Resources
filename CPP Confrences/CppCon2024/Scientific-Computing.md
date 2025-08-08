@@ -861,7 +861,7 @@ uint64_t add_and_divide_u(uint64_t a, uint64_t b){
 We can look at the assembly, the signed version is much longer! the signed version has some arithmetical shifts to get the sign.\
 Division by two is the same as shifting once to the right, and shifting is much faster than division. division has a really bad performance, and the compiler will try to use other option whenever possible. (out of order execution of instructions pipelines).
 
-```MIPS
+```x86asm
 # add_and_divide_s(long, long)
 lea rcx, [rdi + rsi]
 mov rax, rcx

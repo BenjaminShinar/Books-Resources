@@ -264,6 +264,15 @@ Markdown formatting tricks, tips, etc
 
 [supported languages in code fences](https://github.com/highlightjs/highlight.js/blob/main/SUPPORTED_LANGUAGES.md)
 
+Stuff I use:
+
+- cpp
+- python
+- sh, bash
+- x86asm
+- js
+- golang
+
 ### Tags
 
 Dialog Box - don't use

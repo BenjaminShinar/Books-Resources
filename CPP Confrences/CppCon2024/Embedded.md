@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore Regehr dscp
+// cSpell:ignore Regehr dscp OSPEEDR MODER ULCON UTXBUF URXBUF UBRDIV strb
 -->
 
 <link rel="stylesheet" type="text/css" href="../../markdown-style.css">
@@ -10,10 +10,10 @@
 9 Talks about embedded C++.
 </summary>
 
-- [ ] Balancing Efficiency and Flexibility: Cost of Abstractions in Embedded Systems - Marcell Juhasz
+- [x] Balancing Efficiency and Flexibility: Cost of Abstractions in Embedded Systems - Marcell Juhasz
 - [ ] Boosting Software Efficiency: A Case Study of 100% Performance Improvement in an Embedded C++ System - Gili Kamma
 - [ ] C++ Exceptions for Smaller Firmware - Khalil Estell
-- [ ] Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
+- [x] Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
 - [x] Message Handling with Boolean Algebra - Ben Deane
 - [ ] Multi Producer, Multi Consumer, Lock Free, Atomic Queue - User API and Implementation - Erez Strauss
 - [ ] Sender Patterns to Wrangle Concurrency in Embedded Devices - Michael Caisse
@@ -275,22 +275,22 @@ we have the expression tree of "less_than<5> and less_than<7>", which we as huma
 
 ```cpp
 template <matcher X, matcher Y>
-constexpr auto implies(X const &, Y const &) -> bool 
+constexpr auto implies(X const &, Y const &) -> bool
 {
   return std::same_as<X, Y>;
 }
 
-constexpr auto implies(matcher auto &&, always_t) -> bool 
+constexpr auto implies(matcher auto &&, always_t) -> bool
 {
   return true;
 }
 
-constexpr auto implies(never_t, matcher auto &&) -> bool 
+constexpr auto implies(never_t, matcher auto &&) -> bool
 {
   return true;
 }
 
-constexpr auto implies(never_t, always_t) -> bool 
+constexpr auto implies(never_t, always_t) -> bool
 { // ambiguity breaker!
   return true;
 }
@@ -310,7 +310,7 @@ constexpr auto implies(M const &m, or_t<L, R> const &o) -> bool
 
 // generic matchs to simplify the same operations
 template <typename Op, typename Field, auto X, auto Y>
-constexpr auto implies(relational_matcher_t<Op, Field, X>, relational_matcher_t<Op, Field, Y>) 
+constexpr auto implies(relational_matcher_t<Op, Field, X>, relational_matcher_t<Op, Field, Y>)
 {
   return X == Y or Op{}(X, Y);
 }
@@ -318,7 +318,7 @@ constexpr auto implies(relational_matcher_t<Op, Field, X>, relational_matcher_t<
 // explicitly stating implication,
 template <typename Field, auto X, auto Y>
 constexpr auto implies(less_equal<Field, X> const &,
-less_than<Field, Y> const &) -> bool 
+less_than<Field, Y> const &) -> bool
 {
   return X < Y;
 }
@@ -332,4 +332,487 @@ disjunctive normal forms: an expression with only "or", "and" and single terms. 
 we can transform any expression into a disjunctive normal form using DeMorgans' laws and distributive laws.
 
 going back to the "sum_of_products" topic.
+
+</details>
+
+### Balancing Efficiency and Flexibility: Cost of Abstractions in Embedded Systems - Marcell Juhasz
+
+<details>
+<summary>
+Effects of design decisions on performance of embedded code.
+</summary>
+
+[Balancing Efficiency and Flexibility: Cost of Abstractions in Embedded Systems](https://youtu.be/7gz98K_hCEM?si=P_f1maqyB9ejvoy4), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Balancing_Efficiency_and_Flexibility.pdf), [event](https://cppcon2024.sched.com/event/1gZeI/balancing-efficiency-and-flexibility-cost-of-abstractions-in-embedded-systems).
+
+HAL - Hardware Abstraction Layer
+
+> - Encapsulation
+> - Inheritance
+> - Polymorphism
+> - Template Metaprogramming
+> - Concepts
+> - Constant Expressions
+> - Immediate Functions
+> - Parameter Pack and Fold Expressions
+> - <cpp>constexpr If </cpp> Statements
+
+measuring binary size, runtime performance (analytical and empirical)
+
+> Absolute minimal embedded project:
+>
+> - Main function:
+>   - Consists of a single, empty infinite loop
+> - Startup script:
+>   - Defines the vector table
+>   - Sets stack pointer
+>   - Copies data section from Flash to RAM
+>   - Initializes uninitialized global and static variables to zero
+>   - Calls static constructors
+>   - Calls `main()`
+> - Linker Script: specifies the memory
+
+this is how it traditionally looks:
+
+```cpp
+typedef struct {
+  uint32_t pin;
+  GPIO_Modes mode;
+} GPIO_InitStruct;
+
+void GPIO_Init(GPIO_InitStruct* conf) {
+  uint32_t temp;
+  /* check the values */
+  if (!IS_GPIO_PIN(conf->pin)) { return; }
+  if (!IS_GPIO_MODE(conf->mode)) { return; }
+  /* configure the GPIO based on the settings */
+  if (conf->mode == GPIO_MODE_OUTPUT) {
+    temp = OSPEEDR;
+    temp &= ~(OSPEEDR_MASK << (conf->pin * 2u));
+    temp |= (GPIO_SPEED_FREQ_LOW << (conf->pin * 2u));
+    OSPEEDR = temp;
+    /* ... */
+  }
+  /* ... */
+}
+
+int main (void) {
+  GPIO_InitStruct conf = { 0 };
+  conf.pin = GPIO_PIN_6;
+  conf.mode = GPIO_MODE_INPUT;
+  GPIO_Init(&conf) ;
+  while (1) { }
+}
+```
+
+#### Layers Of Abstractions
+
+bitmask calculations for every register
+
+##### Encapsulation
+
+We start with encapsulation, the generic class of _CRegister_, and the conataining classes for specific register operations (_CModeRegister_, _COutputTypeRegister_, _COutPutSpeedRegister_).
+
+```cpp
+class CRegister {
+private:
+  const std::uint32_t m_address;
+public:
+  CRegister(std::uint32_t address) : m_address(address) { }
+  void set(std::uint32_t val) const {
+    *(reinterpret_cast<volatile std::uint32_t *>(m_address)) = val;
+  }
+  /* ... */
+};
+
+class CModeRegister {
+private:
+  const CRegister m_register{0x48000000};
+  inline std::uint32_t calculate_value(std::uint32_t pin, GPIO_Modes mode) {
+    return (mode & GPIO_MODE) << (pin * 2);
+  }
+  inline std::uint32_t calculate_bitmask(std::uint32_t pin) {
+    return MODER_MASK << (pin * 2);
+  }
+public:
+  inline void set_mode(std::uint32_t pin, GPIO_Modes mode) {
+    m_register.set(calculate_value(pin, mode), calculate_bitmask(pin));
+  }
+}
+```
+
+Encapsulation also helps with testability, we can inject a different implementation of _CRegister_ to find out what's really happening.\
+Encapsulation doesn't have effect on the binary, so we get the same binary size and same behavior, and we gain in readability and simplicity. we can also use some static members since the structs don't have state, but it causes an increase in binary size, since the static objects must be initialized somewhere. we can use templated classes with the address as the template parameter, which brings us back to the original binary size.
+
+##### Inheritance
+
+Next we look at inheritance, the generic class acts as base class, and the specific classes extend it.
+
+```cpp
+class COutputSpeedRegister : public CRegister<0x48000008> {
+private:
+  static inline std::uint32_t calculate_value(std::uint32_t pin, GPIO_Output_Speeds speed) {
+    return speed << (pin * 2);
+  }
+  static inline std::uint32_t calculate_bitmask(std::uint32_t pin) {
+    return OSPEEDR_MASK << (pin * 2);
+  }
+public:
+  static inline void set_speed(std::uint32_t pin, GPIO_Output_Speeds speed) {
+    set(calculate_value(pin, speed), calculate_bitmask(pin));
+  }
+};
+```
+
+because we don't have anything virtual here, we don't have any effect on runtime performance, and the binary is still the same.
+
+##### Polymorphism
+
+for polymorphism, we need our microcontrolher to communicate with a Peripheral, we could have the implementation coupled into the HAL, which would mean that we only work with a specific peripheral, but with polymorphism, we add an abstraction layer so we are decoupled. this is dynamic polymorphism, and now we use virtual inheritance.
+
+```cpp
+class IPin {
+public:
+  virtual void set() = 0;
+  virtual void reset() = 0;
+};
+
+class CLed {
+private:
+  bool m_state{false};
+  IPin* m_pin{nullptr}; // pimpl
+public:
+  CLed() = delete;
+  CLed(IPin* pin) : m_pin(pin) {
+    m_pin->reset();
+  }
+  /* ... */
+};
+
+class CPin : public IPin {
+private:
+  std::uint8_t m_pin{0};
+public:
+  CPin() = delete;
+  CPin(std::uint8_t pin) : m_pin(pin) {}
+  void set() override {
+    CBitSetResetRegister::set_pin(m_pin);
+  }
+  void reset() override {
+    CBitSetResetRegister::reset_pin(m_pin);
+  }
+};
+```
+
+if we include the RTTI (RunTime Type Information) in the binary, it increases the binary size substantially. it stores the <cpp>\_type_info</cpp> section into the binary, since it is necessary for <cpp>typeid</cpp> and <cpp>dynamic_cast</cpp>.\
+if we manage to de-virtualize the calls, then we can decrease back the binary size to nearly the original size.
+
+we can look at the assembly without de-virtualization - when we have a virtual table.
+
+| CPin vtable             | address? | mangled name        |
+| ----------------------- | -------- | ------------------- |
+| 0x08000258 : 0x080001b1 | 080001b0 | <\_ZN4CPin3setEv>   |
+| 0x0800025c : 0x08000199 | 08000198 | <\_ZN4CPin5resetEv> |
+
+```x86asm
+;no de-virtualization
+<main>:
+push {r0, r1, r2, lr}
+ldr r3, [pc, #28] ; (80001e4 <main+0x20>) ; load virtual table
+mov r2, sp
+str r3, [sp, #0]
+movs r3, #6
+strb r3, [r2, #4]
+ldr r3, [sp, #0]
+mov r0, sp
+ldr r3, [r3, #0]
+blx r3
+ldr r3, [sp, #0]
+mov r0, sp
+ldr r3, [r3, #4]
+blx r3
+b.n 80001d0 <main+0xc>
+Nop ; (mov r8, r8)
+.word 0x08000258
+```
+
+for static polymorphism (with de-virtualization), we can use <cpp>concepts</cpp> instead of virtual tables.
+
+```cpp
+template <typename T>
+concept IPin = requires(T pin) {
+  { pin.set() } -> std::same_as<void>;
+  { pin.reset() } -> std::same_as<void>;
+};
+
+class CPin {
+private:
+  std::uint8_t m_pin{0};
+public:
+  CPin () = delete;
+  CPin (std::uint8_t pin) : m_pin(pin) {}
+  void set() const {
+    CBitSetResetRegister::set_pin(m_pin);
+  }
+  void reset() const {
+    CBitSetResetRegister::reset_pin(m_pin);
+  }
+};
+
+static_assert(IPin<CPin>); // optional
+
+template <IPin TPin>
+class CLed {
+private:
+  bool m_state{false};
+  TPin* m_pin{nullptr};
+public:
+  CLed() = delete;
+  CLed(TPin* pin) : m_pin(pin) {
+    m_pin->reset();
+  }
+  /* ... */
+};
+```
+
+this compiles into the same binary as the original.
+
+#### Architecture Matters
+
+we usually take the architecture abstraction as a given, and write our c++ code as a wrapper over it.\
+for our example, we have a seven segments display device, where each segment corresponds to a bit (an output data register). we have an operation to reset it - binary AND `&` with the correct bitmask (known at advance), and we set it with a binary OR `|` and some other bitmask.
+
+```cpp
+ODR &= ~0b1111_1111; // reset to empty
+ODR |= 0b0101_1100; // set bits to the pattern of '5'
+```
+
+if our architecture only supports pin operations, we would have to iterate over each pin to set it, so we want our underlying hardware abstraction layer to operate on a collection of bits, and not just one-by-one.
+
+example of inefficient code:
+
+```cpp
+typedef struct {
+  uint32_t pin;
+  GPIO_Modes mode;
+} GPIO_InitStruct;
+
+void GPIO_Init(GPIO_InitStruct* conf) {
+  uint32_t temp;
+  /* check the values */
+  if (!IS_GPIO_PIN(conf->pin)) { return; }
+  if (!IS_GPIO_MODE(conf->mode)) { return; } // enum
+  /* configure the GPIO based on the settings */
+  if (conf->mode == GPIO_MODE_OUTPUT) { // branching
+    temp = OSPEEDR;
+    temp &= ~(OSPEEDR_MASK << (conf->pin * 2u)); // runtime bitmask calculations
+    temp |= (GPIO_SPEED_FREQ_LOW << (conf->pin * 2u));
+    OSPEEDR = temp;
+    /* ... */
+  }
+  /* ... */
+}
+```
+
+> - Enums are basically integers with no value restrictions
+> - Runtime branching based on input parameters
+> - Runtime bitmask calculations
+> - Function calls
+
+we want to get rid of these inefficiencies, so we bring in some advance c++ to move the calculations into compile time.
+
+```cpp
+enum class modes : std::uint32_t {
+  input = 0b00,
+  output = 0b01,
+  alt_func = 0b10,
+  analog = 0b11
+};
+enum class ports : std::uint8_t {
+  port_f,
+  port_d,
+  port_c,
+  port_b,
+  port_a
+};
+
+template <modes mode>
+concept is_valid_mode = (
+  (mode == modes::input) ||
+  (mode == modes::output) ||
+  (mode == modes::alt_func) ||
+  (mode == modes::analog)
+);
+
+template <pins pin>
+concept is_valid_pin = (
+  is_valid_low_pin<pin> || is_valid_high_pin<pin>
+);
+
+template <pins... pin>
+concept are_valid_pins = (is_valid_pin<pin> && ...);
+
+template <modes mode, pins... pin>
+requires (are_valid_pins<pin ...> && is_valid_mode<mode>)
+consteval std::uint32_t moder_value () {
+  return (... | (static_cast<std::uint32_t>(mode) << (static_cast<std::uint32_t>(pin) * 2)));
+}
+
+template <pins... pin>
+requires (are_valid_pins<pin ...>)
+consteval std::uint32_t moder_bitmask () {
+  return (... | (GPIO_MODER_MODER0 << (static_cast<std::uint32_t>(pin) * 2)));
+}
+
+template <GpioInitConfig conf, pins... pin>
+requires (is_valid_gpio_config<conf> && are_valid_pins<pin...>)
+static inline void configure_pins() {
+  static_assert((sizeof...(pin) > 0), "No pins provided.");
+  if constexpr ((conf.mode == modes::output) || (conf.mode == modes::alt_func)) {
+  /* ... */
+  }
+  if constexpr (conf.mode != modes::analog) {
+  /* ... */
+  }
+  if constexpr (conf.mode == modes::alt_func) {
+  /* ... */
+  }
+  /* ... */
+}
+```
+
+with this re-write, we employ C++ code to get better performance.
+
+> - Enumerations
+>   - Not plain integers anymore
+>   - No implicit conversion between enum values and integral types
+>     - Explicit static_cast required
+>     - Harder to misuse accidentally
+> - Template parameters
+>   - Compile time parameter passing Concepts
+> - Concepts
+>   - Set of requirements on template arguments
+>   - Compile time parameter validation
+> - Immediate Functions (<cpp>consteval</cpp>)
+>   - Executed at compile time
+>     - Useful for e.g., bitmask calculations
+> - Compile-time Branching (<cpp>constexpr if</cpp>)
+>   - Eliminates:
+>     - Unused code
+>     - Comparisons
+>     - Jump instructions
+
+after measuring, the improved code has a smaller binary size and executes less instructions overall. this is a win for us.
+
+</details>
+
+### Leveraging C++20/23 Features for Low Level Interactions - Jeffrey Erickson
+
+<details>
+<summary>
+Using C++ for better HW safety.
+</summary>
+
+[Leveraging C++20/23 Features for Low Level Interactions](https://youtu.be/rfkSHxSoQVE?si=hTx0bTH2wp7G82U7), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Leveraging_Cpp20_23_Features_for_Low_Level_Interactions.pdf), [event](https://cppcon2024.sched.com/event/1gZfB/leveraging-c++2023-features-for-low-level-interactions).
+
+> In a bare-metal environment, we're going to demonstrate effective use of C++:
+>
+> - How did we end up with C language HW interactions?
+> - What are best practices for using C from C++?
+> - How can we use C++ to make HW access cleaner, safer, and more testable?
+
+C++ has some reputation for being bloated for bare-metal, this isn't always true. C++ has many advantages over C. we can't get rid of all the existing C code (there is a lot of it), but we can write C compatible code using the c++ best practices.
+
+moving between C and C++ boundaries, the <cpp>std::unique_ptr</cpp> and the `.get()` method, (c++23 has <cpp>std::out_ptr</cpp> and <cpp>std::inout_ptr</cpp> as syntactic sugar helpers). the memory layout can be different between C and C++ objects, the compiler can re-order the layout, so there are some guidelines to follow when passing data. we can test the data with <cpp>std::is_trivial</cpp> to make sure it supports static initialization, and <cpp>std::is_standard_layout</cpp> to ensure the memory layout is the same in C and C++.
+
+breaking free of the kernel, if we need C because the kernel needs it, maybe we an bypass the kernel, and therefore remove the need for C code.\
+using the _pimpl_ idiom to wrap a pointer to the register inside a class - a pointer to a register struct.
+
+```cpp
+struct my_uart_regs {
+// ...
+  volatile uint32_t BAUD_RATE_REG;
+// ...
+};
+
+class my_uart {
+...
+private:
+  std::unique_ptr<my_uart_regs> p_regs;
+};
+```
+
+we can pass a pointer to the real registry address, or use a mocking object. we need to define the register set. for hardware access, we need to use the <cpp>volatile</cpp> key word, since the hardware can change the data values, so we won't allow the compiler to take shortcuts.
+
+```cpp
+typedef struct __attribute__((packed)) __attribute__((aligned(4))){
+  volatile uint32_t reg1; // Offset 0
+  volatile uint32_t reg2; // Offset 4
+  volatile uint32_t pad[4];
+  volatile uint32_t reg3; // Offset 20
+// ...
+} regs_t;
+```
+
+this is one of the few cases where we need to use <cpp>reinterpret_cast</cpp>, we probably can't use <cpp>std::make_unique</cpp>, but anyway, we need a custom delete, since we would deallocate data that wasn't allocated, and doesn't have the metadata we expect. we need to defend from the delete, so we define a custom deleter ourselves.
+
+```cpp
+
+struct my_uart_regs __attribute__((packed)) __attribute__((align(4))){
+// ...
+  volatile uint32_t BAUD_RATE_REG;
+// ...
+};
+
+struct uart_regs_no_deleter {
+  operator()(my_uart_regs* ptr) {
+  // do nothing
+  }
+};
+
+class my_uart {
+  //...
+public:
+  void set_baud_rate(const uint32_t& rate) {
+    p_regs -> BAUD_RATE_REG = rate;
+  }
+
+  uint32_t get_baud_rate() const {
+    return p_regs -> BAUD_RATE_REG;
+  }
+private:
+  std::unique_ptr<my_uart_regs, my_uart_no_deleter>-> p_regs;
+};
+```
+
+now we got to the registers themselves, and we need operate on them, we could use C binary logic operators directly, but C++ could give us better safety with strong typing, and use <cpp>constexpr</cpp> to move code from runtime to compile time.
+
+```cpp
+// c-style
+uint32_t value = 0;
+value |= 0x1;
+value &= ~(0x1);
+```
+
+Macro are dangerous because they aren't type-checked, and the speed gains only come from inlining the code. we could define the masks as <cpp>constexpr</cpp> and it works great with floating numbers.
+
+```cpp
+// old macro
+#define REPLACE_BITS(x, mask, bits) ((x & (~(mask))) | (bits & mask))
+// c++ 
+
+// templated function
+template<std::size_t N>
+std::bitset<N> replace_bits(std::bitset<N> x, std::bitset<N> mask, std::bitset<N> bits){
+  return ((x & (~(mask))) | (bits & mask));
+}
+```
+
+> Wrapping up
+>
+> - Developers do a lot in C to make it 'safer'
+> - But C++ has advantages:
+>   - Strong typing and a more thorough type system makes code safer
+>   - Lifetime management is important and C++ takes many of those questions off the table
+> - Still need static analysis, but the compiler does more for you
+
 </details>

@@ -2,7 +2,9 @@
   "version": "0.2",
   "ignorePaths": [],
   "dictionaryDefinitions": [],
-  "dictionaries": ["cpp"],
+  "dictionaries": [
+    "cpp"
+  ],
   "words": [
     "alignas",
     "Architecting",
@@ -43,10 +45,17 @@
     "Xoshiro",
     "xstd",
     "PIMPL",
-    "-werror",
+    "werror",
     "wextra"
   ],
   "ignoreWords": [
+    "Shivam",
+    "Sakshi",
+    "Aber",
+    "Verma",
+    "Bairoliya",
+    "Altshuler",
+    "Almutawa",
     "Maniscalco",
     "Kemper",
     "Jianfei",

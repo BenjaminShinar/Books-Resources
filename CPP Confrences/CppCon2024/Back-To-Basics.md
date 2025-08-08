@@ -19,7 +19,7 @@
 - [x] Back to Basics: Lifetime Management - Phil Nash
 - [ ] Back to Basics: Object-Oriented Programming - Andreas Fertig
 - [ ] Back to Basics: R-values and Move Semantics - Amir Kirsh
-- [ ] Back to Basics: Unit Testing - Dave Steffen
+- [x] Back to Basics: Unit Testing - Dave Steffen
 
 ---
 
@@ -1065,4 +1065,180 @@ constexpr bool isPrime(int val) {
 }
 ```
 
+</details>
+
+### Back to Basics: Unit Testing - Dave Steffen
+
+<details>
+<summary>
+What are unit tests and how to write good ones.
+</summary>
+
+[Back to Basics: Unit Testing](https://youtu.be/MwoAM3sznS0?si=u_DljVbqmkiys5WN), [slides](https://github.com/CppCon/CppCon2024/blob/main/Presentations/Back_to_Basics_Unit_Testing.pdf), [event](https://cppcon2024.sched.com/event/1gZdl/back-to-basics-unit-testing).
+
+> Unit testing is the act of testing the correctness of your code at the smallest possible unit: the function.\
+> Unit tests are small, automated, stand alone executables that perform unit testing on your code.
+
+it was a new idea 20 years ago, but today is considered a required part of the code, which all projects must include.
+
+we can't catch everything in unit tests, but they act as the first line of defense between writing bad code and having that bad code reach the end-user.
+
+we could start with unit test in the a separate "main" file and <cpp>assert</cpp> statements. it's not great, it fails on the first error, it doesn't produce detailed logs, and it won't work if we didn't define the #DEBUG flag for the assert. but it's the first step.
+
+```cpp
+#include <cassert>
+int main()
+{
+  assert(abs(5) == 5);
+  assert(abs(-5) == 5);
+}
+```
+
+we can use the <cpp>Catch2</cpp> unit test framework, instead, it handles some boiler plate for us, we write test "cases" inside test "suits".
+
+```cpp
+// test_math.cpp
+#include <catch2/catch_test_macros.hpp>
+#include "math.hpp"
+
+TEST_CASE("Absolute value tests") {
+  CHECK(abs(5) == 5);
+  CHECK(abs(-5) == 5);
+}
+```
+
+the test needs to live next to the code it's testing, not a separate project. defiantly not a different repository with a different team.
+
+good unit tests:
+
+- good tests
+- good code
+- good process
+
+#### Good Tests
+
+test can't prove a code is right, they can try to show that it has a bug and fail at that. we follow Popper Falsifiability principle, so we need the same way of thought as science experiments.
+
+- repeatable - you get the same answer every time
+- replicable - your colleagues get the same answer you do
+- Accuracy: measurements are "right"
+- Precision: measurements are "informative"
+
+accuracy tells us "there is a bug", while precision tells us where to look for the bug. our tests should fail just for the system we test, not all across the system, tests should only test one system at a time.
+
+- test completely
+- test correctly
+- test validity
+
+execution paths: boundary scopes, equivalence classes, not testing invalid input or undefined behavior. looking at edge cases, unique logic, off-by-one cases.
+
+for our absolute value function, `INT_MIN` is not a valid input, we have signed integer overflow which is undefined behavior. if we define the behavior, we check it.
+
+```cpp
+
+auto abs(int x) -> int
+{
+  if (x == std::numeric_limits<int>::min())
+    throw std::domain_error("Can't take abs of INT_MIN")
+  if (x >= 0) return x;
+  else return -x;
+}
+
+
+#include <catch2/catch_test_macros.hpp>
+#include "math.hpp"
+
+TEST_CASE("Absolute value tests"){
+  CHECK(abs(5) == 5);
+  CHECK(abs(-5) == 5)
+}
+
+TEST_CASE("Abs of INT_MIN is an error") {
+  CHECK_THROWS_AS(
+    abs(INT_MIN),
+    std::domain_error);
+}
+```
+
+there are cases where we don't know the "correct" answer, such as computing Pi, we need to get the correct results from some source. we can use property testing, where we don't check for the exact result, we check for properties we know the answer to have.\
+we don't use unit tests to check the code produces what it produced earlier, that's sometimes called 'acceptance' test, which is a different thing.
+
+> Hermetic tests: tests run against a test environment (i.e., application servers and resources) that is entirely self-contained (i.e., no external dependencies like production backends)\
+> Any time bits enter or leave your unit test, your test results also depend on things you're not trying to test and don't control.\
+> Solution: "Mocks" (and test doubles).
+
+unit tests are still code, so they need to be good code: readable, maintaible, and documented. unit tests should be human-readble, and easy to inspect.
+
+> Jon Jagger: "Unit tests should have a cyclomatic complexity of 1"
+>
+> - Unit Tests should have no logic other than testing.
+> - Conditionals should be rare (other than the assertions).
+> - Loops should be even more rare.
+>
+> The ultimate unit test readability goal:
+>
+> - Reviewers can tell your unit tests are correct
+> - even if they haven't read the code under test
+> - even if they don't know what it's supposed to do
+
+##### Testing Classes In C++
+
+white box vs black box testing. black box - don't test internals, don't break encapsulation. white box testing checks internal state.
+
+if we want to allow access to internals in c++, we can use a friend class. never `#define private public` at the top of the file.
+
+```cpp
+// code we test
+class Cup {
+public:
+  Cup();
+  bool IsEmpty();
+  bool Fill();
+  bool Drink();
+private:
+  bool empty_;
+  friend struct CupTester
+};
+
+// unit test
+struct CupTester {
+  bool& is_empty;
+  CupTester(Cup& c) : empty(c.empty_);
+};
+
+TEST_CASE("Cup::Cup")
+{
+  Cup cup; // new cups are supposed to be empty
+  CupTester tester(cup);
+  CHECK(cup_tester.is_empty);
+};
+```
+
+white-box testing is usually easier to do, it's easy to set up the object into a specific configuration. however, it means the test is tightly coupled with the code it tests, for some industries, it's a maintaibadicy issue.\
+black box testing uses only the public interface, but it can also hide circular bugs if we check function by function. to get around this, we can test behavior.
+
+```cpp
+TEST_CASE( "A new cup is empty" ) {
+  Cup cup;
+  CHECK(cup.IsEmpty());
+}
+
+TEST_CASE( "An empty cup can be filled" ) {
+  Cup cup;
+  bool success = cup.fill();
+  CHECK(success);
+};
+```
+
+behavior driven development testing uses the "given, when, then" pattern, which also acts as documentation. but black box testing only works if the public interface is well designed.
+
+#### Good Process
+
+design for testability, every good design decision increases testability, and any increase to disability makes the design better.
+
+- test early
+- test often
+- test automatically
+
+if the code is hard to test, the interface is too complicated. red green cycle to develop functionality.
 </details>
