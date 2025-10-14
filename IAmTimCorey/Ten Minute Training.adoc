@@ -1474,12 +1474,23 @@ we can now rename fields, target different platforms such as Azure (which will g
 
 === Timesaving Blazor Extension for Visual Studio
 
-
 .visual studio extension
 [%collapsible]
 ====
 
 Blazm.extension for visual studio and Blazor, context menu, moving from code-behind to the ".razor" file, finding usages in components, generating isolated files for css and javascript, generating unit test files (C# or Razor syntax), showing project routes and some other useful commands.
+
+====
+
+=== SLNX Files in .NET 9 - Why They Matter
+
+
+.converting solution files from sln to slnx
+[%collapsible]
+====
+
+replacing dot net sln solution files with the new slnx files. the solution file contains the version, minimum version, projects in the solution, build configurations, references to other solutions, and other stuff. this file is prone to merge errors.
+In new versions of visual studio, we can enable the 'persistent solution file' option to work with the new slnx format. we can save the file as slnx and look at the differences. it is much simpler, only having the paths to the projects and less boilerplate code.
 
 ====
 
