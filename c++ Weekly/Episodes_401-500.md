@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat  nrvo fimplicit Decrypter gcem vgdb cvref debian chrono -Wpadded -Wsystem -Wnrvo
+// cSpell:ignore codecov cppcoro dogbolt decompiler Lippincott bfloat stdfloat nrvo fimplicit Decrypter gcem vgdb cvref debian chrono -Wpadded -Wsystem -Wnrvo infiz FLTK -Wstack
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -2897,4 +2897,672 @@ the posix manual pages have some possible leaks if we just copy from them. lets 
 - closing the file handle at destruction
 - getting NRVO when with the designated initializer (dot notation)
 
+</details>
+
+## C++ Weekly - Ep 483 - Stop Using `rand`, Start Using Random
+
+<details>
+<summary>
+Using C++ pseudo-random number generators.
+</summary>
+
+[Stop Using `rand`, Start Using Random](https://youtu.be/kjogmOXkipw?si=JG-48dgXzlKxx8qp)
+
+the <cpp>random</cpp> header is very complicated.\
+we start by creating a random device, the available options are based on the machine, but we are guaranteed to have the default one.
+
+```cpp
+#include <random>
+#include <iostream>
+#include <cstdio>
+
+int main()
+{
+  std::random_device rd("default");
+  std::uniform_int_distribution uid(1, 6);
+
+  for (int i = 0; i < 6; i++)
+  {
+    std::cout << uid(rd) << '\n';
+  }
+  std::puts("");
+}
+```
+
+if we want reproducible results, rather than getting different random values each time, we can add a seed. this is done by replacing the random device, to something such as <cpp>std::mt19937_64</cpp> engine and supplying it with a seed. the default seed is *5489u*, which is what is used if we default initialize it.
+
+```cpp
+#include <random>
+#include <iostream>
+#include <cstdio>
+
+int main()
+{
+  std::mt19937_64 rd{0}; // passing a seed
+  std::uniform_int_distribution uid(1, 6);
+
+  for (int i = 0; i < 6; i++)
+  {
+    std::cout << uid(rd) << '\n';
+  }
+  std::puts("");
+}
+```
+
+there are other distributions besides the uniform one, such as normal, bernoulli, poisson and sampling, or <cpp>std::generate_canonical</cpp>. we can experiment with this by creating random bytes the size of some object, and then using <cpp>std::bitcast</cpp> to treat those bytes as if they were a real object.
+
+</details>
+
+## C++ Weekly - Ep 484 - Infinite Loops, UB, and C++26
+
+<details>
+<summary>
+infinite loops were undefined behavior prior to C++26.
+</summary>
+
+[Infinite Loops, UB, and C++26](https://youtu.be/Zkm1ZaNn3ko?si=QTKkr9n0M42Xuaam)
+
+A program with an infinite loop can create undefined behavior prior to C++26. the compiler could optimize over the loop and lead to unexpected behavior. the following code would actually call the uncalled function, even if we never did so. clang and gcc could produce different behaviors.
+
+```cpp
+#include <cstdio>
+
+int main()
+{
+  while (true) {
+
+  }
+  return 42;
+}
+
+int uncalled()
+{
+  std::puts("Hello World!");
+  return 10;
+}
+```
+
+in the assembled code in older versions of clang, the uncalled function is directly below the main function, and the main function is empty. so the execution simply 'falls through' to the uncalled section and runs it.
+
+```x86asm
+main:
+
+uncalled():
+  push    rax
+  lea     rdi, [rip + .L.str]
+  call    puts@PLT
+  mov     eax, 10
+  pop     rcx
+  ret
+
+.L.str:
+  .asciz  "Hello World!"
+```
+
+in C++26, infinite loops are no longer undefined behavior, and won't be optimized by the compiler.
+
+</details>
+
+## C++ Weekly - Ep 485 - Variadic Structured Bindings in C++26
+
+<details>
+<summary>
+A new C++26 feature for structured bindings and expansion packs.
+</summary>
+
+[Variadic Structured Bindings in C++26](https://youtu.be/qIDFyhtUMnQ?si=SjQp3wRTdO3YahF3)
+
+introducing a variadic pack, using the <cpp>sizeof...()</cpp> operator. and then using fold expression over the elements with <cpp>...</cpp> expansion because the comma operator forces the correct order.
+
+```cpp
+#include <print>
+
+void inspect(const auto &obj) {
+  const auto &[...values] = obj;
+
+  std::print("Object Has: {} elements", sizeof...(values));
+  int count = 0;
+  (std::print("Elem {}: {}", count++, values), ...);
+}
+
+int main()
+{
+  struct MyData {
+    int x;
+    int y;
+    float z;
+  };
+
+  MyData value{1, 2, 3.4f};
+  inspect(value);
+}
+```
+
+we don't know the name of the field, we know the value, and we could use <cpp>decltype</cpp> to get the type somehow. this could be used to serialized json objects, although it will probably be replaced by C++26 reflection.
+
+</details>
+
+## C++ Weekly - Ep 486 - Captureless Lambdas with Captures
+
+<details>
+<summary>
+Materialized Lambdas and lifetime of captured local objects.
+</summary>
+
+[Captureless Lambdas with Captures](https://youtu.be/MvjBJmsbM4g?si=GmDMQkEyZXMVDFje)
+
+<cpp>constexpr</cpp> isn't related to object lifetime, it's about initialization, so if we want to return a reference to a <cpp>constexpr</cpp> variable in a function, we should declare it as static.\
+when we have a <cpp>constexpr</cpp> thing that we capture (explicitly or implicitly), it becomes part of the lambda code, rather than part of the lambda object.
+
+```cpp
+#include <array>
+
+const int &get_int_constexpr()
+{
+  //constexpr static int i = 42;
+  // return i;
+}
+
+auto get_int_maker()
+{
+  int i = 42;
+  //return [](){ return i; }; // error, no automatic capture
+  // return [&](){ return i; }; // error, local variable captured by reference
+}
+
+auto get_int_maker2()
+{
+  constexpr int i = 42;
+  // return [&](){ return i; }; // this works, even
+  return [](){ return i; }; // this works, even without explicitly capturing i
+}
+
+auto get_array_maker()
+{
+  constexpr std::array<int, 10> data{};
+  return [](){ return data; }; // this doesn't work in clang, but works in GCC
+}
+
+int main()
+{
+  auto l = get_int_maker();
+  auto l_size = sizeof(l); // size 8
+  auto l_res = l(); // error!
+  auto l2 = get_int_maker2();
+  auto l2_size = sizeof(l2); // size 1
+  auto l2_res = l2(); // 42!
+  auto l3 = get_array_maker();
+  auto l3_size = sizeof(l3); // size 1
+  auto l3_res = l2(); // array
+}
+```
+
+all sorts of weird behavior, depending on the compiler, if we capture explicitly, implicitly or by value.
+
+</details>
+
+## C++ Weekly - Ep 487 - AI: Not Just Autocomplete
+
+<details>
+<summary>
+Using Claude AI.
+</summary>
+
+[AI: Not Just Autocomplete](https://youtu.be/acD9F8dzjik?si=VH7fuu6YMf0uiADd)
+
+episode started as moving from exceptions to <cpp>std::expected</cpp>, but turned into agent-based workflow.\
+An agent based AI creates tasks for other AI instances, which should avoid overwhelming the context window of the AI instance the user is interacting with.\
+we work with the *infiz* project and ask the *claude* agent to do it for us.
+
+```sh
+claude # run claude agent
+### from here on it's claude cli
+$ /init # create CLAUDE.md file
+$ update your notes to use ninja instead of Make generator
+$ build and run tests, make sure all tests pass
+$ /cost # what was the cost of the session so far
+$ update the code to remove all uses of exceptions and move to std::expected from C++23 instead
+# accept or reject code changes
+# if reject, tell the agent what else to do 
+$ make new git branch and commit the changes
+$ add more constexpr tests
+```
+
+</details>
+
+## C++ Weekly - Ep 488 - 35 Years of Sad Game Dev Attempts
+
+<details>
+<summary>
+Story time.
+</summary>
+
+[35 Years of Sad Game Dev Attempts](https://youtu.be/4dyKlx1QmkU?si=4e6CZJ9DrpkQ53K2)
+
+the story of how jason developed stuff, the first attempts, submissions and rejections of projects, including some that were commercial products. even ChaiScript was a game engine, in some aspects. some videos about game design. tile engine, raycasting engines, **cons_expr** - another scripting engine for <cpp>constexpr</cpp>.
+
+</details>
+
+## C++ Weekly - Ep 489 - C++11's User Defined Literals
+
+<details>
+<summary>
+How to define literal and best practices for using them.
+</summary>
+
+[C++11's User Defined Literals](https://youtu.be/DU1SmsjUxWg?si=JSxAxEkZIDo58LPh)
+
+creating and using user defined literals, like the <cpp>std::chrono</cpp> literals for durations. to define a literal, it must take one of limited list of parameters types.
+
+the user defined operators must start with an underscore, since it was decided to leave room for future standard literals. so we need to use `_mst` rather than `mst`. the limited list of the allowed parameter types doesn't even include integers, so we must make sure to properly convert into the required type. it gets complicated when using negative numbers. we would usually want this to be <cpp>consteval</cpp>, unless we have some allocation we can't avoid.
+
+```cpp
+struct MyStrongType {
+  int i;
+};
+
+// should be consteval, since that's what a literal means
+consteval MyStrongType operator""_mst(unsigned long long int v) {
+  return MyStrongType{static_cast<int>(v)};
+}
+
+int main()
+{
+  [[maybe_unused]] auto value = MyStrongType{42};
+  [[maybe_unused]] auto value2 = 43_mst;
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 490 - `std::ignore` vs \_ vs `[[maybe_unused]]`
+
+<details>
+<summary>
+Different ways to tell the compiler something won't be used.
+</summary>
+
+[`std::ignore` vs \_ vs [[maybe_unused]]](https://youtu.be/iUcS0LCj2Ko?si=QYsEwsjo4HbEgwB0)
+
+we can use the <cpp>[[maybe_unused]]</cpp> attribute, the <cpp>std::ignore</cpp> object (global object that anything can be assigned to) or the empty/nameless `_` underscore placeholder (since c++26). only the nameless underscore can work with structured bindings, we can actually have multiple variables with the same `_` name, but they are actually different from one another!
+
+```cpp
+#include <tuple> // for std::ignore
+
+[[nodiscard]] std::pair<int, int> get_value();
+
+int main()
+{
+  get_value(); // warning, ignoring no discard
+  auto x = get_value(); // warning, unused value
+  [[maybe_unused]] auto x1 = get_value(); // no warning
+  std::ignore = get_value(); // no warning
+  _ = get_value(); // no warning
+  auto [a,b] = get_value(); // might get a warning if one is unused, might not.
+  return b;
+}
+```
+
+the behavior should be the same, although the performance and compilation time might be different.
+
+</details>
+
+## C++ Weekly - Ep 491 - Extract, Merge, Insert: C++17 Node Handles
+
+<details>
+<summary>
+Efficient operations for map and set containers.
+</summary>
+
+[Extract, Merge, Insert: C++17 Node Handles](https://youtu.be/VzDMgStcCGs?si=Y2krN6PubxqnAU8N)
+
+New functions for <cpp>std::map, std::set</cpp> and the *multi* and *unordered* variants. when creating a copy of a container, the new container allocates memory for each node.the new functions try doing the same thing in an efficient matter.
+
+```cpp
+#include <map>
+#include <string>
+#include <print>
+
+int main()
+{
+  std::map<std::string, int> original;
+  original["hello world long string"] = 1; // long string, a lot of work is being done here
+  original["short"] = 2; // required to be an allocation
+  original["another"] = 3; // required to be an allocation
+  original["value1"] = 3; // required to be an allocation
+
+  std::map<std::string, int> newmap;
+  newmap.insert(original.begin(), original.end()); // copy map, three more allocations.
+  std::print("{}\n", original);
+  std::print("{}\n", newmap);
+
+  std::map<std::string, int> original2;
+  original2["a"] = 1
+  original2["b"] = 2
+  original2["c"] = 3
+  std::print("{}\n", original2);
+
+  std::map<std::string, int> merged;
+  merged.merge(original2); // steals the values from original2, avoids allocation
+  std::print("{}\n", original2);
+  std::print("{}\n", merged);
+  
+  auto node = original("value1");
+  std::map<std::string, int> stolen_goods;
+  stolen_goods.insert(std::move(node)); // no allocations, must take rvalue
+  stolen_goods.insert(original.extract(original_begin())); // no allocations
+
+  std::print("{}\n", original);
+  std::print("{}\n", stolen_goods);
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 492 - initializer_list Constructors
+
+<details>
+<summary>
+Different types of constructors.
+</summary>
+
+[initializer_list Constructors](https://youtu.be/E5aEt4917mM?si=P0Zx6Vo6-NWXPgYY)
+
+constructors that take an <cpp>std::initializer_list</cpp> as the argument. conflict with brace initialization, might be confusing.
+
+```cpp
+#include <vector>
+#include <fmt/format.h>
+#include <fmt/rages.h>
+
+int main()
+{
+  std::vector v(3,4); // vector with three elements of the value 4. relies on implicit conversion from int to size_t
+  std::print("{}\n", v);
+  std::vector v2{3,4}; // vector with two elements: 3, 4
+  std::print("{}\n", v2);
+  std::vector v3({3,4}); // vector with two elements: 3, 4
+  std::print("{}\n", v3);
+}
+```
+
+and now we try this with our own pair-like struct.
+
+```cpp
+struct S
+{
+  int a;
+  int b;
+  std::vector<int> data;
+};
+
+struct S2
+{
+  int a;
+  int b;
+  std::vector<int> data;
+
+  S2(int a_, int b_): a{_a}, b{_b} {}
+  S2(std::initializer_list<int> data_): data{_data} {}
+};
+
+
+int main()
+{
+  S s(3,4, {1,2,3}); // C++20 parameterized direct initialization
+  fmt::print("{}, {}, {}\n", s.a, s.b, s.data);
+  S2 s2(3,4); // calling a constructor, can't do direct initialization now.
+  fmt::print("{}, {}, {}\n", s2.a, s2.b, s2.data);
+  S2 s{3,4}; // calling an initializer list constructor with the curly braces.
+  fmt::print("{}, {}, {}\n", s3.a, s3.b, s3.data);
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 493 - C++ GUI Quick Start with FLTK
+
+<details>
+<summary>
+Fast Light Tool Kit - Open Source C++ GUI framework.
+</summary>
+
+[C++ GUI Quick Start with FLTK](https://youtu.be/hFreBEUmumw?si=uWvHHF9nJsDQ2ywC), [example repository](https://github.com/lefticus/fltk_example)
+
+using the best practices template and creating a new repository, creating a new project, cloning locally, running cmake, removing un-needed dependencies, updating package sources.
+
+creating a window, with a button on it, adding a callback to the button.
+
+to run on the CI we need to make sure we have the correct headers (such as OPEN GL) for each platform. the example from FLTK use naked <cpp>new</cpp> allocations which some tools view as memory leaks.
+
+</details>
+
+## C++ Weekly - Ep 494 - Tool Spotlight: Modern Safe scanf: scnlib
+
+<details>
+<summary>
+Modern replacement for <cpp>scanf</cpp>.
+</summary>
+
+[Tool Spotlight: Modern Safe scanf: scnlib](https://youtu.be/Y3yAVejU0Wk?si=-tDmr7Iy5hQmbgNk)
+
+a modern replacement for reading input, like the <cpp>lib{fmt}</cpp> library, but for parsing. it already exists on compiler explorer.
+
+```cpp
+#include <scn/scan.h>
+
+int main()
+{
+  std::string_view input = "42, 43";
+  auto result = scn:scan<int, int>(input, "{}, {}");
+  if (result) {
+    auto [a, b] = result->values();
+    std::cout << a << ' ' << b <<'\n';
+  }
+}
+```
+
+it can ignore whitespace, but not the comma, and it truncates floating point values to integers.
+
+</details>
+
+## C++ Weekly - Ep 495 - Custom Formatters for `std::Format`
+
+<details>
+<summary>
+Writing custom formatters.
+</summary>
+
+[Custom Formatters for `std::Format`](https://youtu.be/Rq4apPjnrsU?si=7goq1mJ9xVU6kJuV)
+
+custom formatters introduction, custom formatters are easy, custom format strings are harder. we define a format specialization for this. we need the <cpp>constexpr</cpp> `parse` and the <cpp>const</cpp> `format` functions.
+
+```cpp
+#include <print>
+#include <string>
+struct Data
+{
+  int value;
+  double distance;
+  std::string name;
+};
+
+template<>
+struct std::formatter<Data> {
+  constexpr auto parse(std::format_parse_context &ctx) {
+    return ctx.begin();
+  }
+
+  auto format(const Data &d, std::format_context &ctx) const {
+    return std::format_to(ctx.out, "[{}: {}, {}]", d.name, d.value, d.distance);
+  }
+};
+
+int main()
+{
+  Data data{1, 3.4, "Hello World"};
+  std::print("{}\n", d); // no way to format by default
+}
+```
+
+we don't have any format string changes, like width, number formats, etc...
+
+</details>
+
+## C++ Weekly - Ep 496 - Stack vs Heap
+
+<details>
+<summary>
+Address on the memory, stack and heap.
+</summary>
+
+[Stack vs Heap](https://youtu.be/VAzfOxLNLl4?si=udbJT9qgBKZMEdMK)
+
+surprisingly, the c++ standard doesn't address the difference between the stack and the heap, but we can reason about it.
+
+different scopes:
+
+- automatic - lexically scoped local variables are stack variables
+- dynamic - (new and delete) are heap variables.
+
+```cpp
+
+void print_address(*int val) {
+  std::println("Pointer to: {}", static_cast<const void *>(val));
+}
+
+void print_address(const auto &val) {
+  std::println("Reference to: {}", static_cast<const void *>(val));
+}
+
+int main()
+{
+  int i = 42;
+  int j = 43;
+  int k = 44;
+
+  print_address(i);
+  print_address(j);
+  print_address(k);
+
+  print_address(new int{45});
+  print_address(new int{46});
+  print_address(new int{47});
+}
+```
+
+the stack grows down, starting high (address 0x7fffa9254fc in the example) and each subsequent variable is at a lower address. the heap grows upwards, starting from a low memory location (address 0x3edc42f0) and then moving to higher addresses.
+
+if the stack grows too much, we have a stack overflow, the stack is limited by some settings, the heap is virtually unlimited, based on the machine virtual memory. working with the stack is faster than the heap.
+</details>
+
+## C++ Weekly - Ep 497 - How to Add Static Analysis to Legacy C++
+
+<details>
+<summary>
+A strategy to get rid of errors in large legacy codebases.
+</summary>
+
+[How to Add Static Analysis to Legacy C++](https://youtu.be/7_nSywhw_E8?si=wMI1JDB_2zSUI0L5)
+
+we start with a code example that has some issues. if we move to `-O3` optimization, the compiler tries to optimize the loop away and finds an issue. if we have different warnings depending on the optimization, it's a sign of UB. unused variables might also be a sign of errors.
+
+We can have the additional flags for compiler warnings (`-Wall -Wextra -Wunused -Wconversion -Werror`). however, if we turn them all on at once, we will see too many warnings right away. so instead, if we find one warning, we can turn it on specifically and detect only errors of this kind, and once we fix an error of one kind, we add the flag to the compilation, and we are sure it won't come back again.
+
+```cpp
+#include <fmt/format.h>
+
+#include <array>
+#include <cstdint>
+#include <iostream>
+
+[[nodiscard]] constexpr std::uint32_t rot32(std::uint32_t x, std::uint32_t r) {
+  return (x << r) | (x >> (32 -r));
+}
+
+int main() {
+  fmt::print("Hello world terminated by a new line!\n");
+
+  // this will cause a undefinedBehavior Sanitize Error
+  auto val = rot32(0, 0);
+
+  std::array<int, 5> values{1, 2, 3, 4, 5};
+
+  // this will cause a -Wconversion warning
+  // signed integer compared to unsigned
+  for (int i = 0; i <= values.size(); ++i) {
+    // this will loop off at the end of the array and AddressSanitizer Error
+    fmt::print("Value: {}\n", value[i]);
+  }
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 498 - Lifetimes of Local Variables
+
+<details>
+<summary>
+investigating local variable lifetime.
+</summary>
+
+[Lifetimes of Local Variables](https://youtu.be/F-gRrU-g22k?si=YnRGvjSctfPTFVsO)
+
+lexically scoped automatic variables. not variables declared with <cpp>auto</cpp>, even though in **C** `auto` meant automatically managed.\
+we take a custom object that prints it's lifetime operations.
+
+```cpp
+struct S{
+  S() {std::puts("S() // default ctor")}
+  S(const S &) {std::puts("S(const S &) // copy ctor")}
+  S &operator=(const S &) {std::puts("=(const S &) // copy assignment")}
+  S(S &&) {std::puts("S(S &&) // move ctor")}
+  S &operator=(S &&) {std::puts("=(S &&) // move assignment")}
+  ~S() {std::puts("~S() // dtor")}
+};
+
+int main(){
+  S s; // lifetime begins
+  {
+    S s2; // lifetime begins
+  } // lifetime ends
+
+  for (auto i = 0; i <10 ; ++i)
+  {
+    std::puts("loop");
+    S s3;
+  } // per loop lifetime ends, but there's also a lifetime for the loop variable.
+  std::puts("final line of main");
+} // lifetime ends
+```
+
+</details>
+
+## C++ Weekly - Ep 499 - GCC's Stack Usage Analysis (and Warnings!)
+
+<details>
+<summary>
+GCC flag to view stack usage.
+</summary>
+
+[GCC's Stack Usage Analysis (and Warnings!)](https://youtu.be/kXe-YkJ9nBs?si=1vIr115uT7aoZjr1)
+
+we can use compiler explorer to see that stack usage report. this will change based on the optimization level and what we use in the program. if we have forward declared code then the compiler can't remove it.
+
+the GCC flag is `-fstack-usage`, which creates a ".su" file. we can also enable a `-Wstack-usage=byte-size" warning to warn us if we exceed a stack size, which can be important if we are targeting embedded machines.
+</details>
+
+## C++ Weekly - Ep 500 - The Show's Half Over!
+
+<details>
+<summary>
+Youtube milestone!
+</summary>
+
+[The Show's Half Over!](https://youtu.be/Pf7tq3DG88A?si=RGNqFGJCUURsfVSd)
+
+in the recent episode, the title page started mentioning the episode number out of 999. the series is expected to last until 2035 or such. this will include C++26, 29, 32, 35 and parts of C++38.\
+There's also a new book, "Programming Puzzles Big Book".
+
+also looking at some statistics of which are the most watched videos.
 </details>

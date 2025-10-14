@@ -1,14 +1,14 @@
 <!--
-// cSpell:ignore gotos lefticus xoroshiro    rotr lippincott kcov tandy jongg pscii
+// cSpell:ignore gotos lefticus xoroshiro    rotr lippincott kcov tandy jongg pscii gdbgui abidiff
  -->
 
 # C++ Weekly takeaways
 
 what I learned from each episode.
 
-[c++ Weekly Playlist](https//www.youtube.com/playlist?list=PLs3KjaCtOwSZ2tbuV1hx8Xz-rFZTan2J1)
+[c++ Weekly Playlist](https:://www.youtube.com/playlist?list=PLs3KjaCtOwSZ2tbuV1hx8Xz-rFZTan2J1)
 
-[Best Practices Book](https//github.com/lefticus/cppBestPractices)
+[Best Practices Book](https:://github.com/lefticus/cppBestPractices)
 
 ## C++ Weekly - Ep 1 - ChaiScript_Parser Initialization Refactor
 
@@ -203,7 +203,7 @@ Whiles are gotos
 
 ## C++ Weekly - Ep 70 - C++ IIFE in quick-bench.com
 
-http://quick-bench.com/
+[quick-bench](http://quick-bench.com/)
 A site that allows quick benchmarking of c++ code.
 
 ## C++ Weekly - Ep 71 - Hidden C++ 17 - Part 1
@@ -211,7 +211,7 @@ A site that allows quick benchmarking of c++ code.
 New stuff in c++17
 Some regex features, ‘multiline’ option.
 Shared_ptr with index
-reinterpet_pointer_cast<> and shared_ptr/
+reinterpret_pointer_cast<> and shared_ptr/
 Std::as_const - takes a reference and returns a const reference.
 Std::to_chars - fills a string with a number at the locale format
 Std::from_chars - takes a char\* (begin and end) and returns a numeric result.
@@ -772,6 +772,7 @@ examples of some usages of goto that fail.
 - can't jump and skip initialization of a variable.
 - can't jump between functions (labels are scoped).
 - can't have blank labels.
+
 </details>
 
 ## C++ Weekly - Ep 293 - RPG in C++20 Project: Major Updates!
@@ -784,7 +785,7 @@ Update about the game progress.
 [RPG in C++20 Project: Major Updates!](https://youtu.be/IWEdaC9evBc)
 
 status update for the rpg game with new feature.\
-running on a commador emulator.
+running on a commodore emulator.
 
 optimization passes, we see the differences between different levels of optimization, in execution and size. ascii vs pscii(?spelling?) \
 AVR architecture processor? \
@@ -878,7 +879,7 @@ int main()
 
 <details>
 <summary>
-an home excerisice to make everything `auto` and see how it goes.
+an home execresize to make everything `auto` and see how it goes.
 </summary>
 
 not a best practice episode, rather an exercise for us to follow. we should find a project and make everything auto. the variables, the return type of function, and the parameters.
@@ -910,7 +911,7 @@ has some other stuff.
 
 <details>
 <summary>
-an home excerisice to make everything `const` and see how it goes
+an home execresize to make everything `const` and see how it goes
 </summary>
 
 [Homework: const All The Things](https://youtu.be/ZYtVuVPOY4A)
@@ -921,21 +922,20 @@ we will need to think about making everything const (except maybe member variabl
 we can do it together with the version that we made auto or a new version.
 
 </details>
- 
- ## C-- Weekly - Ep 300 - The Least Portable Programming Language?
 
- <details>
- <summary>
+## C-- Weekly - Ep 300 - The Least Portable Programming Language?
+
+<details>
+<summary>
 sphinx C-- is a language that combines high and low level features, and it nearly impossible to port.
  </summary>
- 
+
  [The Least Portable Programming Language?](https://youtu.be/V0z9PKFe4jY)
 
 [C--](https://en.wikipedia.org/wiki/C--) is a programming language that is used for compilers, but there is also [sphinx c--](http://c--sphinx.narod.ru/indexe.htm), which was maintained almost until 2001, it's a high-level language, but it's un-portable.
 
 it un-portable because it expects us to write instructions to registers directly and talk directly to hardware, but it also has structs and function. we have internal assembly commands which we can run from the code. it's very much tied to 32-bit computers.
 
-now we continue [episode 286](%C++-Episodes.md), he used a function to write frames to the 2nd screen.
+now we continue episode 286, he used a function to write frames to the 2nd screen.
 
 </details>
- 

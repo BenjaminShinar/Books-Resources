@@ -3,7 +3,14 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": ["cpp"],
-  "words": ["Wconversion", "Valgrind"],
+  "words": [
+    "Wconversion",
+    "Valgrind",
+    "Wunused",
+    "Wextra",
+    "Werror",
+    "Weverything"
+  ],
   "ignoreWords": [
     "smallpt",
     "IIFE",

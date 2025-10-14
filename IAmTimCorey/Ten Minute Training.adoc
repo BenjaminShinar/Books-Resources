@@ -1472,6 +1472,17 @@ we can now rename fields, target different platforms such as Azure (which will g
 
 ====
 
+=== Timesaving Blazor Extension for Visual Studio
+
+
+.visual studio extension
+[%collapsible]
+====
+
+Blazm.extension for visual studio and Blazor, context menu, moving from code-behind to the ".razor" file, finding usages in components, generating isolated files for css and javascript, generating unit test files (C# or Razor syntax), showing project routes and some other useful commands.
+
+====
+
 == Misc
 
 .Stuff Worth Keeping

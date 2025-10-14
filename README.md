@@ -277,8 +277,7 @@ Stuff I use:
 
 Dialog Box - don't use
 
-<dialog open>This is an open dialog window</dialog>
-
+<dialog open>This is an open dialog window</dialog>  <!-- markdownlint-disable-line MD033 -->
 \
 \
 \
@@ -286,7 +285,7 @@ Dialog Box - don't use
 
 definition and tooltip
 
-<dfn><abbr title="HyperText Markup Language">HTML</abbr></dfn> is the standard markup language for creating web pages.
+<dfn><abbr title="HyperText Markup Language">HTML</abbr></dfn> is the standard markup language for creating web pages.  <!-- markdownlint-disable-line MD033 -->
 
 ### keyboard tricks
 

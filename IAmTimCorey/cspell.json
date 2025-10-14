@@ -3,7 +3,20 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": ["csharp", "sql", "softwareTerms"],
-  "words": ["Deconstructor", "blazor", "linux", "dotnet"],
-  "ignoreWords": ["Corey", "appsettings", "highlightjs","nullable"],
+  "words": [
+    "Deconstructor",
+    "blazor",
+    "LINQ"
+  ],
+  "ignoreWords": [
+    "Corey",
+    "appsettings",
+    "highlightjs",
+    "nullable",
+    "SQLDA",
+    "Blazm",
+    "loweralpha",
+    "SLNX"
+  ],
   "import": []
 }

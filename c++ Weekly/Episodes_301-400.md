@@ -1,5 +1,5 @@
 <!--
-// cSpell:ignore fsanitize Fertig FTXUI NOLINT ssupported lstdc libuv Codecov fanalyzer pypy cppyy consteval emptycrate chrono constinit cppcheck INTERPROCEDURAL functools libbacktrace nodiscard valgrind csdint remove_cvref_t nlohmann catchorg Pico subspan Bloaty McBloatface rodata dynstr fullsymbols conan gitlab jenkins unreachables conway gtest codecov typesafe ftxui Hylo
+// cSpell:ignore Fertig FTXUI NOLINT ssupported lstdc libuv Codecov fanalyzer pypy cppyy emptycrate chrono INTERPROCEDURAL functools libbacktrace  remove_cvref_t nlohmann catchorg Pico Bloaty McBloatface rodata dynstr fullsymbols unreachables conway gtest codecov ftxui Hylo ADSP
 -->
 
 <link rel="stylesheet" type="text/css" href="../markdown-style.css">
@@ -387,7 +387,7 @@ Discussion episode.
 
 [Are Code Comments a Code Smell?](https://youtu.be/8V6Ry5eTTcc)
 
-the defintion of code smells.\
+the definition of code smells.\
 are all comments simply signs that we didn't try hard enough to make the code clear?
 
 </details>
@@ -900,13 +900,13 @@ int main()
 
 | type/keyword                  | compile-time calculation | const | static | example                                           | notes                                                                        |
 | ----------------------------- | ------------------------ | ----- | ------ | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `constexpr`                   | up to the compiler       | yes   | no     | `constexpr auto value = get_value(1);`            |
+| `constexpr`                   | up to the compiler       | yes   | no     | `constexpr auto value = get_value(1);`            | |
 | `constexpr static`            | yes                      | yes   | yes    | `constexpr static auto value = get_value(1);`     | must be static const                                                         |
 | `constinit static`            | yes                      | no    | yes    | `constinit static auto value = get_value(1);`     | must be static                                                               |
 | `consteval` function          | yes                      | no    | no     | `auto value = get_value_consteval(5)`             | argument must be compile time constants, function can't be used in run time. |
 | template parameter            | yes                      | no    | no     | `auto value = make_compile_time<get_value(10)>()` | using templates                                                              |
 | wrapping `consteval` function | yes                      | no    | no     | `auto value = as_constant(get_value(10))`         | inner function can be reused                                                 |
-| `consteval invoke` wrapper    | yes                      | no    | no     | with moveable and callable                        |
+| `consteval invoke` wrapper    | yes                      | no    | no    | | with moveable and callable                        |
 
 </details>
 
@@ -1465,7 +1465,7 @@ int main(int argc, const char*[])
 
 inline S make_value_from_arg_const(const S s)
 {
-    return s; //because we return it, const is bad in function defintion
+    return s; //because we return it, const is bad in function definition
 }
 
 inline S make_value_from_arg_move(S s)
@@ -2228,7 +2228,7 @@ int main()
 }
 ```
 
-there is a danger of ODR (one defintion rule) violation, so it's probably better to create a callable directly.
+there is a danger of ODR (one definition rule) violation, so it's probably better to create a callable directly.
 
 </details>
 
@@ -2322,7 +2322,7 @@ a new version of **C**, which will have changes which can be useful for c++ prog
 - `#embed` - pull a text file, compile time (using `#include` doesn't work well).
 - `constexpr` - values, but not functions.
 - attributes - such as `[[nodiscard]]`, `[[maybe_unused]]`.
-- unnamed parameters in function defintion.
+- unnamed parameters in function definition.
 - typed enumeration - `enum myEnum: int {ONE, TWO};`.
 - `__has_include` - compile time check if a file can be included.
 
@@ -3206,7 +3206,7 @@ New pre-processor directives in upcoming C and C++ standards.
 
 [C23's `#embed` and C++23's `#warning`](https://youtu.be/ibKnNRAq5UY).
 
-in C++23 and C23 standards, there are new pre-processor directive (commands/defintions/macros).
+in C++23 and C23 standards, there are new pre-processor directive (commands/definations/macros).
 
 C23 now has `#embed` - which allows us to directly pull in data from other files into the binary. we can limit the numer of the bytes taken. theoretically, we could use "/dev/random" to get random data from the local machine.
 
@@ -3228,7 +3228,7 @@ C++23 provides the `#warning` directive, which we can use to write warnings at c
 
 ```cpp
 #include <climits>
-#include <csdint>
+#include <cstdint>
 #if UINT_MAX == UINT16_MAX
 #warning "Project not tested on 8bit platforms"
 #endif
@@ -4377,7 +4377,7 @@ int main()
 }
 ```
 
-the two are equivelent, we could remove the <cpp>mutable</cpp> mark from the lambda and add <cpp>const</cpp> to the member function and then we couldn't change the return value.
+the two are equivalent, we could remove the <cpp>mutable</cpp> mark from the lambda and add <cpp>const</cpp> to the member function and then we couldn't change the return value.
 
 (more about compile time members, constructors and mutability).
 
