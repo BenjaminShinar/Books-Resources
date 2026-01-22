@@ -105,3 +105,102 @@ int main()
 next episode will show how we do it for real in C++26.
 
 </details>
+
+## C++ Weekly - Ep 503 - The Amazing Power of C++26's Template For Statements
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[The Amazing Power of C++26's Template For Statements](https://youtu.be/yaWiGLSDc64?si=oz-F4JdFQntp69Wj)
+
+expansion templates, <cpp>template for</cpp>, a C++26 feature.\
+will act as either ranged-for-loop on templated objects, or as a _destructing expression statement_. 
+
+we can't run a for-loop over a tuple, since the elemnts aren't the same type.
+
+```c++
+#include <tuple>
+
+std::tuple<int, char, double> get_tuple();
+
+void use(double);
+void use(int);
+void use(char);
+
+int main()
+{
+    for (const auto &val : get_tuple()) {
+        // this is an error
+    }
+    template for (const auto &val : get_tuple()) {
+        // this should work
+        use(val); // conversions might happen here
+    }
+}
+```
+
+a <cpp>std::tuple</cpp> is something that can be destructred, so we can use the same `template for` on data types and 'visit' each of the elements.
+
+this is somewhat equivelent.
+```cpp
+void use_data(const auto &data) {
+    const auto&[...elem] = data;
+    (use(elem),...);
+}
+```
+
+the real strengh will be working over constant expressions, we could make the iteration item a constant expression, we need to do some workarounds, but we could do stuff during compile time.
+
+</details>
+
+## C++ Weekly - Ep 504 - Practical Reflection in C++26
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Practical Reflection in C++26](https://youtu.be/Mg_TBYppQwU?si=xqCT-25XjYv3Yy1K)
+
+combining the power of reflection with the scripting langugage.
+
+```cpp
+namespace lefticus::interface {
+    // defining functions
+}
+
+int main(){
+    lefticus::cons_expr evaluator;
+
+    // bind members
+    bind<^^lefticus::interface>(evaluator);
+
+    // test calling functions defind in the interface namespace
+    evaluator.evaluate(R"(
+        (q)
+        (u 2 3)
+        (print (myfloor (+ 3.2 13.9)))
+    )");
+}
+```
+
+the `^^` is the reflection operator, it creates a metadata object, the magic itself happens in the *bind* function. the `[:<>:]` is a splicing syntax for reflection, there are many functions in the <cpp>std::meta</cpp> library for reflection.
+
+```cpp
+template <auto Member>
+constexpr auto bind_member(auto &engine) {
+    if constexpr (!std::meta::is_special_member_function(Member)) {
+        engine.template add<&[:Member:]>(std::meta::display_string_of(Member));
+    }
+}
+
+template <auto Type>
+constexpr auto bind(auto &engine) {
+    static constexpr auto ctx = std::meta::access_context::unprivileged();
+
+    template for (constexpr auto mem : std:define_static_array(members_of(Type, ctx)) {
+        bind_member<mem>(engine);
+    }
+}
+```
+</details>
