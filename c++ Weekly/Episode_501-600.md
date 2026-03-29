@@ -155,7 +155,7 @@ the real strengh will be working over constant expressions, we could make the it
 </details>
 
 ## C++ Weekly - Ep 504 - Practical Reflection in C++26
-<!-- <details> -->
+<details>
 <summary>
 //TODO: add Summary
 </summary>
@@ -204,3 +204,166 @@ constexpr auto bind(auto &engine) {
 }
 ```
 </details>
+
+## C++ Weekly - Ep 505 - C++26's CNTTP bind Functions
+
+<details>
+<summary>
+using `bind` for non-type template parameters.
+</summary>
+
+[C++26's CNTTP bind Functions](https://youtu.be/gIyuvqJnhi0?si=6o0loIodc_QPc88E).
+
+the <cpp>std::bind_front</cpp> and <cpp>std::bind_back</cpp> functions.
+
+```cpp
+#include <functional>
+
+int add(int x, int y) {
+    return x + y;
+}
+
+void use(const auto f&);
+
+int main()
+{
+    const auto old_bound = std::bind_front(&add, 2);
+    //return old_bound(3);
+    const auto bound = std::bind_front<add>(1);
+    use(bound);
+}
+```
+
+we no longer need to pass the pointer to the binding function, which might reduce the binary size.
+
+</details>
+
+## C++ Weekly - Ep 506 - Zero Cost Function Binding
+<details>
+<summary>
+improving on last week.
+</summary>
+
+[Zero Cost Function Binding](https://youtu.be/9laCL5GixNk?si=7rFQI8J1juiIMhur)
+
+
+continuing from last week example of CNNTP function binding. trying to implement it ourselves. we pass the callable, but we don't need to capture it. we use a forwarding reference, which can capture the parameters, and we eventually return a lambda closer object.
+
+```cpp
+#include <functional>
+
+int add(int x, int y) {
+    return x + y;
+}
+
+void use(const auto f&);
+
+template<auto Func, typename... Param>
+constexpr auto bind_front(Param && ... param) {
+    return [...param = std::forward<Param>(param)]<typename ... Inner>(Inner && ... inner) {
+        return Func(param..., std::forward<Inner>(inner));
+    }
+}
+
+int main()
+{
+
+    const auto bound = bind_front<add>(1);
+    use(bound);
+}
+```
+
+we want to exapnd the functionality to also take additional parameters at compile time, and not just the callable object. and if there are no runtime bounded parameters, we can make the returned callable static, saving even more stack space. however, this isn't currently part of the standard bounding functions.
+
+
+```cpp
+void use(const auto f&);
+
+template<auto Func, auto ... Constexpers, typename... Param>
+constexpr auto bind_front(Param && ... param) {
+    if constexpr (sizeof...(param) == 0) {
+        return []<typename ... Inner>(Inner && ... inner) static {
+            return Func(Constexpers..., std::forward<Inner>(inner));
+    } else {
+        return [...param = std::forward<Param>(param)]<typename ... Inner>(Inner && ... inner) {
+            return Func(Constexpers..., param..., std::forward<Inner>(inner));
+        }
+    }
+}
+
+int main()
+{
+
+    const auto bound = bind_front<add,1>);
+    use(bound);
+}
+```
+
+</details>
+
+## C++ Weekly - Ep 507 - Insidious Accidental Lambda Conversion
+
+<details>
+<summary>
+Another example of implict conversion.
+</summary>
+
+[Insidious Accidental Lambda Conversion](https://youtu.be/b3fFxneoHso?si=r1tGhK1uuW7Dv-Zj)
+
+(talking about the new book)
+
+an accidental lambda conversion, submitted by a viewer.
+
+```cpp
+#include <cstdio>
+
+int main()
+{
+    auto succeeded = [](){ return false; };
+
+    if (succeeded) {
+        std::puts("success");
+    } else {
+        std::puts("failure!");
+    }
+}
+```
+
+the bug is that we didn't call the lambda, we only defined it and checked the truthiness of the objcet, so since the address isn't null, it will always be considered True. getting warnings depends on the compiler.
+
+we can set up some compiler flags to avoid boolean convesions (`-Wbool-conversion`, `-Wpointer-bool-conversion`, `-Wundefined-bool-conversion`) to warn us against implict conversions to booleans, but not all developers want these warnings.
+
+it can also mess us with strings, where it prints 1 rather than the address of the object.
+</details>
+
+## C++ Weekly - Ep 508 - What if You're Windows Only?
+
+<details>
+<summary>
+Building a project for Windows and older targets.
+</summary>
+
+[What if You're Windows Only?](https://youtu.be/aEuRTzj1qrM?si=iwBkkM6nFVkNV5Kx)
+
+some project aren't designed to be multi-platform, and are strictly for windows.
+
+the steps:
+
+
+> 1. Port my build system to CMake
+> 1. upgrade visual studio to the laters
+>     a. if you need the older compiler, configure it in the cmake
+>     a. also add new build system with the latest compiler
+>     a. add the `clang-cl`
+>     a. turning compatability flags with old featurse from MSVC.
+> 1. start turning off compatability flags
+> 1. isolate the code that uses windows extentsions libraries
+>     a. move those clases into a separate static library.
+> 1. isolate the code that doesn't need anything windows specific.
+>     a. movet those classes into a different static library as well
+> 1. add a linux/gcc/clang build that compiles and tests just those isolated components
+
+wider testing with different compilers helps catching bugs, we can get better compilers for the CI, even if we don't use the most modern tools for the release (since we need to use the older tool chain).
+
+</details>
+
