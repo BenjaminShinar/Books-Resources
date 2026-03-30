@@ -367,3 +367,294 @@ wider testing with different compilers helps catching bugs, we can get better co
 
 </details>
 
+## C++ Weekly - Ep 509 - Can Lambdas Inherit Interfaces?
+
+<details>
+<summary>
+Playing with lambdas.
+</summary>
+
+[Can Lambdas Inherit Interfaces?](https://youtu.be/f0heIju3udc)
+
+creating a lambda that implements some abstract base class, so it functionally inherits from a class even though it itself is nameless. like how Java has.
+
+something like
+```cpp
+struct BaseClass {
+    virtual int do_work() = 0;
+};
+
+int main()
+{
+    auto lambda = []() : BaseClass {
+        // body of the lambda
+    };
+}
+```
+
+This isn't like inheriting from a lambda using <cpp>decltype(lambda)</cpp>, we want the other way around. so a differenet question is to ask "can we inject behavior into a lambda".
+
+starting with C++23, we can use 'deducing this' (like how we create recursive lambdas).
+
+```cpp
+template<typename ... Base>
+struct overload : Base {
+    using Base::operator()...;
+
+    void update_values() {
+        ++value;
+    }
+
+    int value =0;
+};
+
+template<typename ... Base>
+overload(Base && ...) -> overload<Base...>;
+
+int main()
+{
+    auto lambda = 
+
+    overload d{
+        [](this auto & self, int i) {
+            self.update_values();
+            std::cout << "i: " << i << " value: " << self.value << '\n'
+            return self.value;
+        },
+        [](this auto & self, double d) {
+            self.update_values();
+            std::cout << "d: " << d << " value: " << self.value << '\n'
+            return self.value;
+        },
+    };
+    d(42);
+    d(4.2);
+}
+```
+
+so the lambdas share a state, inherit behavior, but don't know about other things.
+
+</details>
+
+## C++ Weekly - Ep 510 - The AMAZING Performance of array (and span)!
+
+<details>
+<summary>
+getting better performance using compile time containers.
+</summary>
+
+[The AMAZING Performance of array (and span)!](https://youtu.be/u0mVnuUh46w)
+
+<cpp>std::array</cpp> is the zero cost abstraction of a continues data.
+
+```cpp
+#include <array>
+#include <vector>
+#include <numeric>
+
+int sum(const std::vector<int> & data) {
+    return std::accumalte(data.begin(), data.end(), 0);
+}
+
+int sum(const std::array<int, 10> & data) {
+    return std::accumalte(data.begin(), data.end(), 0);
+}
+```
+we can compare the generated code between the two options, and see that the version with the array is much simpler than the vectror version, it does some loop unrolling (using architecture native, if possible). the compiler knows at compile time how much work it would end up doing, so it can optimize the generated code. this also works with other operations, such as <cpp>std::ranges::for_each</cpp> (though not always).
+
+there's also a non-owning continous data, which is <cpp>std::span</cpp>, and the compiler operates on both.
+
+</details>
+
+## C++ Weekly - Ep 511 - `move(obj).fun()` vs `move(obj.fun())`
+
+<details>
+<summary>
+move an object and call a member, or call a member and move the result.
+</summary>
+
+[`move(obj).fun()` vs `move(obj.fun())`](https://youtu.be/nLjrMcjsa0Y)
+
+this can depend on the object we have, and what members it has.
+
+note: a moved from object is required to be in a valid state, but not a specified one. for most implementations, a moved-from string ends up empty, but that's not a requirement.
+
+```cpp
+#include <optional>
+#include <string>
+#include <iostream>
+
+int main()
+{
+    std::string data = "Hello World";
+    std::cout << "Before: " << data << '\n';
+    std::string other = std::move(data);
+    std::cout << "After: " << data << '\n'; // empty
+
+    std::optional<std::string> os{"optional"};
+    std::cout << "Optional Before: " << os.value() << '\n';
+    auto os2 = std::move(os).value();
+    // we pick the && qualified reference
+    std::cout << "Optional After: " << os.value() << '\n'; // empty
+}
+```
+
+(he uses an custom object as an example), we see what operator is called depending on which thing is moved, if the class has reference qualified members (move operators), the result is the same at all cases. but if we don't have reference qualified members (only copy operators), then we might want to take ownership of the data.
+(in c++23 we can use the 'deducing this' and <cpp>std::forward_like</cpp>).
+
+</details>
+
+## C++ Weekly - Ep 512 - reinterpret_cast is Finally Fixed!
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[reinterpret_cast is Finally Fixed!](https://youtu.be/JtFVyXQ00PQ)
+
+</details>
+
+## C++ Weekly - Ep 513 - How Many Ways Can You End a Program?
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[How Many Ways Can You End a Program?](https://youtu.be/ki9omnMeYS8)
+
+</details>
+
+## C++ Weekly - Ep 514 - C++26 on 1990 DOS?
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[C++26 on 1990 DOS?](https://youtu.be/dtO94ifh7Ac)
+
+</details>
+
+## C++ Weekly - Ep 515 - Revolutionize Your Templates with static_assert of non-value-dependent Exprs
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Revolutionize Your Templates with static_assert of non-value-dependent Exprs](https://youtu.be/pwf45vaXm3Q)
+
+</details>
+
+## C++ Weekly - Ep 516 - C++26's User Generated static_assert Messages
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[C++26's User Generated static_assert Messages](https://youtu.be/CmfgZa-bcTg)
+
+</details>
+
+## C++ Weekly - Ep 517 - Tool Spotlight: ClangBuildAnalyzer
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Tool Spotlight: ClangBuildAnalyzer](https://youtu.be/gEQ5_FjCihA)
+
+</details>
+
+## C++ Weekly - Ep 518 - Online C++ Tools You Must See! (2026)
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Online C++ Tools You Must See! (2026)](https://youtu.be/VAgC2bCwOQo)
+
+</details>
+
+## C++ Weekly - Ep 519 - initializer_list vs Initializer List
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[initializer_list vs Initializer List](https://youtu.be/8OlG6ya3kIY)
+
+</details>
+
+## C++ Weekly - Ep 520 - Yes, UB Really is THAT BAD
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Yes, UB Really is THAT BAD](https://youtu.be/atEP9wbuaL0)
+
+</details>
+
+## C++ Weekly - Ep 521 - Job Hunting and Optimizing Compilers with Jamie Pendergast (CppCast Ep404)
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Job Hunting and Optimizing Compilers with Jamie Pendergast (CppCast Ep404)](https://youtu.be/vzar4IDKTys)
+
+</details>
+
+## C++ Weekly - Ep 522 - Don't Remove Code. =delete it!
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Don't Remove Code. =delete it!](https://youtu.be/gwwxD_l9T28)
+
+</details>
+
+## C++ Weekly - Ep 523 - Why I'm Still Using std::cout (on this channel)
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Why I'm Still Using std::cout (on this channel)](https://youtu.be/TreruByxQWE)
+
+</details>
+
+## C++ Weekly - Ep 524 - Line Coverage vs Branch Coverage vs Path Coverage
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Line Coverage vs Branch Coverage vs Path Coverage](https://youtu.be/Gr0aI-TPRiQ)
+
+</details>
+
+## C++ Weekly - Ep 525 - Compiling at Compile Time with Daniel Nikpayuk (CppCast Ep405)
+
+<!-- <details> -->
+<summary>
+//TODO: add Summary
+</summary>
+
+[Compiling at Compile Time with Daniel Nikpayuk (CppCast Ep405)](https://youtu.be/JJjBQ95e28s)
+
+</details>
+
