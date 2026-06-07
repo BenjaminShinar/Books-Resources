@@ -15,3 +15,9 @@ golang {
   color: #5dc9e2;
   /* gopher light-blue */
 }
+
+k8s {
+  /* kubernetes blue */
+  color: #326CE5;
+
+}

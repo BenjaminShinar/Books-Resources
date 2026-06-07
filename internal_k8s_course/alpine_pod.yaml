@@ -1,0 +1,14 @@
+# pod.yaml
+# A simple pod running Alpine Linux. In practice you rarely create
+# pods directly - you use Deployments instead. This is for learning.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-pod
+  labels:
+    app: debug          # Labels are key-value pairs used for selection
+spec:
+  containers:
+    - name: alpine
+      image: alpine:3.19       # Container image to run
+      command: ["sleep", "3600"]  # Keep the pod alive for 1 hour

@@ -1,0 +1,9 @@
+# app-env-config.yaml
+# This ConfigMap holds simple key-value pairs injected as environment variables.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-env-config
+data:
+  APP_ENV: "training"
+  LOG_LEVEL: "debug"

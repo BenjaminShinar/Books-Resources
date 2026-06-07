@@ -1,0 +1,27 @@
+# daemonset.yaml
+# A DaemonSet ensures one pod runs on every node in the cluster.
+# When you add a new node, K8s automatically schedules a DaemonSet pod on it.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: log-collector
+spec:
+  selector:
+    matchLabels:
+      app: log-collector
+  template:
+    metadata:
+      labels:
+        app: log-collector
+    spec:
+      containers:
+        - name: vector
+          image: timberio/vector:latest-alpine
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log     # Read the node's log files
+              readOnly: true
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log            # Mount the node's /var/log directory

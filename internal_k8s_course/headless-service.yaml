@@ -1,0 +1,15 @@
+# headless-service.yaml
+# A headless Service (clusterIP: None) gives StatefulSet pods their DNS names.
+# It enables direct DNS to each pod:
+#   redis-0.redis.default.svc.cluster.local
+#   redis-1.redis.default.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  clusterIP: None          # Headless - no single cluster IP
+  selector:
+    app: redis
+  ports:
+    - port: 6379

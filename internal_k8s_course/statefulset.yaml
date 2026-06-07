@@ -1,0 +1,36 @@
+# statefulset.yaml
+# StatefulSets give each pod a stable identity and persistent storage.
+# Pods are named deterministically: redis-0, redis-1, redis-2
+# Each pod gets its own PersistentVolumeClaim (not shared).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  serviceName: redis        # Name of the headless Service that provides DNS for these pods
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data        # Redis data directory
+  # Each replica gets its own PersistentVolumeClaim (unlike Deployments which share volumes)
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]   # Only one pod can mount this volume
+        resources:
+          requests:
+            storage: 1Gi

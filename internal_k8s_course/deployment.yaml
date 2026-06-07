@@ -1,0 +1,29 @@
+# deployment.yaml
+# A Deployment ensures the desired number of pod replicas are running.
+# If a pod crashes, the Deployment controller creates a replacement.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deploy
+spec:
+  replicas: 3              # Run 3 identical pods
+  selector:
+    matchLabels:
+      app: nginx           # The Deployment manages pods with this label
+  template:                # Pod template - defines what each pod looks like
+    metadata:
+      labels:
+        app: nginx         # Must match selector.matchLabels above
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25
+          ports:
+            - containerPort: 80    # Port the container listens on
+          resources:
+            requests:              # Minimum resources guaranteed to the pod
+              cpu: 50m             # 50 millicores = 5% of one CPU core
+              memory: 64Mi
+            limits:                # Maximum resources the pod can use
+              cpu: 100m
+              memory: 128Mi

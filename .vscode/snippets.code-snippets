@@ -43,6 +43,12 @@
     "body": ["<golang>$1</golang>"],
     "description": "special style for golang terms"
   },
+    "Kubernetes Style": {
+    "scope": "markdown,md,",
+    "prefix": "/k8s",
+    "body": ["<k8s>$1</k8s>"],
+    "description": "special style for kubernetes terms"
+  },
   "High Availability": {
     "scope": "markdown,md,",
     "prefix": "ha",

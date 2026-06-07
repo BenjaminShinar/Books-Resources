@@ -1,0 +1,24 @@
+# ingress.yaml
+# Routes external HTTP traffic to our nginx-svc Service.
+# When you hit http://myapp.local, the Ingress Controller forwards
+# the request to nginx-svc on port 80.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  annotations:
+    # Rewrite the URL path before forwarding to the backend
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx        # Which Ingress Controller handles this resource
+  rules:
+    - host: myapp.local          # Match requests with this hostname
+      http:
+        paths:
+          - path: /              # Match all paths
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-svc  # Forward to this Service
+                port:
+                  number: 80

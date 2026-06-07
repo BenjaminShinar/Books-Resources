@@ -1,0 +1,12 @@
+# app-file-config.yaml
+# This ConfigMap holds file content mounted into the container filesystem.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-file-config
+data:
+  config.json: |
+    {
+      "database": "postgres",
+      "port": 5432
+    }

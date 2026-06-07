@@ -1,0 +1,24 @@
+# persistent-volume.yaml
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-pv
+spec:
+  capacity:
+    storage: 5Gi                  # Total capacity of this volume
+  accessModes:
+    - ReadWriteOnce               # Can be mounted read-write by a single node
+  hostPath:
+    path: /tmp/k8s-data           # Where data lives on the node
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi                # Request 2Gi from available PVs

@@ -2,6 +2,7 @@
 ignore these words in spell check for this file
 // cSpell:ignore Okun kube fooa SVennam aaaabc kubelet kubernetes nginx openshift linux redhat Silberschatz Korth Sudarshan ntile cume_dist arity ODBC JDBC OLAP
 -->
+<link rel="stylesheet" type="text/css" href="./markdown-style.css">
 
 # Books-Resources
 
@@ -273,6 +274,15 @@ Stuff I use:
 - js
 - golang
 
+
+Markdown classes:
+I defined some classes in the markdown-style.css file, these styles aren't visible in github (which doesn't support arbitrary css), but work fine for local viewing:
+
+- <cloud>cloud</cloud> - terms about cloud stuff, like AWS services, GCP and Azure.
+- <cpp>C++</cpp> - C++ libraries, types, coroutins, concepts, etc...
+- <golang>golang</golang> - golang library, packages, types, methods, concepts.
+- <k8s>kubernetes</k8s> - kubernetes tools, types, etc...
+
 ### Tags
 
 Dialog Box - don't use
@@ -330,6 +340,31 @@ $$
 $$
 
 </details>
+
+## Package Managers
+
+<details>
+<summary>
+how to use various package managers.
+</summary>
+
+### Brew
+
+<details>
+<summary>
+Brew is the Mac package manager.
+</summary>
+
+```shell
+brew install pkg1 pkg2
+brew upgrade pkg1 pkg2
+```
+
+</details>
+
+
+</details>
+
 
 ## Other stuff
 
