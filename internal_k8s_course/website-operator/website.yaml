@@ -1,0 +1,8 @@
+# website.yaml
+apiVersion: training.example.com/v1
+kind: Website
+metadata:
+  name: my-site
+spec:
+  image: nginx:1.25
+  replicas: 2

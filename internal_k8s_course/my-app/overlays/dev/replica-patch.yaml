@@ -1,0 +1,12 @@
+# my-app/overlays/dev/replica-patch.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx          # Must match the base Deployment name
+spec:
+  replicas: 1          # Dev: single replica saves resources
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest    # Dev: latest tag for fast iteration

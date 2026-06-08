@@ -281,7 +281,7 @@ I defined some classes in the markdown-style.css file, these styles aren't visib
 - <cloud>cloud</cloud> - terms about cloud stuff, like AWS services, GCP and Azure.
 - <cpp>C++</cpp> - C++ libraries, types, coroutins, concepts, etc...
 - <golang>golang</golang> - golang library, packages, types, methods, concepts.
-- <k8s>kubernetes</k8s> - kubernetes tools, types, etc...
+- <k8s>kubernetes</k8s> - kubernetes tools, types, helm stuff, etc..
 
 ### Tags
 

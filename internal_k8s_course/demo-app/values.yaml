@@ -1,0 +1,22 @@
+# demo-app/values.yaml
+replicaCount: 4
+
+app:
+  name: demo-app
+  port: 80
+
+image:
+  repository: nginx
+  tag: "1.25"
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi

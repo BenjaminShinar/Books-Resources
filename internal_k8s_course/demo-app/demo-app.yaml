@@ -1,0 +1,79 @@
+# demo-app.yaml
+# Complete deployment: ConfigMap + Deployment + Service + Ingress
+---
+# Configuration injected as environment variables
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-config
+data:
+  APP_VERSION: "1.0.0"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: demo
+          image: demo-app:1.0
+          imagePullPolicy: Never      # Use the local image loaded via "kind load"
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: demo-config     # Inject APP_VERSION as env var
+          # Readiness probe: K8s won't send traffic until /readyz returns 200
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 3    # Wait 3s before first check
+            periodSeconds: 5          # Check every 5s
+          # Liveness probe: K8s restarts the pod if /healthz fails
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+# ClusterIP Service to expose the pods internally
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-svc
+spec:
+  selector:
+    app: demo
+  ports:
+    - port: 80              # Service port (what other pods use)
+      targetPort: 8080      # Container port (where our Go app listens)
+---
+# Ingress to expose the app externally via hostname
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: demo.local       # Access via http://demo.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: demo-svc
+                port:
+                  number: 80

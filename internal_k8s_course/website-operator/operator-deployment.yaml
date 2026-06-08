@@ -1,0 +1,21 @@
+# operator-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website-operator
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: website-operator
+  template:
+    metadata:
+      labels:
+        app: website-operator
+    spec:
+      serviceAccountName: website-operator
+      containers:
+        - name: operator
+          image: website-operator:latest
+          imagePullPolicy: Never        # Use the locally loaded image

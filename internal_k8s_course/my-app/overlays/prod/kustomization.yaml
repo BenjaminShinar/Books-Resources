@@ -1,0 +1,8 @@
+# my-app/overlays/prod/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+namespace: prod
+patches:
+  - path: replica-patch.yaml

@@ -1,0 +1,8 @@
+# hello-site.yaml
+apiVersion: training.example.com/v1
+kind: Website
+metadata:
+  name: hello-site
+spec:
+  image: nginx:1.25
+  replicas: 5

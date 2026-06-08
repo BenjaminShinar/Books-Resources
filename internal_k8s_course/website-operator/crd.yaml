@@ -1,0 +1,57 @@
+# crd.yaml
+# A CRD extends the K8s API with a new resource type.
+# After applying this, "kubectl get websites" (or "kubectl get ws") will work.
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  # Name must be: plural.group
+  name: websites.training.example.com
+spec:
+  group: training.example.com     # API group (like "apps" in apps/v1)
+  versions:
+    - name: v1                    # API version
+      served: true                # Enable this version
+      storage: true               # Store data in this version's format
+      schema:
+        openAPIV3Schema:          # Validation schema for the custom resource
+          type: object
+          properties:
+            spec:
+              type: object
+              required: ["image", "replicas"]    # These fields are mandatory
+              properties:
+                image:
+                  type: string
+                  description: "Container image for the website"
+                replicas:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+                  description: "Number of replicas"
+            status:
+              type: object
+              properties:
+                availableReplicas:
+                  type: integer
+                ready:
+                  type: boolean
+      subresources:
+        status: {}               # Enable /status subresource for status updates
+      # Custom columns shown in "kubectl get websites"
+      additionalPrinterColumns:
+        - name: Image
+          type: string
+          jsonPath: .spec.image
+        - name: Replicas
+          type: integer
+          jsonPath: .spec.replicas
+        - name: Ready
+          type: boolean
+          jsonPath: .status.ready
+  scope: Namespaced              # Website resources live in a namespace
+  names:
+    plural: websites             # kubectl get websites
+    singular: website            # kubectl get website my-site
+    kind: Website                # Kind in YAML manifests
+    shortNames:
+      - ws                       # kubectl get ws (shorthand)

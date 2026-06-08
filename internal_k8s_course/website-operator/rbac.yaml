@@ -1,0 +1,37 @@
+# rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: website-operator
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: website-operator
+rules:
+  # Watch and update Website custom resources
+  - apiGroups: ["training.example.com"]
+    resources: ["websites", "websites/status"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  # Manage Deployments created by the operator
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+  # Manage Services created by the operator
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: website-operator
+subjects:
+  - kind: ServiceAccount
+    name: website-operator
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: website-operator
+  apiGroup: rbac.authorization.k8s.io

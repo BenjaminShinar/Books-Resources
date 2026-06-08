@@ -1,0 +1,3 @@
+# demo-app/bad-values.yaml
+replicaCount: "four"   # Invalid: should be an integer, not a string
+#replicacount: 3       # Invalid: should be 'replicaCount' with a capital 'C'

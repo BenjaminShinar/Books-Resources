@@ -1,0 +1,11 @@
+# logging-net.yaml
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: logging-net
+spec:
+  config: '{
+    "cniVersion": "1.0.0",
+    "name": "cni-logger",
+    "type": "cni-logger"
+    }'

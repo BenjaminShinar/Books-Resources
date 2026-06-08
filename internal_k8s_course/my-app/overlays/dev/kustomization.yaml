@@ -1,0 +1,8 @@
+# my-app/overlays/dev/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base                   # Pull in all base manifests
+namespace: dev                   # Inject this namespace into every resource
+patches:
+  - path: replica-patch.yaml    # Apply the dev-specific overrides

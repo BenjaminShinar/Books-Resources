@@ -1,0 +1,37 @@
+# cni-logger-daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cni-logger-installer
+  namespace: kube-system
+  labels:
+    app: cni-logger
+spec:
+  selector:
+    matchLabels:
+      app: cni-logger
+  template:
+    metadata:
+      labels:
+        app: cni-logger
+    spec:
+      initContainers:
+      - name: install-cni
+        image: cni-logger:daemonset
+        imagePullPolicy: Never
+        command: ["cp", "/cni-logger", "/host/opt/cni/bin/cni-logger"]
+        volumeMounts:
+        - name: cni-bin
+          mountPath: /host/opt/cni/bin
+      containers:
+      - name: pause
+        image: busybox:1.36
+        command: ["sleep", "infinity"]
+      volumes:
+      - name: cni-bin
+        hostPath:
+          path: /opt/cni/bin
+          type: Directory
+      tolerations:
+      - operator: Exists
+      hostNetwork: true
