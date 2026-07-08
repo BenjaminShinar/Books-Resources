@@ -53,9 +53,9 @@ int main() {
 
 ## C++ Weekly - Ep 502 - Simple Reflection For C++20
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Working back reflection into C++20 code.
 </summary>
 
 [Simple Reflection For C++20](https://youtu.be/voljWhjl0bA?si=XoEocGHmjDr4MQvh)
@@ -107,9 +107,9 @@ next episode will show how we do it for real in C++26.
 </details>
 
 ## C++ Weekly - Ep 503 - The Amazing Power of C++26's Template For Statements
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Template expansion.
 </summary>
 
 [The Amazing Power of C++26's Template For Statements](https://youtu.be/yaWiGLSDc64?si=oz-F4JdFQntp69Wj)
@@ -157,7 +157,7 @@ the real strengh will be working over constant expressions, we could make the it
 ## C++ Weekly - Ep 504 - Practical Reflection in C++26
 <details>
 <summary>
-//TODO: add Summary
+Combining the power of reflection with the scripting langugage.
 </summary>
 
 [Practical Reflection in C++26](https://youtu.be/Mg_TBYppQwU?si=xqCT-25XjYv3Yy1K)
@@ -504,47 +504,256 @@ int main()
 
 </details>
 
-## C++ Weekly - Ep 512 - reinterpret_cast is Finally Fixed!
+## C++ Weekly - Ep 512 - `reinterpret_cast` is Finally Fixed!
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+lifetime managment functions.
 </summary>
 
-[reinterpret_cast is Finally Fixed!](https://youtu.be/JtFVyXQ00PQ)
+[`reinterpret_cast` is Finally Fixed!](https://youtu.be/JtFVyXQ00PQ)
+
+C++23 added <cpp>std::start_lifetime_as</cpp> and <cpp>std::start_lifetime_as_array</cpp>
+
+
+this is undefined behavior, we create an integer and modify it as a float.
+```cpp
+#include <memory>
+
+int main()
+{
+    int *i = new int(42);
+    float *f = std::reinterpet_cast<float *>(i);
+
+    return static_cast<int>(*f);
+}
+```
+
+
+in C++26 we can cast in and out of void pointers (since <cpp>reintepert_cast</cpp> is not `constexpr`), and undefined behavior is not allowed during compliation time. so we can see this in action.
+
+```cpp
+consteval void bad_things() {
+    int *i = new int(42);
+    [[maybe_unused]] float *f = static_cast<float f*>(static_cast<void *>(i));
+    *f = 4.5; // undefined behavior
+    delete i;
+}
+
+int main()
+{
+    bad_things();
+}
+```
+
+the new lifetime methods have defined behavior and are not undefined, we can treat it as if it was the new type.
 
 </details>
 
 ## C++ Weekly - Ep 513 - How Many Ways Can You End a Program?
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Seven ways to end a program.
 </summary>
 
 [How Many Ways Can You End a Program?](https://youtu.be/ki9omnMeYS8)
+
+1. return statement from main.
+1. `exit`.
+1. <cpp>std::abort</cpp>.
+1. <cpp>std::exit</cpp>, <cpp>std::quick_exit</cpp>.
+1. <cpp>std::terminate</cpp>.
+1. crash for unefined behavior.
+1. get killed for taking too many resources or by watchdog.
+
+the first way, the book correct <cpp>EXIT_SUCCESS</cpp> return statement. this is the correct way, since it's taking the value from the platform. the second way is more commonly used, with `return 0`, which could potentially be wrong depending on the platform. and finally, we can can drop the return statement entirely and keep it empty, which is like returning the success code.
+
+```cpp
+#include <cstdlib>
+
+int main()
+{
+    // return EXIT_SUCCESS; // explicit
+    // return 0; // usually correct
+    // do nothing!
+}
+```
+
+we can also return a value, like `return 42`, which would be interpetted as failure, but that's still a way to end the program.
+
+after the "boring" options to return from the `main`, we can move on to more intresting ways. such as calling `exit(EXIT_SUCCESS)` somewhere in the middle of the code. this is mean we don't have stack unwinding and we might lose out on destructor calls - static and thread locals object are cleaed up, but automatic objects are not.
+
+```cpp
+struct Lifetime {
+    ~Lifetime() { std::puts("Destroyed!");}
+};
+
+void helper_function(bool condition) {
+    if (condition) {
+        exit(EXIT_SUCCESS);
+    }
+}
+
+int main()
+{
+    lifetime l1; // not cleaned up
+    static Lifetime l2; // cleaned up
+    helper_function(true);
+}
+```
+
+similiar to <cpp>exit</cpp>, there's <cpp>std::abort</cpp>, which raises a signal, this is also what the assert stament does. no cleanup happens at all. we can still interupt the signal handler if we want.
+
+
+```cpp
+int main()
+{
+    lifetime l1; // not cleaned up
+    static Lifetime l2; // not cleaned up either in abort.
+    assert(false);
+    std::abort();
+}
+```
+
+<cpp>std::quick_exit</cpp> only calls the handlers, which we can define with <cpp>std::atexit</cpp> and <cpp>std::at_quick_exit</cpp> (the underscore are differnt). the quick exit doesn't trigger the buffer flushing.
+
+```cpp
+Lifetime *l = new Lifetime();
+void do_quick_exit() {
+    std::atexit([](){ delete l ;});  // not triggered for quick exit
+    //std::at_quick_exit([](){ delete l ;});  // triggered for quick exit, but not printing
+    std::at_quick_exit([](){ delete l ; std::fflush(stdout)});  // triggered for quick exit, and now we see the printed output
+    std::quick_exit(EXIT_FAILURE);
+}
+
+int main()
+{
+    do_quick_exit();
+}
+```
+
+next we have <cpp>std::terminate</cpp>, which is implictly called with unhandled exceptions.
+
+
+```cpp
+void directly_terminate() {
+    Lifetime local;
+    sd::terminate();
+}
+
+void indirectly_terminate_maybe() {
+    throw 42; // terminates if not caught
+}
+
+void very_indirectly_terminate() noexcept {
+    // guarnteed to call terminate
+    throw 42; // exception in noexcept function
+}
+
+int main()
+{
+    directly_terminate();
+}
+```
+
+our next option it to cause undefined behavior and hope for a crash. this depends on the compiler, it can crash immediatly by generating an invalid opcode (which is what gcc does) or it can ignore the bad code (which is what clang does)
+
+```cpp
+void ub_crash_maybe() {
+    int i* = nullptr;
+    *i = 42;
+}
+
+
+int main()
+{
+    ub_crash_maybe();
+}
+```
+
+the final option is to loop or consume all resources until the process is killed.
+
+```cpp
+void end_program() {
+    while (true) {}
+}
+
+void end_program_linux() {
+    std::vector<int> vec(1'000'000'000'000); // take all the resources
+}
+```
+
+actual suggestions to handle undefined state if we want to protect against unknown state or exit really qucikyl
+
+> 1. register the `at_quick_exit` handler.
+> 2. in the handler, save the stareas much as possible to a new file, flush output.
+> 3. register the sigabrt handler.
+> 4. in the handler, call `quick_exit()`.
+> 5. make the terminate handler call the quick exit.
 
 </details>
 
 ## C++ Weekly - Ep 514 - C++26 on 1990 DOS?
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Compiling modern code on dos. doesn't work properly out of the box.
 </summary>
 
 [C++26 on 1990 DOS?](https://youtu.be/dtO94ifh7Ac)
 
+C++ is portable, we can run a dosbox to emulate dos, and run `gpp --version` to see which gcc version we are running there, and we can check what features are avaialbe there. djgpp is a port of gcc to dos.
+
+for some reason, we don't have all the stuff out of the box to run modern C++ code, so there's some problem about supporting long file names, and there's some hacking needed. even iostream doesn't work.
+
+the support is limited.
+
+check out the [cpp evolution over time](cppevo.dev) for some stuff.
+
 </details>
 
-## C++ Weekly - Ep 515 - Revolutionize Your Templates with static_assert of non-value-dependent Exprs
+## C++ Weekly - Ep 515 - Revolutionize Your Templates with `static_assert` of non-value-dependent Exprs
 
-<!-- <details> -->
+<details>
 <summary>
-//TODO: add Summary
+Backport of static assertions changes.
 </summary>
 
 [Revolutionize Your Templates with static_assert of non-value-dependent Exprs](https://youtu.be/pwf45vaXm3Q)
+
+until C++23, all static assertions had to valid at compilation time, regardless of whether the code block they were in was valid (the unused branch in `if constexpr` shouldn't exist).\
+this is actually not a new lanugage feature, the change was backported so new compilers will have this behavior even in older C++ code.
+
+```cpp
+#include <type_traits>
+
+template<typename Output>
+Output Func() {
+    if constexpr(std::is_same_v<Output, int>) {
+        static_assert(false);
+    } else {
+        return 42;
+    }
+}
+
+int main()
+{
+    func<float>(); // fails in C++20, even though the line shouldn't even be compiled
+    
+}
+```
+
+but this is usually the wrong tool for the task, we can delete function specializations or use template contratints to delete.
+
+```cpp
+auto func(int) = delete;
+auto func(std::integral auto) = delete;
+int main()
+{
+    func(10); // not allowed
+}
+```
 
 </details>
 
